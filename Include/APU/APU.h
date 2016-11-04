@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,116 +22,117 @@
 #define _APU_H_
 
 #include "common.h"
+
+const uint8 SNDCHIP_NONE  = 0;
+const uint8 SNDCHIP_VRC6  = 1;			// Konami VRCVI
+const uint8 SNDCHIP_VRC7  = 2;			// Konami VRCVII
+const uint8 SNDCHIP_FDS	  = 4;			// Famicom Disk Sound
+const uint8 SNDCHIP_MMC5  = 8;			// Nintendo MMC5
+const uint8 SNDCHIP_N106  = 16;			// Namco N-106
+const uint8 SNDCHIP_FME07 = 32;			// Sunsoft FME-07
+
+enum {MACHINE_NTSC, MACHINE_PAL};
+
 #include "mixer.h"
+#include "SoundInterface.h"
 #include "vrc6.h"
-
-const int SNDCHIP_NONE	= 0;
-const int SNDCHIP_VRC6	= 1;			// Konami VRCVI
-const int SNDCHIP_VRC7	= 2;			// Konami VRCVII
-const int SNDCHIP_FDS	= 4;			// Famicom Disk Sound
-const int SNDCHIP_MMC5	= 8;			// Nintendo MMC5
-const int SNDCHIP_N106	= 16;			// Namco N-106
-const int SNDCHIP_FME07	= 32;			// Sunsoft FME-07
-
-class ICallback;
-class CSampleMem;
+#include "mmc5.h"
+#include "fds.h"
+#include "n106.h"
+#include "vrc7.h"
 
 class CSquare;
 class CTriangle;
 class CNoise;
 class CDPCM;
 
-class CAPU
-{
-	public:
-		CAPU();
-		~CAPU();
+class CEmulator;
+class CCPU;
 
-		bool					Init(ICallback *pCallback, CSampleMem *pSampleMem);
-		void					Shutdown();
-		void					Halt();
-		void					Reset();
-		void					Process();
-		void					AddCycles(uint32 Cycles);
-		void					EndFrame();
+class CAPU {
+public:
+	CAPU(ICallback *pCallback, CSampleMem *pSampleMem);
+	~CAPU();
+
+	void	Shutdown();
+	void	Halt();
+	void	Reset();
+	void	Process();
+	void	EndFrame();
+	void	SetNextTime(uint32 Cycles);
+
+	uint8	Read4015();
+	void	Write4017(uint8 Value);
+	void	Write4015(uint8 Value);
+	void	Write(uint16 Address, uint8 Value);
+
+	void	SetExternalSound(uint8 Chip);
+	void	ExternalWrite(uint16 Address, uint8 Value);
+	uint8	ExternalRead(uint16 Address);
+	
+	void	ChangeMachine(int Machine);
+	void	SetSoundInterface(ISoundInterface *pSoundInterface);
+	bool	SetupSound(int SampleRate, int NrChannels, int Speed);
+	void	SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume) const;
+
+	int32	GetVol(uint8 Chan);
+
+public:
+	static const uint8	LENGTH_TABLE[];
+	static const uint32	BASE_FREQ_NTSC;
+	static const uint32	BASE_FREQ_PAL;
+	static const uint8	FRAME_RATE_NTSC;
+	static const uint8	FRAME_RATE_PAL;
+
+private:
+	static const int SEQUENCER_PERIOD;
+	
+	inline void Clock_240Hz();
+	inline void	Clock_120Hz();
+	inline void	Clock_60Hz();
+	inline void	ClockSequence();
 		
-		void					Run(uint32 Cycles);
+private:
+	ISoundInterface	*m_pSoundInterface;
+	CMixer			*m_pMixer;
+	ICallback		*m_pParent;
 
-		uint8					ReadControl();
-		void					Write4017(uint8 Value);
-		void					WriteControl(uint8 Value);
-		void					Write(uint16 Address, uint8 Value);
 
-		void					SetExternalSound(uint8 Chip);
-		void					ExternalWrite(uint16 Address, uint8 Value);
-		uint8					ExternalRead(uint16 Address);
-		
-		void					ChangeSpeed(int Speed);
+//	CSquare			*m_pSquare1;
+//	CSquare			*m_pSquare2;
 
-		bool					AllocateBuffer(int SampleRate, int NrChannels, int Speed);
-		void					ReleaseBuffer();
-		void					ClearBuffer();
+	CSquare			*SquareCh1;
+	CSquare			*SquareCh2;
+	CTriangle		*TriangleCh;
+	CNoise			*NoiseCh;
+	CDPCM			*DPCMCh;
 
-		void					SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume);
+	CVRC6			VRC6;
+	CMMC5			MMC5;
+	CFDS			FDS;
+	CN106			N106;
+	CVRC7			VRC7;
 
-		int32					GetVol(uint8 Chan);
-		bool					IRQ();
+	uint8			m_iExternalSoundChip;				// External sound chip, if used
+	uint32			m_iCurrentTime;
+	uint32			m_iNextStopTime;
 
-		static const uint8		DUTY_PULSE[];
-		static const uint8		LENGTH_TABLE[];
-		static const uint16		NOISE_FREQ[];
-		static const uint16		DMC_FREQ_NTSC[];
-		static const uint16		DMC_FREQ_PAL[];
+	uint32			FramePeriod;						// Cycles per frame
+	uint32			FrameCycles;						// Cycles emulated from start of frame
+	uint32			FrameClock;							// Clock for frame sequencer
+	uint8			FrameSequence;						// Frame sequence
+	uint8			FrameMode;							// 4 or 5-steps frame sequence
+	int32			FrameCyclesLeft;
 
-		static const double		BASE_FREQ_NTSC;
-		static const double		BASE_FREQ_PAL;
+	uint32			SoundBufferSamples;					// Size of buffer, in samples
+	bool			m_bStereoEnabled;					// If stereo is enabled
 
-		static const uint8		FRAME_RATE_NTSC;
-		static const uint8		FRAME_RATE_PAL;
+	uint32			SampleSizeShift;					// To convert samples to bytes
+	uint32			SoundBufferSize;					// Size of buffer, counting int32s
+//	uint32			SoundBufferSamples;					// Size of buffer, in samples
+	uint32			BufferPointer;						// Fill pos in buffer
+	int16			*SoundBuffer;						// Sound transfer buffer
 
-	private:
-		static const int		SEQUENCER_PERIOD;
-		
-		inline void				Clock_240Hz();
-		inline void				Clock_120Hz();
-		inline void				Clock_60Hz();
-		inline void				ClockSequence();
-		
-		CMixer					*Mixer;
-
-		// Channels
-		CSquare					*SquareCh1;
-		CSquare					*SquareCh2;
-		CTriangle				*TriangleCh;
-		CNoise					*NoiseCh;
-		CDPCM					*DPCMCh;
-		
-		// Chips
-		CVRC6					*VRC6;
-
-		ICallback				*Parent;
-
-		uint8					ExternalSoundChip;					// External sound chip, if used
-
-		uint8					SoundRegs[0x17];					// Internal APU regs ($4000-$4013)
-		uint8					ControlReg;							// The $4015 reg
-
-		uint32					FramePeriod;						// Cycles per frame
-		int32					FrameCycles;						// Cycles emulated from start of frame
-		int32					ClockCycles;						// Cycles to emulate
-		int32					FrameClock;							// Clock for frame sequencer
-		uint8					FrameSequence;						// Frame sequence
-		uint8					FrameMode;							// 4 or 5-steps frame sequence
-		int32					FrameLength;
-
-		uint32					SampleSizeShift;					// To convert samples to bytes
-		uint32					SoundBufferSize;					// Size of buffer, counting int32s
-		uint32					SoundBufferSamples;					// Size of buffer, in samples
-		uint32					BufferPointer;						// Fill pos in buffer
-		int16					*SoundBuffer;						// Sound transfer buffer
-		bool					StereoEnabled;						// If stereo is enabled
-
-		bool					HaltEmulation;						// Stop emulation
 };
 
 #endif /* _APU_H_ */

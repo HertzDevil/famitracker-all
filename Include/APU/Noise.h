@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,33 +28,29 @@
 
 #include "channel.h"
 
-class CNoise : public CChannel
-{
+class CNoise : public CChannel {
 public:
 	CNoise(CMixer *pMixer, int ID);
 	~CNoise();
 
+	void	Reset();
 	void	Write(uint16 Address, uint8 Value);
 	void	WriteControl(uint8 Value);
 	uint8	ReadControl();
-
-	void	Reset();
-
-	void	Process(int Time);
+	void	Process(uint32 Time);
 
 	void	LengthCounterUpdate();
 	void	EnvelopeUpdate();
 
 private:
-	uint8	Enabled, Looping, Volume, SampleRate;
-	int32	Value, LastValue, EnvelopeCounter;
-	uint16	Samples, Wavelength, LengthCounter, ShiftReg;
-	uint8	EnvelopeFix, EnvelopeSpeed;
-	uint8	ShiftTwice, LastRand;
+	static const uint16	NOISE_FREQ[];
 
-	int16	Counter;
-
-	uint8	ControlReg;
+	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;
+	uint8	m_iEnvelopeVolume, m_iFixedVolume;
+	int8	m_iEnvelopeCounter;
+	
+	uint8	m_iSampleRate;
+	uint16	m_iShiftReg;
 };
 
 #endif /* _NOISE_H_ */

@@ -26,6 +26,8 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
+	void				TranslateMML();
+
 	CSequenceEditorVRC6	SequenceEditor;
 	CSequence 			*m_SelectedSeq;
 
@@ -54,6 +56,11 @@ public:
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 public:
 	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDeltaposModSelectSpin(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeSeqIndex();
+	afx_msg void OnBnClickedFreeSeq();
+	afx_msg void OnBnClickedParseMml();
 public:
 	virtual BOOL DestroyWindow();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

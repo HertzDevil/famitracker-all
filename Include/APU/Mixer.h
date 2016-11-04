@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,7 +21,8 @@
 #ifndef _MIXER_H_
 #define _MIXER_H_
 
-#include "common.h"
+#include "SoundInterface.h"
+#include "blip_buffer.h"
 
 enum CHAN_IDS {
 	CHANID_SQUARE1,
@@ -55,10 +56,22 @@ enum CHAN_IDS {
 };
 
 struct stChanVal {
-	double Left, Right, Mono;
+	int32 Left, Right;
 	double VolLeft, VolRight;
 	double Stereo;
-	int32 VolMeasure, VolFallOff;
+};
+
+struct stMixerSettings {
+	int m_iMaster;
+	int m_iInternal;
+	int m_iVRC6;
+	int m_iVRC7;
+	int m_iMMC5;
+	int m_iFDS;
+	int m_iN106;
+	int m_iFME07;
+	int m_iChannels[CHANNELS];
+	int m_iChannelPan[CHANNELS];
 };
 
 class CMixer
@@ -68,44 +81,63 @@ class CMixer
 		~CMixer();
 
 		bool	Init();
+		void	Shutdown();
 		void	ExternalSound(int Chip);
-		void	SetChannelVolume(int ChanID, double VolLeft, double VolRight);
-		void	AddValue(int ChanID, int Value, int FrameCycles);
-		void	UpdateSettings(int LowCut, int HighCut, int HighDamp, int OverallVol);
+//		void	SetChannelVolume(int ChanID, double VolLeft, double VolRight);
+		void	AddValue(int ChanID, int Chip, int Value, int FrameCycles);
+		void	UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVol);
 
-		bool	AllocateBuffer(unsigned int Size, uint32 SampleRate, uint32 ClockRate);
+		bool	AllocateBuffer(unsigned int Size, uint32 SampleRate, uint32 ClockRate, uint8 NrChannels);
 		void	SetClockRate(int Rate);
 		void	ClearBuffer();
 		int		FinishBuffer(int t);
-		int		ReadBuffer(int Size, void *Buffer, bool Stereo);
 		int		SamplesAvail();
 
+		void	MixSamples(blip_sample_t *pBuffer, uint32 Count);
+		uint32	GetMixSampleCount(int t);
+
 		void	AddSample(int ChanID, int Value);
+
+//		void	FlushBuffer(ISoundInterface *pSoundInterface, uint32 Size, bool Stereo);
+
+		int		ReadBuffer(int Size, void *Buffer, bool Stereo);
 
 		int32	GetChanOutput(uint8 Chan);
 
 	private:
-		inline double	CalcPin1(double Val1, double Val2);
-		inline double	CalcPin2(double Val1, double Val2, double Val3);
+		inline double CalcPin1(double Val1, double Val2);
+		inline double CalcPin2(double Val1, double Val2, double Val3);
 
-		void			AddDelta(int AmpLeft, int AmpRight, int Time);
+		void MixInternal(int Value, int Time);
+		void MixN106(int Value, int Time);
+		void MixFDS(int Value, int Time);
+		void MixVRC6(int Value, int Time);
+		void MixMMC5(int Value, int Time);
 
-		bool			m_bVolRead;
-		int				m_iSampleRate;
+//		void SetVolumeLevels();
 
-		stChanVal		Channels[CHANNELS];
-		
-		uint32			ExternalSamples;
-		int32			ExternalSampleBuffer[1000];
+		// Blip buffer synths
+		Blip_Synth<blip_good_quality, -500>		Synth2A03;
+		Blip_Synth<blip_good_quality, -1600>	SynthN106;
+		Blip_Synth<blip_good_quality, -3500>	SynthFDS;
+		Blip_Synth<blip_good_quality, -30>		SynthMMC5;
+		Blip_Synth<blip_good_quality, -200>		SynthVRC6;
 
+		Blip_Buffer		BlipBuffer;
+
+		int32			*m_pSampleBuffer;
+
+		/*stChanVal*/int32		Channels[CHANNELS];
 		uint8			ExternalChip;
-		double			MasterVol;
-		double			InternalVol,
-						MMC5Vol,
-						VRC6Vol,
-						VRC7Vol,
-						FDSVol,
-						N106Vol;
+		bool			StereoEnabled;
+
+		uint32			m_iSampleRate;
+
+		int32			ChannelLevels[CHANNELS];
+		uint32			ChanLevelFallOff[CHANNELS];
 };
+
+//void GetMixerSettings(stMixerSettings *pSettings);
+//void UpdateMixerSettings(stMixerSettings *pSettings);
 
 #endif /* _MIXER_H_ */

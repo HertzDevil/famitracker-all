@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -59,6 +59,7 @@ struct stSongHeader {
 	unsigned char	PatternLength;
 	unsigned char	Speed;
 	unsigned char	Tempo;
+	unsigned char	FrameBank;
 };
 
 class CCompiler
@@ -69,6 +70,7 @@ public:
 
 	void Export(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt);
 	void ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
+	void ExportNES(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
 	void ExportBIN(CString BIN_File, CString DPCM_File, CFamiTrackerDoc *pDoc, CEdit *pLogTxt);
 	void ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
 
@@ -92,6 +94,7 @@ private:
 	void StoreByte(unsigned char Value);
 
 	unsigned int GetCurrentOffset();
+	unsigned int GetAbsoluteAddress();
 
 	// Song conversion functions
 	void WriteHeader(stTuneHeader *pHeader, CFamiTrackerDoc *pDoc);
@@ -124,12 +127,13 @@ private:
 	unsigned int	m_iInitialPosition;
 	bool			m_bBankSwitched;			// True for bank switched song
 	unsigned int	m_iMasterHeaderAddr;
+	unsigned int	m_iDriverSize;				// Size of driver binary
 
 	// For bank switching
 	CDataBank		m_DataBanks[MAX_BANKS];
 	unsigned int	m_iSelectedBank;
 	unsigned int	m_iAllocatedBanks;
-	unsigned char	m_cSelectedBanks[8];		// There are 8 banks visible
+	unsigned char	m_cSelectedBanks[8];		// There are 8 banks visible, $8000-$FFFF
 	CDataBank		m_pSelectedBanks[8];
 
 	unsigned int	m_iLoadAddress;
@@ -142,6 +146,7 @@ private:
 	unsigned int	m_iSequences;
 	unsigned int	m_iAssignedInstruments[MAX_INSTRUMENTS];
 	unsigned int	m_iSequenceAddresses[MAX_SEQUENCES][MOD_COUNT];
+	unsigned int	m_iSequenceAddressesVRC6[MAX_SEQUENCES][MOD_COUNT];
 	
 	// Patterns and frames
 	unsigned short	m_iPatternAddresses[MAX_PATTERN][MAX_CHANNELS];

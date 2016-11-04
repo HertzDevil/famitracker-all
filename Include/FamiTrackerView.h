@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -67,6 +67,9 @@ enum {
 	CMD_GET_SPEED,
 	CMD_TIME,
 	CMD_TICK,
+	CMD_BEGIN,
+	CMD_GET_FRAME,
+	CMD_MOVE_TO_START,
 };
 
 struct stUndoBlock {
@@ -75,6 +78,14 @@ struct stUndoBlock {
 	int Channel;
 	int Row, Column;
 	int Frame;
+};
+
+class CSelectPoint {
+public:
+	unsigned int m_iChanStart, m_iChanEnd;
+	unsigned int m_iColStart, m_iColEnd;
+	unsigned int m_iRowStart, m_iRowEnd;
+private:
 };
 
 const unsigned int COLUMNS = 7;
@@ -101,6 +112,8 @@ public:
 	unsigned int		GetInstrument() const { return m_iInstrument; };
 	unsigned int		GetOctave() const { return m_iOctave; };
 	void				SetOctave(unsigned int iOctave);
+	void				SetFollowMode(bool Mode);
+	void				CreateFont();
 
 	// Scrolling/viewing no-editing functions
 	void				MoveCursorUp();
@@ -132,14 +145,11 @@ public:
 
 	int					GetCurrentChannelType();
 
+	void				MoveCursor(int Step);
+
 	// Settings
-	unsigned int		GetStepping() const { return m_iRealKeyStepping; };
-	
-	void				SetStepping(int Step) { 
-		m_iRealKeyStepping = Step; 
-		if (Step > 0) m_iKeyStepping = Step; 
-		else m_iKeyStepping = 1; 
-	};
+	unsigned int		GetStepping() const { return m_iRealKeyStepping; };	
+	void				SetStepping(int Step) { m_iRealKeyStepping = Step; if (Step > 0) m_iKeyStepping = Step; else m_iKeyStepping = 1; };
 
 	void				SetChangeAllPattern(bool ChangeAll) { m_bChangeAllPattern = ChangeAll; };
 
@@ -151,12 +161,17 @@ public:
 	int					PlayerCommand(char Command, int Value);
 	void 				GetRow(CFamiTrackerDoc *pDoc);
 
+	stChanNote			GetNoteSynced(int Channel);
+
 	// Note preview
 	void				PreviewNote(unsigned char Key);
 	void				PreviewRelease(unsigned char Key);
 
 	bool				SwitchToInstrument() { return m_bSwitchToInstrument; };
 	void				SwitchToInstrument(bool Switch) { m_bSwitchToInstrument = Switch; };
+
+	int					GetPlayFrame() { return m_iPlayFrame; };
+	bool				GetFollowMode() { return m_bFollowMode; };
 
 protected:
 	// Drawing functions
@@ -171,9 +186,13 @@ protected:
 	void				RestoreBackground(CDC *pDC);
 	void				CreateBackground();
 
+	void				FastRedraw();
+
 	unsigned int		GetChannelAtPoint(unsigned int PointX);
 	unsigned int		GetColumnAtPoint(unsigned int PointX, unsigned int MaxColumns);
 	int					GetRowAtPoint(unsigned int PointY);
+
+	void				ClickChannelBar(unsigned int Channel, unsigned int Column);
 
 	// General
 	void				StepDown();
@@ -181,12 +200,6 @@ protected:
 	void				SelectWholePattern(unsigned int Channel);
 
 	unsigned int		GetCurrentColumnCount() const { return COLUMNS + GetDocument()->GetEffColumns(m_iCursorChannel) * 3; };
-
-	unsigned int		GetSelectStart() const { return (m_iSelectEnd > m_iSelectStart ? m_iSelectStart : m_iSelectEnd); };
-	unsigned int		GetSelectEnd()	 const { return (m_iSelectEnd > m_iSelectStart ? m_iSelectEnd : m_iSelectStart); };
-	unsigned int		GetSelectColStart() const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColStart : m_iSelectColEnd); };
-	unsigned int		GetSelectColEnd()	const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColEnd : m_iSelectColStart); };
-
 	void				ScanActualLengths();
 	unsigned int		GetCurrentPatternLength();
 
@@ -203,6 +216,16 @@ protected:
 	// MIDI note functions
 	void				TriggerMIDINote(unsigned int Channel, unsigned int MidiNote, unsigned int Velocity, bool Insert);
 	void				ReleaseMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
+	void				CutMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
+
+	// Selection
+	unsigned int		GetSelectRowStart() const;
+	unsigned int		GetSelectRowEnd() const;
+	unsigned int		GetSelectColStart() const;
+	unsigned int		GetSelectColEnd() const;
+
+	void				CheckSelectionStart(CPoint point);
+	void				CheckSelectionChange(CPoint point);
 
 //
 // Private functions
@@ -218,7 +241,9 @@ private:
 	void				KeyDecreaseAction();
 	int					TranslateKey(unsigned char Key);
 	int					TranslateKey2(unsigned char Key);
+	int					TranslateKeyAzerty(unsigned char Key);
 	bool				CheckHaltKey(unsigned char Key);
+	bool				CheckReleaseKey(unsigned char Key);
 	bool				PreventRepeat(unsigned char Key, bool Insert);
 	void				RepeatRelease(unsigned char Key);
 	bool				EditInstrumentColumn(stChanNote &Note, int Value);
@@ -240,7 +265,7 @@ private:
 	void				UpdateArpDisplay();
 
 //
-// Important View variables
+// View variables
 //
 protected:
 	// General
@@ -253,10 +278,13 @@ protected:
 	// Cursor & editing
 	unsigned int		m_iCurrentFrame;											// Frame displayed on screen
 	unsigned int		m_iCurrentRow;												// Middle row in pattern field
-	unsigned int		m_iCursorRow, m_iCursorChannel, m_iCursorColumn;			// Selected channel-part (note, instrument or effect)
+	unsigned int		m_iPlayRow;													// Current row for playback
+	unsigned int		m_iPlayFrame;												// Current frame for playback
+	unsigned int		m_iCursorChannel, m_iCursorColumn;							// Selected channel-part (note, instrument or effect)
 	unsigned int		m_iLastRowState, m_iLastFrameState, m_iLastCursorColumn;	// tracks screen refreshing
 	unsigned int		m_iKeyStepping;												// Numbers of rows to jump when moving
 	unsigned int		m_iRealKeyStepping;
+	int					m_iCursorRow;												// Should be signed
 	bool				m_bChangeAllPattern;										// All pattern will change
 	int					m_iPasteMode;
 	bool				m_bEditEnable;												// Edit is enabled
@@ -264,20 +292,27 @@ protected:
 	unsigned int		m_iInstrument;												// Selected instrument
 	unsigned int		m_iOctave;													// Selected octave
 	bool				m_bSwitchToInstrument;
+	bool				m_bFollowMode;												// Follow mode, default true
+	
 	// Playing
 	bool				m_bMuteChannels[MAX_CHANNELS];
 	unsigned int		m_iPlayTime;
 	unsigned int		m_iTickPeriod;
 	unsigned int		m_iTempo, m_iSpeed;					// Tempo and speed
 
+	char				m_iAutoArpNotes[128];
+	int					m_iAutoArpPtr, m_iLastAutoArpPtr;
+	int					m_iAutoArpKeyCount;
+
 	// Window size
 	unsigned int		m_iWindowWidth, m_iWindowHeight;
 	unsigned int		m_iVisibleRows;
 
 	// Selection
-	unsigned int		m_iSelectStart, m_iSelectEnd;
+	unsigned int		m_iSelectChanStart, m_iSelectChanEnd;
+	unsigned int		m_iSelectRowStart, m_iSelectRowEnd;
 	unsigned int		m_iSelectColStart, m_iSelectColEnd;
-	unsigned int		m_iSelectChannel;
+	bool				m_bSelectionActive;
 
 	// Drawing
 	bool				m_bForceRedraw;						// Draw the thing
@@ -289,6 +324,12 @@ protected:
 	CDC					*m_pBackDC;
 	CBitmap				m_bmpCache, *m_pOldCacheBmp;
 	bool				m_bUpdateBackground;
+	CFont				m_PatternFont;
+	CFont				m_HeadFont;
+	int					m_iChanHeadFadeCol[13];
+	int					m_iRowHighlight;
+
+//	CFontDrawer			m_FontDrawer;
 
 	// Undo
 	unsigned int		m_iUndoLevel, m_iRedoLevel;
@@ -318,11 +359,10 @@ protected:
 public:
 	void	RegisterKeyState(int Channel, int Note);
 
-/////////7 if my teacher in programming see this then my head would roll :)
+	// change this
 	stChanNote	CurrentNotes[MAX_CHANNELS];
 	bool		NewNoteData[MAX_CHANNELS];
 	unsigned int Arpeggiate[MAX_CHANNELS];
-////////7777777
 
 
 // Overrides
@@ -398,6 +438,9 @@ public:
 	afx_msg void OnUpdateEditPasteoverwrite(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditInstrumentMask(CCmdUI *pCmdUI);
 
+	afx_msg void OnIncreaseStepSize();
+	afx_msg void OnDecreaseStepSize();
+
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnUpdateEditUndo(CCmdUI *pCmdUI);
 	afx_msg void OnEditRedo();
@@ -430,6 +473,7 @@ public:
 	afx_msg void OnEditGradient();
 	afx_msg void OnNextInstrument();
 	afx_msg void OnPrevInstrument();
+	afx_msg void OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 #ifndef _DEBUG  // debug version in FamiTrackerView.cpp

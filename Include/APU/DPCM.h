@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 ** must bear this legend.
 */
 
+
 /*
  * Delta modulation generation
  *
@@ -28,45 +29,41 @@
 
 #include "channel.h"
 
-class CDPCM : public CChannel
-{
+class CEmulator;
+
+class CDPCM : public CChannel {
 public:
-	CDPCM(CMixer *pMixer, int ID);
+	CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID);
 	~CDPCM();
 
 	void	Reset();
-	void	Init(CSampleMem *pSampleMem);
 	void	SetSpeed(int Speed);
-
 	void	Write(uint16 Address, uint8 Value);
 	void	WriteControl(uint8 Value);
 	uint8	ReadControl();
 	uint8	DidIRQ();
-	
-	void	Process(int Time);
+	void	Process(uint32 Time);
 	void	Reload();
 
-	bool	IRQ() { bool ret = (TriggeredIRQ != 0); TriggeredIRQ = 0; return ret; };
-
 private:
-	uint8	ControlReg;
+	static const uint16	DMC_FREQ_NTSC[];
+	static const uint16	DMC_FREQ_PAL[];
 
-	uint8	SampleBuf;
-	bool	SampleFilled;
-	uint8	SilenceFlag;
+	CEmulator *m_pEmulator;
 
-	uint8	Enabled, TriggeredIRQ, PlayMode, Divider;
-	int8	PCM;
-	int32	OutValue, LastOutValue, Counter;
-	uint32	Frequency;
-	uint8	ShiftReg, DeltaCounter, DAC_LSB;
-	uint16	DMA_LoadReg, DMA_LoadRegCnt;
-	uint16	DMA_Length, DMA_LengthCounter;
+	uint8	m_iBitDivider, m_iShiftReg;
+	uint8	m_iPlayMode;
+	uint8	m_iDeltaCounter;
+	uint8	m_iSampleBuffer;
 
-	uint16	DMC_Freq[16];
+	uint16	m_iDMA_LoadReg, m_iDMA_Address;
+	uint16	m_iDMA_Length, m_iDMA_LengthCounter;
 
-	CSampleMem *SampleMem;
+	bool	m_bTriggeredIRQ, m_bSampleFilled, m_bSilenceFlag;
 
+	uint16	m_iDMC_FreqTable[16];
+
+	CSampleMem	*m_pSampleMem;
 };
 
 #endif /* _DPCM_H_ */

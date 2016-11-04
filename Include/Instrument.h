@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@ private:
 class CInstrument2A03 : public CInstrument {
 public:
 	CInstrument2A03();
-	int		GetType() { return INST_2A03; };
-
+	int	GetType() { return INST_2A03; };
+public:
 	int		GetModEnable(int Index);
 	int		GetModIndex(int Index);
 	void	SetModIndex(int Index, int Value);
@@ -61,7 +61,8 @@ private:
 class CInstrumentVRC6 : public CInstrument {
 public:
 	CInstrumentVRC6();
-	int		GetType() { return INST_VRC6; };
+	int	GetType() { return INST_VRC6; };
+public:
 	int		GetModEnable(int Index);
 	int		GetModIndex(int Index);
 	void	SetModEnable(int Index, int Value);
@@ -70,4 +71,15 @@ public:
 private:
 	int		m_iModEnable[MOD_COUNT];
 	int		m_iModIndex[MOD_COUNT];
+};
+
+class CInstrumentVRC7 : public CInstrument {
+public:
+	CInstrumentVRC7();
+	int	GetType() { return INST_VRC7; };
+public:
+	void SetPatch(int Patch);
+	int GetPatch() const { return m_iPatch; };
+private:
+	int m_iPatch;
 };

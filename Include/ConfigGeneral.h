@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	bool	m_bWrapCursor;
+	bool	m_bWrapFrames;
 	bool	m_bFreeCursorEdit;
 	bool	m_bPreviewWAV;
 	bool	m_bKeyRepeat;
@@ -48,6 +49,7 @@ protected:
 	bool	m_bNoStepMove;
 	int		m_iPageStepSize;
 	bool	m_bPatternColors;
+	bool	m_bPullUpDelete;
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -56,6 +58,7 @@ public:
 	virtual BOOL OnApply();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOptWrapcursor();
+	afx_msg void OnBnClickedOptWrapFrames();
 	afx_msg void OnBnClickedOptFreecursor();
 	afx_msg void OnBnClickedOptWavepreview();
 	afx_msg void OnBnClickedOptKeyrepeat();
@@ -69,6 +72,6 @@ public:
 	afx_msg void OnCbnEditupdatePagelength();
 	afx_msg void OnCbnSelendokPagelength();
 	afx_msg void OnBnClickedOptNostepmove();
-public:
+	afx_msg void OnBnClickedOptPullupdelete();
 	afx_msg void OnBnClickedOptPattenrcolors();
 };

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -50,6 +50,10 @@ BEGIN_MESSAGE_MAP(CInstrumentSettingsVRC6, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, &CInstrumentSettingsVRC6::OnLvnItemchangedInstsettings)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_MOD_SELECT_SPIN, OnDeltaposModSelectSpin)
+	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
+	ON_BN_CLICKED(IDC_PARSE_MML, OnBnClickedParseMml)
+	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
 END_MESSAGE_MAP()
 
 
@@ -122,10 +126,15 @@ void CInstrumentSettingsVRC6::SetCurrentInstrument(int Index)
 	CInstrumentVRC6 *InstConf = (CInstrumentVRC6*)pDoc->GetInstrument(Index);
 	m_pSettingsListCtrl	= (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
 
+	m_bInitializing = true;
+
 	int SelectedEffect = m_pSettingsListCtrl->GetSelectionMark();
 
 	if (SelectedEffect == -1)
 		SelectedEffect = 0;
+
+	m_iCurrentEffect = SelectedEffect;
+	m_iInstrument = Index;
 
 	for (int i = 0; i < MOD_COUNT; i++) {
 		sprintf(Text, "%i", InstConf->GetModIndex(i));
@@ -134,10 +143,10 @@ void CInstrumentSettingsVRC6::SetCurrentInstrument(int Index)
 	} 
 
 	int Item = InstConf->GetModIndex(SelectedEffect);
-	m_iCurrentEffect = SelectedEffect;
-	m_iInstrument = Index;
 
 	SelectSequence(Item);
+
+	m_bInitializing = false;
 }
 
 void CInstrumentSettingsVRC6::SelectSequence(int Sequence)
@@ -201,6 +210,7 @@ void CInstrumentSettingsVRC6::CompileSequence()
 	CString Text;
 	GetDlgItemText(IDC_MML, Text);
 
+	/*
 	switch (m_iCurrentEffect) {
 		case 0:
 			TranslateMML(Text, m_SelectedSeq, 0, 15); break;
@@ -211,6 +221,9 @@ void CInstrumentSettingsVRC6::CompileSequence()
 		case 4:
 			TranslateMML(Text, m_SelectedSeq, 0, 7); break;
 	}
+	*/
+
+	TranslateMML();
 
 	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
 	m_pSettingsListCtrl->SetCheck(m_iCurrentEffect);
@@ -222,4 +235,147 @@ BOOL CInstrumentSettingsVRC6::DestroyWindow()
 {
 	SequenceEditor.DestroyWindow();
 	return __super::DestroyWindow();
+}
+
+void CInstrumentSettingsVRC6::OnDeltaposModSelectSpin(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);	
+	CString Text;
+	int Pos;
+
+	Pos = GetDlgItemInt(IDC_SEQ_INDEX) - ((NMUPDOWN*)pNMHDR)->iDelta;
+
+	LIMIT(Pos, MAX_SEQUENCES, 0);
+
+	Text.Format("%i", Pos);
+	SetDlgItemText(IDC_SEQ_INDEX, Text);
+
+	*pResult = 0;
+}
+
+void CInstrumentSettingsVRC6::OnEnChangeSeqIndex()
+{
+	CString Text;
+	int Index;
+	int Setting;
+
+	if (m_bInitializing)
+		return;
+
+	CInstrument2A03 *InstConf = (CInstrument2A03*)pDoc->GetInstrument(m_iInstrument);
+
+	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
+	Index				= GetDlgItemInt(IDC_SEQ_INDEX);
+	Setting				= m_iCurrentEffect;
+
+	if (Index < 0)
+		Index = 0;
+
+	if (Index >= MAX_SEQUENCES)
+		Index = MAX_SEQUENCES - 1;
+
+	Text.Format("%i", Index);
+	m_pSettingsListCtrl->SetItemText(Setting, 1, Text);
+
+	InstConf->SetModIndex(Setting, Index);
+
+	SelectSequence(Index);
+}
+
+void CInstrumentSettingsVRC6::OnBnClickedFreeSeq()
+{
+	CString Text;
+	int i;
+
+	for (i = 0; i < MAX_SEQUENCES; i++) {
+		if (pDoc->GetSequenceCountVRC6(i, m_iCurrentEffect) == 0) {
+			Text.Format("%i", i);
+			// Things will update automatically by changing this
+			SetDlgItemText(IDC_SEQ_INDEX, Text);
+			return;
+		}
+	}
+}
+
+void CInstrumentSettingsVRC6::OnBnClickedParseMml()
+{
+	TranslateMML();
+	SelectSequence(m_iSelectedSequence);
+}
+
+void CInstrumentSettingsVRC6::TranslateMML()
+{
+	CString MML, Accum;
+	int Len, i, c, Value, AddedItems;
+
+	GetDlgItemText(IDC_MML, MML);
+
+	Len = MML.GetLength();
+
+	AddedItems = 0;
+
+	m_SelectedSeq->SetLoopPoint(-1);
+
+	for (i = 0; i < (Len + 1); i++) {
+		c = MML.GetAt(i);
+
+		if (c >= '0' && c <= '9' || c == '-' && i != Len) {
+			Accum.AppendChar(c);
+		}
+		else if (c == '|') {
+			m_SelectedSeq->SetLoopPoint(AddedItems);
+		}
+		else {
+			if (Accum.GetLength() > 0) {
+				sscanf(Accum, "%i", &Value);
+
+				switch (m_iCurrentEffect) {
+					case MOD_VOLUME:
+						LIMIT(Value, 15, 0);
+						break;
+					case MOD_ARPEGGIO:
+					case MOD_PITCH:
+					case MOD_HIPITCH:
+						LIMIT(Value, 126, -127);
+						break;
+					case MOD_DUTYCYCLE:
+						LIMIT(Value, 7, 0);
+						break;
+				}
+
+				m_SelectedSeq->SetItem(AddedItems++, Value);
+			}
+			Accum = "";
+		}
+	}
+
+	m_SelectedSeq->SetItemCount(AddedItems);
+	
+	pDoc->SetModifiedFlag();
+}
+
+BOOL CInstrumentSettingsVRC6::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: Add your specialized code here and/or call the base class
+	switch (pMsg->message) {
+		case WM_KEYDOWN:
+			switch (pMsg->wParam) {
+				case 13:	// Return
+					pMsg->wParam = 0;
+					OnBnClickedParseMml();
+					return TRUE;
+				case 27:	// Esc
+					pMsg->wParam = 0;
+					return TRUE;
+				default:
+					if (GetDlgItem(IDC_MML) != GetFocus())
+						static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewNote((unsigned char)pMsg->wParam);
+			}
+			break;
+		case WM_KEYUP:
+			static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewRelease((unsigned char)pMsg->wParam);
+			return TRUE;
+	}
+
+	return __super::PreTranslateMessage(pMsg);
 }

@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "DialogReBar.h"
-#include "..\include\dialogrebar.h"
+#include "MainFrm.h"
 
 // COctaveDlgBar dialog
 
@@ -22,6 +22,7 @@ BEGIN_MESSAGE_MAP(CDialogReBar, CDialogBar)
 	ON_WM_ERASEBKGND()
 	ON_WM_MOVE()
 	ON_WM_CTLCOLOR()
+	ON_NOTIFY(UDN_DELTAPOS, IDC_HIGHLIGHTSPIN, OnDeltaposHighlight)
 END_MESSAGE_MAP()
 
 
@@ -59,4 +60,20 @@ HBRUSH CDialogReBar::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	}
 
 	return hbr;
+}
+
+void CDialogReBar::OnDeltaposHighlight(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int Value = GetDlgItemInt(IDC_HIGHLIGHT, 0, 0) - ((NMUPDOWN*)pNMHDR)->iDelta;
+	
+	if (Value < 1)
+		Value = 1;
+	if (Value > 32)	// hard coded
+		Value = 32;
+
+	SetDlgItemInt(IDC_HIGHLIGHT, Value, 0);
+	
+	CDocument *pDoc = theApp.GetFirstDocument();
+	POSITION Pos = pDoc->GetFirstViewPosition();
+	pDoc->GetNextView(Pos)->RedrawWindow();
 }

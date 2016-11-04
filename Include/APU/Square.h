@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 */
 
 /*
- * Square wave generation
+ * Square wave
  *
  */
 
@@ -27,48 +27,36 @@
 #define _SQUARE_H_
 
 #include "channel.h"
-#include "envelope.h"
 
-class CSquare : public CChannel, CEnvelope
-{
+class CSquare : public CChannel {
 public:
 	CSquare(CMixer *pMixer, int ID);
 	~CSquare();
 
 	void	Reset();
-
 	void	Write(uint16 Address, uint8 Value);
 	void	WriteControl(uint8 Value);
 	uint8	ReadControl();
-
 	void	Process(uint32 Time);
 
 	void	LengthCounterUpdate();
-	void	SweepUpdate1();
-	void	SweepUpdate2();
+	void	SweepUpdate(bool First);
 	void	EnvelopeUpdate();
-	
+
 private:
-	uint8	Enabled;
-	uint8	Volume;
+	static const uint8 DUTY_PULSE[];
 
-	bool bInverted;
+	uint8	m_iDutyLength, m_iDutyCycle;
 
-	uint8	DutyLength, DutyCycle;
-	uint16	Wavelength;
-	uint16	LengthCounter;
-	uint8	ControlReg;
+	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;
+	uint8	m_iEnvelopeVolume, m_iFixedVolume;
+	int8	m_iEnvelopeCounter;
+	bool	m_bInvert;
 
-	uint8	WaveLow, WaveHigh;
-
-	uint8	SweepEnabled, SweepRefresh, SweepMode, SweepShift;
+	uint8	SweepEnabled, SweepPeriod, SweepMode, SweepShift;
 	int16	SweepCounter, SweepResult;
 	bool	SweepWritten;
-	uint8	SweepRegister;
-
-	uint16	Counter;
-
-	int32	Value, LastValue;
+//	uint8	SweepRegister;
 };
 
 #endif /* _SQUARE_H_ */

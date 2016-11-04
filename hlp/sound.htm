@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
+<TITLE></TITLE>
+    <style type="text/css">
+        .style1
+        {
+            font-size: small;
+        }
+        .style2
+        {
+            font-size: 11pt;
+        }
+        .style3
+        {
+            font-size: 11pt;
+            font-weight: bold;
+        }
+    </style>
+</HEAD>
+<BODY style="font-size: 9pt; font-family: Arial">
+    <span style="font-size: 16pt; color: gray; font-family: Verdana"><strong>Sound hardware</strong></span><hr />
+    <strong style="font-size: x-small">
+        <br />
+    </strong><span style="font-size: x-small">
+    This section explains the sound hardware in NES/Famicom.<br />
+    </span>
+    <strong>
+        <span class="style2">
+    <br />
+        Internal 2A03/2A07 channels</span><span class="style1"><br />
+        </span>
+    </strong>
+    <strong style="font-size: x-small">
+        <br />
+    </strong>
+    <span style="font-size: x-small">
+        The sound processor has five channels,</span> two square waves,
+    one triangle wave, one noise generator and one digital sample (DPCM) channel.<br />
+    <br />
+    <strong>Square 1 &amp; 2<br />
+    <br />
+    </strong>Produces pulse waves with four duty settings (12.5%, 25%,
+    50% and 25% inverted).
+    Have hardware sweep control that can be accessed by the H and I effects.<br />
+    Note: There is a bug that resets the duty phase when switching between 
+    certain frequencies, this can be heard as a pop and might be noticable when 
+    using vibrato or pitch slides across those frequencies.<br />
+    <br />
+    <strong>Triangle<br />
+    <br />
+    </strong>Triangle shaped waveform. There is no volume control for this channel, 
+    however, due to how the hardware is implemented, the output level of the DPCM 
+    channel will affect the volume output of the triangle wave.<br />
+    <br />
+    <strong>Noise<br />
+    <br />
+    </strong>Noise generator. Can produce 32767-bits and 93-bits sequences, selectable
+    from the instruments duty setting.<br />
+    <br />
+    <strong>DPCM (Delta PCM)<br />
+    <br />
+    </strong>Plays samples. Most of the effects (like arpeggio &amp; pitch slides) does 
+    not operate on this channel.<br />
+    <br />
+    <br />
+    <span class="style3">Expansion sound</span><br />
+    <br />
+    The Famicom has the ability to mix sound from expansion chips found in some carts. Currently, Famitracker supports 
+    only one chip. Expansion sound is enabled from the module properties window.<br />
+    <br />
+    <strong style="font-size: 9pt">Konami VRC6<br />
+        <br />
+    </strong>The VRC6 chip has two square waves and a sawtooth wave.
+    <br />
+    <br />
+    <strong>Square 1 &amp; 2<br />
+    </strong>
+    <br />
+    Produces pulse waves like the internal channels, but have eight different duty 
+    settings and lacks hardware sweep. <br />
+    <br />
+    <strong>Sawtooth<br />
+        <br />
+    </strong>Sawtooth wave generator. This channel has no real duty function, but 
+    still takes advantage of that instrument setting and adds it to the volume 
+    register ().
+    This results in a distorted saw wave.
+
+
+</BODY>
+</HTML>

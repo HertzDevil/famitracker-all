@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 /*
 
-	If a new setting is added, do not forget to update load, store and default settings routines!
+	When new settings are added, don't forget to update load, store and default setting routines
 
 */
 
@@ -65,6 +65,7 @@ void CSettings::LoadSettings()
 {
 	// General 
 	General.bWrapCursor					= GetAppProfileInt("General", "Wrap cursor", 1) == 1;
+	General.bWrapFrames					= GetAppProfileInt("General", "Wrap across frames", 1) == 1;
 	General.bFreeCursorEdit				= GetAppProfileInt("General", "Free cursor edit", 0) == 1;
 	General.bWavePreview				= GetAppProfileInt("General", "Wave preview", 1) == 1;
 	General.bKeyRepeat					= GetAppProfileInt("General", "Key repeat", 1) == 1;
@@ -76,6 +77,7 @@ void CSettings::LoadSettings()
 	General.bNoStepMove					= GetAppProfileInt("General", "No Step moving", 0) == 1;
 	General.iPageStepSize				= GetAppProfileInt("General", "Page step size", 4);
 	General.bPatternColor				= GetAppProfileInt("General", "Pattern colors", 1) == 1;
+	General.bPullUpDelete				= GetAppProfileInt("General", "Delete pull up", 0) == 1;
 
 	// Sound
 	strDevice							= GetAppProfileString("Sound", "Device", "");
@@ -119,12 +121,14 @@ void CSettings::LoadSettings()
 	Paths[PATH_FTI]						= GetAppProfileString("Paths", "FTI path", "");
 	Paths[PATH_NSF]						= GetAppProfileString("Paths", "NSF path", "");
 	Paths[PATH_DMC]						= GetAppProfileString("Paths", "DMC path", "");
-	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");}
+	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");
+}
 
 void CSettings::SaveSettings()
 {
 	// General
 	WriteAppProfileInt("General", "Wrap cursor",	  General.bWrapCursor);
+	WriteAppProfileInt("General", "Wrap across frames",	  General.bWrapFrames);
 	WriteAppProfileInt("General", "Free cursor edit", General.bFreeCursorEdit);
 	WriteAppProfileInt("General", "Wave preview",	  General.bWavePreview);
 	WriteAppProfileInt("General", "Key repeat",		  General.bKeyRepeat);
@@ -136,6 +140,7 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("General", "No Step moving",	  General.bNoStepMove);
 	WriteAppProfileInt("General", "Page step size",	  General.iPageStepSize);
 	WriteAppProfileInt("General", "Pattern colors",	  General.bPatternColor);
+	WriteAppProfileInt("General", "Delete pull up",	  General.bPullUpDelete);
 
 	// Sound
 	WriteAppProfileInt("Sound", "Sample rate",			 Sound.iSampleRate);
@@ -186,6 +191,7 @@ void CSettings::DefaultSettings()
 {
 	// General
 	General.bWrapCursor			= 1;
+	General.bWrapFrames			= 0;
 	General.bFreeCursorEdit		= 0;
 	General.bWavePreview		= 1;
 	General.bKeyRepeat			= 0;
@@ -197,6 +203,7 @@ void CSettings::DefaultSettings()
 	General.bNoStepMove			= false;
 	General.iPageStepSize		= 4;
 	General.bPatternColor		= true;
+	General.bPullUpDelete		= false;
 
 	// Sound
 	strDevice				= "";

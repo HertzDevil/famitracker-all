@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include "FamiTrackerView.h"
 #include "InstrumentDPCM.h"
 #include "PCMImport.h"
-#include "..\include\instrumentdpcm.h"
 
 const char *KEY_NAMES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
@@ -108,19 +107,14 @@ BOOL CInstrumentDPCM::OnInitDialog()
 	}
 
 	pOctave->SetCurSel(3);
-
 	CheckDlgButton(IDC_LOOP, 0);
-
 	m_pTableListCtrl->DeleteAllItems();
 
-	for (i = 0; i < 12; i++) {
+	for (i = 0; i < 12; i++)
 		m_pTableListCtrl->InsertItem(i, KEY_NAMES[i], 0);
-	}
 
 	BuildSampleList();
-
 	SetCurrentInstrument(pView->GetInstrument());
-
 	m_iSelectedSample = 0;
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -200,6 +194,7 @@ void CInstrumentDPCM::BuildSampleList()
 
 // When saved in NSF, the samples has to be aligned at even 6-bits addresses
 //#define ADJUST_FOR_STORAGE(x) (((x >> 6) + (x & 0x3F ? 1 : 0)) << 6)
+// crap.........
 #define ADJUST_FOR_STORAGE(x) (x)
 
 void CInstrumentDPCM::LoadSample(char *FilePath, char *FileName)
@@ -211,29 +206,42 @@ void CInstrumentDPCM::LoadSample(char *FilePath, char *FileName)
 		return;
 	}
 
-	CDSample *NewSample = pDoc->GetFreeDSample();
-	
-	int Size = 0;
+	CDSample *NewSample = new CDSample;
 
-	for (int i = 0; i < MAX_DSAMPLES; i++) {
-		Size += ADJUST_FOR_STORAGE(pDoc->GetDSample(i)->SampleSize);
-	}
-	
 	if (NewSample != NULL) {
-		if ((Size + (int)SampleFile.GetLength()) > 0x4000) {
-			MessageBox("Couldn't load sample, out of sample memory (max 16 kB is avaliable)\n");
-			NewSample = NULL;
-		}
-		else {
-			sprintf(NewSample->Name, "%s", FileName);
-			NewSample->SampleSize = (int)SampleFile.GetLength();
-			NewSample->SampleData = new char[NewSample->SampleSize];
-			SampleFile.Read(NewSample->SampleData, NewSample->SampleSize);
-		}
+		sprintf(NewSample->Name, "%s", FileName);
+		NewSample->SampleSize = (int)SampleFile.GetLength();
+		NewSample->SampleData = new char[NewSample->SampleSize];
+		SampleFile.Read(NewSample->SampleData, NewSample->SampleSize);
+		InsertSample(NewSample);
 	}
 	
 	SampleFile.Close();
 	BuildSampleList();
+}
+
+void CInstrumentDPCM::InsertSample(CDSample *pNewSample)
+{	
+	int Size = 0;
+
+	CDSample *pFreeSample = pDoc->GetFreeDSample();
+
+	for (int i = 0; i < MAX_DSAMPLES; i++)
+		Size += ADJUST_FOR_STORAGE(pDoc->GetDSample(i)->SampleSize);
+	
+	if ((Size + pNewSample->SampleSize) > 0x4000) {
+		theApp.DisplayError(IDS_OUT_OF_SAMPLEMEM);
+	}
+	else {
+		strcpy(pFreeSample->Name, pNewSample->Name);
+		pFreeSample->SampleSize = pNewSample->SampleSize;
+		pFreeSample->SampleData = new char[pNewSample->SampleSize];
+		memcpy(pFreeSample->SampleData, pNewSample->SampleData, pNewSample->SampleSize);
+	}
+
+	delete [] pNewSample->SampleData;
+	// pNewSample must be allocated dynamically
+	delete pNewSample;
 }
 
 void CInstrumentDPCM::OnBnClickedLoad()
@@ -270,10 +278,26 @@ void CInstrumentDPCM::OnBnClickedLoad()
 
 void CInstrumentDPCM::OnBnClickedUnload()
 {
+	CListCtrl *pListBox = (CListCtrl*)GetDlgItem(IDC_SAMPLE_LIST);
+	int nItem = -1, SelCount, Index;
+	char ItemName[256];
+
 	if (m_iSelectedSample == MAX_DSAMPLES)
 		return;
+	
+	if (!(SelCount = pListBox->GetSelectedCount()))
+		return;
 
-	pDoc->RemoveDSample(m_iSelectedSample);
+	for (int i = 0; i < SelCount; i++) {
+		nItem = pListBox->GetNextItem(nItem, LVNI_SELECTED);
+		ASSERT(nItem != -1);
+		pListBox->GetItemText(nItem, 0, ItemName, 256);
+		//sscanf(ItemName, "%i", &Index);
+		Index = atoi(ItemName);
+		pDoc->RemoveDSample(Index);
+	}
+
+//	pDoc->RemoveDSample(m_iSelectedSample);
 
 	BuildSampleList();
 }
@@ -298,37 +322,12 @@ void CInstrumentDPCM::OnNMClickSampleList(NMHDR *pNMHDR, LRESULT *pResult)
 void CInstrumentDPCM::OnBnClickedImport()
 {
 	CPCMImport		ImportDialog;
-	stImportedPCM	*Imported;
-	CString			Name;
+	CDSample		*pImported;
 
-	Imported = ImportDialog.ShowDialog();
-
-	if (Imported->Size == 0)
+	if (!(pImported = ImportDialog.ShowDialog()))
 		return;
 
-	CDSample *NewSample = pDoc->GetFreeDSample();
-	
-	int Size = 0;
-
-	for (int i = 0; i < MAX_DSAMPLES; i++) {
-		Size += ADJUST_FOR_STORAGE(pDoc->GetDSample(i)->SampleSize);
-	}
-	
-	if (NewSample != NULL) {
-		if ((Size + Imported->Size) > 0x4000) {
-			MessageBox("Couldn't load sample, out of sample memory (max 16 kB is avaliable)\n");
-			NewSample = NULL;
-		}
-		else {
-			strcpy(NewSample->Name, Imported->Name);
-			NewSample->SampleSize = Imported->Size;
-			NewSample->SampleData = new char[NewSample->SampleSize];
-			memcpy(NewSample->SampleData, Imported->Data, NewSample->SampleSize);
-		}
-	}
-
-	delete [] Imported->Data;
-
+	InsertSample(pImported);
 	BuildSampleList();
 }
 
@@ -433,7 +432,6 @@ void CInstrumentDPCM::OnCbnSelchangeSamples()
 
 void CInstrumentDPCM::OnBnClickedSave()
 {
-	//CListCtrl	*List = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 	CString		Path;
 	CFile		SampleFile;
 

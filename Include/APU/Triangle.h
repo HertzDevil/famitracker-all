@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,34 +28,25 @@
 
 #include "channel.h"
 
-class CTriangle : public CChannel
-{
+class CTriangle : public CChannel {
 public:
 	CTriangle(CMixer *pMixer, int ID);
 	~CTriangle();
 
 	void	Reset();
-
 	void	Write(uint16 Address, uint8 Value);
 	void	WriteControl(uint8 Value);
 	uint8	ReadControl();
-
-	void	Process(int Time);
+	void	Process(uint32 Time);
 
 	void	LengthCounterUpdate();
 	void	LinearCounterUpdate();
-
 private:
-	uint8	Enabled, Loop, Halt;
-	int32	Value, LastValue, Counter;
-	uint16	Samples, Wavelength, LengthCounter;
-	uint16	LinearCounter, LinearLoad, LinearMode;
-	uint8	LinearHalt;
-	uint8	LinearChange;
-	int8	StepGen, StepGenStep;
+	static const uint8 TRIANGLE_WAVE[];
 
-	uint8	ControlReg;
-
+	uint8	m_iLoop, m_iLinearLoad, m_iHalt;
+	uint16	m_iLinearCounter;
+	int8	m_iStepGen, m_iStepGenStep;
 };
 
 #endif /* _TRIANGLE_H_ */

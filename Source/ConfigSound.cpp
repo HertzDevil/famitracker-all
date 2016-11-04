@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ BOOL CConfigSound::OnInitDialog()
 	SampleSize->AddString("16 bit");
 	SampleSize->AddString("8 bit");
 
-	Slider->SetRange(10, 200);
+	Slider->SetRange(1, 500);
 
 	switch (theApp.m_pSettings->Sound.iSampleRate) {
 		case 11025: SampleRate->SelectString(0, "11 025 Hz"); break;

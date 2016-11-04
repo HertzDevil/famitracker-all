@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ public:
 
 	struct {
 		bool	bWrapCursor;
+		bool	bWrapFrames;
 		bool	bFreeCursorEdit;
 		bool	bWavePreview;
 		bool	bKeyRepeat;
@@ -71,6 +72,7 @@ public:
 		int		iPageStepSize;
 		CString	strFont;
 		bool	bPatternColor;
+		bool	bPullUpDelete;
 	} General;
 
 	CString	strDevice;

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@
 #pragma once
 
 struct stChanNote {
-	int		Note;
-	int		Octave;
-	int		Vol;
-	int		Instrument;
-	int		EffNumber[MAX_EFFECT_COLUMNS];
-	int		EffParam[MAX_EFFECT_COLUMNS];
+	unsigned char Note;
+	unsigned char Octave;
+	unsigned char Vol;
+	unsigned char Instrument;
+	unsigned char EffNumber[MAX_EFFECT_COLUMNS];
+	unsigned char EffParam[MAX_EFFECT_COLUMNS];
 };
 
 class CPatternData {
@@ -37,9 +37,6 @@ public:
 
 	void	Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed, unsigned int Tempo);
 
-	void	ClearNote(unsigned int Channel, unsigned int Pattern, unsigned int Row);
-	void	ClearPattern(unsigned int Channels);
-
 	void	SetEffect(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column, char EffNumber, char EffParam);
 	void	SetInstrument(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Instrument);
 	void	SetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Note);
@@ -47,28 +44,32 @@ public:
 	void	SetVolume(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Volume);
 
 	char GetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
-		{ return m_stPatternData[Channel][Pattern][Row].Note; };
+		{ return GetPatternData(Channel, Pattern, Row)->Note; };
 
 	char GetOctave(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
-		{ return m_stPatternData[Channel][Pattern][Row].Octave; };
+		{ return GetPatternData(Channel, Pattern, Row)->Octave; };
 
 	char GetInstrument(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
-		{ return m_stPatternData[Channel][Pattern][Row].Instrument; };
+		{ return GetPatternData(Channel, Pattern, Row)->Instrument; };
 
 	char GetVolume(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
-		{ return m_stPatternData[Channel][Pattern][Row].Vol; };
+		{ return GetPatternData(Channel, Pattern, Row)->Vol; };
 
 	char GetEffect(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column) 
-		{ return m_stPatternData[Channel][Pattern][Row].EffNumber[Column]; };
+		{ return GetPatternData(Channel, Pattern, Row)->EffNumber[Column]; };
 
 	char GetEffectParam(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column) 
-		{ return m_stPatternData[Channel][Pattern][Row].EffParam[Column]; };
+		{ return GetPatternData(Channel, Pattern, Row)->EffParam[Column]; };
 
 	bool IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row);
+	bool IsPatternFree(unsigned int Channel, unsigned int Pattern);
 
-	stChanNote m_stPatternData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];	// The patterns
+	void ClearEverything();
 
-	unsigned int	m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		// List of the patterns assigned to frames
+	stChanNote *GetPatternData(int Channel, int Pattern, int Row);
+
+	// Move these to the private area
+	unsigned short	m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		// List of the patterns assigned to frames
 
 	unsigned int	m_iPatternLength;							// Amount of rows in one pattern
 	unsigned int	m_iFrameCount;								// Number of frames
@@ -78,5 +79,8 @@ public:
 	unsigned int	m_iEffectColumns[MAX_CHANNELS];				// Effect columns enabled
 
 private:
+	void			AllocatePattern(int Channel, int Patterns);
 
+	// All accesses to m_pPatternData must go through GetPatternData()
+	stChanNote		*m_pPatternData[MAX_CHANNELS][MAX_PATTERN];
 };

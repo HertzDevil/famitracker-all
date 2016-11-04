@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,14 +18,17 @@
 ** must bear this legend.
 */
 
-#include "stdafx.h"
-#include "apu/apu.h"
-#include "apu/noise.h"
+#include "APU/apu.h"
+#include "APU/noise.h"
+
+const uint16 CNoise::NOISE_FREQ[] = {0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 
+								     0xCA, 0xFE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4};
 
 CNoise::CNoise(CMixer *pMixer, int ID)
 {
-	Mixer = pMixer;
-	ChanId = ID;
+	m_pMixer = pMixer;
+	m_iChanId = ID;
+	m_iChip = SNDCHIP_NONE;
 }
 
 CNoise::~CNoise()
@@ -34,15 +37,15 @@ CNoise::~CNoise()
 
 void CNoise::Reset()
 {
-	EnvelopeCounter = 0;
-	LengthCounter = 0;
-	ControlReg = 0;
-	ShiftReg = 1;
-	Enabled = 0;
-	Counter = 0;
-	Wavelength = 4;
+	m_iEnabled = m_iControlReg = 0;
+	m_iCounter = m_iLengthCounter = 0;
+	
+	m_iShiftReg = 1;
 
-	Value = 0;
+	Write(0, 0);
+	Write(1, 0);
+	Write(2, 0);
+	Write(3, 0);
 
 	EndFrame();
 }
@@ -51,81 +54,76 @@ void CNoise::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 	case 0x00:
-		Looping				= (Value & 0x20);
-		EnvelopeFix			= (Value & 0x10);
-		if (!EnvelopeFix)
-			EnvelopeSpeed	= (Value & 0x0F) + 1;
-		else
-			Volume			= (Value & 0x0F);
+		m_iLooping = (Value & 0x20);
+		m_iEnvelopeFix = (Value & 0x10);
+		m_iFixedVolume = (Value & 0x0F);
+		m_iEnvelopeSpeed = (Value & 0x0F) + 1;
 		break;
-
 	case 0x01:
 		break;
-
 	case 0x02:
-		Wavelength = CAPU::NOISE_FREQ[Value & 0x0F];
-		SampleRate = (Value & 0x80) ? 8 : 13;
+		m_iFrequency = NOISE_FREQ[Value & 0x0F];
+		m_iSampleRate = (Value & 0x80) ? 8 : 13;
 		break;
-
 	case 0x03:
-		LengthCounter = CAPU::LENGTH_TABLE[((Value & 0xF8) >> 3)] + 1;
-		if (!EnvelopeFix)
-			Volume = 0x0F;
-		if (ControlReg)
-			Enabled = 1;
+		m_iLengthCounter = CAPU::LENGTH_TABLE[((Value & 0xF8) >> 3)] + 1;
+		m_iEnvelopeVolume = 0x0F;
+		if (m_iControlReg)
+			m_iEnabled = 1;
 		break;
 	}
 }
 
 void CNoise::WriteControl(uint8 Value)
 {
-	ControlReg = Value;
+	m_iControlReg = Value & 1;
 
-	if (Value == 0) 
-		Enabled = 0;
+	if (m_iControlReg == 0) 
+		m_iEnabled = 0;
 }
 
 uint8 CNoise::ReadControl()
 {
-	return ((LengthCounter > 0) && (Enabled == 1));
+	return ((m_iLengthCounter > 0) && (m_iEnabled == 1));
 }
 
-void CNoise::Process(int Time)
+void CNoise::Process(uint32 Time)
 {
-	bool Output = Enabled && (LengthCounter > 0);
-	static uint8 LastSample;	// I guess this wouldn't be allowed if there was more than one instance of CNoise
+	bool Output = m_iEnabled && (m_iLengthCounter > 0);
+	static uint8 LastSample;	// I think this wouldn't be allowed if there was more than one instance of CNoise
 
-	while (Time >= Counter) {
-		Time		-= Counter;
-		FrameCycles += Counter;
-		Counter		= Wavelength;
+	while (Time >= m_iCounter) {
+		Time			-= m_iCounter;
+		m_iFrameCycles	+= m_iCounter;
+		m_iCounter		= m_iFrequency;
 		
-		ShiftReg = (((ShiftReg << 14) ^ (ShiftReg << SampleRate)) & 0x4000) | (ShiftReg >> 1);
-
-		if (Output && LastSample != (ShiftReg & 0x01)) {
-			LastSample = (ShiftReg & 0x01);
-			AddMixer((LastSample && Output) ? Volume : 0);
+		m_iShiftReg = (((m_iShiftReg << 14) ^ (m_iShiftReg << m_iSampleRate)) & 0x4000) | (m_iShiftReg >> 1);
+		
+		if (Output && LastSample != (m_iShiftReg & 0x01)) {
+			LastSample = (m_iShiftReg & 0x01);
+			Mix((LastSample && Output) ? (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume) : 0);
 		}
 	}
 
-	Counter -= Time;
-	FrameCycles += Time;
+	m_iCounter -= Time;
+	m_iFrameCycles += Time;
 }
 
 void CNoise::LengthCounterUpdate()
 {
-	if ((Looping == 0) && (LengthCounter > 0)) LengthCounter--;
+	if ((m_iLooping == 0) && (m_iLengthCounter > 0)) 
+		m_iLengthCounter--;
 }
 
 void CNoise::EnvelopeUpdate()
 {
-	if (--EnvelopeCounter < 1) {
-		EnvelopeCounter += EnvelopeSpeed;
-		if (!EnvelopeFix) {
-			if (Looping)
-				Volume = (Volume - 1) & 0x0F;
-			else if (Volume > 0)
-				Volume--;
+	if (--m_iEnvelopeCounter < 1) {
+		m_iEnvelopeCounter += m_iEnvelopeSpeed;
+		if (!m_iEnvelopeFix) {
+			if (m_iLooping)
+				m_iEnvelopeVolume = (m_iEnvelopeVolume - 1) & 0x0F;
+			else if (m_iEnvelopeVolume > 0)
+				m_iEnvelopeVolume--;
 		}
 	}
 }

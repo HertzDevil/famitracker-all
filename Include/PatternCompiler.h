@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ public:
 	~CPattCompiler();
 
 	void CleanUp();
-	void CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel, unsigned char (*DPCM_LookUp)[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE]);
+	void CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel, unsigned char (*DPCM_LookUp)[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE], unsigned int *iAssignedInstruments);
 	bool IsSampleAccessed(unsigned int Index) { return m_bDSamplesAccessed[Index]; };
 
 public:
@@ -42,6 +42,7 @@ public:
 	unsigned char	GetCompressedData(unsigned int i) { ASSERT(i < m_iCompressedDataPointer); return m_pCompressedData[i]; };
 
 private:
+	unsigned int FindInstrument(int Instrument, unsigned int *pInstList);
 	void WriteData(unsigned char Value);
 	void DispatchZeroes();
 	void AccumulateZero();

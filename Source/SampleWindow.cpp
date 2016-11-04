@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@
 // CSampleWindow
 
 IMPLEMENT_DYNAMIC(CSampleWindow, CWnd)
+
 
 CSampleWindow::CSampleWindow()
 {
@@ -91,12 +92,9 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 {
 	if (m_hWnd) {
 		CDC *pDC = GetDC();
-
 		m_pStates[m_iCurrentState]->SetSampleData(Samples, Count);
 		m_pStates[m_iCurrentState]->Draw(pDC, false);
-
 		ReleaseDC(pDC);
-
 		delete [] Samples;
 	}
 }

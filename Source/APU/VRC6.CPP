@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 */
 
 #include <memory>
-#include "apu/apu.h"
+#include "APU/apu.h"
 
-// VRC6 external sound chip emulation
+// Konami VRC6 external sound chip emulation
 
 void CVRC6_Pulse::Reset()
 {
@@ -39,7 +39,7 @@ void CVRC6_Pulse::Write(uint16 Address, uint8 Value)
             DutyCycle = ((Value & 0x70) >> 4) + 1;
             Volume = Value & 0x0F;
 			if (Gate)
-				AddMixer(Volume);
+				Mix(Volume);
   			break;
 		case 0x01:
             FreqLow = Value;
@@ -56,21 +56,21 @@ void CVRC6_Pulse::Write(uint16 Address, uint8 Value)
 void CVRC6_Pulse::Process(int Time)
 {
 	if (!Enabled || Frequency == 0) {
-		FrameCycles += Time;
+		m_iFrameCycles += Time;
 		return;
 	}
 
 	while (Time >= Counter) {
-		Time		-= Counter;
-		FrameCycles += Counter;
-		Counter		= Frequency;
+		Time			-= Counter;
+		m_iFrameCycles	+= Counter;
+		Counter			= Frequency+1;
 	
 		DutyCycleCounter = (DutyCycleCounter + 1) & 0x0F;
-		AddMixer((DutyCycleCounter >= DutyCycle || Gate) ? Volume : 0);
+		Mix((DutyCycleCounter >= DutyCycle || Gate) ? Volume : 0);
 	}
 
-	Counter -= (uint16)Time;
-	FrameCycles += Time;
+	Counter -= Time;
+	m_iFrameCycles += Time;
 }
 
 void CVRC6_Sawtooth::Reset()
@@ -102,16 +102,18 @@ void CVRC6_Sawtooth::Write(uint16 Address, uint8 Value)
 void CVRC6_Sawtooth::Process(int Time)
 {
 	if (!Enabled || !Frequency) {
-		FrameCycles += Time;
+		m_iFrameCycles += Time;
 		return;
 	}
 
 	while (Time >= Counter) {
 		Time		-= Counter;
-		FrameCycles	+= Counter;
+		m_iFrameCycles	+= Counter;
 		Counter		= Frequency;
 
-		PhaseAccumulator = (PhaseAccumulator + PhaseInput) & 0xFF;
+		if (ResetReg & 1)
+			PhaseAccumulator = (PhaseAccumulator + PhaseInput) & 0xFF;
+
 		ResetReg++;
 
 		if (ResetReg == 14) {
@@ -119,19 +121,18 @@ void CVRC6_Sawtooth::Process(int Time)
 			ResetReg = 0;
 		}
 
-		AddMixer(PhaseAccumulator >> 3);
+		Mix(PhaseAccumulator >> 3);
 	}
 
 	Counter -= Time;
-	FrameCycles += Time;
+	m_iFrameCycles += Time;
 }
 
 void CVRC6::Init(CMixer *pMixer)
 {
-	Mixer		= pMixer;
-	Pulse1		= new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE1);
-	Pulse2		= new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE2);
-	Sawtooth	= new CVRC6_Sawtooth(pMixer, CHANID_VRC6_SAWTOOTH);
+	Pulse1	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE1);
+	Pulse2	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE2);
+	Sawtooth = new CVRC6_Sawtooth(pMixer, CHANID_VRC6_SAWTOOTH);
 }
 
 void CVRC6::Reset()

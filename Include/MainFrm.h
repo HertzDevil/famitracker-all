@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,11 +22,12 @@
 #pragma once
 
 #include "Famitrackerdoc.h"
-#include "PatternWnd.h"
+#include "FrameBoxWnd.h"
 #include "InstrumentEditDlg.h"
 #include "PerformanceDlg.h"
 #include "SampleWindow.h"
 #include "DialogReBar.h"
+#include "ControlPanelDlg.h"
 
 class CCustomEdit : public CEdit {
 	DECLARE_DYNAMIC(CCustomEdit)
@@ -86,8 +87,11 @@ public:
 	void			CloseInstrumentSettings();
 	
 	void			UpdateTrackBox();
+	void			ResizeFrameWindow();
 
 protected:
+	bool			CreateDialogPanels();
+	bool			CreateToolbars();
 	bool			CreateInstrumentToolbar();
 	bool			CreateSampleWindow();
 	void			OpenInstrumentSettings();
@@ -97,32 +101,33 @@ protected:
 	void			SetFrameCount(int Count);
 
 protected:  // control bar embedded members
-	CStatusBar		m_wndStatusBar;
-	CToolBar		m_wndToolBar;
-	CPatternWnd		m_wndPatternWindow;
-	CDialogBar		m_wndDialogBar;
-	CReBar			m_wndToolBarReBar;
-	CDialogReBar	m_wndOctaveBar;
+	CStatusBar			m_wndStatusBar;
+	CToolBar			m_wndToolBar;
+	CFrameBoxWnd		m_wndFrameWindow;
+	CReBar				m_wndToolBarReBar;
+	CDialogReBar		m_wndOctaveBar;
+	CDialogBar			m_wndControlBar;	// Parent to frame editor and settings/instrument editor
+	CControlPanelDlg	m_wndDialogBar;
 
-	CToolBarCtrl	m_wndInstToolBar;
-	CWnd			m_wndInstToolBarWnd;
-	CReBarCtrl		m_wndInstToolReBar;
+	CToolBarCtrl		m_wndInstToolBar;
+	CWnd				m_wndInstToolBarWnd;
+	CReBarCtrl			m_wndInstToolReBar;
 
-	CListCtrl		*InstrumentList;
-	CListCtrl		*InstSettingsList;
-	CListCtrl		*ModifierList;
-	CImageList		*m_pImageList;
+	CListCtrl			*InstrumentList;
+	CListCtrl			*InstSettingsList;
+	CListCtrl			*ModifierList;
+	CImageList			*m_pImageList;
 
 	CInstrumentEditDlg	m_InstEdit;
 	CPerformanceDlg		m_PerformanceDlg;
 	CSampleWindow		m_SampleWindow;
 	CSampleWinProc		m_SampleProc;
 
-	CCustomEdit		*m_pCustomEditSpeed;
-	CCustomEdit		*m_pCustomEditTempo;
-	CCustomEdit		*m_pCustomEditLength;
-	CCustomEdit		*m_pCustomEditFrames;
-	CCustomEdit		*m_pCustomEditStep;
+	CCustomEdit			*m_pCustomEditSpeed;
+	CCustomEdit			*m_pCustomEditTempo;
+	CCustomEdit			*m_pCustomEditLength;
+	CCustomEdit			*m_pCustomEditFrames;
+	CCustomEdit			*m_pCustomEditStep;
 
 	bool m_bInitialized;
 
@@ -140,6 +145,7 @@ public:
 	void SetupColors(void);
 	void DisplayOctave();
 	void UpdateInstrumentIndex();
+	int GetHighlightRow();
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle = WS_OVERLAPPEDWINDOW, const RECT& rect = rectDefault, CWnd* pParentWnd = NULL, LPCTSTR lpszMenuName = NULL, DWORD dwExStyle = 0, CCreateContext* pContext = NULL);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result);
@@ -151,6 +157,7 @@ public:
 	afx_msg void OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnCreateNSF();
+	afx_msg void OnCreateWAV();
 	afx_msg void OnNextFrame();
 	afx_msg void OnPrevFrame();
 	afx_msg void OnChangeAll();
@@ -204,6 +211,10 @@ public:
 	afx_msg void OnTrackerSwitchToInstrument();
 	afx_msg void OnUpdateTrackerSwitchToInstrument(CCmdUI *pCmdUI);
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
+	afx_msg void OnClickedFollow();
+	afx_msg void OnViewControlpanel();
+	afx_msg void OnUpdateViewControlpanel(CCmdUI *pCmdUI);
+	afx_msg void OnClearPatterns();
 };
 
 

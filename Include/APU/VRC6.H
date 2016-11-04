@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,60 +21,56 @@
 #ifndef _VRC6_H_
 #define _VRC6_H_
 
+#include "apu.h"
 #include "external.h"
 #include "channel.h"
 
-class CVRC6_Pulse : public CChannel
-{
-	public:
-		CVRC6_Pulse(CMixer *pMixer, int ID) {
-			Mixer = pMixer;
-			ChanId = ID;
-		};
+class CVRC6_Pulse : public CExChannel {
+public:
+	CVRC6_Pulse(CMixer *pMixer, int ID) {
+		CExChannel::Init(pMixer, SNDCHIP_VRC6, ID);
+	};
 
-		void Reset();
-		void Write(uint16 Address, uint8 Value);
-		void Process(int Time);
+	void Reset();
+	void Write(uint16 Address, uint8 Value);
+	void Process(int Time);
 
-	private:
-		uint8	DutyCycle, Volume, Gate, Enabled;
-		uint32	Frequency;
-		uint8	FreqLow, FreqHigh;
-		int32	Counter;
-		uint8	DutyCycleCounter;
+private:
+	uint8	DutyCycle, Volume, Gate, Enabled;
+	uint32	Frequency;
+	uint8	FreqLow, FreqHigh;
+	int32	Counter;
+	uint8	DutyCycleCounter;
 };
 
-class CVRC6_Sawtooth : public CChannel
-{
-	public:
-		CVRC6_Sawtooth(CMixer *pMixer, int ID) {
-			Mixer = pMixer;
-			ChanId = ID;
-		}
+class CVRC6_Sawtooth : public CExChannel {
+public:
+	CVRC6_Sawtooth(CMixer *pMixer, int ID) {
+		CExChannel::Init(pMixer, SNDCHIP_VRC6, ID);
+	}
 
-		void Reset();
-		void Write(uint16 Address, uint8 Value);
-		void Process(int Time);
+	void Reset();
+	void Write(uint16 Address, uint8 Value);
+	void Process(int Time);
 
-	private:
-		uint8	PhaseAccumulator, PhaseInput, Enabled, ResetReg;
-		uint32	Frequency;
-		uint8	FreqLow, FreqHigh;
-		int32	Counter;
+private:
+	uint8	PhaseAccumulator, PhaseInput, Enabled, ResetReg;
+	uint32	Frequency;
+	uint8	FreqLow, FreqHigh;
+	int32	Counter;
 };
 
-class CVRC6 : public CExternal
-{
-	public:
-		void Init(CMixer *pMixer);
-		void Reset();
-		void Write(uint16 Address, uint8 Value);
-		void EndFrame();
-		void Process(int Time);
+class CVRC6 : public CExternal {
+public:
+	void Init(CMixer *pMixer);
+	void Reset();
+	void Write(uint16 Address, uint8 Value);
+	void EndFrame();
+	void Process(int Time);
 
-	private:
-		CVRC6_Pulse		*Pulse1, *Pulse2;
-		CVRC6_Sawtooth	*Sawtooth;
+private:
+	CVRC6_Pulse		*Pulse1, *Pulse2;
+	CVRC6_Sawtooth	*Sawtooth;
 };
 
 #endif /* _VRC6_H_ */

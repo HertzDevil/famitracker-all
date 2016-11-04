@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@ typedef signed		char		int8;
 typedef signed		short		int16;
 typedef signed		long		int32;
 typedef signed		__int64		int64;
+
+#define _MAIN_H_
 
 #define SAMPLES_IN_BYTES(x) (x << SampleSizeShift)
 

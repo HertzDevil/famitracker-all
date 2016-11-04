@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,59 +28,84 @@
 void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 {
 	CInstrumentVRC6 *pInst;
-	int MidiNote;
+//	int MidiNote;
+	int PostEffect = 0, PostEffectParam;
 
-	m_iInstrument = pNoteData->Instrument;
+	int LastInstrument = m_iInstrument;
 
-	if (m_iInstrument == MAX_INSTRUMENTS) {
-		m_iInstrument = m_iLastInstrument;
-	}
+	if (HandleDelay(pNoteData, EffColumns))
+		return;
+
+	if (!CChannelHandler::CheckNote(pNoteData, INST_VRC6))
+		return;
 
 	if ((pInst = (CInstrumentVRC6*)m_pDocument->GetInstrument(m_iInstrument)) == NULL)
 		return;
-
-	if (pInst->GetType() != INST_VRC6)
-		return;
-
+/*
 	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
 		m_iVolume = 0x10;
 		KillChannel();
 		return;
 	}
-
-	// No note
-	if (pNoteData->Note == 0)
-		return;
-
+*/
 	// Evaluate effects
 	for (int n = 0; n < EffColumns; n++) {
 		int EffCmd	 = pNoteData->EffNumber[n];
 		int EffParam = pNoteData->EffParam[n];
 
 		if (!CheckCommonEffects(EffCmd, EffParam)) {
-//			switch (EffCmd) {
-//			}
+			switch (EffCmd) {
+				case EF_DUTY_CYCLE:
+					m_iDefaultDuty = m_cDutyCycle = EffParam;
+					break;
+				case EF_SLIDE_UP:
+				case EF_SLIDE_DOWN:
+					PostEffect = EffCmd;
+					PostEffectParam = EffParam;
+					SetupSlide(EffCmd, EffParam);
+					break;
+			}
 		}
 	}
 
-	if (pNoteData->Vol < 0x10) {
-		m_iVolume = pNoteData->Vol;
+	if (LastInstrument != m_iInstrument || pNoteData->Note > 0) {
+		// Setup instrument
+		for (int i = 0; i < MOD_COUNT; i++) {
+			ModEnable[i]	= pInst->GetModEnable(i);
+			ModIndex[i]		= pInst->GetModIndex(i);
+			ModPointer[i]	= 0;
+			ModDelay[i]		= 1;
+		}
 	}
 
-	// Trigger instrument
-	for (int i = 0; i < MOD_COUNT; i++) {
-		ModEnable[i]	= pInst->GetModEnable(i);
-		ModIndex[i]		= pInst->GetModIndex(i);
-		ModPointer[i]	= 0;
-		ModDelay[i]		= 1;
+	// Get volume
+	if (pNoteData->Vol < 0x10)
+		m_iVolume = pNoteData->Vol << VOL_SHIFT;
+
+	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
+		m_iVolume = 0x0F << VOL_SHIFT;
+		KillChannel();
+		return;
 	}
 
-	MidiNote = MIDI_NOTE(pNoteData->Octave, pNoteData->Note);
+	// No note
+	if (!pNoteData->Note)
+		return;
 
-	m_iFrequency = TriggerNote(MidiNote);
-	m_iNote = MidiNote;
-	m_iOutVol = 0xF;
-	m_bEnabled = true;
+	// Get the note
+	RunNote(pNoteData->Octave, pNoteData->Note);
+
+	m_iNote		 = MIDI_NOTE(pNoteData->Octave, pNoteData->Note);
+	m_iOutVol	 = 0xF;
+	m_cDutyCycle = m_iDefaultDuty;
+	m_bEnabled	 = true;
+	m_iLastInstrument = m_iInstrument;
+
+	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
+		m_iEffect = EF_NONE;
+
+	if (PostEffect)
+		SetupSlide(PostEffect, PostEffectParam);
 }
 
 void CChannelHandlerVRC6::ProcessChannel()
@@ -92,9 +117,8 @@ void CChannelHandlerVRC6::ProcessChannel()
 	CChannelHandler::ProcessChannel();
 	
 	// Sequences
-	for (int i = 0; i < MOD_COUNT; i++) {
+	for (int i = 0; i < MOD_COUNT; i++)
 		RunSequence(i, m_pDocument->GetSequenceVRC6(ModIndex[i], i));
-	}
 }
 
 void CChannelHandlerVRC6::RunSequence(int Index, CSequence *pSequence)
@@ -133,14 +157,12 @@ void CChannelHandlerVRC6::RunSequence(int Index, CSequence *pSequence)
 		ModPointer[Index]++;
 
 		if (ModPointer[Index] == pSequence->GetItemCount()) {
-			if (pSequence->GetLoopPoint() != -1) {
+			if (pSequence->GetLoopPoint() != -1)
 				// Loop
 				ModPointer[Index] = pSequence->GetLoopPoint();
-			}
-			else {
+			else
 				// End of sequence
 				ModEnable[Index] = 0;
-			}
 		}
 	}
 }
@@ -172,7 +194,8 @@ void CVRC6Square1::RefreshChannel()
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
 		Volume = 0;
@@ -221,7 +244,8 @@ void CVRC6Square2::RefreshChannel()
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
 		Volume = 0;
@@ -269,12 +293,17 @@ void CVRC6Sawtooth::RefreshChannel()
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol | m_cDutyCycle << 4;
+//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol | (m_cDutyCycle << 4);
+	Volume = (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
+
+	Volume = (Volume << 1) | (m_cDutyCycle << 4);
 
 	if (Volume < 0)
 		Volume = 0;
 	if (Volume > 63)
 		Volume = 63;
+
+	//Volume = 63;
 
 	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;

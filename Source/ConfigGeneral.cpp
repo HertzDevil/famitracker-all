@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@ void CConfigGeneral::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CConfigGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_OPT_WRAPCURSOR, OnBnClickedOptWrapcursor)
+	ON_BN_CLICKED(IDC_OPT_WRAPFRAMES, OnBnClickedOptWrapFrames)
 	ON_BN_CLICKED(IDC_OPT_FREECURSOR, OnBnClickedOptFreecursor)
 	ON_BN_CLICKED(IDC_OPT_WAVEPREVIEW, OnBnClickedOptWavepreview)
 	ON_BN_CLICKED(IDC_OPT_KEYREPEAT, OnBnClickedOptKeyrepeat)
@@ -55,7 +56,8 @@ BEGIN_MESSAGE_MAP(CConfigGeneral, CPropertyPage)
 	ON_CBN_EDITUPDATE(IDC_PAGELENGTH, OnCbnEditupdatePagelength)
 	ON_CBN_SELENDOK(IDC_PAGELENGTH, OnCbnSelendokPagelength)
 	ON_BN_CLICKED(IDC_OPT_NOSTEPMOVE, OnBnClickedOptNostepmove)
-	ON_BN_CLICKED(IDC_OPT_PATTENRCOLORS, &CConfigGeneral::OnBnClickedOptPattenrcolors)
+	ON_BN_CLICKED(IDC_OPT_PATTENRCOLORS, OnBnClickedOptPattenrcolors)
+	ON_BN_CLICKED(IDC_OPT_PULLUPDELETE, OnBnClickedOptPullupdelete)
 END_MESSAGE_MAP()
 
 
@@ -64,6 +66,7 @@ END_MESSAGE_MAP()
 BOOL CConfigGeneral::OnSetActive()
 {
 	CheckDlgButton(IDC_OPT_WRAPCURSOR, m_bWrapCursor);
+	CheckDlgButton(IDC_OPT_WRAPFRAMES, m_bWrapFrames);
 	CheckDlgButton(IDC_OPT_FREECURSOR, m_bFreeCursorEdit);
 	CheckDlgButton(IDC_OPT_WAVEPREVIEW, m_bPreviewWAV);
 	CheckDlgButton(IDC_OPT_KEYREPEAT, m_bKeyRepeat);
@@ -75,6 +78,7 @@ BOOL CConfigGeneral::OnSetActive()
 	CheckDlgButton(IDC_STYLE2, m_iEditStyle == EDIT_STYLE2);
 	CheckDlgButton(IDC_STYLE3, m_iEditStyle == EDIT_STYLE3);
 	CheckDlgButton(IDC_OPT_PATTENRCOLORS, m_bPatternColors);
+	CheckDlgButton(IDC_OPT_PULLUPDELETE, m_bPullUpDelete);
 	SetDlgItemInt(IDC_PAGELENGTH, m_iPageStepSize, FALSE);
 	return CPropertyPage::OnSetActive();
 }
@@ -87,6 +91,12 @@ void CConfigGeneral::OnOK()
 void CConfigGeneral::OnBnClickedOptWrapcursor()
 {
 	m_bWrapCursor = IsDlgButtonChecked(IDC_OPT_WRAPCURSOR) != 0;
+	SetModified();
+}
+
+void CConfigGeneral::OnBnClickedOptWrapFrames()
+{
+	m_bWrapFrames = IsDlgButtonChecked(IDC_OPT_WRAPFRAMES) != 0;
 	SetModified();
 }
 
@@ -121,6 +131,7 @@ BOOL CConfigGeneral::OnApply()
 		m_iPageStepSize = MAX_PATTERN_LENGTH;
 
 	theApp.m_pSettings->General.bWrapCursor		= m_bWrapCursor;
+	theApp.m_pSettings->General.bWrapFrames		= m_bWrapFrames;
 	theApp.m_pSettings->General.bFreeCursorEdit	= m_bFreeCursorEdit;
 	theApp.m_pSettings->General.bWavePreview	= m_bPreviewWAV;
 	theApp.m_pSettings->General.bKeyRepeat		= m_bKeyRepeat;
@@ -131,6 +142,7 @@ BOOL CConfigGeneral::OnApply()
 	theApp.m_pSettings->General.bNoStepMove		= m_bNoStepMove;
 	theApp.m_pSettings->General.iPageStepSize	= m_iPageStepSize;
 	theApp.m_pSettings->General.bPatternColor	= m_bPatternColors;
+	theApp.m_pSettings->General.bPullUpDelete	= m_bPullUpDelete;
 
 	return CPropertyPage::OnApply();
 }
@@ -140,6 +152,7 @@ BOOL CConfigGeneral::OnInitDialog()
 	CPropertyPage::OnInitDialog();
 
 	m_bWrapCursor		= theApp.m_pSettings->General.bWrapCursor;
+	m_bWrapFrames		= theApp.m_pSettings->General.bWrapFrames;
 	m_bFreeCursorEdit	= theApp.m_pSettings->General.bFreeCursorEdit;
 	m_bPreviewWAV		= theApp.m_pSettings->General.bWavePreview;
 	m_bKeyRepeat		= theApp.m_pSettings->General.bKeyRepeat;
@@ -150,6 +163,7 @@ BOOL CConfigGeneral::OnInitDialog()
 	m_bNoStepMove		= theApp.m_pSettings->General.bNoStepMove;
 	m_iPageStepSize		= theApp.m_pSettings->General.iPageStepSize;
 	m_bPatternColors	= theApp.m_pSettings->General.bPatternColor;
+	m_bPullUpDelete		= theApp.m_pSettings->General.bPullUpDelete;
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -200,6 +214,12 @@ void CConfigGeneral::OnBnClickedOptNostepmove()
 void CConfigGeneral::OnBnClickedOptPattenrcolors()
 {
 	m_bPatternColors = IsDlgButtonChecked(IDC_OPT_PATTENRCOLORS) != 0;
+	SetModified();
+}
+
+void CConfigGeneral::OnBnClickedOptPullupdelete()
+{
+	m_bPullUpDelete = IsDlgButtonChecked(IDC_OPT_PULLUPDELETE) != 0;
 	SetModified();
 }
 

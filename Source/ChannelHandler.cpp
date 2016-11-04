@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include "SoundGen.h"
 #include "ChannelHandler.h"
 
-void CChannelHandler::InitChannel(CAPU *pAPU, unsigned char *pVibTable, CFamiTrackerDoc *pDoc)
+void CChannelHandler::InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *pDoc)
 {
 	m_pAPU = pAPU;
 	m_pcVibTable = pVibTable;
@@ -56,16 +56,17 @@ void CChannelHandler::Arpeggiate(unsigned int Note)
 
 void CChannelHandler::MakeSilent()
 {
-	m_iVolume		= 0x0F;
-	m_iPortaSpeed	= 0;
-	m_cArpeggio		= 0;
-	m_cArpVar		= 0;
-	m_iVibratoSpeed = m_iVibratoPhase = 0;
-	m_iTremoloSpeed = m_iTremoloPhase = 0;
-	m_iFinePitch	= 0x80;
-	m_iFrequency	= 0;
-	m_iLastFrequency = 0xFFFF;
-	m_bDelayEnabled	= false;
+	m_iVolume			= MAX_VOL;
+	m_iPortaSpeed		= 0;
+	m_cArpeggio			= 0;
+	m_cArpVar			= 0;
+	m_iVibratoSpeed		= m_iVibratoPhase = 0;
+	m_iTremoloSpeed		= m_iTremoloPhase = 0;
+	m_iFinePitch		= 0x80;
+	m_iFrequency		= 0;
+	m_iVolSlide			= 0;
+//	m_iLastFrequency	= 0xFFFF;
+	m_bDelayEnabled		= false;
 
 	KillChannel();
 }
@@ -73,7 +74,6 @@ void CChannelHandler::MakeSilent()
 void CChannelHandler::KillChannel()
 {
 	m_bEnabled			= false;
-	//m_iFrequency		= 0;
 	m_iLastFrequency	= 0xFFFF;
 	m_iOutVol			= 0x00;
 	m_iPortaTo			= 0;
@@ -94,6 +94,38 @@ unsigned int CChannelHandler::TriggerNote(int Note)
 	return m_pNoteLookupTable[Note];
 }
 
+void CChannelHandler::RunNote(int Octave, int Note)
+{
+	// Run the note and handle portamento
+	int NewNote, NesFreq;
+	// And note
+	NewNote = MIDI_NOTE(Octave, Note);
+	NesFreq = TriggerNote(NewNote);
+
+	if (m_iPortaSpeed > 0 && m_iEffect == EF_PORTAMENTO) {
+		if (m_iFrequency == 0)
+			m_iFrequency = NesFreq;
+		m_iPortaTo = NesFreq;
+	}
+	else
+		m_iFrequency = NesFreq;
+}
+
+void CChannelHandler::SetupSlide(int Type, int EffParam)
+{
+	#define GET_SLIDE_SPEED(x) (((x & 0xF0) >> 3) + 1)
+
+	m_iPortaSpeed = GET_SLIDE_SPEED(EffParam);
+	m_iEffect = Type;
+
+	if (Type == EF_SLIDE_UP)
+		m_iNote = m_iNote + (EffParam & 0xF);
+	else
+		m_iNote = m_iNote - (EffParam & 0xF);
+
+	m_iPortaTo = TriggerNote(m_iNote);
+}
+
 // Handle usual effects for all channels
 bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char EffParam)
 {
@@ -104,7 +136,6 @@ bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char Eff
 			if (!EffParam)
 				m_iPortaTo = 0;
 			break;
-
 		case EF_VIBRATO:
 			m_iVibratoDepth = (EffParam & 0x0F) + 2;
 			m_iVibratoSpeed = EffParam >> 4;
@@ -131,6 +162,9 @@ bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char Eff
 		case EF_PORTA_UP:
 			m_iPortaSpeed = EffParam;
 			m_iEffect = EF_PORTA_UP;
+			break;
+		case EF_VOLUME_SLIDE:
+			m_iVolSlide = EffParam;
 			break;
 		default:
 			return false;
@@ -182,6 +216,15 @@ void CChannelHandler::ProcessChannel()
 
 	if (!m_bEnabled)
 		return;
+
+	// Volume slide
+	m_iVolume -= (m_iVolSlide & 0x0F);
+	if (m_iVolume < 0)
+		m_iVolume = 0;
+
+	m_iVolume += (m_iVolSlide & 0xF0) >> 4;
+	if (m_iVolume < 0)
+		m_iVolume = MAX_VOL;
 
 	// Vibrato and tremolo
 	m_iVibratoPhase = (m_iVibratoPhase + m_iVibratoSpeed) & (VIBRATO_LENGTH - 1);
@@ -237,4 +280,38 @@ void CChannelHandler::ProcessChannel()
 				m_iFrequency = 0;
 			break;
 	}
+}
+
+// Used to see that everything is ok right before playing a note
+bool CChannelHandler::CheckNote(stChanNote *pNoteData, int InstrumentType)
+{
+	CInstrument	*pInstrument;
+
+	// No note data
+	if (!pNoteData)
+		return false;
+
+	// Save instrument index
+	if ((m_iInstrument = pNoteData->Instrument) == MAX_INSTRUMENTS)
+		m_iInstrument = m_iLastInstrument;
+
+	// Halt and release
+	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
+//		m_iVolume = 0x10;
+//		KillChannel();
+		// Allow incorrect instruments for note off
+		return true;
+	}
+
+	pInstrument = m_pDocument->GetInstrument(m_iInstrument);
+	
+	// No instrument
+	if (!pInstrument)
+		return false;
+
+	// Wrong type of instrument
+	if (pInstrument->GetType() != InstrumentType)
+		return false;
+
+	return true;
 }

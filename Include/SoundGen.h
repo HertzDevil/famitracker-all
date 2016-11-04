@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,32 +30,30 @@
 const int VIBRATO_LENGTH = 64;
 const int TREMOLO_LENGTH = 64;
 
+const unsigned int TOTAL_CHANNELS = MAX_CHANNELS;
+
 // Custom messages
+
+enum { M_SILENT_ALL = WM_USER + 1,
+	   M_LOAD_SETTINGS,
+	   M_PLAY,
+	   M_PLAY_LOOPING,
+	   M_STOP,
+	   M_RESET,
+	   M_START_RENDER};
+/*
 #define M_SILENT_ALL	WM_USER + 1
 #define M_LOAD_SETTINGS WM_USER + 2
+*/
+
+typedef enum { SONG_TIME_LIMIT, SONG_LOOP_LIMIT } RENDER_END;
 
 struct stVolLevels {
-	int Chan1, Chan2, Chan3, Chan4, Chan5;
-};
-/*
-class CChannelCommon
-{
-public:
-
-private:
-
+	int Chan1, Chan2, Chan3, Chan4, Chan5;		// kill this
 };
 
-class CChannelVRC6 
-{
-	public:
-		unsigned char m_cVolume;
-		unsigned char m_cNote;
-		unsigned char m_cOctave;
-	private:
+class CChannelHandler;
 
-};
-*/
 class CFamiTrackerView;
 
 class CSoundGen : public CWinThread, ICallback
@@ -79,6 +77,8 @@ private:
 	int					m_iTrebleFreq;
 	int					m_iTrebleDamp;
 
+	int					m_iAudioUnderruns;
+
 	CDSound				*m_pDSound;
 	CDSoundChannel		*m_pDSoundChannel;
 
@@ -98,48 +98,67 @@ private:
 	int					m_iTempoAccum;			// Used for speed calculation
 	unsigned int		m_iTickPeriod;
 	unsigned int		m_iPlayTime;
-	bool				m_bNewRow;
+//	bool				m_bNewRow;
 	bool				m_bPlaying, m_bPlayLooping;
 
 	int					m_iJumpToPattern;
 	int					m_iSkipToRow;
 
 	unsigned int		*m_pNoteLookupTable;
-	unsigned int		m_iNoteLookupTable_NTSC[12 * 8];
-	unsigned int		m_iNoteLookupTable_PAL[12 * 8];
+	unsigned int		m_iNoteLookupTable[96];				// 12 notes / 8 octaves
+	unsigned int		m_iNoteLookupTableSaw[96];			// For VRC6 sawtooth
+
 	unsigned int		m_iMachineType;						// NTSC/PAL
 	bool				m_bRunning;
 
-	unsigned char		m_cVibTable[VIBRATO_LENGTH];
+	int					m_cVibTable[VIBRATO_LENGTH];
 	unsigned char		m_cTremTable[TREMOLO_LENGTH];
+
+	CChannelHandler		*ChannelCollection[TOTAL_CHANNELS];
+	unsigned int		m_iChannelsActive;
 
 	// General variables
 	HANDLE				m_hNotificationEvent;
+	HANDLE				m_hAliveCheck;
 	HWND				m_hWnd;
+
+	// Rendering
+	RENDER_END			m_iRenderEndWhen;
+	int					m_iRenderEndParam;
+	int					m_iRenderedFrames;
+	int					m_iRenderedSong;
 
 // Functions
 private:
 	void				PlayNote(int Channel, stChanNote *NoteData, int EffColumns);
 	void				ResetAPU();
 	void				RunFrame();
+	void				CheckControl();
+	void				ResetBuffer();
+	void				BeginPlayer(bool bLooping);
+
+public:
+	// Interface from outside the thread
+	void				StartPlayer(bool Looping);
+	void				StopPlayer();
+	void				ResetPlayer();
+	void				ResetTempo();
+	unsigned int		GetTempo();
+	bool				IsPlaying() { return m_bPlaying; };
+
 
 public:
 	virtual BOOL		InitInstance();
 	virtual int			ExitInstance();
 	virtual int			Run();
+	void				SetupChannels(int Chip);
+	bool				CreateAPU();
 
 	void				SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
 	void				LoadMachineSettings(int Machine, int Rate);
 
-	// Player
-	void				StartPlayer(bool Looping);
-	void				StopPlayer();
-	void				ResetTempo();
-	unsigned int		GetTempo();
-	bool				IsPlaying() { return m_bPlaying; };
-
 	// Sound
-	bool				InitializeSound(HWND hWnd);
+	bool				InitializeSound(HWND hWnd, HANDLE hAliveCheck, HANDLE hNotification);
 	bool				ResetSound();
 	void				FlushBuffer(int16 *Buffer, uint32 Size);
 	
@@ -150,6 +169,15 @@ public:
 	bool				IsRunning()				{ return m_bRunning; }
 	unsigned int		GetOutput(int Chan);
 
+	// Rendering
+	bool				RenderToFile(char *File, int SongEndType, int SongEndParam);
+	void				StopRendering();
+	void				GetRenderStat(int &Frame, int &Time, bool &Done);
+	bool				IsRendering();
+	void				CheckRenderStop();
+
+	void				SongIsDone();
+	void				FrameIsDone(int SkipFrames);
 };
 
 extern CSoundGen SoundGenerator;

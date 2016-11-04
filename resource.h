@@ -3,7 +3,9 @@
 // Used by FamiTracker.rc
 //
 #define ID_INDICATOR_OCTAVE             1
+#define IDS_SONG_DELETE                 2
 #define IDC_WRITE_BIN                   3
+#define ID_INVALID_WAVEFILE             3
 #define IDC_IMPORT                      4
 #define IDC_NEW_DATA                    4
 #define IDC_WRITE_PRG                   5
@@ -20,6 +22,8 @@
 #define ID_CMD_PASTEOVERWRITE           118
 #define ID_CMD_NEXT_INSTRUMENT          119
 #define ID_CMD_PREV_INSTRUMENT          120
+#define ID_CMD_INCREASESTEPSIZE         122
+#define ID_CMD_DECREASESTEPSIZE         123
 #define IDR_MAINFRAME                   128
 #define ID_INDICATOR_RATE               129
 #define IDR_FamiTrackerTYPE             129
@@ -45,6 +49,7 @@
 #define IDS_STRING146                   146
 #define IDS_OUT_OF_SLOTS                146
 #define IDD_PCMIMPORT                   147
+#define IDS_OUT_OF_SAMPLEMEM            147
 #define IDI_INST_2A03                   153
 #define IDD_INSTRUMENT_INTERNAL         158
 #define IDD_INSTRUMENT_DPCM             159
@@ -64,9 +69,7 @@
 #define IDD_CONFIG_SOUND                201
 #define IDS_FILE_LOAD_ERROR             204
 #define IDS_CONFIG_WINDOW               205
-#define IDR_INSTRUMENT                  205
 #define IDS_WELCOME                     206
-#define IDB_INSTRUMENT_TOOLS            208
 #define IDD_CONFIG_SHORTCUTS            211
 #define IDD_OCTAVE                      212
 #define IDI_INST_VRC6                   214
@@ -74,10 +77,16 @@
 #define IDI_INST_VRC6INV                217
 #define IDD_EXPORT                      218
 #define IDD_ABOUT                       220
+#define IDI_INST_VRC7                   224
+#define IDI_INST_VRC7INV                225
+#define IDD_INSTRUMENT_VRC7             226
+#define IDD_CREATEWAV                   232
+#define IDD_WAVE_PROGRESS               233
+#define IDD_MAINBAR                     235
+#define IDB_INSTRUMENT_TOOLS            238
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_MODIFIERS                   1003
-#define IDC_ADD_INST                    1004
 #define IDC_INSTNAME                    1005
 #define IDC_SEQ_INDEX                   1007
 #define IDC_MOD_SELECT_SPIN             1008
@@ -134,6 +143,7 @@
 #define IDC_OPT_HEXROW                  1066
 #define IDC_CHANMAP                     1067
 #define IDC_SONG_NAME                   1067
+#define IDC_OPT_WRAPFRAMES              1067
 #define IDC_SONG_ARTIST                 1068
 #define IDC_MML                         1068
 #define IDC_VELOCITY                    1068
@@ -146,6 +156,7 @@
 #define IDC_FONT                        1071
 #define IDC_OPT_PATTENRCOLORS           1071
 #define IDC_ABOUT                       1072
+#define IDC_OPT_PULLUPDELETE            1072
 #define IDC_RESTORE                     1073
 #define IDC_CLIP                        1074
 #define IDC_SHORTCUTS                   1074
@@ -190,13 +201,45 @@
 #define IDC_EXPANSION                   1135
 #define IDC_CLOSE                       1137
 #define IDC_SAVENSF                     1142
+#define IDC_EXPORT                      1142
 #define IDC_OUTPUT                      1143
 #define IDC_SAVEBIN                     1144
 #define IDC_SAVEPRG                     1145
 #define IDC_BUTTON1                     1146
 #define IDC_DEBUG                       1146
 #define IDC_ADD                         1146
+#define IDC_SONG_ADD                    1146
 #define IDC_REMOVE                      1147
+#define IDC_CHECK1                      1147
+#define IDC_SONG_REMOVE                 1147
+#define IDC_FOLLOW                      1147
+#define IDC_PATCH                       1148
+#define IDC_SONG_DOWN                   1148
+#define IDC_COMBO1                      1149
+#define IDC_TYPE                        1149
+#define IDC_SONG_UP                     1149
+#define IDC_SONGLIST                    1150
+#define IDC_SONGNAME                    1151
+#define IDC_LIST1                       1152
+#define IDC_EDIT1                       1153
+#define IDC_HIGHLIGHT                   1153
+#define IDC_PROGRESS1                   1154
+#define IDC_PROGRESS_BAR                1154
+#define IDC_EDIT2                       1155
+#define IDC_TIMES                       1155
+#define IDC_SECONDS                     1156
+#define IDC_BEGIN                       1159
+#define IDC_CANCEL                      1160
+#define IDC_RADIO_LOOP                  1162
+#define IDC_RADIO_TIME                  1163
+#define IDC_SPIN_TIMES                  1165
+#define IDC_SPIN_LOOP                   1165
+#define IDC_PROGRESS_LBL                1166
+#define IDC_SPIN_TIME                   1166
+#define IDC_PROGRESS_FILE               1167
+#define IDC_SPIN1                       1167
+#define IDC_HIGHLIGHTSPIN               1167
+#define IDC_TIME                        1168
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -230,10 +273,6 @@
 #define ID_EDIT_PASTEMIX                32899
 #define ID_MODULE_MOVEFRAMEDOWN         32902
 #define ID_MODULE_MOVEFRAMEUP           32903
-#define ID_BUTTON32905                  32905
-#define ID_BUTTON32906                  32906
-#define ID_BUTTON32907                  32907
-#define ID_BUTTON32908                  32908
 #define ID_MODULE_SAVEINSTRUMENT        32909
 #define ID_MODULE_LOADINSTRUMENT        32911
 #define ID_EDIT_CLEAREVERYTHING         32912
@@ -267,6 +306,12 @@
 #define ID_TRACKER_SWITCHTOTRACKINSTRUMENT 32949
 #define ID_POPUP_EFFECTS32950           32950
 #define ID_FILE_ADDSONG                 32951
+#define ID_FRAME_INSERT_UNIQUE          32952
+#define ID_FILE_CREATEWAV               32954
+#define ID_EDIT_ZAPPATTERNS             32955
+#define ID_VIEW_CONTROLPANEL            32956
+#define ID_VIEW_CONTROLPANEL32957       32957
+#define ID_EDIT_CLEARPATTERNS           32958
 #define ID_INDICATOR_INSTRUMENT         61204
 #define ID_INDICATOR_TEMPO              61205
 
@@ -274,9 +319,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        224
-#define _APS_NEXT_COMMAND_VALUE         32952
-#define _APS_NEXT_CONTROL_VALUE         1147
-#define _APS_NEXT_SYMED_VALUE           121
+#define _APS_NEXT_RESOURCE_VALUE        239
+#define _APS_NEXT_COMMAND_VALUE         32959
+#define _APS_NEXT_CONTROL_VALUE         1168
+#define _APS_NEXT_SYMED_VALUE           124
 #endif
 #endif

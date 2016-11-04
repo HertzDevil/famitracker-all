@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,17 +22,12 @@
 #define _EXTERNAL_H_
 
 #include "mixer.h"
+#include "Blip_buffer.h"
 
-class CExternal
-{
+class CExternal {
 public:
-	virtual void Init(CMixer *pMixer) {
-		Mixer = pMixer;
-	}
-
 protected:
-	CMixer		*Mixer;
-
+	CMixer *m_pMixer;
 };
 
 #endif /* _EXTERNAL_H_ */

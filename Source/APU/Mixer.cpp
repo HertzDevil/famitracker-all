@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,29 +24,18 @@
 // Mixing of internal audio relies on Blargg's findings
 //
 
-#include "stdafx.h"
-#include "apu/mixer.h"
-#include "apu/apu.h"
+#include <memory>
+#include "APU/mixer.h"
+#include "APU/apu.h"
 #include "blip_buffer.h"
 
 //#define LINEAR_MIXING
 
-const int MAX_VOL		= 200;
-
-const int OVERALL_AMP	= 1;
-const int INTRNAL_AMP	= 750;
-const int VRC6_AMP		= 4;
-const int VRC7_AMP		= 2;
-const int MMC5_AMP		= 8;
-const int FDS_AMP		= 1;
-const int N106_AMP		= 1;
-
-static Blip_Buffer	BlipBuffer;
-static Blip_Synth<blip_high_quality, -2> BlipSynth;
+const double AMP_2A03 = 400.0;
 
 CMixer::CMixer()
 {
-	m_bVolRead = false;
+	m_pSampleBuffer = NULL;
 }
 
 CMixer::~CMixer()
@@ -55,7 +44,7 @@ CMixer::~CMixer()
 
 inline double CMixer::CalcPin1(double Val1, double Val2)
 {
-	// Mix the APU audio pin 1 output: the square channels
+	// Mix the output of APU audio pin 1: square
 	//
 
 	if ((Val1 + Val2) > 0)
@@ -66,23 +55,33 @@ inline double CMixer::CalcPin1(double Val1, double Val2)
 
 inline double CMixer::CalcPin2(double Val1, double Val2, double Val3)
 {
-	// Mix the APU audio pin 2 output: triangle, noise and DPCM
+	// Mix the output of APU audio pin 2: triangle, noise and DPCM
 	//
 
 	if ((Val1 + Val2 + Val3) > 0)
-		return 159.79 / ((1.0 / ((Val1 / 8227.0 ) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
+		return 159.79 / ((1.0 / ((Val1 / 8227.0) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
 
 	return 0;
 }
 
 bool CMixer::Init()
 {
-	memset(Channels, 0, sizeof(stChanVal) * CHANNELS);
-	memset(ExternalSampleBuffer, 0, sizeof(int32) * 1000);
+	memset(Channels, 0, sizeof(int) * CHANNELS);
+	memset(ChannelLevels, 0, sizeof(int) * CHANNELS);
+	memset(ChanLevelFallOff, 0, sizeof(int) * CHANNELS);
+//	memset(ExternalSampleBuffer, 0, sizeof(int32) * 1000);
 
-	ExternalSamples = 0;
+//	ExternalSamples = 0;
 
 	return true;
+}
+
+void CMixer::Shutdown()
+{
+	if (m_pSampleBuffer)
+		delete [] m_pSampleBuffer;
+
+	m_pSampleBuffer = NULL;
 }
 
 void CMixer::ExternalSound(int Chip)
@@ -90,147 +89,50 @@ void CMixer::ExternalSound(int Chip)
 	ExternalChip = Chip;
 }
 
-void CMixer::SetChannelVolume(int ChanID, double VolLeft, double VolRight)
+void CMixer::UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVol)
 {
-	Channels[ChanID].VolLeft	= VolLeft;
-	Channels[ChanID].VolRight	= VolRight;
-}
+	float fVol = float(OverallVol) / 100.0f;
 
-void CMixer::UpdateSettings(int LowCut, int HighCut, int HighDamp, int OverallVol)
-{
+	// Blip-buffer filtering
 	BlipBuffer.bass_freq(LowCut);
-	BlipSynth.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
-	float Vol = float(OverallVol) / 100.0f;
+	Synth2A03.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
+	SynthVRC6.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
+	SynthMMC5.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
+	SynthFDS.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
+	SynthN106.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
-	BlipSynth.volume(0.005f * Vol);
-
-	InternalVol = INTRNAL_AMP;
-	VRC6Vol = VRC6_AMP * 2;
-	MasterVol = OVERALL_AMP;
+	Synth2A03.volume(1.0f * fVol);
+	SynthVRC6.volume(1.3f * fVol);
+	SynthMMC5.volume(1.0f);
+	SynthFDS.volume(1.0f);
+	SynthN106.volume(1.0f);
 }
 
-void CMixer::AddSample(int ChanID, int Value)
+void CMixer::MixSamples(blip_sample_t *pBuffer, uint32 Count)
 {
-	switch (ChanID) {
-		case CHANID_VRC7:
-			ExternalSampleBuffer[ExternalSamples] = Value * (int32)VRC7Vol;
-			break;
-	}
-	ExternalSamples++;
+	BlipBuffer.mix_samples(pBuffer, Count);
 }
 
-void CMixer::AddValue(int ChanID, int Value, int FrameCycles)
+uint32 CMixer::GetMixSampleCount(int t)
 {
-	// Add a new channel output value to mix
-	//
-	// I only got accurate data for mixing the NES internal channels,
-	// the rest of the channles are just added together
-	//
-
-	static double LastSumL, LastSumR, LastSum;
-	double /*SumL, SumR,*/ Sum;
-	int DeltaL, DeltaR;
-	int AbsVol;
-
-	AbsVol = abs(Value);
-
-	if (ChanID == CHANID_VRC6_SAWTOOTH) {
-		AbsVol /= 2;
-	}
-
-	if (AbsVol >= Channels[ChanID].VolMeasure) {
-		Channels[ChanID].VolMeasure = AbsVol;
-		Channels[ChanID].VolFallOff = 3;
-	}
-
-	Channels[ChanID].Mono	= Value;
-
-//	if (!StereoEnabled) {
-#ifdef LINEAR_MIXING
-		Sum = ((Channels[CHANID_SQUARE1].Mono + Channels[CHANID_SQUARE2].Mono) * 0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Mono + 0.00494 * Channels[CHANID_NOISE].Mono + 0.00335 * Channels[CHANID_DPCM].Mono));
-#else /* LINEAR_MIXING */
-		Sum = (CalcPin1(Channels[CHANID_SQUARE1].Mono, Channels[CHANID_SQUARE2].Mono) + CalcPin2(Channels[CHANID_TRIANGLE].Mono, Channels[CHANID_NOISE].Mono, Channels[CHANID_DPCM].Mono)) * InternalVol;
-#endif /* LINEAR_MIXING */
-
-		// External channels are mixed linear
-		switch (ExternalChip) {
-			case SNDCHIP_VRC6: Sum += (Channels[CHANID_VRC6_PULSE1].Mono + Channels[CHANID_VRC6_PULSE2].Mono + Channels[CHANID_VRC6_SAWTOOTH].Mono) * VRC6Vol; break;
-				/*
-			case SNDCHIP_VRC7: Sum += Channels[CHANID_VRC7].Mono * VRC7Vol; break;
-			case SNDCHIP_FDS: Sum += (Channels[CHANID_FDS].Mono) * FDSVol; break;
-			case SNDCHIP_MMC5: Sum += (Channels[CHANID_MMC5_SQUARE1].Mono + Channels[CHANID_MMC5_SQUARE2].Mono) * MMC5Vol; break;
-			case SNDCHIP_N106: Sum += (Channels[CHANID_N106_CHAN1].Mono + Channels[CHANID_N106_CHAN2].Mono + Channels[CHANID_N106_CHAN3].Mono + Channels[CHANID_N106_CHAN4].Mono + Channels[CHANID_N106_CHAN5].Mono + Channels[CHANID_N106_CHAN6].Mono + Channels[CHANID_N106_CHAN7].Mono + Channels[CHANID_N106_CHAN8].Mono) * N106Vol; break;
-			case SNDCHIP_FME07:
-				break;
-				*/
-		}
-
-		Sum *= MasterVol / 2;
-		DeltaL = int(Sum - LastSum);
-		DeltaR = DeltaL;
-		LastSum = Sum;
-		/*
-	}
-	else {
-
-#ifdef LINEAR_MIXING
-		SumL = ((Channels[CHANID_SQUARE1].Left + Channels[CHANID_SQUARE2].Left) * 0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Left + 0.00494 * Channels[CHANID_NOISE].Left + 0.00335 * Channels[CHANID_DPCM].Left)) * InternalVol;
-		SumR = ((Channels[CHANID_SQUARE1].Right + Channels[CHANID_SQUARE2].Right) *  0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Right + 0.00494 * Channels[CHANID_NOISE].Right + 0.00335 * Channels[CHANID_DPCM].Right)) * InternalVol;
-#else /* LINEAR_MIXING *//*
-		SumL = (CalcPin1(Channels[CHANID_SQUARE1].Left, Channels[CHANID_SQUARE2].Left) + CalcPin2(Channels[CHANID_TRIANGLE].Left, Channels[CHANID_NOISE].Left, Channels[CHANID_DPCM].Left)) * InternalVol;
-		SumR = (CalcPin1(Channels[CHANID_SQUARE1].Right, Channels[CHANID_SQUARE2].Right) + CalcPin2(Channels[CHANID_TRIANGLE].Right, Channels[CHANID_NOISE].Right, Channels[CHANID_DPCM].Right)) * InternalVol;
-#endif /* LINEAR_MIXING */
-/*
-		// External channels are mixed linear
-		switch (ExternalChip) {
-			case SNDCHIP_VRC6:
-				SumL += (Channels[CHANID_VRC6_PULSE1].Left + Channels[CHANID_VRC6_PULSE2].Left + Channels[CHANID_VRC6_SAWTOOTH].Left) * VRC6Vol;
-				SumR += (Channels[CHANID_VRC6_PULSE1].Right + Channels[CHANID_VRC6_PULSE2].Right + Channels[CHANID_VRC6_SAWTOOTH].Right) * VRC6Vol;
-				break;
-			case SNDCHIP_VRC7:
-				SumL += Channels[CHANID_VRC7].Left * VRC7Vol;
-				SumR += Channels[CHANID_VRC7].Right * VRC7Vol;
-				break;
-			case SNDCHIP_FDS:
-				SumL += (Channels[CHANID_FDS].Left) * FDSVol;
-				SumR += (Channels[CHANID_FDS].Right) * FDSVol;
-				break;
-			case SNDCHIP_MMC5:
-				SumL += (Channels[CHANID_MMC5_SQUARE1].Left + Channels[CHANID_MMC5_SQUARE2].Left) * MMC5Vol;
-				SumR += (Channels[CHANID_MMC5_SQUARE1].Right + Channels[CHANID_MMC5_SQUARE2].Right) * MMC5Vol;
-				break;
-			case SNDCHIP_N106:
-				SumL += (Channels[CHANID_N106_CHAN1].Left + Channels[CHANID_N106_CHAN2].Left + Channels[CHANID_N106_CHAN3].Left + Channels[CHANID_N106_CHAN4].Left + Channels[CHANID_N106_CHAN5].Left + Channels[CHANID_N106_CHAN6].Left + Channels[CHANID_N106_CHAN7].Left + Channels[CHANID_N106_CHAN8].Left) * N106Vol;
-				SumR += (Channels[CHANID_N106_CHAN1].Right + Channels[CHANID_N106_CHAN2].Right + Channels[CHANID_N106_CHAN3].Right + Channels[CHANID_N106_CHAN4].Right + Channels[CHANID_N106_CHAN5].Right + Channels[CHANID_N106_CHAN6].Right + Channels[CHANID_N106_CHAN7].Right + Channels[CHANID_N106_CHAN8].Right) * N106Vol;
-				break;
-			case SNDCHIP_FME07:
-				break;
-		}
-
-		SumL *= MasterVol;
-		SumR *= MasterVol;
-
-		DeltaL = int(SumL - LastSumL);
-		DeltaR = int(SumR - LastSumR);
-	
-		LastSumL = SumL;
-		LastSumR = SumR;
-	}
-*/
-	if (DeltaL + DeltaR)
-		AddDelta(DeltaL, DeltaR, FrameCycles);
+	return BlipBuffer.count_samples(t);
 }
 
-bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32 ClockRate)
+bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32 ClockRate, uint8 NrChannels)
 {
+	m_iSampleRate = SampleRate;
+
 	BlipBuffer.sample_rate(SampleRate, BufferLength);
 	BlipBuffer.clock_rate(ClockRate);
 
-	BlipSynth.volume(0.005f);
-	BlipSynth.output(&BlipBuffer);
+//	SetVolumeLevels();
 
-	m_iSampleRate = SampleRate;
+	if (m_pSampleBuffer)
+		delete [] m_pSampleBuffer;
+
+	// Allocate a transfer buffer
+	m_pSampleBuffer = new int32[BufferLength * NrChannels];
 
 	return true;
 }
@@ -241,48 +143,147 @@ void CMixer::SetClockRate(int Rate)
 	BlipBuffer.clock_rate(Rate);
 }
 
-void CMixer::AddDelta(int AmpLeft, int AmpRight, int Time)
-{
-	BlipSynth.offset(Time, (AmpLeft + AmpRight) >> 1, &BlipBuffer);
-}
-
 void CMixer::ClearBuffer()
 {
 	BlipBuffer.clear();
 }
 
 int CMixer::SamplesAvail()
-{
+{	
 	return (int)BlipBuffer.samples_avail();
 }
 
 int CMixer::FinishBuffer(int t)
 {
-	// Finishes the blip_buffer buffer, returns samples avaliable
-
 	BlipBuffer.end_frame(t);
 
 	for (int i = 0; i < CHANNELS; i++) {
-		if (Channels[i].VolFallOff > 0) {
-			Channels[i].VolFallOff--;
-		}
+		if (ChanLevelFallOff[i] > 0)
+			ChanLevelFallOff[i]--;
 		else {
-			Channels[i].VolFallOff = 1;
-			if (Channels[i].VolMeasure > 0) {
+			ChanLevelFallOff[i] = 1;
+			if (ChannelLevels[i] > 0) {
 				if (i == 4) {
-					Channels[i].VolMeasure -= 8;
-					if (Channels[i].VolMeasure < 0)
-						Channels[i].VolMeasure = 0;
+					ChannelLevels[i] -= 8;
+					if (ChannelLevels[i] < 0)
+						ChannelLevels[i] = 0;
 				}
 				else
-					Channels[i].VolMeasure -= 1;
-				if (Channels[i].VolMeasure < 0)
-					Channels[i].VolMeasure = 0;
+					ChannelLevels[i] -= 1;
+				if (ChannelLevels[i] < 0)
+					ChannelLevels[i] = 0;
 			}
 		}
 	}
 
 	return BlipBuffer.samples_avail();
+}
+
+//
+// Mixing
+//
+
+void CMixer::MixInternal(int Value, int Time)
+{
+	static double LastSum;
+	double Sum, Delta;
+
+#ifdef LINEAR_MIXING
+	SumL = ((Channels[CHANID_SQUARE1].Left + Channels[CHANID_SQUARE2].Left) * 0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Left + 0.00494 * Channels[CHANID_NOISE].Left + 0.00335 * Channels[CHANID_DPCM].Left)) * InternalVol;
+	SumR = ((Channels[CHANID_SQUARE1].Right + Channels[CHANID_SQUARE2].Right) *  0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Right + 0.00494 * Channels[CHANID_NOISE].Right + 0.00335 * Channels[CHANID_DPCM].Right)) * InternalVol;
+#else
+	// I only got accurate data for mixing the NES internal channels
+	Sum = CalcPin1(Channels[CHANID_SQUARE1], Channels[CHANID_SQUARE2]) + 
+		  CalcPin2(Channels[CHANID_TRIANGLE], Channels[CHANID_NOISE], Channels[CHANID_DPCM]);
+#endif
+
+	Delta = (Sum - LastSum) * AMP_2A03;
+	LastSum = Sum;
+
+	if (Delta)
+		Synth2A03.offset(Time, (int)Delta, &BlipBuffer);
+}
+
+void CMixer::MixN106(int Value, int Time)
+{
+	SynthN106.offset(Time, Value, &BlipBuffer);
+}
+
+void CMixer::MixFDS(int Value, int Time)
+{
+	SynthFDS.offset(Time, Value, &BlipBuffer);
+}
+
+void CMixer::MixVRC6(int Value, int Time)
+{
+	SynthVRC6.offset(Time, Value, &BlipBuffer);
+}
+
+void CMixer::MixMMC5(int Value, int Time)
+{
+//	static double LastSumL, LastSumR;
+//	double DeltaL, DeltaR;
+//	double SumL, SumR;
+
+//	SumL = Channels[CHANID_MMC5_SQUARE1].Left + Channels[CHANID_MMC5_SQUARE2].Left;
+//	SumR = Channels[CHANID_MMC5_SQUARE1].Right + Channels[CHANID_MMC5_SQUARE2].Right;
+/*
+	SynthMMC5.offset(Time, Value, &Buffers[0]);
+	SynthMMC5.offset(Time, Value, &Buffers[1]);
+*/
+//	DeltaL = SumL - LastSumL;
+//	DeltaR = SumR - LastSumR;
+
+//	if (DeltaL + DeltaR) {
+//		SynthMMC5.offset(Time, (int)DeltaL, &BlipBuffer);
+		//SynthMMC5.offset(Time, (int)DeltaR, &Buffers[1]);
+//	}
+
+//	LastSumL = SumL;
+//	LastSumR = SumR;
+}
+
+void CMixer::AddValue(int ChanID, int Chip, int Value, int FrameCycles)
+{
+	// Add a new channel value to mix
+	//
+
+//	Channels[ChanID].Left  = int32(float(Value) * Channels[ChanID].VolLeft);
+//	Channels[ChanID].Right = int32(float(Value) * Channels[ChanID].VolRight);
+
+	int AbsVol;
+
+	AbsVol = abs(Value);
+
+	if (ChanID == CHANID_VRC6_SAWTOOTH)
+		AbsVol = (AbsVol * 3) / 4;
+//		AbsVol *= 0.7;
+	if (AbsVol >= ChannelLevels[ChanID]) {
+		ChannelLevels[ChanID] = AbsVol;
+		ChanLevelFallOff[ChanID] = 3;
+	}
+
+	Channels[ChanID] = Value;
+
+	switch (Chip) {
+		case SNDCHIP_NONE:
+			MixInternal(Value, FrameCycles);
+			break;
+		case SNDCHIP_N106:
+			MixN106(Value, FrameCycles);
+			break;
+		case SNDCHIP_FDS:
+			MixFDS(Value, FrameCycles);
+			break;
+		case SNDCHIP_MMC5:
+			MixMMC5(Value, FrameCycles);
+			break;
+		case SNDCHIP_VRC6:
+			MixVRC6(Value, FrameCycles);
+			break;
+		case SNDCHIP_FME07:
+			break;
+	}
 }
 
 int CMixer::ReadBuffer(int Size, void *Buffer, bool Stereo)
@@ -292,7 +293,7 @@ int CMixer::ReadBuffer(int Size, void *Buffer, bool Stereo)
 
 int32 CMixer::GetChanOutput(uint8 Chan)
 {
-	int32 Ret = Channels[Chan].VolMeasure;
-	m_bVolRead = true;
+	int32 Ret = ChannelLevels[Chan];
+//	m_bVolRead = true;
 	return Ret;
 }

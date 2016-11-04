@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,199 +18,176 @@
 ** must bear this legend.
 */
 
-#include "stdafx.h"
-#include "apu/apu.h"
-#include "apu/dpcm.h"
+#include "APU/apu.h"
+#include "APU/dpcm.h"
 
-CDPCM::CDPCM(CMixer *pMixer, int ID)
+const uint16 CDPCM::DMC_FREQ_NTSC[] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54};
+const uint16 CDPCM::DMC_FREQ_PAL[]	= {398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50};
+
+CDPCM::CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID)
 {
-	Mixer = pMixer;
-	ChanId = ID;
+	m_pMixer = pMixer;
+	m_pSampleMem = pSampleMem;
+	m_iChanId = ID;
+	m_iChip = SNDCHIP_NONE;
 }
 
 CDPCM::~CDPCM()
 {
 }
 
-void CDPCM::Init(CSampleMem *pSampleMem)
-{
-	SampleMem = pSampleMem;
-}
-
 void CDPCM::Reset()
 {
+	m_iEnabled = 0;
+	m_iCounter = m_iFrequency = 0;
 
-	ControlReg = 0;
-
-	PCM = 0;
-	ShiftReg = DeltaCounter = DAC_LSB = 0;
-	OutValue = Counter = 0;
-	Frequency = 0;
-	DMA_LoadReg = DMA_LoadRegCnt = 0;
-	DMA_Length = DMA_LengthCounter = 0;
-	Enabled = TriggeredIRQ = PlayMode = Divider = 0;
+	m_iBitDivider = m_iShiftReg = 0;
+	m_iDMA_LoadReg = m_iDMA_Address = 0;
+	m_iDMA_Length = m_iDMA_LengthCounter = 0;
 	
+	m_bTriggeredIRQ = m_bSampleFilled = false;
+
+	// loaded with 0 on power-up.
+	m_iDeltaCounter = 0;
+
 	EndFrame();
 }
 
 void CDPCM::SetSpeed(int Speed)
 {
-	int i;
-
-	if (Speed == SPEED_NTSC)
-		for (i = 0; i < 16; i++)
-			DMC_Freq[i] = CAPU::DMC_FREQ_NTSC[i];
-
-	else if (Speed == SPEED_PAL)
-		for (i = 0; i < 16; i++)
-			DMC_Freq[i] = CAPU::DMC_FREQ_PAL[i];
+	for (int i = 0; i < 16; i++)
+		m_iDMC_FreqTable[i] = (Speed == MACHINE_NTSC) ? DMC_FREQ_NTSC[i] : DMC_FREQ_PAL[i];
 }
 
 void CDPCM::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 		case 0x00:
-			PlayMode = (Value & 0xC0);
-			Frequency = DMC_Freq[(Value & 0x0F)];
+			m_iPlayMode = (Value & 0xC0);
+			m_iFrequency = m_iDMC_FreqTable[(Value & 0x0F)];
 			if ((Value & 0x80) == 0x00) 
-				TriggeredIRQ = 0;
+				m_bTriggeredIRQ = false;
 			break;
 		case 0x01:
-			//if ((Value & 0x80) == 0)							// fix
-			//	DeltaCounter = Value & 0x7F;
-			DeltaCounter = Value & 0x7F;
-			AddMixer(DeltaCounter);
+			m_iDeltaCounter = Value & 0x7F;
+			Mix(m_iDeltaCounter);
 			break;
 		case 0x02:
-			DMA_LoadReg = Value;
+			m_iDMA_LoadReg = Value;
 			break;
 		case 0x03:
-			DMA_Length = Value;
+			m_iDMA_Length = Value;
 			break;
 	}
 }
 
 void CDPCM::WriteControl(uint8 Value)
 {
-	if (Value == 0x00) {
-		Enabled = 0;
-		DMA_LengthCounter = 0;
+	if ((Value & 1) == 0) {
+		m_iEnabled = 0;
+		m_iDMA_LengthCounter = 0;
 	}
 	else {
-		if (Enabled == 0)
+		if (m_iEnabled == 0)
 			Reload();
 
-		Enabled = 1;
+		m_iEnabled = 1;
 	}
 
-	TriggeredIRQ = 0;
+	m_bTriggeredIRQ = false;
 }
 
 uint8 CDPCM::ReadControl()
 {
-	if (Enabled == 1)
-		return 1;
-
-	return 0;
+	return m_iEnabled ? 1 : 0;
 }
 
 uint8 CDPCM::DidIRQ()
 {
-	if (TriggeredIRQ == 1) 
-		return 1;
-
-	return 0;
+	return m_bTriggeredIRQ ? 1 : 0;
 }
 
 void CDPCM::Reload()
 {
-    DMA_LoadRegCnt		= (DMA_LoadReg << 6) | 0x4000;
-    DMA_LengthCounter	= (DMA_Length << 4) + 1;
-	Divider				= 0;
-	Counter				= Frequency;
+    m_iDMA_Address		 = m_iDMA_LoadReg << 6 | 0x4000;
+    m_iDMA_LengthCounter = (m_iDMA_Length << 4) + 1;
+	m_iBitDivider		 = 8;
+	m_iCounter			 = m_iFrequency;
 
-	SampleFilled		= false;
-	SilenceFlag			= false;
+	m_bSampleFilled		 = false;
+	m_bSilenceFlag		 = false;
+
+//	CheckSample(DMA_LoadRegCnt | 0x8000, DMA_LengthCounter, Frequency);
 }
 
-void CDPCM::Process(int Time)
+void CDPCM::Process(uint32 Time)
 {
-	static int LastDelta;
-
-	if (!Enabled) {
-		FrameCycles += Time;
+	if (!m_iEnabled || m_bSilenceFlag) {
+		m_iFrameCycles += Time;
 		return;
 	}
 
-	while (Time > Counter) {
-		Time		-= Counter;
-		FrameCycles += Counter;
-		Counter		= Frequency;
+	while (Time > m_iCounter) {
+		Time		   -= m_iCounter;
+		m_iFrameCycles += m_iCounter;
+		m_iCounter	   = m_iFrequency;
 
 		// DMA reader
 		// Check if a new byte should be fetched
-		if (!SampleFilled) {
+		if (!m_bSampleFilled && m_iDMA_LengthCounter > 0) {
 
-			SampleFilled	= true;
-			SampleBuf		= SampleMem->Read((DMA_LoadRegCnt++) | 0x8000);
-			//SampleBuf		= CPU->GetByte((DMA_LoadRegCnt++) | 0x8000);
-//			CPU->AddCycles(4);
+//			m_iSampleBuffer	= m_pEmulator->ReadMemory(m_iDMA_Address | 0x8000);
+			m_iSampleBuffer = m_pSampleMem->Read(m_iDMA_Address | 0x8000);
+			m_bSampleFilled = true;
+//			m_pEmulator->ConsumeCycles(4);
 
-			if (!DMA_LengthCounter) {
-				switch (PlayMode) {
+			m_iDMA_Address = (m_iDMA_Address + 1) & 0x7FFF;
+			m_iDMA_LengthCounter--;
+
+			if (!m_iDMA_LengthCounter) {
+				switch (m_iPlayMode) {
 					case 0x00:	// Stop
-						Enabled = 0;
-						SilenceFlag = true;
 						break;
-					case 0x40:
+					case 0x40:	// Loop
 					case 0xC0:
 						Reload();
 						break;
 					case 0x80:	// Stop and do IRQ (not when an NSF is playing)
-						
-						Enabled = 0;
-//						SilenceFlag = true;
-						TriggeredIRQ = true;
-						
-						//DeltaCounter = 0x10;
-						//Reload();
-
+						m_bTriggeredIRQ = true;
 						break;
 				}
 			}
-
-			DMA_LengthCounter--;
-
 		}
 
 		// Output unit
-		if (!Divider) {
-			Divider = 8;
-			ShiftReg = SampleBuf;
-			SampleFilled = false;
-		}
-
-		if (!SilenceFlag) {
-			if (ShiftReg & 0x01) {
-				if (DeltaCounter < 126)
-					DeltaCounter += 2;
-				else if (DeltaCounter == 126)
-					DeltaCounter++;
+		if (!m_iBitDivider) {
+			if (m_bSampleFilled) {
+				m_iBitDivider = 8;
+				m_iShiftReg = m_iSampleBuffer;
+				m_bSampleFilled  = false;
 			}
 			else {
-				if (DeltaCounter > 1)
-					DeltaCounter -= 2;
-				else if (DeltaCounter == 2)
-					DeltaCounter--;
+				m_bSilenceFlag = true;
 			}
 		}
 
-		ShiftReg >>= 1;
-		Divider--;
+		if (!m_bSilenceFlag) {
+			if ((m_iShiftReg & 1) == 1) {
+				if (m_iDeltaCounter < 126)
+					m_iDeltaCounter += 2;
+			}
+			else {
+				if (m_iDeltaCounter > 1)
+					m_iDeltaCounter -= 2;
+			}
 
-		AddMixer(DeltaCounter);
+			m_iShiftReg >>= 1;
+			m_iBitDivider--;
+		}
+
+		Mix(m_iDeltaCounter);
 	}
 
-	Counter -= Time;
-	FrameCycles += Time;
+	m_iCounter -= Time;
+	m_iFrameCycles += Time;
 }

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -100,6 +100,13 @@ void CDocumentFile::WriteBlockChar(char Value)
 	m_iBlockPointer += sizeof(char);
 }
 
+void CDocumentFile::WriteString(CString String)
+{
+	for (int i = 0; i < String.GetLength(); i++)
+		WriteBlockChar(String.GetAt(i));
+	WriteBlockChar(0);
+}
+
 void CDocumentFile::FlushBlock()
 {
 	if (!m_pBlockData)
@@ -191,6 +198,19 @@ char CDocumentFile::GetBlockChar()
 	m_iBlockPointer += sizeof(char);
 
 	return Value;
+}
+
+CString CDocumentFile::ReadString()
+{
+	char str[1024], c;
+	int str_ptr = 0;
+
+	while (c = GetBlockChar())
+		str[str_ptr++] = c;
+
+	str[str_ptr++] = 0;
+
+	return CString(str);
 }
 
 void CDocumentFile::GetBlock(void *Buffer, int Size)

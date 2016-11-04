@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,25 +25,26 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
+#define EVENT_FLAG	1
+#define NO_SYNC		2
+#define	IN_SYNC		3
+
 class CDSoundChannel
 {
 	friend class CDSound;
 
 	public:
+		CDSoundChannel();
+		~CDSoundChannel();
+
 		void Play();
 		void Stop();
 		void Pause();
 		void Clear();
 		void Reset();
 		void WriteSoundBuffer(void *Buffer, unsigned int Samples);
-		bool IsInSync();
-
-		void SetNotification();
-		void ResetNotification();
 		int	 WaitForDirectSoundEvent();
-
-		int GetWriteBlock();
-		int GetPlayBlock();
+		bool IsPlaying() const;
 
 		int GetBlockSize()		{ return BlockSize;		};
 		int GetBlockSamples()	{ return BlockSize >> ((SampleSize >> 3) - 1); };
@@ -53,32 +54,20 @@ class CDSoundChannel
 		int	GetSampleRate()		{ return SampleRate;	};
 		int GetChannels()		{ return Channels;		};
 
-		int GetBlock();
-
-		int GetPlayPos();
-
-		bool IsStartSync() { return StartSync; };
-
-		int		Underruns;
+	private:
+		int GetWriteBlock();
+		int GetPlayBlock();
 
 	private:
-		LPDIRECTSOUNDBUFFER		lpDirectSoundBuffer;
-		LPDIRECTSOUNDNOTIFY		lpDirectSoundNotify;
+		LPDIRECTSOUNDBUFFER	lpDirectSoundBuffer;
+		LPDIRECTSOUNDNOTIFY	lpDirectSoundNotify;
 
-		HANDLE	hNotification;
+		HANDLE	hEventList[2];
 		HWND	hWndTarget;
 
-		int		SampleSize;
-		int		SampleRate;
-		int		Blocks;
-		int		Channels;
-		int		BufferLength;			// in ms
+		int		SampleSize, SampleRate, Channels;
+		int		BufferLength, Blocks;			// buffer length in ms
 		int		LastWriteBlock;
-
-		bool	InSync;
-		bool	StartSync;
-		bool	SyncProblem;
-		bool	ManualEvent;
 
 		unsigned int	SoundBufferSize;		// in bytes
 		unsigned int	BlockSize;				// in bytes
@@ -104,9 +93,7 @@ class CDSound
 		int				MatchDeviceID(char *Name);
 
 	private:
-
 		const static unsigned int MAX_DEVICES = 256;
-
 		static const int MAX_BLOCKS;
 
 		HWND			hWndTarget;
@@ -116,7 +103,6 @@ class CDSound
 		unsigned int	m_iDevices;
 		char			*m_pcDevice[MAX_DEVICES];
 		GUID			*m_pGUIDs[MAX_DEVICES];
-
 };
 
 #endif /* _DSOUND_H_ */

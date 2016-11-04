@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -60,12 +60,13 @@ static const char *KEY_NAMES[] = {
 };
 
 struct stAccelEntry {
-	char	*name;
-	int		mod;
-	int		key;
-	int		id;
+	char *name;
+	int	 mod;
+	int	 key;
+	int	 id;
 };
 
+// Don't forget to update ACCEL_COUNT
 const stAccelEntry DEFAULT_TABLE[] = {
 	{"Previous octave",				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
 	{"Next octave",					MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
@@ -78,7 +79,7 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{"Select all",					MOD_CONTROL,	'A',			ID_EDIT_SELECTALL},
 	{"Toggle channel",				MOD_ALT,		VK_F9,			ID_TRACKER_TOGGLECHANNEL},
 	{"Solo channel",				MOD_ALT,		VK_F10,			ID_TRACKER_SOLOCHANNEL},
-	{"Gradient",					MOD_NONE,		0,				ID_EDIT_GRADIENT},
+	{"Gradient",					MOD_CONTROL,	'G',			ID_EDIT_GRADIENT},
 	{"Go to next frame",			MOD_CONTROL,	VK_RIGHT,		ID_NEXT_FRAME},
 	{"Go to previous frame",		MOD_CONTROL,	VK_LEFT,		ID_PREV_FRAME},
 	{"Transpose, decrease notes",	MOD_CONTROL,	VK_F1,			ID_TRANSPOSE_DECREASENOTE},
@@ -89,10 +90,13 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{"Decrease pattern",			MOD_NONE,		VK_SUBTRACT,	IDC_FRAME_DEC},
 	{"Next instrument",				MOD_CONTROL,	VK_DOWN,		ID_CMD_NEXT_INSTRUMENT},
 	{"Previous instrument",			MOD_CONTROL,	VK_UP,			ID_CMD_PREV_INSTRUMENT},
-	{"Mask instruments",			MOD_ALT,		'T',			ID_EDIT_INSTRUMENTMASK}
+	{"Mask instruments",			MOD_ALT,		'T',			ID_EDIT_INSTRUMENTMASK},
+	{"Edit instrument",				MOD_CONTROL,	'I',			ID_MODULE_EDITINSTRUMENT},
+	{"Increase step size",			MOD_CONTROL,	VK_ADD,			ID_CMD_INCREASESTEPSIZE},
+	{"Decrease step size",			MOD_CONTROL,	VK_SUBTRACT,	ID_CMD_DECREASESTEPSIZE},
 };
 
-const int ACCEL_COUNT = 23;
+const int ACCEL_COUNT = 26;		// Don't forget to update this
 
 stAccelEntry EntriesTable[ACCEL_COUNT];
 

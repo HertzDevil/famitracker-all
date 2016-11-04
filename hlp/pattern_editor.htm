@@ -1,0 +1,201 @@
+<HTML>
+<HEAD>
+<META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
+<TITLE></TITLE>
+    <style type="text/css">
+        .style1
+        {
+            font-size: 11pt;
+        }
+        .style2
+        {
+            width: 116px;
+        }
+        .style3
+        {
+            height: 19px;
+            width: 116px;
+        }
+    </style>
+</HEAD>
+<BODY style="font-size: 9pt; font-family: Arial">
+    <span style="font-size: 16pt; color: gray; font-family: Verdana"><strong>Pattern editor</strong></span><hr />
+    <br />
+    The pattern field consists of all channels and works like this: (all fields 
+    except note &amp; octave are in hexadecimal)<br />
+    <img id="Img4" src="img/pattern.PNG" style="font-size: 10pt" alt="" /><br />
+    <p>
+    Use insert-key to insert rows and delete-key to delete rows. Backspace removes
+    a row. Every field can be cleared by using the '-' (dash) key. 
+        <br />
+        Additional keys can be found
+    in <a href="shortcuts.htm">key command-section.</a><br />
+        <br />
+        Channels can be muted by clicking it's name in the channel header, double clicking
+        makes it play solo. (Same as Alt+F9 &amp; Alt+F10)</p>
+    <ul>
+        <li><strong>Note column<br /></strong>Note and octave to play. The editor must be in 
+            record mode to insert notes
+    in the column (toggle record / normal mode with space).<br />Keyboard keys are mapped to notes as following: Z = C,
+    S = C#, X = D, D = D#, C = E..., and Q, 2, W, 3... are one octave higher. 
+            <br />Octave
+    can be changed either by F2 (octave 0) to F9 (octave 7), or stepped up and down
+    with numpad keys '/' and '*'.<br />
+        </li>
+        <li>
+            <strong>Instrument column<br /></strong>The instrument to use. Selected instrument is automatically inserted unless
+    the instrument mask option is selected.<br />If cleared then the last instrument is 
+            used.</li>
+        <li>
+            <strong>Volume column</strong><br />Sets the volume for a channel, range 0 - F. 
+            Works only in square and noise-channels.
+            </li>
+        <li>
+            <strong>Channel effects<br /></strong>Used for channel effects. Format is 
+            <strong>Yxx</strong>, where <strong>Y</strong>
+    = effect number and <strong>xx</strong> = effect parameter.
+            <br />Additional effect-columns can be used by clicking the arrows in the channel header.<br />
+            <a href="effect_list.htm">See this page for available effects.</a>
+            <br /></li>
+    </ul>
+    <strong><span class="style1">Toolbars</span><br />
+    <br />
+    <img id="Img3" src="img/toolbar1.png" style="font-size: 10pt" alt=""/><br />
+    <br /></strong>The buttons are in order<br />
+    <table id="Table1" border="1" cellpadding="2" cellspacing="0" style="font-size: 9pt; font-family: Arial">
+        <tr>
+            <td class="style2">New</td>
+            <td>New module</td>
+        </tr>
+        <tr>
+            <td class="style3">Open</td>
+            <td style="height: 19px">Open a file</td>
+        </tr>
+        <tr>
+            <td class="style2">Save</td>
+            <td>Save current file</td>
+        </tr>
+        <tr>
+            <td class="style2">Cut</td>
+            <td>Cut selected pattern</td>
+        </tr>
+        <tr>
+            <td class="style2">Copy</td>
+            <td>Copies selected pattern</td>
+        </tr>
+        <tr>
+            <td class="style2">Paste</td>
+            <td>Paste into pattern</td>
+        </tr>
+        <tr>
+            <td class="style2">About</td>
+            <td>Display about box</td>
+        </tr>
+        <tr>
+            <td class="style2">Help</td>
+            <td>Help button</td>
+        </tr>
+        <tr>
+            <td class="style2">Play</td>
+            <td>Play the module</td>
+        </tr>
+        <tr>
+            <td class="style2">Play pattern</td>
+            <td>Play and loop selected pattern</td>
+        </tr>
+        <tr>
+            <td class="style2">Stop</td>
+            <td>Stop player</td>
+        </tr>
+        <tr>
+            <td class="style2">Record</td>
+            <td>Record/normal mode</td>
+        </tr>
+        <tr>
+            <td class="style2">Add frame</td>
+            <td>Add a new frame</td>
+        </tr>
+        <tr>
+            <td class="style2">Remove frame</td>
+            <td>Remove selected frame</td>
+        </tr>
+        <tr>
+            <td class="style2">Move frame down</td>
+            <td>Move selected frame down one step</td>
+        </tr>
+        <tr>
+            <td class="style2">Move frame up</td>
+            <td>Move selected frame up one step</td>
+        </tr>
+        <tr>
+            <td class="style2">Previous song</td>
+            <td>Moves to previous song in list</td>
+        </tr>
+        <tr>
+            <td class="style2">Next song</td>
+            <td>Moves to next song in list</td>
+        </tr>
+        <tr>
+            <td class="style2">Setting</td>
+            <td>Bring up settings dialog</td>
+        </tr>
+        <tr>
+            <td class="style2">NSF export</td>
+            <td>Bring up export dialog</td>
+        </tr>
+        <tr>
+            <td class="style2">Octave</td>
+            <td>Selected octave</td>
+        </tr>
+    </table>
+    <br />
+    <br />
+    <strong><span class="style1">The control panel</span><br />
+        <br />
+        <img id="IMG1" src="img/toolbar2.png" style="font-size: 10pt" /><br />
+        <br />
+        <br />
+        Frame editor<br />
+        <br />
+    </strong>The first part is the frame editor (or order editor in other trackers).
+    A frame consists of pattern numbers for the channels. <span style="font-size: 9pt">Each
+        channel is represented by a number that represents the selected pattern slot. There
+        128 available pattern slots for each channel, and the patterns aren't shared across
+        the channels. 128 frames can be used.<br />
+        <br />
+    </span>To switch pattern, press the "+" - or "-" buttons or "+" &amp; "-" keys in
+    the pattern editor. If "change all" is checked, all channels will switch. To move
+    between frames in the pattern editor, use Ctrl+Right and Ctrl+Left.<br />
+    <br />
+    <br />
+    <strong>Song settings &amp; edit settings<br />
+        <br />
+    </strong>Song settings is default play speed &amp; tempo, number
+    of rows and frames in the song. Numbers can be entered manually by double-clicking the boxes.<br />
+    <br />
+    Speed and tempo can also be changed by using pattern command <b>Fxx</b>. The real BPM
+    tempo is calculated by the formula <strong>(6 * Tempo) / Speed</strong>, which means that the
+    tempo box is correct at speed of 6. The time base for the song is 60 or
+    50 frames per second (when using default NTSC/PAL settings), and this is used to 
+    calculate the average tempo of the song. This means that some rows may play 
+    slightly longer than others and may be noticeable. To avoid this, leave the 
+    tempo setting at 150 (125 for PAL) and use only the speed setting to change BPM 
+    to ensure all rows get the same duration.<br />
+    <br />
+    The step setting changes the step behaviour when moving the cursor in the pattern
+    editor. Key repetition enables key repeat behaviour.<br />
+    <br />
+    <strong>
+        <br />
+        Song information &amp; instrument list<br />
+        <br />
+    </strong>Song information text fields are for name, artist and copyright. These 
+    strings are stored
+    in NSFs (and also seen in the NSF export dialog). The song
+    list selects a song in multi-song files (also known as subtunes). 
+    The big list to the right is the instrument box. The small toolbar is used to create,
+    delete, open, save and edit settings for instrument and the text box is to name 
+    instruments.
+
+</BODY>
+</HTML>

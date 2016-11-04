@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,18 +18,21 @@
 ** must bear this legend.
 */
 
-#include "stdafx.h"
-#include "apu/apu.h"
-#include "apu/square.h"
+#include <memory>
+#include "APU/apu.h"
+#include "APU/square.h"
 
 // This is also shared with MMC5
 
+const uint8	CSquare::DUTY_PULSE[] = {0x0E, 0x0C, 0x08, 0x04};
+
 CSquare::CSquare(CMixer *pMixer, int ID)
 {
-	memset(this, 0, sizeof(CSquare));
+//	memset(this, 0, sizeof(CSquare));
 
-	Mixer		= pMixer;
-	ChanId		= ID;
+	m_pMixer = pMixer;
+	m_iChanId = ID;
+	m_iChip = SNDCHIP_NONE;
 }
 
 CSquare::~CSquare()
@@ -38,14 +41,18 @@ CSquare::~CSquare()
 
 void CSquare::Reset()
 {
-	Counter = 0;
-	DutyLength = DutyCycle = 0;
-	LengthCounter = Wavelength = SweepCounter = 0;
-	Enabled = ControlReg = Volume = Volume = 0;
+	m_iEnabled = m_iControlReg = 0;
+	m_iCounter = m_iEnvelopeCounter = 0;
 
-	SweepResult = 0;
-	SweepRefresh = SweepShift = 0;
-	SweepEnabled = SweepMode = 0;
+	SweepCounter = 1;
+	SweepPeriod = 1;
+
+	Write(0, 0);
+	Write(1, 0);
+	Write(2, 0);
+	Write(3, 0);
+
+	SweepUpdate(false);
 
 	EndFrame();
 }
@@ -54,125 +61,115 @@ void CSquare::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 	case 0x00:
-		DutyLength		= CAPU::DUTY_PULSE[(Value & 0xC0) >> 6];
-		Looping			= (Value & 0x20);
-		EnvelopeFix		= (Value & 0x10);
-		Volume			= (Value & 0x0F);
-		EnvelopeSpeed	= (Value & 0x0F) + 1;
-
-		if (DutyLength == 4) {
-			DutyLength = 0x0C;
-			bInverted = true;
+		m_iDutyLength = DUTY_PULSE[(Value & 0xC0) >> 6];
+		m_iFixedVolume = (Value & 0x0F);
+		m_iLooping = (Value & 0x20);
+		m_iEnvelopeFix = (Value & 0x10);
+		m_iEnvelopeSpeed = (Value & 0x0F) + 1;
+		if (m_iDutyLength == 4) {
+			m_iDutyLength = 0x0C;
+			m_bInvert = true;
 		}
 		else
-			bInverted = false;
-
+			m_bInvert = false;
 		break;
-
 	case 0x01:
-		SweepRegister	= Value;
-		SweepWritten	= true;
+		SweepEnabled = (Value & 0x80);
+		SweepPeriod	 = ((Value >> 4) & 0x07) + 1;
+		SweepMode	 = (Value & 0x08);		
+		SweepShift	 = (Value & 0x07);
+		SweepWritten = true;
 		break;
-
 	case 0x02:
-		Wavelength		= Value | (Wavelength & 0x0700);
+		m_iFrequency = Value | (m_iFrequency & 0x0700);
 		break;
-
 	case 0x03:
-		LengthCounter	= CAPU::LENGTH_TABLE[((Value & 0xF8) >> 3)] + 1;
-		Wavelength		= ((Value & 0x07) << 8) | (Wavelength & 0xFF);
-		DutyCycle		= 0;
-		EnvelopeVolume	= 0x0F;
-
-		if (ControlReg)
-			Enabled = 1;
-
+		m_iFrequency = ((Value & 0x07) << 8) | (m_iFrequency & 0xFF);
+		m_iLengthCounter = CAPU::LENGTH_TABLE[((Value & 0xF8) >> 3)] + 1;
+		m_iDutyCycle = 0;
+		m_iEnvelopeVolume = 0x0F;
+		if (m_iControlReg)
+			m_iEnabled = 1;
 		break;
 	}
 }
 
 void CSquare::WriteControl(uint8 Value)
 {
-	ControlReg = Value & 0x01;
+	m_iControlReg = Value & 0x01;
 
-	if (ControlReg == 0)
-		Enabled = 0;
+	if (m_iControlReg == 0)
+		m_iEnabled = 0;
 }
 
 uint8 CSquare::ReadControl()
 {
-	return ((LengthCounter > 0) && (Enabled == 1));
+	return ((m_iLengthCounter > 0) && (m_iEnabled == 1));
 }
 
 void CSquare::Process(uint32 Time)
 {
-	if (!Wavelength) {
-		FrameCycles += Time;
+	if (!m_iFrequency) {
+		m_iFrameCycles += Time;
 		return;
-	}	
-
-	bool Valid = (Wavelength > 7) && (Enabled != 0) && (LengthCounter > 0) && SweepResult < 0x800;
-
-	while (Time >= Counter) {
-		Time		-= Counter;
-		FrameCycles += Counter;
-		Counter		= Wavelength + 1;
-		DutyCycle	= (DutyCycle + 1) & 0x0F;
-		if (bInverted)
-			AddMixer((((DutyCycle >= DutyLength) && Valid) ? 0 : (EnvelopeFix ? Volume : EnvelopeVolume)));
-		else
-			AddMixer((((DutyCycle >= DutyLength) && Valid) ? (EnvelopeFix ? Volume : EnvelopeVolume) : 0));
 	}
 
-	Counter -= (uint16)Time;
-	FrameCycles += Time;
+	bool Valid = (m_iFrequency > 7) && (m_iEnabled != 0) && (m_iLengthCounter > 0) && SweepResult < 0x800;
+
+	while (Time >= m_iCounter) {
+		Time			-= m_iCounter;
+		m_iFrameCycles	+= m_iCounter;
+		m_iCounter		= m_iFrequency + 1;
+		m_iDutyCycle	= (m_iDutyCycle + 1) & 0x0F;
+		if (m_bInvert)
+			Mix((((m_iDutyCycle >= m_iDutyLength) && Valid) ? 0 : (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume)));
+		else
+			Mix((((m_iDutyCycle >= m_iDutyLength) && Valid) ? (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume) : 0));
+	}
+
+	m_iCounter -= Time;
+	m_iFrameCycles += Time;
 }
 
 void CSquare::LengthCounterUpdate()
 {
-	if ((Looping == 0) && (LengthCounter > 0)) LengthCounter--;
+	if ((m_iLooping == 0) && (m_iLengthCounter > 0)) m_iLengthCounter--;
 }
 
-void CSquare::SweepUpdate1()
+void CSquare::SweepUpdate(bool First)
 {
-	SweepResult = (Wavelength >> SweepShift);
+	SweepResult = (m_iFrequency >> SweepShift);
 
 	if (SweepMode)
-		SweepResult = Wavelength - SweepResult;
+		SweepResult = m_iFrequency - SweepResult - (First ? 0 : 1);
 	else
-		SweepResult = Wavelength + SweepResult;
+		SweepResult = m_iFrequency + SweepResult;
 
-	if (SweepEnabled && (Wavelength > 0x07) && (SweepResult < 0x800) && (SweepShift > 0)) {
-		if (SweepCounter == 0) {
-			SweepCounter	= SweepRefresh + 1;
-			Wavelength		= SweepResult;
-		}
-		SweepCounter--;
+	if (--SweepCounter == 0) {
+		SweepCounter = SweepPeriod;
+		if (SweepEnabled && (m_iFrequency > 0x07) && (SweepResult < 0x800) && (SweepShift > 0))
+			m_iFrequency = SweepResult;
 	}
 
 	if (SweepWritten) {
-		SweepWritten	= false;
-		SweepEnabled	= (SweepRegister & 0x80);	
-		SweepRefresh	= (SweepRegister & 0x70) >> 4;
-		SweepMode		= (SweepRegister & 0x08);		
-		SweepShift		= (SweepRegister & 0x07);	
-		SweepCounter	= SweepRefresh + 1;
+		SweepWritten = false;
+		SweepCounter = SweepPeriod;
 	}
 }
-
+/*
 void CSquare::SweepUpdate2()
 {
-	SweepResult = (Wavelength >> SweepShift);
+	SweepResult = (m_iFrequency >> SweepShift);
 
 	if (SweepMode)
-		SweepResult = Wavelength - SweepResult + 1;
+		SweepResult = m_iFrequency - SweepResult + 1;
 	else
-		SweepResult = Wavelength + SweepResult;
+		SweepResult = m_iFrequency + SweepResult;
 
-	if (SweepEnabled && Wavelength > 0x07 && SweepResult < 0x800 && SweepShift > 0) {
-		if (SweepCounter == 0) {
+	if (SweepEnabled && m_iFrequency > 0x07 && SweepResult < 0x800 && SweepShift > 0) {
+		if (SweepCounter <= 1) {
 			SweepCounter	= SweepRefresh + 1;
-			Wavelength		= SweepResult;
+			m_iFrequency	= SweepResult;
 		}
 		SweepCounter--;
 	}
@@ -186,8 +183,17 @@ void CSquare::SweepUpdate2()
 		SweepCounter	= SweepRefresh + 1;
 	}
 }
-
+*/
 void CSquare::EnvelopeUpdate()
 {
-	DoEnvelope();
+	if (--m_iEnvelopeCounter < 1) {
+		m_iEnvelopeCounter += m_iEnvelopeSpeed;
+		if (!m_iEnvelopeFix) {
+			if (m_iLooping)
+				m_iEnvelopeVolume = (m_iEnvelopeVolume - 1) & 0x0F;
+			else if (m_iEnvelopeVolume > 0)
+				m_iEnvelopeVolume--;
+		}
+	}
 }
+

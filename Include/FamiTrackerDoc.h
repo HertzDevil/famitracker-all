@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 
 
 #pragma once
+
+#include "apu/apu.h"
 
 #define MIDI_NOTE(octave, note)		((octave) * 12 + (note) - 1)
 #define GET_OCTAVE(midi_note)		((midi_note) / 12)
@@ -57,6 +59,7 @@ const int MAX_CHANNELS				= 5 + 8;	// Number of avaliable channels (max)
 
 const int CHANNELS_DEFAULT			= 5;
 const int CHANNELS_VRC6				= 3;
+const int CHANNELS_VRC7				= 6;
 
 const int OCTAVE_RANGE				= 8;
 const int NOTE_RANGE				= 12;
@@ -67,13 +70,15 @@ const unsigned int FRAMERATE_NTSC	= 60;
 const unsigned int FRAMERATE_PAL	= 50;
 
 enum {
-	INST_2A03,
-	INST_VRC6
+	INST_2A03 = 1,
+	INST_VRC6,
+	INST_VRC7
 };
 
 enum {				// Supported expansion chips
-	CHIP_NONE,
-	CHIP_VRC6
+	CHIP_NONE = SNDCHIP_NONE,
+	CHIP_VRC6 = SNDCHIP_VRC6,
+	CHIP_VRC7 = SNDCHIP_VRC7,
 };
 
 enum { 
@@ -114,9 +119,9 @@ enum eEffects {
 	EF_PORTA_DOWN,
 	EF_DUTY_CYCLE,
 	EF_SAMPLE_OFFSET,
-
 	EF_SLIDE_UP,
 	EF_SLIDE_DOWN,
+	EF_VOLUME_SLIDE,
 
 	EF_COUNT
 };
@@ -140,26 +145,15 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 '2',	// Portamento down
 						 'V',	// Duty cycle
 						 'Y',	// Sample offset
-						 
-						 'Q',
-						 'R',
+						 'Q',	// Slide up
+						 'R',	// Slide down
+						 'A',	// Volume slide
 
 };
 
 enum eNotes {
 	NONE = 0,
-	C,
-	Cb,
-	D,
-	Db,
-	E,
-	F,
-	Fb,
-	G,
-	Gb,
-	A,
-	Ab,
-	B,
+	C, Cb, D, Db, E, F, Fb, G, Gb, A, Ab, B,
 	RELEASE,	// Halt, key is released
 	HALT,		// Halt note (a ***)
 };
@@ -193,9 +187,6 @@ struct stSequence {
 
 class CDSample {
 public:
-//	unsigned int GetRoundedSampleSize() {
-//		return ((SampleSize >> 4) + 1) << 4;
-//	}
 	unsigned int SampleSize;
 	char		*SampleData;
 	char		Name[256];
@@ -281,11 +272,20 @@ public:
 	void			SetSongSpeed(unsigned int Speed);					// Sets the speed of song
 	void			SetSongTempo(unsigned int Tempo);
 
-	void			SetTracks(unsigned int Tracks);
+	void			ClearPatterns();
+
+	// Track functions
+//	void			SetTracks(unsigned int Tracks);
 	void			SelectTrack(unsigned int Track);
 	void			AllocateSong(unsigned int Song);
 	unsigned int	GetTrackCount();
 	unsigned int	GetSelectedTrack();
+	char			*GetTrackTitle(unsigned int Track) const;
+	bool			AddTrack();
+	void			RemoveTrack(unsigned int Track);
+	void			SetTrackTitle(unsigned int Track, CString Title);
+	void			MoveTrackUp(unsigned int Track);
+	void			MoveTrackDown(unsigned int Track);
 
 	void			SelectExpansionChip(unsigned char Chip);
 	unsigned char	GetExpansionChip() const { return m_cExpansionChip; };
@@ -307,13 +307,15 @@ public:
 	unsigned int	GetPatternAtFrame(unsigned int Frame, unsigned int Channel) const;
 	void			SetPatternAtFrame(unsigned int Frame, unsigned int Channel, unsigned int Pattern);
 
+	int				GetFirstFreePattern(int Channel);
+
 	// General
 	bool			IsFileLoaded() const { return m_bFileLoaded; };
 	unsigned int	GetFrameRate(void) const;
 
 	// Pattern editing
-	void			IncreasePattern(unsigned int PatternPos, unsigned int Channel);
-	void			DecreasePattern(unsigned int PatternPos, unsigned int Channel);
+	void			IncreasePattern(unsigned int PatternPos, unsigned int Channel, int Count);
+	void			DecreasePattern(unsigned int PatternPos, unsigned int Channel, int Count);
 	void			IncreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	void			DecreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	void			IncreaseVolume(unsigned int Frame, unsigned int Channel, unsigned int Row);
@@ -378,6 +380,12 @@ protected:
 	void			ReorderSequences();
 	void			ConvertSequences();
 
+	void			StoreInstrument_2A03(CFile *pFile, CInstrument *pInstr);
+	void			StoreInstrument_VRC6(CFile *pFile, CInstrument *pInstr);
+
+	void			LoadInstrument_2A03(CFile *pFile, CInstrument *pInst, int iInstVer);
+	void			LoadInstrument_VRC6(CFile *pFile, CInstrument *pInst, int iInstVer);
+
 private:
 
 	//
@@ -389,6 +397,8 @@ private:
 	CPatternData	*m_pTunes[MAX_TRACKS];
 
 	unsigned int	m_iTracks, m_iTrack;						// Tracks and selected track
+
+	CString			m_sTrackNames[MAX_TRACKS];
 
 	// Instruments and sequences
 	CInstrument		*m_pInstruments[MAX_INSTRUMENTS];
@@ -410,6 +420,8 @@ private:
 
 	unsigned int	m_iMachine;									// NTSC / PAL
 	unsigned int	m_iEngineSpeed;								// Refresh rate
+
+//	bool			m_bExpandDPCMArea;							// DPCM bank switching
 
 	// Remove this eventually
 	stSequence		Sequences[MAX_SEQUENCES];

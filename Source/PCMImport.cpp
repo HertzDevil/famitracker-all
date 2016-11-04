@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -93,29 +93,33 @@ BEGIN_MESSAGE_MAP(CPCMImport, CDialog)
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 END_MESSAGE_MAP()
 
-stImportedPCM *CPCMImport::ShowDialog()
+CDSample *CPCMImport::ShowDialog()
 {
 	// Return import parameters, 0 if cancel
 
 	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||");
 
-	Imported.Data = NULL;
-	Imported.Name = NULL;
-	Imported.Size = 0;
-
+/*
+	strcpy(pImported->Name, "");
+	Imported.SampleData = NULL;
+	Imported.SampleSize = 0;
+*/
 	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_WAV);
 
 	if (OpenFileDialog.DoModal() == IDCANCEL)
-		return &Imported;
+		return NULL;
+//		return &Imported;
 
 	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_WAV);
 
 	m_strPath		= OpenFileDialog.GetPathName();
 	m_strFileName	= OpenFileDialog.GetFileName();
 
+	pImported = new CDSample;
+
 	CDialog::DoModal();
 
-	return &Imported;
+	return pImported;
 }
 
 // CPCMImport message handlers
@@ -210,7 +214,7 @@ void CPCMImport::OnBnClickedOk()
 	m_fSampleFile.Read(&BlockSize, 4);
 	WaveSize = BlockSize;
 
-	// This is not perfect, but seems to work for most of the files I tried
+	// This is not perfect, but seems to work for the files I tried
 	while (Scanning) {
 		m_fSampleFile.Read(Header, 4);
 		
@@ -228,7 +232,7 @@ void CPCMImport::OnBnClickedOk()
 				m_fSampleFile.Seek(BlockSize - ReadSize, CFile::current);
 
 				if (WaveFormat.wf.wFormatTag != WAVE_FORMAT_PCM) {
-					AfxMessageBox("Cannot load this sample!\nOnly uncompressed PCM is supported.");
+					theApp.DisplayError(ID_INVALID_WAVEFILE);
 					m_fSampleFile.Close();
 					return;
 				}
@@ -298,7 +302,7 @@ void CPCMImport::OnBnClickedOk()
 		Max = 32;
 	}
 
-	// Do the conversion, this is based of Damian Yerrick's program
+	// Do the conversion, this is based on Damian Yerrick's program
 	do {
 		DeltaAcc >>= 1;
 
@@ -375,9 +379,9 @@ void CPCMImport::OnBnClickedOk()
 	// remove .wav
 	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
 
-	Imported.Data = SampleBuf;
-	Imported.Size = Samples;
-	Imported.Name = (char*)(LPCSTR)m_strFileName;
+	pImported->SampleData = SampleBuf;
+	pImported->SampleSize = Samples;
+	strcpy(pImported->Name, (char*)(LPCSTR)m_strFileName);
 
 	m_fSampleFile.Close();
 

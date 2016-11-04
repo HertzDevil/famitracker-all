@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
 */
 
 #pragma once
-
+/*
 struct stImportedPCM {
 	int Size;
 	char *Data;
 	char *Name;
 };
-
+*/
 // CPCMImport dialog
 
 class CPCMImport : public CDialog
@@ -39,15 +39,14 @@ public:
 // Dialog Data
 	enum { IDD = IDD_PCMIMPORT };
 
-	stImportedPCM *ShowDialog();
+	CDSample *ShowDialog();
 
-	stImportedPCM Imported;
-
+	CDSample *pImported;
 	CString	m_strPath, m_strFileName;
-
 	int m_iQuality;
 	int m_iVolume;
-
+	int m_iSampleSize;
+	int m_iChannels;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -55,15 +54,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnInitDialog();
-//	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-//	afx_msg void OnBnClickedOk();
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedOk();
 private:
 	int ReadSample(void);
 	CFile m_fSampleFile;
-
-	int m_iSampleSize;
-	int m_iChannels;
 };

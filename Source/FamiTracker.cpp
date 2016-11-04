@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ BEGIN_MESSAGE_MAP(CFamiTrackerApp, CWinApp)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_ENABLEMIDI, OnUpdateEditEnablemidi)
 END_MESSAGE_MAP()
 
-// Include this for windows xp style in visual studio 2005
+// Include this for windows xp style in visual studio 2005 or later
 #pragma comment(linker, "\"/manifestdependency:type='Win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='X86' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 // CFamiTrackerApp construction
@@ -124,6 +124,8 @@ BOOL CFamiTrackerApp::InitInstance()
 
 	// Sound generator
 	m_pSoundGenerator = new CSoundGen();
+	m_pSoundGenerator->CreateAPU();
+	m_pSoundGenerator->SetupChannels(SNDCHIP_NONE);
 
 	CSingleDocTemplate* pDocTemplate;
 
@@ -137,8 +139,10 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Enable DDE Execute open
 	EnableShellOpen();
 
-	// Kolla upp det här 
+	// Skip this if in wip mode
+#ifndef WIP
 	RegisterShellFileTypes(TRUE);
+#endif
 
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;
@@ -169,8 +173,13 @@ BOOL CFamiTrackerApp::InitInstance()
 	pDocument	= pTrackerView->GetDocument();
 	pView		= pTrackerView;
 
+	// This object is used to indicate if the sound synth thread locks up
+	m_hAliveCheck = CreateEvent(NULL, TRUE, FALSE, NULL);
+	// Used to awake the sound gen thread in case of lock up
+	m_hNotificationEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
 	// Initialize the sound generator
-	if (!m_pSoundGenerator->InitializeSound(GetMainWnd()->m_hWnd)) {	
+	if (!m_pSoundGenerator->InitializeSound(GetMainWnd()->m_hWnd, m_hAliveCheck, m_hNotificationEvent)) {
 		// If failed, restore and save default settings
 		m_pSettings->DefaultSettings();
 		m_pSettings->SaveSettings();
@@ -213,6 +222,8 @@ BOOL CFamiTrackerApp::InitInstance()
 		::FreeLibrary(hinstDll);
 	}
 
+	pMainFrame->ResizeFrameWindow();
+
 	m_bInitialized = true;
 
 	return TRUE;
@@ -252,9 +263,11 @@ void CFamiTrackerApp::ShutDownSynth()
 
 	m_bShuttingDown = true;
 
-	::DuplicateHandle(0, m_pSoundGenerator->m_hThread, 0, &hThread, 0, FALSE, 0);
+//	::DuplicateHandle(0, m_pSoundGenerator->m_hThread, 0, &hThread, 0, FALSE, 0);
+	hThread = m_pSoundGenerator->m_hThread;
 
 	m_pSoundGenerator->PostThreadMessage(WM_QUIT, 0, 0);
+	SetEvent(m_hNotificationEvent);
 
 	// Probe for thread termination
 	for (int i = 0; i < 50; i++) {
@@ -266,6 +279,42 @@ void CFamiTrackerApp::ShutDownSynth()
 
 	// Failed to close thread
 	DisplayError(IDS_SOUNDGEN_CLOSE_ERR);
+}
+
+void CFamiTrackerApp::BufferUnderrun()
+{
+	pMainFrame->SetMessageText(
+		"Audio buffer underrun, sound settings could be too high for this system or CPU utilization is too high."
+		);
+}
+
+void CFamiTrackerApp::CheckSynth()
+{
+	static DWORD LastTime;
+
+	// Monitor performance
+
+	if (!m_hAliveCheck)
+		return;
+
+	if (LastTime == 0)
+		LastTime = GetTickCount();
+
+	if (WaitForSingleObject(m_hAliveCheck, 0) == WAIT_OBJECT_0) {
+		if ((GetTickCount() - LastTime) > 1000) {
+			pMainFrame->SetMessageText(AFX_IDS_IDLEMESSAGE);
+		}
+
+		LastTime = GetTickCount();
+	}
+	else {
+		// Timeout after 1 s
+		if ((GetTickCount() - LastTime) > 1000) {
+			pMainFrame->SetMessageText("It appears the current sound settings aren't working, change settings and try again!");
+		}
+	}
+
+	ResetEvent(m_hAliveCheck);
 }
 
 
@@ -288,6 +337,7 @@ void *CFamiTrackerApp::GetSoundGenerator()
 void CFamiTrackerApp::LoadSoundConfig()
 {
 	m_pSoundGenerator->PostThreadMessage(M_LOAD_SETTINGS, 0, 0);
+	SetEvent(m_hNotificationEvent);
 }
 
 // Get the midi interface
@@ -337,21 +387,24 @@ unsigned int CFamiTrackerApp::GetOutput(int Chan)
 
 void CFamiTrackerApp::RegisterKeyState(int Channel, int Note)
 {
+	if (!pView)
+		return;
+
 	static_cast<CFamiTrackerView*>(pView)->RegisterKeyState(Channel, Note);
 }
 
 // Read and reset frame rate
 int CFamiTrackerApp::GetFrameRate()
 {
-	int RetVal = m_iFrameRate;
-	m_iFrameRate = 0;
-	return RetVal;
+	m_iFrameRate = m_iFrameCounter;
+	m_iFrameCounter = 0;
+	return m_iFrameRate;
 }
 
 // Increases frame
 void CFamiTrackerApp::StepFrame()
 {
-	m_iFrameRate++;
+	m_iFrameCounter++;
 }
 
 int CFamiTrackerApp::GetUnderruns()
@@ -452,8 +505,14 @@ BOOL CAboutDlg::OnInitDialog()
 
 void CFamiTrackerApp::ReloadColorScheme(void)
 {
+	((CFamiTrackerView*)pView)->CreateFont();
 	((CFamiTrackerView*)pView)->ForceRedraw();
 	((CMainFrame*)(pView->GetParentFrame()))->SetupColors();
+}
+
+void CFamiTrackerApp::ResetPlayer()
+{
+	m_pSoundGenerator->ResetPlayer();
 }
 
 void CFamiTrackerApp::OnTrackerPlay()
@@ -487,8 +546,9 @@ void CFamiTrackerApp::OnTrackerTogglePlay()
 
 void CFamiTrackerApp::OnTrackerPlaypattern()
 {
-	if (m_bInitialized)
+	if (m_bInitialized) {
 		m_pSoundGenerator->StartPlayer(true);
+	}
 }
 
 bool CFamiTrackerApp::IsPlaying()
@@ -516,4 +576,21 @@ CDocument *CFamiTrackerApp::GetFirstDocument()
 	DocPos		= pDocTemp->GetFirstDocPosition();
 
 	return pDocTemp->GetNextDoc(DocPos);
+}
+
+void CFamiTrackerApp::SetSoundChip(int Chip) 
+{ 	
+	m_pSoundGenerator->SetupChannels(Chip); 
+
+	/*
+	POSITION Pos = pDocTemplate->GetFirstDocPosition();
+	CDocument *pDoc = pDocTemplate->GetNextDoc(Pos);
+	Pos	= pDoc->GetFirstViewPosition();
+	CView *pView = pDoc->GetNextView(Pos);
+	CMainFrame *pFrame = (CMainFrame*)pView->GetParentFrame();
+	pFrame->ResizeFrameWindow();
+	*/
+
+	if (pMainFrame)
+		pMainFrame->ResizeFrameWindow();
 }

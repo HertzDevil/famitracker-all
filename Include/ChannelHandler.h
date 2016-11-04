@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,6 +22,9 @@
 
 #include "apu/apu.h"
 
+const int MAX_VOL = 0x7F;
+const int VOL_SHIFT = 3;
+
 //
 // Base class
 //
@@ -36,7 +39,7 @@ public:
 	virtual void SetNoteTable(unsigned int *NoteLookupTable);
 
 	// Public functions
-	void InitChannel(CAPU *pAPU, unsigned char *pVibTable, CFamiTrackerDoc *pDoc);
+	void InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *pDoc);
 	void KillChannel();
 	void MakeSilent();
 	void Arpeggiate(unsigned int Note);
@@ -45,6 +48,10 @@ protected:
 	// Protected virtual functions
 	virtual	unsigned int	TriggerNote(int Note);
 	virtual void			ClearRegisters() = 0;		// this must be overloaded
+	void	RunNote(int Octave, int Note);
+	void	SetupSlide(int Type, int EffParam);
+
+	bool CheckNote(stChanNote *pNoteData, int InstrumentType);
 
 	bool CheckCommonEffects(unsigned char EffCmd, unsigned char EffParam);
 	bool HandleDelay(stChanNote *NoteData, int EffColumns);
@@ -57,19 +64,19 @@ protected:
 	CFamiTrackerDoc	*m_pDocument;
 
 	unsigned int *m_pNoteLookupTable;
-	unsigned char *m_pcVibTable;
+	int *m_pcVibTable;
 
 	// Delay variables
 	bool				m_bDelayEnabled;
 	unsigned char		m_cDelayCounter;
-	unsigned int		m_iDelayEffColumns;		// exterminate this somehow
+	unsigned int		m_iDelayEffColumns;		
 	stChanNote			*m_DelayNote;
 
 	// General variables
 	bool				m_bEnabled;
 	unsigned int		m_iFrequency, m_iLastFrequency;
-	unsigned int		m_iNote/*, m_iLastNote*/;
-	unsigned int		m_iVolume;
+	unsigned int		m_iNote;
+	char				m_iVolume, m_iVolSlide;
 
 	// Effects
 	unsigned int		m_iVibratoDepth, m_iVibratoSpeed, m_iVibratoPhase;
@@ -96,10 +103,8 @@ class CChannelHandler2A03 : public CChannelHandler {
 public:
 	void PlayNote(stChanNote *NoteData, int EffColumns);
 	void ProcessChannel();
-	//void SetNoteTable(unsigned int *NoteLookupTable);
 protected:
 	void RunSequence(int Index, CSequence *pSequence);
-//	unsigned int TriggerNote(int Note);
 
 	unsigned char m_cSweep;
 	unsigned char m_cDutyCycle, m_iDefaultDuty;
@@ -174,7 +179,7 @@ public:
 protected:
 	void RunSequence(int Index, CSequence *pSequence);
 
-	unsigned char m_cDutyCycle;
+	unsigned char m_cDutyCycle, m_iDefaultDuty;
 
 	int ModEnable[MOD_COUNT];
 	int	ModIndex[MOD_COUNT];
@@ -184,7 +189,7 @@ protected:
 
 class CVRC6Square1 : public CChannelHandlerVRC6 {
 public:
-	CVRC6Square1() { m_iChannelID = 5; m_bEnabled = false; };
+	CVRC6Square1() { m_iDefaultDuty = 0; m_iChannelID = 5; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
@@ -193,7 +198,7 @@ private:
 
 class CVRC6Square2 : public CChannelHandlerVRC6 {
 public:
-	CVRC6Square2() { m_iChannelID = 6; m_bEnabled = false; };
+	CVRC6Square2() { m_iDefaultDuty = 0;  m_iChannelID = 6; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
@@ -202,9 +207,33 @@ private:
 
 class CVRC6Sawtooth : public CChannelHandlerVRC6 {
 public:
-	CVRC6Sawtooth() { m_iChannelID = 7; m_bEnabled = false; };
+	CVRC6Sawtooth() { m_iDefaultDuty = 0;  m_iChannelID = 7; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 private:
+};
+
+//
+// Derived channels, VRC7
+//
+
+class CChannelHandlerVRC7 : public CChannelHandler {
+public:
+	void ProcessChannel();
+	void PlayNote(stChanNote *NoteData, int EffColumns);
+protected:
+	unsigned char m_iChannel;
+	unsigned char m_iPatch;
+};
+
+class CVRC7Channel : public CChannelHandlerVRC7 {
+public:
+	CVRC7Channel() { m_iChannelID = 5; m_bEnabled = false; };
+	void RefreshChannel();
+	void ChannelIndex(int Channel) {m_iChannel = Channel; m_iChannelID = 5 + Channel; };
+protected:
+	void ClearRegisters();
+private:
+	void RegWrite(unsigned char Reg, unsigned char Value);
 };

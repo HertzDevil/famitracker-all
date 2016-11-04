@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 // The NSF driver binary
 
 // Change this for new versions
-const char DRIVER_ID[] = "NSF-driver v2.0";
+const char DRIVER_ID[] = "NSF-driver v2.3";
 
 #pragma warning( disable : 4309 ) // disable warning 4309: 'initializing' : truncation of constant value
 
@@ -65,10 +65,11 @@ const char NSF_CALLER_BIN[] = {
 //
 // created with a binary->c-array program
 
-const unsigned int DRIVER1_LOCATION = 0xB200;
+const unsigned int DRIVER1_LOCATION = 0xB000;
 const unsigned int DRIVER2_LOCATION = 0x8000;
 
-#define DRIVER_SIZE (sizeof(DRIVER_MODE1))	// both have the same size
+#define DRIVER_SIZE			(sizeof(DRIVER_MODE1))		// both (mode 1 & 2) have the same size
+#define DRIVER_SIZE_VRC6	(sizeof(DRIVER_MODE2_VRC6))
 
 // These are not covered by the GNU GPL license
 
@@ -78,4 +79,14 @@ const char DRIVER_MODE1[] = {
 
 const char DRIVER_MODE2[] = {
 	#include "drv_mode2.h"
+};
+
+// VRC6 enabled
+/*
+const char DRIVER_MODE1_VRC6[] = {		// not used
+	#include "drv_mode1_vrc6.h"
+};
+*/
+const char DRIVER_MODE2_VRC6[] = {
+	#include "drv_mode2_vrc6.h"
 };

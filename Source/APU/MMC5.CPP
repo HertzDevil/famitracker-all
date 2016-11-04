@@ -1,0 +1,92 @@
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2009  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
+
+#include "common.h"
+#include "APU/apu.h"
+
+// MMC5 external sound, the squares are done using the same square code as for the APU
+
+void CMMC5::Init(CMixer *pMixer)
+{
+	m_pSquare1 = new CSquare(pMixer, CHANID_MMC5_SQUARE1);
+	m_pSquare2 = new CSquare(pMixer, CHANID_MMC5_SQUARE2);
+}
+
+void CMMC5::Reset()
+{
+	m_pSquare1->Reset();
+	m_pSquare2->Reset();
+}
+
+void CMMC5::Write(uint16 Address, uint8 Value)
+{
+	switch (Address) {
+		// Channel 1
+		case 0x5000:
+			m_pSquare1->Write(0, Value);
+			break;
+		case 0x5002:
+			m_pSquare1->Write(2, Value);
+			break;
+		case 0x5003:
+			m_pSquare1->Write(3, Value);
+			break;
+		// Channel 2
+		case 0x5004:
+			m_pSquare2->Write(0, Value);
+			break;
+		case 0x5006:
+			m_pSquare2->Write(2, Value);
+			break;
+		case 0x5007:
+			m_pSquare2->Write(3, Value);
+			break;
+		// Channel 3...
+		// Control
+		case 0x5015:
+			m_pSquare1->WriteControl(Value & 1);
+			m_pSquare2->WriteControl((Value >> 1) & 1);
+			break;
+	}
+}
+
+void CMMC5::EndFrame()
+{
+	m_pSquare1->EndFrame();
+	m_pSquare2->EndFrame();
+}
+
+void CMMC5::Process(uint32 Time)
+{
+	m_pSquare1->Process((uint16)Time);
+	m_pSquare2->Process((uint16)Time);
+}
+
+void CMMC5::LengthCounterUpdate()
+{
+	m_pSquare1->LengthCounterUpdate();
+	m_pSquare2->LengthCounterUpdate();
+}
+
+void CMMC5::EnvelopeUpdate()
+{
+	m_pSquare1->EnvelopeUpdate();
+	m_pSquare2->EnvelopeUpdate();
+}

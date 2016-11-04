@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 2;
-const int VERSION_REV = 7;
+const int VERSION_REV = 9;
 
-//const int VERSION_WIP = 6;
+const int VERSION_WIP = 1;
 
 #define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 
@@ -97,6 +97,10 @@ public:
 	bool			IsPlaying();
 	int				GetTempo();
 	void			ResetTempo();
+	void			ResetPlayer();
+
+	void			CheckSynth();
+	void			BufferUnderrun();
 
 	// Different get-functions
 	CAccelerator	*GetAccelerator() { return m_pAccel; };
@@ -106,6 +110,8 @@ public:
 	CView			*GetView() { return pView; };
 	CDocument		*GetFirstDocument();
 
+	void SetSoundChip(int Chip);
+
 	// Private variables and objects
 private:
 	CDocument		*pDocument;
@@ -114,11 +120,14 @@ private:
 	CAccelerator	*m_pAccel;
 	CSoundGen		*m_pSoundGenerator;
 	char			m_cAppPath[MAX_PATH];
-	int				m_iFrameRate;
+	int				m_iFrameRate, m_iFrameCounter;
 	bool			m_bShuttingDown;
 	bool			m_bInitialized;
 	bool			m_bDocLoaded;
 	bool			m_bThemeActive;
+
+	HANDLE			m_hAliveCheck;
+	HANDLE			m_hNotificationEvent;
 
 // Overrides
 public:

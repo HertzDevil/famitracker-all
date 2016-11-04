@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,31 +27,68 @@
 // This class is used to derive the audio channels
 //
 
-class CChannel
-{
+class CChannel {
 public:
 	CChannel() {
-		FrameCycles = 0;
-		LastValue	= 0;
+		m_iFrameCycles = 0;
+		m_iLastValue   = 0;
 	};
 
 	// Begin a new audio frame
 	inline void EndFrame() {
-		FrameCycles = 0;
+		m_iFrameCycles = 0;
 	}
 
 protected:
-	inline void AddMixer(int32 Value) {
-		if (LastValue == Value)
-			return;
-		Mixer->AddValue(ChanId, Value, FrameCycles);
-		LastValue = Value;
+	inline void Mix(int32 Value) {
+		if (m_iLastValue != Value) {
+			m_pMixer->AddValue(m_iChanId, m_iChip, Value, m_iFrameCycles);
+			m_iLastValue = Value;
+		}
 	};
 
-	CMixer		*Mixer;			// The mixer
-	uint32		FrameCycles;	// Cycle counter, resets every new frame
-	int32		LastValue;		// Last value sent to mixer
-	uint16		ChanId;			// This channels unique ID
+	CMixer	*m_pMixer;			// The mixer
+	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
+	int32	m_iLastValue;		// Last value sent to mixer
+	uint16	m_iChanId;			// This channels unique ID
+	uint16	m_iChip;			// Chip
+
+	// Variables used by channels
+	uint8	m_iControlReg, m_iEnabled;
+	uint16	m_iFrequency, m_iLengthCounter;
+	uint32	m_iCounter;
+};
+
+class CExChannel {
+public:
+	CExChannel() {
+		m_iFrameCycles = 0;
+		m_iLastValue   = 0;
+	};
+
+	void Init(CMixer *pMixer, uint8 Chip, uint8 ID) {
+		m_pMixer = pMixer;
+		m_iChip = Chip;
+		m_iChanId = ID;
+	}
+
+	inline void EndFrame() {
+		m_iFrameCycles = 0;
+	}
+
+protected:
+	inline void Mix(int32 Value) {
+		int32 Delta = Value - m_iLastValue;
+		if (Delta)
+			m_pMixer->AddValue(m_iChanId, m_iChip, Delta, m_iFrameCycles);
+		m_iLastValue = Value;
+	}
+
+	CMixer	*m_pMixer;
+	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
+	uint8	m_iChip;
+	uint8	m_iChanId;
+	int32	m_iLastValue;		// Last value sent to mixer
 };
 
 #endif /* _CHANNEL_H_ */

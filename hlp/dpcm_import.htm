@@ -1,0 +1,51 @@
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+	</HEAD>
+	<BODY style="font-size: 9pt; font-family: Arial">
+        <span style="font-family: Verdana"><span style="font-size: 16pt"><span style="color: gray">
+        <strong>Importing DPCM samples</strong> </span></span></span>
+		<hr>
+        <br />
+        It is possible to import wave files (PCM) and convert 
+		them&nbsp;to 1-bit DPCM samples. The format of PCM-samples should not&nbsp;care 
+		(but it must be raw PCM). Choose import in the DPCM instruments dialog, select 
+		a file and a new dialog will come up where you choose quality and volume.
+        <br />
+        <br />
+        A few options are available:<br />
+        <br />
+		
+		<STRONG>Quality - </STRONG>This 
+				is related to the pitch setting in the DPCM instrument editor,&nbsp;use the 
+				same to play the sample at&nbsp;original pitch.&nbsp;Quality of 15 will give 
+				best result, but samples can only be&nbsp;a little less then one second.<br />
+        <br />
+		<STRONG>Volume - </STRONG>
+				Sets the&nbsp;conversion volume level, higher 
+				levels&nbsp;helps&nbsp;removing noise.<br />
+        <br />
+		<STRONG>Click-elimination - </STRONG>The volume of 
+				triangle and noise&nbsp;is decreased when a DPCM sample is playing and can be 
+				restored with a note-off in the DPCM channel, but this will normally result in 
+				an audible click-sound. These 
+				two options will help&nbsp;restoring the volume after&nbsp;the sample 
+				is&nbsp;finished without causing a click:<UL>
+			<LI>
+				<STRONG>Restore delta counter - </STRONG>Restores 
+						the&nbsp;channels delta counter&nbsp;by adding zeroes after the sample. Could 
+						cause a small echo-like sound.
+			<LI>
+				<STRONG>Clip sample - </STRONG>Cuts 
+						the avaliable&nbsp;volume-range&nbsp;for the sample and leaves the delta 
+						counter near zero after end. Decreases&nbsp;volume&nbsp;and heavily distorts 
+						the&nbsp;sample.
+			</LI>
+		</UL>
+    	What's best depends on the sample, most likely is that you won't need any option.
+        <br />
+        Max size of DPCM samples are 3.9 kB, at quality 15&nbsp;(33 kHz) it's a little 
+        less than one second and lowest quality (4 kHz)&nbsp;about eight seconds.
+	</BODY>
+</HTML>

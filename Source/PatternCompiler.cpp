@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,12 +26,27 @@
 // CPatternCompiler - Compress patterns to strings for the NSF code
 //
 
+/*
+
+ Pattern byte layout: 
+
+ 00h - 7Fh : Notes, where 00h = rest, 7Fh = Note cut
+ 80h - DFh : Commands, defined in the command table
+ E0h - EFh : Quick instrument switches, E0h = instrument 0, EFh = instrument 15
+ F0h - FFh : Volume changes, F0h = volume 0, FFh = volume 15
+
+ Each row entry is ended by a note and the duration of the note,
+ if fixed duration is enabled then duration is omitted.
+
+*/
+
 // Define commands, the available range is 0-48
 #define DEF_CMD(x) ((x << 1) | 0x80)
 
-const unsigned char CMD_INSTRUMENT		= DEF_CMD(0);
-const unsigned char CMD_EFF_SPEED		= DEF_CMD(1);
-const unsigned char CMD_EFF_JUMP		= DEF_CMD(2);
+// Command table
+const unsigned char CMD_INSTRUMENT		= DEF_CMD(0);	// 80h
+const unsigned char CMD_EFF_SPEED		= DEF_CMD(1);	// 82h
+const unsigned char CMD_EFF_JUMP		= DEF_CMD(2);	// ...
 const unsigned char CMD_EFF_SKIP		= DEF_CMD(3);
 const unsigned char CMD_EFF_HALT		= DEF_CMD(4);
 const unsigned char CMD_EFF_VOLUME		= DEF_CMD(5);
@@ -47,12 +62,17 @@ const unsigned char CMD_EFF_DELAY		= DEF_CMD(14);
 const unsigned char CMD_EFF_DAC			= DEF_CMD(15);
 const unsigned char CMD_EFF_DUTY		= DEF_CMD(16);
 const unsigned char CMD_EFF_OFFSET		= DEF_CMD(17);
-const unsigned char CMD_SET_DURATION	= DEF_CMD(18);
-const unsigned char CMD_RESET_DURATION	= DEF_CMD(19);
+const unsigned char CMD_EFF_SLIDE_UP	= DEF_CMD(18);
+const unsigned char CMD_EFF_SLIDE_DOWN	= DEF_CMD(19);
+const unsigned char CMD_EFF_VOL_SLIDE	= DEF_CMD(20);
+
+const unsigned char CMD_SET_DURATION	= DEF_CMD(21);	// AAh
+const unsigned char CMD_RESET_DURATION	= DEF_CMD(22);	// ACh
+
 //const unsigned char CMD_LOOP_POINT		= DEF_CMD(17);
 
-#define OPTIMIZE_DURATIONS
-#define QUICK_INST
+#define OPTIMIZE_DURATIONS		// Remove note durations when possible
+#define QUICK_INST				// Remove instrument switch command for instrument 0 - 15
 
 CPattCompiler::CPattCompiler()
 {
@@ -86,10 +106,10 @@ void CPattCompiler::CleanUp()
 	m_pCompressedData = new unsigned char[0x1000];
 }
 
-void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel, unsigned char (*DPCM_LookUp)[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE])
+void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel, unsigned char (*DPCM_LookUp)[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE], unsigned int *iAssignedInstruments)
 {
 	unsigned int i, iPatternLen;
-	unsigned char AsmNote, Note, Octave, Instrument, LastInstrument, Volume;
+	unsigned char NESNote, Note, Octave, Instrument, LastInstrument, Volume;
 	unsigned char Effect, EffParam;
 	bool Action;
 	stSpacingInfo SpaceInfo;
@@ -104,12 +124,24 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 	m_iZeroes = 0;
 	m_iCurrentDefaultDuration = 0xFF;
 
+	int Chip = pDoc->GetExpansionChip();
+	int InstrChannels;
+
+	switch (Chip) {
+		case CHIP_NONE:
+			InstrChannels = 4;
+			break;
+		case CHIP_VRC6:
+			InstrChannels = 7;
+			break;
+	}
+
 	for (i = 0; i < iPatternLen; i++) {
 		pDoc->GetDataAtPattern(Track, Pattern, Channel, i, &ChanNote);
 
 		Note		= ChanNote.Note;
 		Octave		= ChanNote.Octave;
-		Instrument	= ChanNote.Instrument;
+		Instrument	= FindInstrument(ChanNote.Instrument, iAssignedInstruments);
 		Volume		= ChanNote.Vol;
 		Action		= false;
 
@@ -127,7 +159,7 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 
 #ifdef OPTIMIZE_DURATIONS
 
-		// See how long it's between notes in following rows
+		// Determine length of space between notes
 		SpaceInfo = ScanNoteLengths(pDoc, Track, i, Pattern, Channel);
 
 		if (SpaceInfo.SpaceCount > 2) {
@@ -163,7 +195,8 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 
 			LastInstrument = Instrument;
 			// Write instrument change command
-			if (Channel < 4) {
+			//if (Channel < InstrChannels) {
+			if (Channel != 4) {		// Skip DPCM
 				DispatchZeroes();
 #ifdef QUICK_INST
 				if (Instrument < 0x10) {
@@ -182,30 +215,32 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 		}
 
 		if (Note == 0) {
-			AsmNote = 0;
+			NESNote = 0xFF;
 		}
 		else if (Note == HALT) {
-			AsmNote = 0x7F;
+			NESNote = 0x7F - 1;
 		}
 		else {
 			if (Channel == 4) {
-				// DPCM
+				// 2A03 DPCM
 				int LookUp = (*DPCM_LookUp)[LastInstrument][Octave][Note - 1];
 				if (LookUp > 0) {
-					AsmNote = LookUp << 1;
+					NESNote = LookUp << 1;
 					int Sample = ((CInstrument2A03*)pDoc->GetInstrument(LastInstrument))->GetSample(Octave, Note - 1) - 1;
 					m_bDSamplesAccessed[Sample] = true;
 				}
 				else
-					AsmNote = 0;
+					NESNote = 0;
 			}
 			else if (Channel == 3) {
-				AsmNote = (Note - 1) + (Octave * 12);
-				if (AsmNote == 0)
-					AsmNote += 0x10;
+				// 2A03 Noise
+				NESNote = (Note - 1) + (Octave * 12);
+				if (NESNote == 0)
+					NESNote += 0x10;
 			}
 			else
-				AsmNote = (Note - 1) + (Octave * 12);
+				// All other channels
+				NESNote = (Note - 1) + (Octave * 12);
 		}
 
 		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Channel) + 1); n++) {
@@ -247,19 +282,20 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 					}
 					break;
 				case EF_PORTAMENTO:
-					if (Channel < 5) {
+					//if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_PORTAMENTO);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_PORTA_UP:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_PORTAUP);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_PORTA_DOWN:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_PORTADOWN);
 						WriteData(EffParam);
 					}
@@ -284,25 +320,25 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 					}
 					break;
 				case EF_ARPEGGIO:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_ARPEGGIO);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_VIBRATO:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_VIBRATO);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_TREMOLO:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_TREMOLO);
 						WriteData(EffParam & 0xF7);
 					}
 					break;
 				case EF_PITCH:
-					if (Channel < 5) {
+					if (Channel != 4) {
 						WriteData(CMD_EFF_PITCH);
 						WriteData(EffParam);
 					}
@@ -314,14 +350,32 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 					}
 					break;
 				case EF_DUTY_CYCLE:
-					if (Channel < 5) {
+					if (Channel != 2 && Channel != 4) {	// Not triangle and dpcm
 						WriteData(CMD_EFF_DUTY);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_SAMPLE_OFFSET:
-					if (Channel == 4) {
+					if (Channel == 4) {	// DPCM
 						WriteData(CMD_EFF_OFFSET);
+						WriteData(EffParam);
+					}
+					break;
+				case EF_SLIDE_UP:
+					if (Channel != 4) {
+						WriteData(CMD_EFF_SLIDE_UP);
+						WriteData(EffParam);
+					}
+					break;
+				case EF_SLIDE_DOWN:
+					if (Channel != 4) {
+						WriteData(CMD_EFF_SLIDE_DOWN);
+						WriteData(EffParam);
+					}
+					break;
+				case EF_VOLUME_SLIDE:
+					if (Channel != 4) {
+						WriteData(CMD_EFF_VOL_SLIDE);
 						WriteData(EffParam);
 					}
 					break;
@@ -329,21 +383,22 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 		}
 
 		if (Volume < 0x10) {
-			unsigned char Vol = (Volume ^ 0x0F) & 0x0F;
+			//unsigned char Vol = (Volume ^ 0x0F) & 0x0F;	//	<- use this for volume subtraction
+			unsigned char Vol = Volume;
 			DispatchZeroes();
 			WriteData(0xF0 | Vol);
 			Action = true;			// Terminate command
-		}
+		} 
 
-		if (AsmNote == 0) {
+		if (NESNote == /*0*/ 0xFF) {
 			if (Action) {
-				WriteData(AsmNote);
+				WriteData(/*NESNote*/ 0);
 			}
 			AccumulateZero();
 		}
 		else {
 			DispatchZeroes();
-			WriteData(AsmNote);
+			WriteData(NESNote + 1);
 			AccumulateZero();
 		}
 	}
@@ -351,6 +406,19 @@ void CPattCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, i
 	DispatchZeroes();
 
 	OptimizeString();
+}
+
+unsigned int CPattCompiler::FindInstrument(int Instrument, unsigned int *pInstList)
+{
+	int i;
+
+	for (i = 0; i < MAX_INSTRUMENTS; i++) {
+		if (pInstList[i] == Instrument)
+			return i;
+	}
+
+	// Should generate error
+	return Instrument;
 }
 
 stSpacingInfo CPattCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track, unsigned int StartRow, int Pattern, int Channel)
@@ -457,7 +525,7 @@ int CPattCompiler::GetBlockSize(int Position)		// omg hax!
 
 void CPattCompiler::OptimizeString()
 {
-	// Try to optimize by finding repeating patterns and compress them into a loop
+	// Try to optimize by finding repeating patterns and compress them into a loop (simple RLE)
 	//
 
 	//

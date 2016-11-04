@@ -24,6 +24,8 @@ void CSWSpectrum::Activate()
 
 void CSWSpectrum::Deactivate()
 {
+	delete m_pFftObject;
+	delete [] m_pBlitBuffer;
 }
 
 void CSWSpectrum::SetSampleData(int *pSamples, unsigned int iCount)

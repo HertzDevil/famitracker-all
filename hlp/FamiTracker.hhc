@@ -1,41 +1,44 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <HTML>
 <HEAD>
-<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
 <!-- Sitemap 1.0 -->
 </HEAD><BODY>
 <UL>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="FamiTracker Help Index">
-		<param name="Local" value="main_index.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="FamiTracker Help Index" />
+		<param name="Local" value="main_index.htm" />
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Instruments">
-		<param name="Local" value="instruments.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Instruments" />
+		<param name="Local" value="instruments.htm" />
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Pattern field">
-		<param name="Local" value="tracker_field.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Pattern editor" />
+		<param name="Local" value="pattern_editor.htm"/>
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Effect List">
-		<param name="Local" value="effect_list.htm">
+  <LI/> <OBJECT type="text/sitemap">
+    <param name="Name" value="Sound hardware"/>
+    <param name="Local" value="sound.htm"/>
+  </OBJECT>
+  <LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Effect List"/>
+		<param name="Local" value="effect_list.htm"/>
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Key commands">
-		<param name="Local" value="shortcuts.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Key commands"/>
+		<param name="Local" value="shortcuts.htm"/>
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="NSF exporting">
-		<param name="Local" value="nsf_export.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="NSF exporting"/>
+		<param name="Local" value="nsf_export.htm"/>
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Configuration">
-		<param name="Local" value="configuration.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Configuration"/>
+		<param name="Local" value="configuration.htm"/>
 		</OBJECT>
-	<LI> <OBJECT type="text/sitemap">
-		<param name="Name" value="Change log">
-		<param name="Local" value="changelog.htm">
+	<LI/> <OBJECT type="text/sitemap">
+		<param name="Name" value="Change log"/>
+		<param name="Local" value="changelog.htm"/>
 		</OBJECT>
 </UL>
 </BODY></HTML>

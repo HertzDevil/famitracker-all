@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,14 +18,17 @@
 ** must bear this legend.
 */
 
-#include "stdafx.h"
-#include "apu/apu.h"
-#include "apu/triangle.h"
+#include "APU/apu.h"
+#include "APU/triangle.h"
+
+const uint8 CTriangle::TRIANGLE_WAVE[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 
+										  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
 CTriangle::CTriangle(CMixer *pMixer, int ID)
 {
-	Mixer = pMixer;
-	ChanId = ID;
+	m_pMixer = pMixer;
+	m_iChanId = ID;
+	m_iChip = SNDCHIP_NONE;
 }
 
 CTriangle::~CTriangle()
@@ -34,92 +37,108 @@ CTriangle::~CTriangle()
 
 void CTriangle::Reset()
 {
-	Enabled		= 0;
-	Counter		= 0;
-	ControlReg	= 0;
-	LengthCounter = 0;
-	LinearCounter = 0;
-	StepGenStep = 1;
+	m_iEnabled = m_iControlReg = 0;
+	m_iCounter = m_iLengthCounter = 0;
 
-	Value = 0;
-	LastValue = 0;
+	m_iStepGenStep = 1;
+
+	Write(0, 0);
+	Write(1, 0);
+	Write(2, 0);
+	Write(3, 0);
 
 	EndFrame();
-	AddMixer(0);
+
+	Mix(0);
 }
 
 void CTriangle::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 		case 0x00:
-			LinearLoad = (Value & 0x7F);
-			Loop = (Value & 0x80);
+			m_iLinearLoad = (Value & 0x7F);
+			m_iLoop = (Value & 0x80);
 			break;
 		case 0x01:
 			break;
 		case 0x02:
-			Wavelength = Value | (Wavelength & 0x0700);
+			m_iFrequency = Value | (m_iFrequency & 0x0700);
 			break;
 		case 0x03:
-			Wavelength = ((Value & 0x07) << 8) | (Wavelength & 0xFF);
-			LengthCounter = CAPU::LENGTH_TABLE[(Value & 0xF8) >> 3];
-			Halt = 1;
-			if (ControlReg)
-				Enabled = 1;
+			m_iFrequency = ((Value & 0x07) << 8) | (m_iFrequency & 0xFF);
+			m_iLengthCounter = CAPU::LENGTH_TABLE[(Value & 0xF8) >> 3];
+			m_iHalt = 1;
+			if (m_iControlReg)
+				m_iEnabled = 1;
 			break;
 	}
 }
 
 void CTriangle::WriteControl(uint8 Value)
 {
-	ControlReg = Value;
-	if (Value == 0)
-		Enabled = 0;
+	m_iControlReg = Value & 1;
+	
+	if (m_iControlReg == 0)
+		m_iEnabled = 0;
 }
 
 uint8 CTriangle::ReadControl()
 {
-	return ((LengthCounter > 0) && (Enabled == 1));
+	return ((m_iLengthCounter > 0) && (m_iEnabled == 1));
 }
 
-void CTriangle::Process(int Time)
+void CTriangle::Process(uint32 Time)
 {
-	// The triangle is skipped if a frequency lesser than 2 is used
+	// Triangle skips if a wavelength less than 2 is used
 	// It takes to much CPU and it wouldn't be possible to hear anyway
 	//
 
-	if (!LinearCounter || !LengthCounter || !Enabled || Wavelength < 2) {
-		FrameCycles += Time;
+	if (!m_iLinearCounter || !m_iLengthCounter || !m_iEnabled) {
+		m_iFrameCycles += Time;
+		return;
+	}
+	else if (m_iFrequency <= 1) {
+		// Frequency is too high to be audible
+		Mix(7);
+		m_iStepGen = 7;
+		m_iFrameCycles += Time;
 		return;
 	}
 
-	while (Time >= Counter) {
-		Time		-= Counter;
-		FrameCycles += Counter;
-		Counter		= Wavelength + 1;
-
-		StepGen = (StepGen + 1) & 0x1F;
-		AddMixer((StepGen & 0x0F) ^ ((StepGen & 0x10) - ((StepGen >> 4) & 0x01)));
+	while (Time >= m_iCounter) {
+		Time		   -= m_iCounter;
+		m_iFrameCycles += m_iCounter;
+		m_iCounter	   = m_iFrequency + 1;
+		m_iStepGen	   = (m_iStepGen + 1) & 0x1F;
+		Mix(TRIANGLE_WAVE[m_iStepGen]);
 	}
 	
-	Counter -= Time;
-	FrameCycles += Time;
+	m_iCounter -= Time;
+	m_iFrameCycles += Time;
 }
 
 void CTriangle::LengthCounterUpdate()
 {
-	if ((Loop == 0) && (LengthCounter > 0)) LengthCounter--;
+	if ((m_iLoop == 0) && (m_iLengthCounter > 0)) 
+		m_iLengthCounter--;
 }
 
 void CTriangle::LinearCounterUpdate()
 {
-	if (Halt == 1)
-		LinearCounter = LinearLoad;
-	else
-		if (LinearCounter > 0)
-			LinearCounter--;
+	/*
+		1.  If the halt flag is set, the linear counter is reloaded with the counter reload value, 
+			otherwise if the linear counter is non-zero, it is decremented.
 
-	if (Loop == 0)
-		Halt = 0;
+		2.  If the control flag is clear, the halt flag is cleared. 
+	*/
+
+	if (m_iHalt == 1)
+		m_iLinearCounter = m_iLinearLoad;
+	else
+		if (m_iLinearCounter > 0)
+			m_iLinearCounter--;
+
+	if (m_iLoop == 0)
+		m_iHalt = 0;
 }
 

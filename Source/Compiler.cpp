@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,6 +30,11 @@ const unsigned int BANK_SIZE		= 0x10000;
 const unsigned int DPCM_BANK_SIZE	= 0x4000;
 
 const unsigned int PAGE_SIZE		= 0x1000;		// one NSF page, 4kB
+
+const int CHAN_ORDER_DEFAULT[]	= {0, 1, 2, 3, 4};
+const int CHAN_ORDER_VRC6[]		= {0, 1, 2, 3, 5, 6, 7, 4};
+
+const int *m_pChanOrder;
 
 CCompiler::CCompiler()
 {
@@ -131,7 +136,18 @@ void CCompiler::CreateHeader(CFamiTrackerDoc *pDoc, stNSFHeader *pHeader, bool E
 	else
 		pHeader->Flags		= 0x02;
 
-	pHeader->SoundChip		= 0x00;		// this will be filled with nice stuff later...
+	// Expansion chip
+	switch (pDoc->GetExpansionChip()) {
+		case CHIP_NONE:
+			pHeader->SoundChip = 0x00;
+			m_pChanOrder = CHAN_ORDER_DEFAULT;
+			break;
+		case CHIP_VRC6:
+			pHeader->SoundChip = SNDCHIP_VRC6;
+			m_pChanOrder = CHAN_ORDER_VRC6;
+			break;
+	}
+
 	pHeader->Reserved[0]	= 0x00;
 	pHeader->Reserved[1]	= 0x00;
 	pHeader->Reserved[2]	= 0x00;
@@ -142,6 +158,8 @@ void CCompiler::CreateHeader(CFamiTrackerDoc *pDoc, stNSFHeader *pHeader, bool E
 //
 void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL)
 {
+	const char *pDriver;
+
 	unsigned int iOffsetDriver;
 	unsigned int iOffsetMusic;
 	unsigned int iOffsetDPCM;
@@ -157,15 +175,14 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 
 	LogFile = NULL;
 
-/*
+#ifdef _DEBUG
 	LogFile = new CFile;
 
 	if (!LogFile->Open("C:\\nsflog.txt", CFile::modeWrite | CFile::modeCreate)) {
 		AfxMessageBox("Could not open log file!");
 		return;
 	}
-
-*/
+#endif
 
 	// Build the music data
 	CompileData(pDoc);
@@ -184,15 +201,27 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 	else
 		bAlternativeMode = true;
 
+	// Use this for now until it's fixed
+	if (pDoc->GetExpansionChip() != CHIP_NONE)
+		bAlternativeMode = true;
+
 	// Define memory areas
 	//
-	if (bAlternativeMode) {
+	if (bAlternativeMode || m_bBankSwitched) {
 		m_iDriverLocation	= DRIVER2_LOCATION;
 		m_iLoadAddress		= m_iDriverLocation;
 
-		iOffsetMusic		= DRIVER_SIZE;
+		iOffsetMusic		= m_iDriverSize;
 		iOffsetDriver		= 0;
 		iOffsetDPCM			= m_iSampleStart;
+
+		// Bank switched songs also use mode 2
+		switch (pDoc->GetExpansionChip()) {
+			case CHIP_NONE: pDriver = DRIVER_MODE2; break;
+			case CHIP_VRC6: pDriver = DRIVER_MODE2_VRC6; break;
+		}
+
+	//	pDriver = DRIVER_MODE2;
 	}
 	else {
 		m_iDriverLocation	= DRIVER1_LOCATION;
@@ -201,6 +230,13 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 		iOffsetMusic		= 0;
 		iOffsetDriver		= m_iDataPointer;
 		iOffsetDPCM			= m_iDataPointer + (0xC000 - DRIVER1_LOCATION);
+
+		switch (pDoc->GetExpansionChip()) {
+			case CHIP_NONE: pDriver = DRIVER_MODE1; break;
+//			case CHIP_VRC6: pDriver = DRIVER_MODE1_VRC6; break;
+		}
+
+	//	pDriver = DRIVER_MODE1;
 	}
 
 	CreateHeader(pDoc, &Header, EnablePAL);
@@ -210,20 +246,21 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 
 	// remove this
 	pFileSpace		= new unsigned char[0x20000];
+	memset(pFileSpace, 0, 0x20000);
 	iCurrentSize	= 0;
 
 	if (!m_bBankSwitched) {
-		if (!bAlternativeMode)
-			memcpy(pFileSpace + iOffsetDriver, DRIVER_MODE1, DRIVER_SIZE);
-		else
-			memcpy(pFileSpace + iOffsetDriver, DRIVER_MODE2, DRIVER_SIZE);
+//		if (!bAlternativeMode)
+//			memcpy(pFileSpace + iOffsetDriver, pDriver, m_iDriverSize);
+//		else
+			memcpy(pFileSpace + iOffsetDriver, pDriver, m_iDriverSize);
 
 		memcpy(pFileSpace + iOffsetMusic, m_pData, m_iDataPointer);
-		iCurrentSize = m_iDataPointer + DRIVER_SIZE;
+		iCurrentSize = m_iDataPointer + m_iDriverSize;
 
 		// Last two bytes of music code points to the start of music data
-		pFileSpace[iOffsetDriver + DRIVER_SIZE - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
-		pFileSpace[iOffsetDriver + DRIVER_SIZE - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
+		pFileSpace[iOffsetDriver + m_iDriverSize - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
+		pFileSpace[iOffsetDriver + m_iDriverSize - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
 
 		if (m_iDPCMSize > 0) {
 			memcpy(pFileSpace + iOffsetDPCM, m_pDPCM + m_iSampleStart - 0x4000, m_iDPCMSize);
@@ -231,14 +268,14 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 				iCurrentSize = iOffsetDPCM + m_iDPCMSize;
 			}
 			else {
-				iCurrentSize += ((0xC000 - DRIVER1_LOCATION) - DRIVER_SIZE) + m_iDPCMSize;
+				iCurrentSize += ((0xC000 - DRIVER1_LOCATION) - m_iDriverSize) + m_iDPCMSize;
 			}
 		}
 	}
 	else {
-		// Copy driver
 
-		iCurrentSize = iOffsetMusic - DRIVER_SIZE;
+		// Copy driver
+		iCurrentSize = iOffsetMusic - m_iDriverSize;
 
 		// The first banks
 		for (int i = 0; i < 4; i++) {
@@ -260,22 +297,22 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 		}
 
 		// Driver
-		memcpy(pFileSpace, DRIVER_MODE2, DRIVER_SIZE);
+		memcpy(pFileSpace, /*DRIVER_MODE2*/pDriver, m_iDriverSize);
 
-		pFileSpace[DRIVER_SIZE - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
-		pFileSpace[DRIVER_SIZE - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
+		pFileSpace[m_iDriverSize - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
+		pFileSpace[m_iDriverSize - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
 	}
 
 	Print(" * NSF load address: $%04X\n", m_iLoadAddress);
 	Print("Writing output file...\n");
-	Print(" * Driver size: %i bytes\n", DRIVER_SIZE);
+	Print(" * Driver size: %i bytes\n", m_iDriverSize);
 
 	if (m_bBankSwitched) {
 		Print(" * NSF type: Bankswitched (%i banks)\n", m_iAllocatedBanks);
-		Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x80000 - DRIVER_SIZE - m_iDPCMSize));
+		Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x80000 - m_iDriverSize - m_iDPCMSize));
 	}
 	else {
-		Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x8000 - DRIVER_SIZE - m_iDPCMSize));
+		Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x8000 - m_iDriverSize - m_iDPCMSize));
 		if (bAlternativeMode)
 			Print(" * NSF type: Linear (mode 2)\n");
 		else
@@ -298,6 +335,94 @@ void CCompiler::ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 		LogFile->Close();
 }
 
+void CCompiler::ExportNES(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL)
+{
+	// 32kb NROM, no CHR
+	const char NES_HEADER[] = {0x4E, 0x45, 0x53, 0x1A, 0x02, 0x00, 0x00, 0x00, 
+							   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+	// This is basically a type 2 NSF with a caller
+	unsigned int iOffsetDriver;
+	unsigned int iOffsetMusic;
+	unsigned int iOffsetDPCM;
+	CFile OutputFile;
+
+	// Clear progress
+	m_pLogText = pLogTxt;
+	m_pLogText->SetWindowText("");
+
+	LogFile = NULL;
+
+	// Build the music data
+	CompileData(pDoc);
+
+	if (!OutputFile.Open(FileName, CFile::modeWrite | CFile::modeCreate)) {
+		AfxMessageBox("Could not open output file!");
+		return;
+	}
+	
+	if (m_bBankSwitched) {
+		AfxMessageBox("Error: Song is too big to fit!", 0, 0);
+		return;
+	}
+
+	// Define memory areas
+	//
+	m_iDriverLocation	= DRIVER2_LOCATION;
+	m_iLoadAddress		= m_iDriverLocation;
+
+	iOffsetMusic		= m_iDriverSize;
+	iOffsetDriver		= 0;
+	iOffsetDPCM			= m_iSampleStart;
+
+	unsigned char *pFileSpace;
+	unsigned int iCurrentSize;
+
+	// remove this
+	pFileSpace		= new unsigned char[0x8000];
+	iCurrentSize	= 0;
+
+	memcpy(pFileSpace, DRIVER_MODE2, m_iDriverSize);
+	memcpy(pFileSpace + m_iDriverSize, m_pData, m_iDataPointer);
+	iCurrentSize = m_iDataPointer + m_iDriverSize;
+
+	// Last two bytes of music code points to the start of music data
+	pFileSpace[iOffsetDriver + m_iDriverSize - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
+	pFileSpace[iOffsetDriver + m_iDriverSize - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
+
+	if (m_iDPCMSize > 0) {
+		memcpy(pFileSpace + iOffsetDPCM, m_pDPCM + m_iSampleStart - 0x4000, m_iDPCMSize);
+		iCurrentSize = iOffsetDPCM + m_iDPCMSize;
+	}
+
+	// Finally add the caller to the end
+	memcpy(pFileSpace + 0x8000 - NSF_CALLER_SIZE, NSF_CALLER_BIN, NSF_CALLER_SIZE);
+
+	pFileSpace[0x7FD8] = (EnablePAL ? 0x01 : 0x00);
+	pFileSpace[0x7FDA] = 0x00;	// init
+	pFileSpace[0x7FDB] = 0x80;
+	pFileSpace[0x7FF2] = 0x03;	// play
+	pFileSpace[0x7FF3] = 0x80;
+
+	Print("Writing output file...\n");
+	Print(" * Driver size: %i bytes\n", m_iDriverSize);
+	Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x8000 - m_iDriverSize - m_iDPCMSize));
+
+	// Write NES header first
+	OutputFile.Write(NES_HEADER, 0x10);
+
+	// Write the file
+	OutputFile.Write(pFileSpace, 0x8000);
+
+	Print("Done, total file size: %i bytes\n", 0x8000);
+
+	// remove
+	delete [] pFileSpace;
+
+	// Done
+	OutputFile.Close();
+}
+
 void CCompiler::ExportBIN(CString BIN_File, CString DPCM_File, CFamiTrackerDoc *pDoc, CEdit *pLogTxt)
 {
 	CFile OutputFileBIN, OutputFileDPCM;
@@ -308,7 +433,7 @@ void CCompiler::ExportBIN(CString BIN_File, CString DPCM_File, CFamiTrackerDoc *
 
 	LogFile = NULL;
 
-#ifdef _DEBUG_
+#ifdef _DEBUG
 
 	LogFile = new CFile;
 
@@ -348,6 +473,9 @@ void CCompiler::ExportBIN(CString BIN_File, CString DPCM_File, CFamiTrackerDoc *
 	// Done
 	OutputFileBIN.Close();
 	OutputFileDPCM.Close();
+
+	if (LogFile)
+		LogFile->Close();
 }
 
 void CCompiler::ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL)
@@ -386,11 +514,9 @@ void CCompiler::ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 	m_iDriverLocation	= DRIVER2_LOCATION;
 	m_iLoadAddress		= m_iDriverLocation;
 
-	iOffsetMusic		= DRIVER_SIZE;
+	iOffsetMusic		= m_iDriverSize;
 	iOffsetDriver		= 0;
 	iOffsetDPCM			= m_iSampleStart;
-
-//	CreateHeader(pDoc, &Header, EnablePAL);
 
 	unsigned char *pFileSpace;
 	unsigned int iCurrentSize;
@@ -398,14 +524,15 @@ void CCompiler::ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 	// remove this
 	pFileSpace		= new unsigned char[0x8000];
 	iCurrentSize	= 0;
+	//
 
-	memcpy(pFileSpace, DRIVER_MODE2, DRIVER_SIZE);
-	memcpy(pFileSpace + DRIVER_SIZE, m_pData, m_iDataPointer);
-	iCurrentSize = m_iDataPointer + DRIVER_SIZE;
+	memcpy(pFileSpace, DRIVER_MODE2, m_iDriverSize);
+	memcpy(pFileSpace + m_iDriverSize, m_pData, m_iDataPointer);
+	iCurrentSize = m_iDataPointer + m_iDriverSize;
 
 	// Last two bytes of music code points to the start of music data
-	pFileSpace[iOffsetDriver + DRIVER_SIZE - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
-	pFileSpace[iOffsetDriver + DRIVER_SIZE - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
+	pFileSpace[iOffsetDriver + m_iDriverSize - 2] = (m_iLoadAddress + iOffsetMusic) & 0xFF;
+	pFileSpace[iOffsetDriver + m_iDriverSize - 1] = (m_iLoadAddress + iOffsetMusic) >> 8;
 
 	if (m_iDPCMSize > 0) {
 		memcpy(pFileSpace + iOffsetDPCM, m_pDPCM + m_iSampleStart - 0x4000, m_iDPCMSize);
@@ -422,8 +549,8 @@ void CCompiler::ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTx
 	pFileSpace[0x7FF3] = 0x80;
 
 	Print("Writing output file...\n");
-	Print(" * Driver size: %i bytes\n", DRIVER_SIZE);
-	Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x8000 - DRIVER_SIZE - m_iDPCMSize));
+	Print(" * Driver size: %i bytes\n", m_iDriverSize);
+	Print(" * Song data size: %i bytes (%i%%)\n", m_iDataPointer, (100 * m_iDataPointer) / (0x8000 - m_iDriverSize - m_iDPCMSize));
 
 	// Write the file
 	OutputFile.Write(pFileSpace, 0x8000);
@@ -491,6 +618,20 @@ void CCompiler::CompileData(CFamiTrackerDoc *pDoc)
 
 	m_iAllocatedBanks = 0;
 
+	// Determine driver size
+	switch (pDoc->GetExpansionChip()) {
+		case CHIP_NONE:
+			m_iDriverSize = DRIVER_SIZE;
+			m_pChanOrder = CHAN_ORDER_DEFAULT;
+			Print(" * No expansion chip\n");
+			break;
+		case CHIP_VRC6:
+			m_iDriverSize = DRIVER_SIZE_VRC6;
+			m_pChanOrder = CHAN_ORDER_VRC6;
+			Print(" * VRC6 expansion enabled\n");
+			break;
+	}
+
 	//
 	// First try, no bank switching
 	//
@@ -519,6 +660,9 @@ void CCompiler::AssembleData(CFamiTrackerDoc *pDoc)
 {
 	unsigned int i;
 
+	if (LogFile)
+		LogFile->SeekToBegin();
+
 	// Begin log
 	WriteLog("Famitracker NSF compiler log file\n");
 	WriteLog("---------------------------------\n");
@@ -530,12 +674,10 @@ void CCompiler::AssembleData(CFamiTrackerDoc *pDoc)
 		for (i = 0; i < 8; i++)
 			AllocateNewBank(i * PAGE_SIZE);
 
-		SetInitialPosition(DRIVER_SIZE);
-		SetMemoryPosition(DRIVER_SIZE);
+		SetInitialPosition(m_iDriverSize);
 	}
 	else {
 		SetInitialPosition(0);
-		SetMemoryPosition(0);
 	}
 
 	// Allocate space
@@ -574,7 +716,6 @@ void CCompiler::AssembleData(CFamiTrackerDoc *pDoc)
 void CCompiler::AllocateSpace()
 {
 	m_pData = new unsigned char[BANK_SIZE];
-//	m_iDataPointer = 0;
 
 	m_pDPCM = new unsigned char[DPCM_BANK_SIZE];
 	m_iDPCMSize = 0;
@@ -623,31 +764,54 @@ void CCompiler::AllocateNewBank(unsigned int iAddress)
 	// Save this bank
 	m_cSelectedBanks[iBankSlot] = m_iAllocatedBanks;
 
+	WriteLog("Allocating bank at: %04X (slot %i) = %i\n", iAddress, iBankSlot, m_iAllocatedBanks);
+
 	m_iAllocatedBanks++;
 }
 
+
+// Remove this
 void CCompiler::SetMemoryPosition(unsigned int iAddress)
 {
+//	ASSERT(iAddress < 0x8000);
 	// Sets current memory position
-	m_iDataPointer = iAddress /*+ m_iInitialPosition*/;
+//	m_iDataPointer = iAddress /*+ m_iInitialPosition*/;
 }
 
 void CCompiler::SetMemoryOffset(unsigned int iOffset)
 {
 	m_iDataPointer = iOffset + m_iInitialPosition;
+	ASSERT(m_iDataPointer < 0x8000);
 }
 
 void CCompiler::SetInitialPosition(unsigned int iAddress)
 {
-	// Sets initial position in memory
+	// Sets initial position in memory, where music data will be stored
+	ASSERT(iAddress < 0x8000);
 	m_iInitialPosition = iAddress;
+	m_iDataPointer = iAddress;
 }
 
 void CCompiler::SkipBytes(unsigned int iBytes)
 {
 	// Skips some bytes
 	m_iDataPointer += iBytes;
+	ASSERT(m_iDataPointer < 0x8000);
 }
+
+unsigned int CCompiler::GetCurrentOffset()
+{
+	// Returns current offset from start of music data (first byte of music data = 0)
+	return m_iDataPointer - m_iInitialPosition;
+}
+
+unsigned int CCompiler::GetAbsoluteAddress()
+{
+	// Returns current absolute address in the ROM space
+	// only useful when bankswitching is enabled
+	return m_iDataPointer + 0x8000;
+}
+
 
 void CCompiler::StoreByte(unsigned char Value)
 {
@@ -657,17 +821,11 @@ void CCompiler::StoreByte(unsigned char Value)
 		// Bankswitched space
 		unsigned int iBank, iSlot;
 		
-//		m_iDataPointer += DRIVER_SIZE;
-
 		// Find the bank used in this address
 		iSlot = (m_iDataPointer & 0x7FFF) >> 12;
 		iBank = m_cSelectedBanks[iSlot];
 
-		m_DataBanks[iBank].WriteByte(m_iDataPointer, Value);
-
-//		m_iDataPointer -= DRIVER_SIZE;
-
-		m_iDataPointer++;
+		m_DataBanks[iBank].WriteByte(m_iDataPointer++, Value);
 	}
 	else {
 		// Linear space
@@ -678,8 +836,8 @@ void CCompiler::StoreByte(unsigned char Value)
 		ASSERT(m_iDataPointer < BANK_SIZE);
 		m_pData[m_iDataPointer++] = Value;
 
-		// Overflow omg! :O
-		if (m_iDataPointer >= (0x8000 - DRIVER_SIZE))
+		// Overflow
+		if (m_iDataPointer >= (0x8000 - m_iDriverSize))
 			m_bErrorFlag = true;
 	}
 }
@@ -689,12 +847,6 @@ void CCompiler::StoreShort(unsigned short Value)
 	// Store a short in memory
 	StoreByte(Value & 0xFF);
 	StoreByte(Value >> 8);
-}
-
-unsigned int CCompiler::GetCurrentOffset()
-{
-	// Returns current offset from initial position
-	return m_iDataPointer - m_iInitialPosition;
 }
 
 // Headers //
@@ -744,6 +896,7 @@ void CCompiler::WriteTrackHeader(stSongHeader *pTrackHeader, unsigned int iAddre
 	StoreByte(pTrackHeader->PatternLength);
 	StoreByte(pTrackHeader->Speed);
 	StoreByte(pTrackHeader->Tempo);
+	StoreByte(pTrackHeader->FrameBank);
 
 	m_iDataPointer = SavedPointer;
 
@@ -752,6 +905,7 @@ void CCompiler::WriteTrackHeader(stSongHeader *pTrackHeader, unsigned int iAddre
 	WriteLog("Frame count: %i\n", pTrackHeader->FrameCount);
 	WriteLog("Pattern length: %i\n", pTrackHeader->PatternLength);
 	WriteLog("Song speed / tempo: %i / %i\n", pTrackHeader->Speed, pTrackHeader->Tempo);
+	WriteLog("Frame bank: %i\n\n", pTrackHeader->FrameBank);
 }
 
 // Song conversion functions //
@@ -766,6 +920,8 @@ bool CCompiler::IsPatternAddressed(CFamiTrackerDoc *pDoc, int Pattern, int Chann
 	return false;
 }
 
+int m_iFrameBank, m_iSavedFrameBank;
+
 void CCompiler::StoreSongs(CFamiTrackerDoc *pDoc)
 {
 	/*
@@ -779,14 +935,16 @@ void CCompiler::StoreSongs(CFamiTrackerDoc *pDoc)
 	unsigned int iHeaderList = GetCurrentOffset() + (iSongCount * 2);
 	unsigned int iSavedPointer;
 
+	const int TRACK_HEADER_SIZE = 7;		// sizeof dosen't work down to single bytes on structs
+
 	m_stTuneHeader.SongListOffset = GetCurrentOffset();
 
 	// Store track header pointers
 	for (i = 0; i < iSongCount; i++)
-		StoreShort(iHeaderList + i * 6);
+		StoreShort(iHeaderList + i * TRACK_HEADER_SIZE);
 
 	// Allocate space for track headers
-	SkipBytes(iSongCount * 6);
+	SkipBytes(iSongCount * TRACK_HEADER_SIZE);
 
 	// Store track headers
 	for (i = 0; i < iSongCount; i++) {
@@ -797,10 +955,25 @@ void CCompiler::StoreSongs(CFamiTrackerDoc *pDoc)
 
 		iFrameCount = pDoc->GetFrameCount();
 		iChannelCount = pDoc->GetAvailableChannels();
+		
+		if (m_bBankSwitched) {
+			int FrameListSize = (iFrameCount * 2) + (iFrameCount * iChannelCount * 3);
+			if ((GetAbsoluteAddress() + FrameListSize) > 0xBFFF) {
+				AllocateNewBank(0xB000);
+			}
+		}
 
 		// Allocate space for the frame list
 		m_iFrameListAddress = GetCurrentOffset();		// Save the address to this list
-		SkipBytes(iFrameCount * iChannelCount * 3 + iFrameCount * 2);
+		m_iFrameBank = m_cSelectedBanks[3];				// Also only used if in bank 3
+
+		if (!m_bBankSwitched)
+			m_iFrameBank = 0;
+
+		WriteLog("Frame start: %04X\n", GetAbsoluteAddress());
+
+		SkipBytes(iFrameCount * 2);					// pointer list
+		SkipBytes(iFrameCount * iChannelCount * 3);	// frame list
 
 		// Store pattern data
 		StorePatterns(pDoc, i);
@@ -817,8 +990,9 @@ void CCompiler::StoreSongs(CFamiTrackerDoc *pDoc)
 		m_stTrackHeader.PatternLength	= pDoc->GetPatternLength();
 		m_stTrackHeader.Speed			= pDoc->GetSongSpeed();
 		m_stTrackHeader.Tempo			= pDoc->GetSongTempo();
+		m_stTrackHeader.FrameBank		= m_iFrameBank;
 		// and print it
-		WriteTrackHeader(&m_stTrackHeader, iHeaderList + i * 6);
+		WriteTrackHeader(&m_stTrackHeader, iHeaderList + i * TRACK_HEADER_SIZE);
 	}
 }
 
@@ -843,7 +1017,7 @@ void CCompiler::CreateFrameList(CFamiTrackerDoc *pDoc)
 	 *
 	 */
 	
-	unsigned int	iFrameCount, iChannelCount, i, j, iOffset;
+	unsigned int	iFrameCount, iChannelCount, i, j, iOffset, iChan;
 	unsigned short	iPattern, iPointer, iChannelItem;
 	unsigned char	iBank;
 
@@ -854,18 +1028,24 @@ void CCompiler::CreateFrameList(CFamiTrackerDoc *pDoc)
 	iChannelItem	= iChannelCount * 3;
 	iOffset			= (iFrameCount * 2) + GetCurrentOffset();
 
+	WriteLog("Frame pointer list at: (offset) %04X (absolute) %04X\n", GetCurrentOffset(), GetAbsoluteAddress());
+
+	int SavedBank = m_cSelectedBanks[3];
+
+	m_cSelectedBanks[3] = m_iFrameBank;
+
 	// Setup addresses for the pointer list
 	for (i = 0; i < iFrameCount; i++)
 		StoreShort(iOffset + i * iChannelItem);
 
 	// Store addresses to patterns
 	for (i = 0; i < iFrameCount; i++) {
-		WriteLog("Frame %i: ", i);
-
+		WriteLog("Frame %02X %04X: ", i, GetAbsoluteAddress());
 		for (j = 0; j < iChannelCount; j++) {
-			iPattern	= pDoc->GetPatternAtFrame(i, j);
-			iPointer	= m_iPatternAddresses[iPattern][j];
-			iBank		= m_iPatternBanks[iPattern][j];
+			iChan		= m_pChanOrder[j];
+			iPattern	= pDoc->GetPatternAtFrame(i, iChan);
+			iPointer	= m_iPatternAddresses[iPattern][iChan];
+			iBank		= m_iPatternBanks[iPattern][iChan];
 
 			// Zero will disable bank writes
 			if (!m_bBankSwitched)
@@ -874,12 +1054,11 @@ void CCompiler::CreateFrameList(CFamiTrackerDoc *pDoc)
 			StoreShort(iPointer);
 			StoreByte(iBank);
 			WriteLog("%04X (%i) ", iPointer, iBank);
-
-//			Print("frame %i(%i): %i\n", i, j, iBank);
 		}
-
 		WriteLog("\n");
 	}
+
+	m_cSelectedBanks[3] = SavedBank;
 }
 
 void CCompiler::StorePatterns(CFamiTrackerDoc *pDoc, unsigned int Track)
@@ -898,48 +1077,50 @@ void CCompiler::StorePatterns(CFamiTrackerDoc *pDoc, unsigned int Track)
 
 	WriteLog(" -- Pattern data -- \n");
 
-	// Find out what patterns that are used
+	// Find out which of the patterns that are used
 	for (i = 0; i < MAX_PATTERN; i++) {
 		for (j = 0; j < pDoc->GetAvailableChannels(); j++)
 			bPatternsUsed[i][j] = IsPatternAddressed(pDoc, i, j);
 	}
 
 	// Iterate through all patterns
-	for (j = 0; j < iChannels; j++) {
-		for (i = 0; i < MAX_PATTERN; i++) {
+	for (i = 0; i < MAX_PATTERN; i++) {
+		for (j = 0; j < iChannels; j++) {
 			// And choose only used ones
 			if (bPatternsUsed[i][j]) {
 
 				// Compile pattern data
-				m_oPatternCompiler.CompileData(pDoc, Track, i, j, &m_iDPCM_LookUp);
+				m_oPatternCompiler.CompileData(pDoc, Track, i, j, &m_iDPCM_LookUp, m_iAssignedInstruments);
 
 				// Get size
 				iSize = m_oPatternCompiler.GetDataSize();
 				iTotalSize += iSize;
 
-				int AbsoluteAddress = m_iDataPointer + /*DRIVER_SIZE +*/ 0x8000;
-
-				// Check if current bank is full 
+				// Check if current bank is full
 				if (m_bBankSwitched) {
-					//if ((m_iDataPointer + iSize) >= 0x4000)
-					if ((AbsoluteAddress + iSize) > 0xBFFF) {
+					if ((GetAbsoluteAddress() + iSize) > 0xBFFF) {
 						AllocateNewBank(0xB000);
 					}
 				}
 
-				// Save the address for this pattern
+				// Save the start address of this pattern
 				m_iPatternAddresses[i][j] = GetCurrentOffset();
 
-				// Since only the last bank is switched, we need to store the bank
-				// where this pattern ends to make sure it's completely available
-				int iBankIndex = ((AbsoluteAddress + iSize) & 0x7FFF) >> 12;
-				
-				if (iBankIndex > 3)
-					iBankIndex = 3;
+				if (m_bBankSwitched) {
+					// Since only the last bank is switched, we need to store the bank
+					// where this pattern ends to make sure it's completely available
+					int iBankIndex = ((GetAbsoluteAddress() + iSize) & 0x7FFF) >> 12;
+					int iBank = m_cSelectedBanks[iBankIndex];
 
-				m_iPatternBanks[i][j] = m_cSelectedBanks[iBankIndex];
+					if (iBank < 3)
+						iBank = 0;
 
- 				WriteLog("Pattern %02X, channel %i: { ", i, j);
+					m_iPatternBanks[i][j] = iBank; 
+				}
+				else
+					m_iPatternBanks[i][j] = 0;
+
+				WriteLog("Pattern %02X, (%04X [%i]) channel %i: { ", i, GetAbsoluteAddress(), m_iPatternBanks[i][j], j);
 
 				// And store it in the memory
 				for (k = 0; k < iSize; k++) {
@@ -1038,6 +1219,58 @@ void CCompiler::CreateSequenceList(CFamiTrackerDoc *pDoc)
 		}
 	}
 
+	WriteLog(" -- Sequences VRC6 -- \n");
+
+	for (i = 0; i < MAX_SEQUENCES; i++) {
+		for (j = 0; j < MOD_COUNT; j++) {
+			pSeq = pDoc->GetSequenceVRC6(i, j);
+			if (pSeq->GetItemCount() > 0) {
+				StoredCount++;
+				WriteLog("Sequence %i (%04X): ", i, m_iDataPointer);
+
+				// Sequences cannot be stored on addresses where the low byte is zero
+				// because that indicates no sequence
+				if ((GetCurrentOffset() & 0xFF) == 0)
+					StoreByte(0);
+
+				// Save a pointer to this
+				m_iSequenceAddressesVRC6[i][j] = GetCurrentOffset();
+
+				// Store the sequence
+				iItemCount	= pSeq->GetItemCount();
+				iLoopPoint	= pSeq->GetLoopPoint();
+
+				StoreByte((unsigned char)iItemCount);
+				StoreByte((unsigned char)iLoopPoint);
+
+				Size += 2;
+
+				WriteLog("%02X %02X ", iItemCount, (unsigned char)iLoopPoint);
+				WriteLog("{ ");
+
+				for (k = 0; k < iItemCount; k++) {
+					StoreByte(pSeq->GetItem(k));
+					Size++;
+					if (k == iLoopPoint)
+						WriteLog("| ");
+					WriteLog("%02X ", pSeq->GetItem(k));
+				}
+				switch (j) {
+					case MOD_VOLUME:	WriteLog("} (Volume)\n");		break;
+					case MOD_ARPEGGIO:	WriteLog("} (Arpeggio)\n");		break;
+					case MOD_PITCH:		WriteLog("} (Pitch)\n");		break;
+					case MOD_HIPITCH:	WriteLog("} (Hi Pitch)\n");		break;
+					case MOD_DUTYCYCLE:	WriteLog("} (Duty cycle)\n");	break;
+				}
+			}
+			else {
+				// No sequence
+				m_iSequenceAddressesVRC6[i][j] = 0;
+			}
+		}
+	}
+
+
 	Print(" * Sequences used: %i (%i bytes)\n", StoredCount, Size);
 }
 
@@ -1046,40 +1279,68 @@ void CCompiler::CreateInstrumentList(CFamiTrackerDoc *pDoc)
 	/*
 	 * Create the instrument list
 	 *
-	 * Sequences must have been done before here
+	 * Sequences must have been done before running this
 	 *
 	 */
 
-	CInstrument2A03 *pInst;
+	CInstrument *pInstrument;
 	unsigned int i, j, iIndex, iAddress, iOffset, iListPointer;	
 
 	WriteLog(" -- Instrument list -- \n");
 
 	m_stTuneHeader.InstrumentListOffset = GetCurrentOffset();
 	
-	iListPointer	= GetCurrentOffset();
-	iOffset			= (m_iInstruments * 2) + GetCurrentOffset();
+	iListPointer = GetCurrentOffset();
+	iOffset		 = (m_iInstruments * 2) + GetCurrentOffset();
+
+	int Offset = 0;
 
 	// Setup addresses for the instruments
-	for (i = 0; i < m_iInstruments; i++)
-		StoreShort(iOffset + i * (MOD_COUNT * 2));
+	for (i = 0; i < m_iInstruments; i++) {
+		StoreShort(iOffset + Offset);
+		
+		int Index = m_iAssignedInstruments[i];
+
+		pInstrument = pDoc->GetInstrument(Index);
+
+		switch (pInstrument->GetType()) {
+			case INST_2A03:
+			case INST_VRC6:
+				Offset += (MOD_COUNT * 2);
+				break;
+		}
+	}
 
 	// Store instruments
 	for (i = 0; i < m_iInstruments; i++) {
+		WriteLog("Instrument %i: ", i);		
+		iIndex = m_iAssignedInstruments[i];
+		pInstrument = pDoc->GetInstrument(iIndex);
 
-		WriteLog("Instrument %i: { ", i);
-		for (j = 0; j < MOD_COUNT; j++) {
-			iIndex		= m_iAssignedInstruments[i];
-			pInst		= (CInstrument2A03*)pDoc->GetInstrument(iIndex);
-			iAddress	= (pInst->GetModEnable(j) == 0) ? 0 : m_iSequenceAddresses[pInst->GetModIndex(j)][j];
-
-			StoreShort(iAddress);
-			WriteLog("%04X ", iAddress);
+		switch (pInstrument->GetType()) {
+			case INST_2A03:
+				WriteLog("2A03 {");
+				for (j = 0; j < MOD_COUNT; j++) {
+					CInstrument2A03 *pInst = (CInstrument2A03*)pInstrument;
+					iAddress = (pInst->GetModEnable(j) == 0) ? 0 : m_iSequenceAddresses[pInst->GetModIndex(j)][j];
+					StoreShort(iAddress);
+					WriteLog("%04X ", iAddress);
+				}
+				break;
+			case INST_VRC6:
+				WriteLog("VRC6 {");
+				for (j = 0; j < MOD_COUNT; j++) {
+					CInstrumentVRC6 *pInst = (CInstrumentVRC6*)pInstrument;
+					iAddress = (pInst->GetModEnable(j) == 0) ? 0 : m_iSequenceAddressesVRC6[pInst->GetModIndex(j)][j];
+					StoreShort(iAddress);
+					WriteLog("%04X ", iAddress);
+				}
+				break;
 		}
-
+		
 		// Print name to log file
 		char Name[256];
-		pInst->GetName(Name);
+		pInstrument->GetName(Name);
 		WriteLog("} %s\n", Name);
 	}
 
@@ -1201,7 +1462,7 @@ void CCompiler::StoreDPCM(CFamiTrackerDoc *pDoc)
 		return;
 
 	iListAddress	= m_stTuneHeader.DPCMSamplesOffset;
-	iDataPosition	= GetCurrentOffset() + DRIVER_SIZE;
+	iDataPosition	= GetCurrentOffset() + m_iDriverSize;
 
 	// Align to DPCM bank or nearest valid sample address
 	if (iDataPosition > 0x4000 && !m_bBankSwitched)
@@ -1281,7 +1542,7 @@ void CDataBank::AllocateBank(unsigned char Origin)
 	m_iPointer	= 0;
 	m_iOrigin	= Origin;
 	m_pData		= new unsigned char[0x1000];
-	memset(m_pData, 0xFF, 0x1000);
+	memset(m_pData, 0xAB, 0x1000);
 }
 
 void CDataBank::WriteByte(unsigned int Pointer, unsigned char Value)

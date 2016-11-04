@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -139,4 +139,19 @@ void CInstrumentVRC6::SetModEnable(int Index, int Value)
 void CInstrumentVRC6::SetModIndex(int Index, int Value)
 {
 	m_iModIndex[Index] = Value;
+}
+
+/*
+ * class CInstrumentVRC7
+ *
+ */
+
+CInstrumentVRC7::CInstrumentVRC7()
+{
+	m_iPatch = 0;
+}
+
+void CInstrumentVRC7::SetPatch(int Patch)
+{
+	m_iPatch = Patch;
 }
