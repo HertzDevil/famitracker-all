@@ -147,7 +147,8 @@ private:
 	int16		*m_pSoundBuffer;					// Sound transfer buffer
 
 	uint8		m_iRegs[0x20];
-	uint8		m_iRegsVRC6[0x09];
+	uint8		m_iRegsVRC6[0x10];
+	uint8		m_iRegsFDS[0x10];
 
 	float		m_fLevelVRC7;
 	float		m_fLevelS5B;

@@ -214,17 +214,9 @@ void CInstrumentEditorFDS::OnModPresetSine()
 	theApp.GetSoundGenerator()->WaveChanged();
 }
 
-int CInstrumentEditorFDS::GetModRate() const 
-{
-	CString str;
-	GetDlgItemText(IDC_MOD_RATE, str);
-	str.Remove(-96);
-	return atoi(str.GetBuffer());
-}
-
 void CInstrumentEditorFDS::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	int ModSpeed = GetModRate();
+	int ModSpeed = GetDlgItemInt(IDC_MOD_RATE);
 	int ModDepth = GetDlgItemInt(IDC_MOD_DEPTH);
 	int ModDelay = GetDlgItemInt(IDC_MOD_DELAY);
 
@@ -234,7 +226,7 @@ void CInstrumentEditorFDS::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrol
 void CInstrumentEditorFDS::OnModRateChange()
 {
 	if (m_pInstrument) {
-		int ModSpeed = GetModRate();
+		int ModSpeed = GetDlgItemInt(IDC_MOD_RATE);
 		LIMIT(ModSpeed, 4095, 0);
 		m_pInstrument->SetModulationSpeed(ModSpeed);
 	}
@@ -263,7 +255,7 @@ void CInstrumentEditorFDS::OnModDelayChange()
 
 void CInstrumentEditorFDS::PreviewNote(unsigned char Key)
 {
-	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+	CFamiTrackerView::GetView()->PreviewNote(Key);
 }
 
 void CInstrumentEditorFDS::OnBnClickedCopyWave()

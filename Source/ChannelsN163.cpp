@@ -32,8 +32,7 @@ CChannelHandlerN163::CChannelHandlerN163() : CChannelHandler(),
 	m_bLoadWave(false),
 	m_iWaveLen(0),
 	m_iWaveIndex(0),
-	m_iWaveCount(0),
-	m_pInstrument(NULL)
+	m_iWaveCount(0)
 {
 	//SetMaxPeriod(0x3FFFF);
 	SetMaxPeriod(0xFFFF);
@@ -51,11 +50,9 @@ void CChannelHandlerN163::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 	int Octave	= pNoteData->Octave;
 	int Volume	= pNoteData->Vol;
 
-	CInstrumentN163 *pInst = (CInstrumentN163*)m_pDocument->GetInstrument(m_iInstrument);
+	CInstrumentN163 *pInstrument = (CInstrumentN163*)m_pDocument->GetInstrument(m_iInstrument);
 
-	m_pInstrument = pInst;
-
-	if (m_pInstrument == NULL)
+	if (pInstrument == NULL)
 		return;
 
 	int PostEffect = 0, PostEffectParam = 0;
@@ -106,16 +103,16 @@ void CChannelHandlerN163::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 	}
 
 	// Instrument switches
-	if (LastInstrument != m_iInstrument || Note > 0 && pInst && Note != HALT && Note != RELEASE) {
+	if (LastInstrument != m_iInstrument || Note > 0 && pInstrument && Note != HALT && Note != RELEASE) {
 		// Load new instrument
 		for (int i = 0; i < SEQ_COUNT; ++i) {
-			m_iSeqEnabled[i] = pInst->GetSeqEnable(i);
-			m_iSeqIndex[i]	 = pInst->GetSeqIndex(i);
+			m_iSeqEnabled[i] = pInstrument->GetSeqEnable(i);
+			m_iSeqIndex[i]	 = pInstrument->GetSeqIndex(i);
 			m_iSeqPointer[i] = 0;
 		}
-		m_iWaveLen = pInst->GetWaveSize();
-		m_iWavePos = /*pInst->GetAutoWavePos() ? GetIndex() * 16 :*/ pInst->GetWavePos();
-		m_iWaveCount = pInst->GetWaveCount();
+		m_iWaveLen = pInstrument->GetWaveSize();
+		m_iWavePos = /*pInstrument->GetAutoWavePos() ? GetIndex() * 16 :*/ pInstrument->GetWavePos();
+		m_iWaveCount = pInstrument->GetWaveCount();
 		if (!m_bLoadWave && LastInstrument != m_iInstrument)
 			m_iWaveIndex = 0;
 		m_bLoadWave = true;
@@ -216,7 +213,6 @@ void CChannelHandlerN163::ClearRegisters()
 
 	WriteReg(ChannelAddrBase + 7, (Channels << 4) | 0);
 
-	m_pInstrument = NULL;
 	m_bLoadWave = false;
 	m_iDutyPeriod = 0;
 }
@@ -246,7 +242,9 @@ void CChannelHandlerN163::WriteData(int Addr, char Data)
 void CChannelHandlerN163::LoadWave()
 {
 	// Fill the wave RAM
-	if (m_pDocument->GetInstrument(m_iInstrument) == NULL)
+	CInstrumentN163 *pInstrument = (CInstrumentN163*)m_pDocument->GetInstrument(m_iInstrument);
+
+	if (pInstrument == NULL || pInstrument->GetType() != INST_N163)
 		return;
 
 	// Start of wave in memory
@@ -259,13 +257,13 @@ void CChannelHandlerN163::LoadWave()
 		m_iWaveIndex = m_iWaveCount - 1;
 
 	for (int i = 0; i < m_iWaveLen; i += 2) {
-		WriteData((m_pInstrument->GetSample(m_iWaveIndex, i + 1) << 4) | m_pInstrument->GetSample(m_iWaveIndex, i));
+		WriteData((pInstrument->GetSample(m_iWaveIndex, i + 1) << 4) | pInstrument->GetSample(m_iWaveIndex, i));
 	}
 }
 
 void CChannelHandlerN163::CheckWaveUpdate()
 {
 	// Check wave changes
-	if (m_pInstrument != NULL && theApp.GetSoundGenerator()->HasWaveChanged())
+	if (theApp.GetSoundGenerator()->HasWaveChanged())
 		m_bLoadWave = true;
 }

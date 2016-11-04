@@ -84,12 +84,12 @@ BOOL CGraphEditor::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpsz
 
 	LOGFONT LogFont;
 
-	const char *SMALL_FONT_FACE = "Verdana";
+	const TCHAR *SMALL_FONT_FACE = _T("Verdana");
 
 	m_pSmallFont = new CFont();
 
 	memset(&LogFont, 0, sizeof LOGFONT);
-	memcpy(LogFont.lfFaceName, SMALL_FONT_FACE, strlen(SMALL_FONT_FACE));
+	_tcscpy_s(LogFont.lfFaceName, 32, SMALL_FONT_FACE);
 	LogFont.lfHeight = -10;
 	LogFont.lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
 	m_pSmallFont->CreateFontIndirect(&LogFont);
@@ -211,11 +211,16 @@ void CGraphEditor::DrawRange(CDC *pDC, int Max, int Min)
 	pDC->SetTextColor(0xFFFFFF);
 	pDC->SetBkColor(pDC->GetPixel(0, 0));	// Ugly but works
 
+	CRect textRect(2, 0, GRAPH_LEFT - 5, 10);
+	CRect topRect = textRect, bottomRect = textRect;
+	
+	topRect.MoveToY(m_GraphRect.top - 3);
 	line.Format(_T("%02i"), Max);
-	pDC->TextOut(2, m_GraphRect.top - 3, line);
+	pDC->DrawText(line, topRect, DT_RIGHT);
 
+	bottomRect.MoveToY(m_GraphRect.bottom - 13);
 	line.Format(_T("%02i"), Min);
-	pDC->TextOut(2, m_GraphRect.bottom - 13, line);
+	pDC->DrawText(line, bottomRect, DT_RIGHT);
 
 	pDC->SelectObject(pOldFont);
 }
@@ -334,6 +339,7 @@ void CGraphEditor::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CGraphEditor::OnLButtonUp(UINT nFlags, CPoint point)
 {
+	ModifyReleased();
 	ReleaseCapture();
 }
 
@@ -427,6 +433,10 @@ void CGraphEditor::OnRButtonUp(UINT nFlags, CPoint point)
 }
 
 void CGraphEditor::HighlightItem(CPoint point)
+{
+}
+
+void CGraphEditor::ModifyReleased()
 {
 }
 
@@ -1088,15 +1098,48 @@ void CNoiseEditor::OnPaint()
 
 	// Draw items
 	for (int i = 0; i < Count; i++) {
-		int item = m_pSequence->GetItem(i);
+		// Draw noise frequency
+		int item = m_pSequence->GetItem(i) & 0x1F;
 		int x = m_GraphRect.left + i * StepWidth + 1;
 		int y = m_GraphRect.top + StepHeight * (m_iItems - item);
 		int w = StepWidth;
-		int h = StepHeight * item;
+		int h = StepHeight;//* item;
 		DrawRect(pDC, x, y, w, h, m_iCurrentPlayPos == i, false);
 
-		DrawRect(pDC, x, y, w, 10, false, false);
+		// Draw switches
+		item = m_pSequence->GetItem(i);
 
+		int Offset = h * 36 - 1;
+
+		if (item & S5B_MODE_SQUARE) {
+			static const COLORREF BUTTON_COL = COMBINE(0, 160, 160);
+			int y = Offset;
+			int h = 9;
+			pDC->FillSolidRect(x, y, w, h, BUTTON_COL);
+			pDC->Draw3dRect(x, y, w, h, BLEND(BUTTON_COL, 0xFFFFFF, 80), BLEND(BUTTON_COL, 0x000000, 80));
+		}
+		else {
+			static const COLORREF BUTTON_COL = COMBINE(50, 50, 50);
+			int y = Offset;
+			int h = 9;
+			pDC->FillSolidRect(x, y, w, h, BUTTON_COL);
+			pDC->Draw3dRect(x, y, w, h, BLEND(BUTTON_COL, 0xFFFFFF, 80), BLEND(BUTTON_COL, 0x000000, 80));
+		}
+
+		if (item & S5B_MODE_NOISE) {
+			static const COLORREF BUTTON_COL = COMBINE(160, 0, 160);
+			int y = Offset + 11;
+			int h = 9;
+			pDC->FillSolidRect(x, y, w, h, BUTTON_COL);
+			pDC->Draw3dRect(x, y, w, h, BLEND(BUTTON_COL, 0xFFFFFF, 80), BLEND(BUTTON_COL, 0x000000, 80));
+		}
+		else {
+			static const COLORREF BUTTON_COL = COMBINE(50, 50, 50);
+			int y = Offset + 11;
+			int h = 9;
+			pDC->FillSolidRect(x, y, w, h, BUTTON_COL);
+			pDC->Draw3dRect(x, y, w, h, BLEND(BUTTON_COL, 0xFFFFFF, 80), BLEND(BUTTON_COL, 0x000000, 80));
+		}
 	}
 	
 	DrawLoopPoint(pDC, StepWidth);
@@ -1108,7 +1151,6 @@ void CNoiseEditor::OnPaint()
 
 void CNoiseEditor::ModifyItem(CPoint point, bool Redraw)
 {
-	int ItemIndex;
 	int ItemValue;
 
 	if (!m_pSequence || !m_pSequence->GetItemCount())
@@ -1117,13 +1159,39 @@ void CNoiseEditor::ModifyItem(CPoint point, bool Redraw)
 	int ItemWidth = GetItemWidth();
 	int ItemHeight = GetItemHeight();
 
-	ItemIndex = (point.x - GRAPH_LEFT) / ItemWidth;
-	ItemValue = m_iItems - (((point.y - m_GraphRect.top) + (ItemHeight / 2)) / ItemHeight);
+	int ItemIndex = (point.x - GRAPH_LEFT) / ItemWidth;
 
-	if (ItemValue < 0)
-		ItemValue = 0;
-	if (ItemValue > m_iItems)
-		ItemValue = m_iItems;
+	int Offset = 36 * ItemHeight - 1;
+
+	if (point.y >= Offset) {
+
+		if (m_iLastIndex == ItemIndex)
+			return;
+
+		m_iLastIndex = ItemIndex;
+
+		if (point.y >= Offset && point.y < Offset + 10) {
+			// Square
+			ItemValue = m_pSequence->GetItem(ItemIndex) ^ S5B_MODE_SQUARE;
+		}
+		else if (point.y >= Offset + 11 && point.y < Offset + 21) {
+			// Noise
+			ItemValue = m_pSequence->GetItem(ItemIndex) ^ S5B_MODE_NOISE;
+		}
+		else
+			return;
+	}
+	else {
+
+		ItemValue = m_iItems - (((point.y - m_GraphRect.top) + (ItemHeight / 2)) / ItemHeight);
+
+		if (ItemValue < 0)
+			ItemValue = 0;
+		if (ItemValue > m_iItems)
+			ItemValue = m_iItems;
+
+		ItemValue |= m_pSequence->GetItem(ItemIndex) & 0xC0;
+	}
 
 	if (ItemIndex < 0 || ItemIndex >= (int)m_pSequence->GetItemCount())
 		return;
@@ -1137,3 +1205,9 @@ int CNoiseEditor::GetItemHeight()
 {
 	return m_GraphRect.Height() / m_iItems;
 }
+
+void CNoiseEditor::ModifyReleased()
+{
+	m_iLastIndex = -1;
+}
+

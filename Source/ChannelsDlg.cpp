@@ -112,7 +112,7 @@ BOOL CChannelsDlg::OnInitDialog()
 
 	CChannelMap *map = theApp.GetChannelMap();
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 
 	for (unsigned i = 0; i < pDoc->GetAvailableChannels(); ++i) {
 		CTrackerChannel *pChannel = pDoc->GetChannel(i);
@@ -204,7 +204,7 @@ void CChannelsDlg::InsertChannel(HTREEITEM hItem)
 		CString ChanName = m_pAvailableTree->GetItemText(hItem);
 		CString ChipName = m_pAvailableTree->GetItemText(hParentItem);
 
-		CString AddStr = ChipName + " :: " + ChanName.Right(ChanName.GetLength() - 3);
+		CString AddStr = ChipName + _T(" :: ") + ChanName.Right(ChanName.GetLength() - 3);
 
 		// Channel ID
 		int ChanId = m_pAvailableTree->GetItemData(hItem);

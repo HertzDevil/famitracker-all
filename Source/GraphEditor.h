@@ -56,6 +56,7 @@ protected:
 	virtual void ModifyLoopPoint(CPoint point, bool Redraw);
 	virtual void ModifyReleasePoint(CPoint point, bool Redraw);
 	virtual void DrawRange(CDC *pDC, int Max, int Min);
+	virtual void ModifyReleased();
 	void DrawBackground(CDC *pDC, int Lines, bool DrawMarks, int MarkOffset);
 	void DrawLoopPoint(CDC *pDC, int StepWidth);
 	void DrawReleasePoint(CDC *pDC, int StepWidth);
@@ -145,6 +146,9 @@ class CNoiseEditor : public CGraphEditor
 {
 private:
 	int m_iItems;
+	int m_iLastIndex;
+protected:
+	void ModifyReleased();
 public:
 	CNoiseEditor(CSequence *pSequence, int Items) : CGraphEditor(pSequence), m_iItems(Items) { };
 	afx_msg void OnPaint();

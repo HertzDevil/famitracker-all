@@ -25,6 +25,7 @@
 #include "CreateWaveDlg.h"
 #include "WavProgressDlg.h"
 #include "SoundGen.h"
+#include "TrackerChannel.h"
 
 const int MAX_LOOP_TIMES = 99;
 const int MAX_PLAY_TIME	 = (99 * 60) + 0;
@@ -69,7 +70,7 @@ int CCreateWaveDlg::GetFrameLoopCount()
 int CCreateWaveDlg::GetTimeLimit()
 {
 	int Minutes, Seconds, Time;
-	char str[256];
+	TCHAR str[256];
 
 	GetDlgItemText(IDC_SECONDS, str, 256);
 	_stscanf(str, _T("%u:%u"), &Minutes, &Seconds);
@@ -90,10 +91,12 @@ void CCreateWaveDlg::OnBnClickedBegin()
 	RENDER_END EndType;
 	int EndParam;
 
-	CString FileName = ((CFamiTrackerDoc*) theApp.GetActiveDocument())->GetFileTitle();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
+
+	CString FileName = pDoc->GetFileTitle();
 
 	CWavProgressDlg ProgressDlg;
-	CFileDialog SaveDialog(FALSE, _T("wav"), FileName, 0, _T("Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||"));
+	CFileDialog SaveDialog(FALSE, _T("wav"), FileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||"));
 
 	// Close this dialog
 	EndDialog(0);
@@ -112,10 +115,23 @@ void CCreateWaveDlg::OnBnClickedBegin()
 		EndParam = GetTimeLimit();
 	}
 
+	CFamiTrackerView *pView = CFamiTrackerView::GetView();
+
+	pView->UnmuteAllChannels();
+
+	// Mute selected channels
+	for (int i = 0; i < m_ctlChannelList.GetCount(); ++i) {
+		if (m_ctlChannelList.GetCheck(i) == 0)
+			pView->ToggleChannel(i);
+	}
+
 //	m_sFileName = SaveDialog.GetPathName();
 	ProgressDlg.SetFile(SaveDialog.GetPathName().GetString());
 	ProgressDlg.SetOptions(EndType, EndParam);
 	ProgressDlg.DoModal();
+
+	// Unmute all channels
+	pView->UnmuteAllChannels();
 }
 
 BOOL CCreateWaveDlg::OnInitDialog()
@@ -125,6 +141,18 @@ BOOL CCreateWaveDlg::OnInitDialog()
 
 	SetDlgItemText(IDC_TIMES, _T("1"));
 	SetDlgItemText(IDC_SECONDS, _T("01:00"));
+
+	m_ctlChannelList.SubclassDlgItem(IDC_CHANNELS, this);
+
+	m_ctlChannelList.ResetContent();
+	m_ctlChannelList.SetCheckStyle(BS_AUTOCHECKBOX);
+
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
+
+	for (int i = 0; i < pDoc->GetChannelCount(); ++i) {
+		m_ctlChannelList.AddString(pDoc->GetChannel(i)->GetChannelName());
+		m_ctlChannelList.SetCheck(i, 1);
+	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE

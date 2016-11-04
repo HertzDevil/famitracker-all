@@ -88,7 +88,13 @@ void CLinkLabel::OnMouseMove(UINT nFlags, CPoint point)
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
-CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD), m_pMail(NULL), m_pWeb(NULL)
+CAboutDlg::CAboutDlg() : 
+	CDialog(CAboutDlg::IDD), 
+	m_pMail(NULL), 
+	m_pWeb(NULL), 
+	m_pLinkFont(NULL), 
+	m_pBoldFont(NULL),
+	m_pTitleFont(NULL)
 {
 }
 
@@ -96,6 +102,9 @@ CAboutDlg::~CAboutDlg()
 {
 	SAFE_RELEASE(m_pMail);
 	SAFE_RELEASE(m_pWeb);
+	SAFE_RELEASE(m_pLinkFont);
+	SAFE_RELEASE(m_pBoldFont);
+	SAFE_RELEASE(m_pTitleFont);
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
@@ -108,12 +117,12 @@ BOOL CAboutDlg::OnInitDialog()
 	CString aboutString;
 
 #ifdef WIP
-	aboutString.Format(_T("FamiTracker Version %i.%i.%i beta %i\n\nA Famicom/NES music tracker"), VERSION_MAJ, VERSION_MIN, VERSION_REV, VERSION_WIP);
+	aboutString.Format(_T("FamiTracker version %i.%i.%i beta %i"), VERSION_MAJ, VERSION_MIN, VERSION_REV, VERSION_WIP);
 #else
-	aboutString.Format(_T("FamiTracker Version %i.%i.%i\n\nA Famicom/NES music tracker"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+	aboutString.Format(_T("FamiTracker version %i.%i.%i"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
 #endif
 
-	SetDlgItemText(IDC_ABOUT, aboutString);
+	SetDlgItemText(IDC_ABOUT1, aboutString);
 
 	m_pMail = new CLinkLabel(LINK_MAIL);
 	m_pWeb = new CLinkLabel(LINK_WEB);
@@ -135,14 +144,28 @@ BOOL CAboutDlg::OnInitDialog()
 	pFont = m_pMail->GetFont();
 	pFont->GetLogFont(&LogFont);
 	LogFont.lfUnderline = 1;
-	CFont *newFont = new CFont();
-	newFont->CreateFontIndirect(&LogFont);
-	m_pMail->SetFont(newFont);
-	m_pWeb->SetFont(newFont);
+	m_pLinkFont = new CFont();
+	m_pLinkFont->CreateFontIndirect(&LogFont);
+	m_pMail->SetFont(m_pLinkFont);
+	m_pWeb->SetFont(m_pLinkFont);
+
+	CStatic *pStatic = (CStatic*)GetDlgItem(IDC_ABOUT1);
+	CFont *pOldFont = pStatic->GetFont();
+	LOGFONT NewLogFont;
+	pOldFont->GetLogFont(&NewLogFont);
+	NewLogFont.lfWeight = FW_BOLD;
+	m_pBoldFont = new CFont();
+	m_pTitleFont = new CFont();
+	m_pBoldFont->CreateFontIndirect(&NewLogFont);
+	NewLogFont.lfHeight = 16;
+//	NewLogFont.lfUnderline = TRUE;
+	m_pTitleFont->CreateFontIndirect(&NewLogFont);
+	((CStatic*)GetDlgItem(IDC_ABOUT1))->SetFont(m_pTitleFont);
+	((CStatic*)GetDlgItem(IDC_ABOUT2))->SetFont(m_pBoldFont);
+	((CStatic*)GetDlgItem(IDC_ABOUT3))->SetFont(m_pBoldFont);
 
 	return TRUE;
 }
-
 
 BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
 {

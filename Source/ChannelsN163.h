@@ -47,5 +47,4 @@ private:
 	int m_iWavePos;
 	int m_iWaveIndex;
 	int m_iWaveCount;
-	CInstrumentN163 *m_pInstrument;
 };

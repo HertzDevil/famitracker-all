@@ -111,7 +111,7 @@ public:
 	static const unsigned int MAX_BUFFER_LENGTH = 10000;
 
 protected:
-	static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+	static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCTSTR lpcstrDescription, LPCTSTR lpcstrModule, LPVOID lpContext);
 	static CDSound *pThisObject;
 
 private:

@@ -111,7 +111,6 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorDPCM, CInstrumentEditPanel)
 	ON_BN_CLICKED(IDC_REMOVE, OnBnClickedRemove)
 	ON_EN_CHANGE(IDC_LOOP_POINT, &CInstrumentEditorDPCM::OnEnChangeLoopPoint)
 	ON_BN_CLICKED(IDC_EDIT, &CInstrumentEditorDPCM::OnBnClickedEdit)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_SAMPLE_LIST, &CInstrumentEditorDPCM::OnLvnItemchangedSampleList)
 	ON_NOTIFY(NM_DBLCLK, IDC_SAMPLE_LIST, &CInstrumentEditorDPCM::OnNMDblclkSampleList)
 	ON_BN_CLICKED(IDC_PREVIEW, &CInstrumentEditorDPCM::OnBnClickedPreview)
 	ON_NOTIFY(NM_RCLICK, IDC_SAMPLE_LIST, &CInstrumentEditorDPCM::OnNMRClickSampleList)
@@ -241,7 +240,7 @@ void CInstrumentEditorDPCM::BuildSampleList()
 		}
 	}
 
-	Text.Format(_T("Space used %i kB, left %i kB (%i kB available)"), Size / 0x400, (MAX_SAMPLE_SPACE - Size) / 0x400, MAX_SAMPLE_SPACE / 0x400);
+	Text.Format(IDS_DPCM_SPACE_FORMAT, Size / 0x400, (MAX_SAMPLE_SPACE - Size) / 0x400, MAX_SAMPLE_SPACE / 0x400);
 	SetDlgItemText(IDC_SPACE, Text);
 }
 
@@ -571,11 +570,11 @@ BOOL CInstrumentEditorDPCM::PreTranslateMessage(MSG* pMsg)
 				if (pMsg->wParam == 27)	// Esc
 					break;
 				// Select DPCM channel
-				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->SelectChannel(4);
-				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote((unsigned char)pMsg->wParam);
+				CFamiTrackerView::GetView()->SelectChannel(4);
+				CFamiTrackerView::GetView()->PreviewNote((unsigned char)pMsg->wParam);
 				return TRUE;
 			case WM_KEYUP:
-				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease((unsigned char)pMsg->wParam);
+				CFamiTrackerView::GetView()->PreviewRelease((unsigned char)pMsg->wParam);
 				return TRUE;
 		}
 	}
@@ -636,9 +635,10 @@ void CInstrumentEditorDPCM::OnEnChangeLoopPoint()
 
 	// TODO:  Add your control notification handler code here
 
+	/*
 	int Pitch = GetDlgItemInt(IDC_LOOP_POINT, 0, 0);
-
 	m_pInstrument->SetSampleLoopOffset(m_iOctave, m_iSelectedKey, Pitch);
+	*/
 }
 
 void CInstrumentEditorDPCM::OnBnClickedEdit()
@@ -650,25 +650,20 @@ void CInstrumentEditorDPCM::OnBnClickedEdit()
 
 	CSampleEditorDlg Editor(this, pSample);
 
-	Editor.DoModal();
+	INT_PTR nRes = Editor.DoModal();
 	
+	if (nRes == IDOK) {
+		// Save edited sample
+		Editor.CopySample(pSample);
+	}
+
 	// Update sample list
 	BuildSampleList();
 }
 
-void CInstrumentEditorDPCM::OnLvnItemchangedSampleList(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	// TODO: save current item
-	*pResult = 0;
-}
-
-// Behaviour when double clicking the sample list
 void CInstrumentEditorDPCM::OnNMDblclkSampleList(NMHDR *pNMHDR, LRESULT *pResult)
 {
-//	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<NMITEMACTIVATE>(pNMHDR);
-//	OnBnClickedEdit();
+	// Behaviour when double clicking the sample list
 	OnBnClickedPreview();
 	*pResult = 0;
 }
@@ -706,7 +701,6 @@ void CInstrumentEditorDPCM::OnNMRClickTable(NMHDR *pNMHDR, LRESULT *pResult)
 	// Create a popup menu for key list with samples
 
 	CDSample *pDSample;
-
 	CMenu PopupMenu;
 	CPoint point;
 

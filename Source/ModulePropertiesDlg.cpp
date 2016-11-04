@@ -24,6 +24,7 @@
 #include "MainFrm.h"
 #include "ModulePropertiesDlg.h"
 #include "ChannelMap.h"
+#include "ModuleImportDlg.h"
 
 LPCTSTR TRACK_FORMAT = _T("#%02i %s");
 
@@ -77,18 +78,7 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	m_pSongList->InsertColumn(0, _T("Songs"), 0, 150);
 	m_pSongList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
-	CString Text;
-	
-	// Song editor
-	int Songs = m_pDocument->GetTrackCount();
-
-	for (int i = 0; i < Songs; ++i) {
-		Text.Format(TRACK_FORMAT, i + 1, m_pDocument->GetTrackTitle(i));	// start counting songs from 1
-		m_pSongList->InsertItem(i, Text);
-	}
-
-	// Select first song when dialog is displayed
-	SelectSong(0);
+	FillSongList();
 
 	// Expansion chips
 	CComboBox *pChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
@@ -271,25 +261,19 @@ void CModulePropertiesDlg::UpdateSongButtons()
 
 void CModulePropertiesDlg::OnBnClickedSongImport()
 {
+	CModuleImportDlg importDlg(m_pDocument);
+
 	CFileDialog OpenFileDlg(TRUE, _T("ftm"), 0, OFN_HIDEREADONLY, _T("FamiTracker files (*.ftm)|*.ftm|All files (*.*)|*.*||"), theApp.GetMainWnd(), 0);
 
 	if (OpenFileDlg.DoModal() == IDCANCEL)
 		return;
 
-	bool bIncludeInstrument = AfxMessageBox(IDS_INCLUDE_INSTRUMENTS, MB_YESNO | MB_ICONQUESTION) == IDYES;
+	if (importDlg.LoadFile(OpenFileDlg.GetPathName(), m_pDocument) == false)
+		return;
 
-	if (m_pDocument->ImportFile(OpenFileDlg.GetPathName(), bIncludeInstrument)) {
-		// Import succeeded, add to list
-		CString TrackTitle;
-		int NewTrack = m_pDocument->GetTrackCount() - 1;
-		TrackTitle.Format(TRACK_FORMAT, NewTrack + 1, m_pDocument->GetTrackTitle(NewTrack));
-		m_pSongList->InsertItem(NewTrack, TrackTitle);
-		SelectSong(NewTrack);
-		m_pDocument->SelectTrack(NewTrack);
-	}
-	else {
-		AfxMessageBox(IDS_IMPORT_FAILED, MB_ICONERROR);
-	}
+	importDlg.DoModal();
+
+	FillSongList();
 }
 
 void CModulePropertiesDlg::OnCbnSelchangeExpansion()
@@ -336,10 +320,28 @@ void CModulePropertiesDlg::OnLvnItemchangedSonglist(NMHDR *pNMHDR, LRESULT *pRes
 		m_iSelectedSong = Song;
 
 		CEdit *pName = (CEdit*)GetDlgItem(IDC_SONGNAME);
-		pName->SetWindowText(m_pDocument->GetTrackTitle(Song));
+		pName->SetWindowText(CString(m_pDocument->GetTrackTitle(Song)));
 
 		UpdateSongButtons();
     }
 
 	*pResult = 0;
+}
+
+void CModulePropertiesDlg::FillSongList()
+{
+	CString Text;
+
+	m_pSongList->DeleteAllItems();
+
+	// Song editor
+	int Songs = m_pDocument->GetTrackCount();
+
+	for (int i = 0; i < Songs; ++i) {
+		Text.Format(TRACK_FORMAT, i + 1, m_pDocument->GetTrackTitle(i));	// start counting songs from 1
+		m_pSongList->InsertItem(i, Text);
+	}
+
+	// Select first song when dialog is displayed
+	SelectSong(0);
 }

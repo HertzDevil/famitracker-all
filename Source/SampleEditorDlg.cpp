@@ -52,11 +52,8 @@ void CSampleEditorDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 }
 
-
 BEGIN_MESSAGE_MAP(CSampleEditorDlg, CDialog)
 	ON_WM_SIZE()
-	ON_BN_CLICKED(IDC_OK, &CSampleEditorDlg::OnBnClickedOk)
-	ON_BN_CLICKED(IDC_CANCEL, &CSampleEditorDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_PLAY, &CSampleEditorDlg::OnBnClickedPlay)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_DELETE, &CSampleEditorDlg::OnBnClickedDelete)
@@ -111,8 +108,8 @@ void CSampleEditorDlg::MoveControls()
 		rect.left++;
 		rect.bottom -= 80;
 		rect.right -= 2;
-		m_pSampleView->Invalidate();
 		m_pSampleView->MoveWindow(rect);
+		m_pSampleView->Invalidate();
 	}
 
 	CWnd *control;
@@ -171,13 +168,13 @@ void CSampleEditorDlg::MoveControls()
 		control->MoveWindow(controlRect);
 	}
 
-	if (control = GetDlgItem(IDC_CANCEL)) {
+	if (control = GetDlgItem(IDCANCEL)) {
 		control->GetClientRect(&controlRect);
 		controlRect.MoveToXY(rect.right - controlRect.right - 10, rect.bottom - 30);
 		control->MoveWindow(controlRect);
 	}
 
-	if (control = GetDlgItem(IDC_OK)) {
+	if (control = GetDlgItem(IDOK)) {
 		control->GetClientRect(&controlRect);
 		controlRect.MoveToXY(rect.right - controlRect.right - 10, rect.bottom - 55);
 		control->MoveWindow(controlRect);
@@ -185,18 +182,6 @@ void CSampleEditorDlg::MoveControls()
 
 	Invalidate();
 	RedrawWindow();
-}
-
-void CSampleEditorDlg::OnBnClickedOk()
-{
-	m_pOriginalSample->Allocate(m_pSample->SampleSize, m_pSample->SampleData);
-
-	EndDialog(0);
-}
-
-void CSampleEditorDlg::OnBnClickedCancel()
-{
-	EndDialog(0);
 }
 
 void CSampleEditorDlg::OnBnClickedPlay()
@@ -652,4 +637,9 @@ void CSampleView::OnSize(UINT nType, int cx, int cy)
 void CSampleView::OnHome()
 {
 	m_iStartCursor = 0;
+}
+
+void CSampleEditorDlg::CopySample(CDSample *pTarget)
+{
+	pTarget->Allocate(m_pSample->SampleSize, m_pSample->SampleData);
 }

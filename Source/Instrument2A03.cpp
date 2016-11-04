@@ -231,7 +231,7 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 			int Count;
 			pFile->Read(&Count, sizeof(int));
 
-			if (Count < 0 || Count >= MAX_SEQUENCE_ITEMS)
+			if (Count < 0 || Count > MAX_SEQUENCE_ITEMS)
 				return false;
 
 			// Find a free sequence
@@ -378,7 +378,7 @@ int CInstrument2A03::Compile(CChunk *pChunk, int Index)
 	int ModSwitch = 0;
 	int StoredBytes = 0;
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 
 	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
 		ModSwitch = (ModSwitch >> 1) | ((GetSeqEnable(i) && (pDoc->GetSequence(GetSeqIndex(i), i)->GetItemCount() > 0)) ? 0x10 : 0);
@@ -403,7 +403,7 @@ bool CInstrument2A03::CanRelease() const
 {
 	if (GetSeqEnable(0) != 0) {
 		int index = GetSeqIndex(SEQ_VOLUME);
-		return ((CFamiTrackerDoc*) theApp.GetActiveDocument())->GetSequence(SNDCHIP_NONE, index, SEQ_VOLUME)->GetReleasePoint() != -1;
+		return CFamiTrackerDoc::GetDoc()->GetSequence(SNDCHIP_NONE, index, SEQ_VOLUME)->GetReleasePoint() != -1;
 	}
 
 	return false;

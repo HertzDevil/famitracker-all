@@ -29,7 +29,7 @@
 #include "InstrumentEditDlg.h"
 #include "SpeedDlg.h"
 #include "SoundGen.h"
-#include "PatternView.h"
+#include "PatternEditor.h"
 #include "Settings.h"
 #include "Accelerator.h"
 #include "TrackerChannel.h"
@@ -302,6 +302,28 @@ CFamiTrackerDoc* CFamiTrackerView::GetDocument() const // non-debug version is i
 }
 #endif //_DEBUG
 
+
+//
+// Static functions
+//
+
+CFamiTrackerView *CFamiTrackerView::GetView()
+{
+	CFrameWnd *pFrame = (CFrameWnd*)(AfxGetApp()->m_pMainWnd);
+	CView *pView = pFrame->GetActiveView();
+
+	if (!pView)
+		return NULL;
+
+	// Fail if view is of wrong kind
+	// (this could occur with splitter windows, or additional
+	// views on a single document
+	if (!pView->IsKindOf(RUNTIME_CLASS(CFamiTrackerView)))
+		return NULL;
+
+	return (CFamiTrackerView*)pView;
+}
+
 // CFamiTrackerView message handlers
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +415,7 @@ void CFamiTrackerView::CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType)
 	int Height = lpClientRect->bottom - lpClientRect->top;
 
 	CScrollBar *pVertScrollBar = GetScrollBarCtrl(SB_VERT);
-	CScrollBar *pHorzScrollBar = GetScrollBarCtrl(SB_VERT);
+	CScrollBar *pHorzScrollBar = GetScrollBarCtrl(SB_HORZ);
 
 	if (pVertScrollBar && pVertScrollBar->IsWindowVisible())
 		Width -= GetSystemMetrics(SM_CXVSCROLL);
@@ -688,32 +710,37 @@ void CFamiTrackerView::OnEditCopy()
 		return;
 	}
 
-	EmptyClipboard();
+	::EmptyClipboard();
 
-	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, sizeof(stClipData));
+	HGLOBAL hMem = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(stClipData));
 
 	if (hMem == NULL) {
-		AfxMessageBox(_T("An error occured while trying to copy data."));
-		CloseClipboard();
+		AfxMessageBox(IDS_CLIPBOARD_COPY_ERROR);
+		::CloseClipboard();
 		return;
 	}
 
-	stClipData *pClipData = (stClipData*)GlobalLock(hMem);
+	stClipData *pClipData = (stClipData*)::GlobalLock(hMem);
 
 	if (pClipData == NULL) {
-		AfxMessageBox(_T("An error occured while trying to copy data."));
-		CloseClipboard();
+		AfxMessageBox(IDS_CLIPBOARD_COPY_ERROR);
+		::CloseClipboard();
 		return;
 	}
 
 	m_pPatternView->Copy(pClipData);
 
-	GlobalUnlock(hMem);
+	::GlobalUnlock(hMem);
 
 	// Set clipboard for internal data, hMem may not be used after this point
-	SetClipboardData(m_iClipBoard, hMem);
+	::SetClipboardData(m_iClipBoard, hMem);
 
-	CloseClipboard();
+	::CloseClipboard();
+
+	// Copy volume values
+	if (m_bShiftPressed) {
+		CopyVolumeColumn();
+	}
 }
 
 void CFamiTrackerView::OnEditCut()
@@ -724,26 +751,29 @@ void CFamiTrackerView::OnEditCut()
 
 void CFamiTrackerView::OnEditPaste()
 {
-	OpenClipboard();
+	if (!OpenClipboard()) {
+		AfxMessageBox(IDS_CLIPBOARD_OPEN_ERROR);
+		return;
+	}
 
-	if (!IsClipboardFormatAvailable(m_iClipBoard)) {
+	if (!::IsClipboardFormatAvailable(m_iClipBoard)) {
 		AfxMessageBox(IDS_CLIPBOARD_NOT_AVALIABLE);
 		return;
 	}
 
-	HGLOBAL hMem = GetClipboardData(m_iClipBoard);
+	HGLOBAL hMem = ::GetClipboardData(m_iClipBoard);
 
 	if (hMem == NULL) {
-		AfxMessageBox(_T("An error occured while trying to paste data."));
-		CloseClipboard();
+		AfxMessageBox(IDS_CLIPBOARD_PASTE_ERROR);
+		::CloseClipboard();
 		return;
 	}
 
-	stClipData *pClipData = (stClipData*)GlobalLock(hMem);
+	stClipData *pClipData = (stClipData*)::GlobalLock(hMem);
 
 	if (pClipData == NULL) {
-		AfxMessageBox(_T("An error occured while trying to paste data."));
-		CloseClipboard();
+		AfxMessageBox(IDS_CLIPBOARD_PASTE_ERROR);
+		::CloseClipboard();
 		return;
 	}
 
@@ -751,9 +781,9 @@ void CFamiTrackerView::OnEditPaste()
 	pAction->SetPaste(pClipData, m_iPasteMode);
 	AddAction(pAction);
 
-	GlobalUnlock(hMem);
+	::GlobalUnlock(hMem);
 
-	CloseClipboard();
+	::CloseClipboard();
 
 	UpdateEditor(CHANGED_PATTERN);
 }
@@ -897,6 +927,47 @@ void CFamiTrackerView::OnEditPastemix()
 		m_iPasteMode = PASTE_MODE_MIX;
 }
 
+
+void CFamiTrackerView::CopyVolumeColumn()
+{
+	CString str;
+
+	m_pPatternView->GetVolumeColumn(str);
+
+	if (!OpenClipboard()) {
+		AfxMessageBox(IDS_CLIPBOARD_OPEN_ERROR);
+		return;
+	}
+
+	::EmptyClipboard();
+
+	HGLOBAL hMem = ::GlobalAlloc(GMEM_MOVEABLE, str.GetLength() + 1);
+
+	if (hMem == NULL) {
+		AfxMessageBox(IDS_CLIPBOARD_COPY_ERROR);
+		::CloseClipboard();
+		return;
+	}
+
+	char *pStr = (char*)::GlobalLock(hMem);
+
+	if (pStr == NULL) {
+		AfxMessageBox(IDS_CLIPBOARD_COPY_ERROR);
+		::CloseClipboard();
+		return;
+	}
+
+	strcpy_s(pStr, str.GetLength() + 1, (LPCSTR)str);
+
+	::GlobalUnlock(hMem);
+
+	// Set clipboard for internal data, hMem may not be used after this point
+	::SetClipboardData(CF_TEXT, hMem);
+
+	::CloseClipboard();
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // UI updates
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -932,7 +1003,7 @@ void CFamiTrackerView::OnInitialUpdate()
 	pMainFrame->UpdateControls();
 	pMainFrame->ResetUndo();
 
-	m_pPatternView->SetHighlight(pMainFrame->GetHighlightRow(), pMainFrame->GetSecondHighlightRow());
+	m_pPatternView->SetHighlight(pDoc->GetFirstHighlight(), pDoc->GetSecondHighlight());
 
 	// Default
 	SetInstrument(0);
@@ -1044,7 +1115,7 @@ void CFamiTrackerView::OnUpdate(CView* /*pSender*/, LPARAM lHint, CObject* /*pHi
 			break;
 
 		case UPDATE_HIGHLIGHT:
-			m_pPatternView->SetHighlight(((CMainFrame*)GetParentFrame())->GetHighlightRow(), ((CMainFrame*)GetParentFrame())->GetSecondHighlightRow());
+			m_pPatternView->SetHighlight(GetDocument()->GetFirstHighlight(), GetDocument()->GetSecondHighlight());
 			UpdateEditor(UPDATE_ENTIRE);
 			break;
 
@@ -1137,6 +1208,10 @@ void CFamiTrackerView::OnUpdateEditPastemix(CCmdUI *pCmdUI)
 // Tracker playing routines
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef _DEBUG
+extern CString patternEditorText;
+#endif
+
 int CFamiTrackerView::PlayerCommand(char Command, int Value)
 {
 	// Handle commands from the player thread
@@ -1152,12 +1227,20 @@ int CFamiTrackerView::PlayerCommand(char Command, int Value)
 	bool bDoUpdate = true;
 	int Frame, Row;
 
+#ifdef _DEBUG
+	static int ticks = 0;
+#endif
+
 	CSoundGen *pSoundGen = theApp.GetSoundGenerator();
 
 	switch (Command) {
 		case CMD_MOVE_TO_TOP:
 			m_pPatternView->JumpToRow(0);
 			m_pPatternView->JumpToFrame(m_pPatternView->GetFrame());
+#ifdef _DEBUG
+			ticks = 0;
+			patternEditorText.Empty();
+#endif
 			break;
 		case CMD_MOVE_TO_START:
 			m_pPatternView->JumpToFrame(0);
@@ -1175,9 +1258,9 @@ int CFamiTrackerView::PlayerCommand(char Command, int Value)
 				if (m_iFrameQueue == -1) {
 					if (!Value) {
 						if (m_pPatternView->StepFrame()) {
-							if (m_pPatternView->GetPlayFrame() == 0) {
-								pSoundGen->SongIsDone();
-							}
+//							if (m_pPatternView->GetPlayFrame() == 0) {
+//								pSoundGen->SongIsDone();
+//							}
 						}
 					}
 				}
@@ -1195,11 +1278,13 @@ int CFamiTrackerView::PlayerCommand(char Command, int Value)
 			break;
 		// Jump to frame
 		case CMD_JUMP_TO:
+			pSoundGen->FrameIsDone(1);
 			m_pPatternView->JumpToFrame(Value + 1);
 			m_pPatternView->JumpToRow(0);
 			break;
 		// Skip to next frame
 		case CMD_SKIP_TO:
+			pSoundGen->FrameIsDone(1);
 			m_pPatternView->StepFrame();
 			m_pPatternView->JumpToRow(Value);
 			break;
@@ -1235,6 +1320,12 @@ int CFamiTrackerView::PlayerCommand(char Command, int Value)
 						FeedNote(i, &NoteData);
 				}
 			}
+
+#ifdef _DEBUG
+			patternEditorText.AppendFormat("%i ", ticks);
+			ticks = 0;
+#endif
+
 			return 0;
 		case CMD_TIME:
 			m_iPlayTime = Value;
@@ -1242,6 +1333,9 @@ int CFamiTrackerView::PlayerCommand(char Command, int Value)
 		case CMD_GET_FRAME:
 			return m_pPatternView->GetPlayFrame();
 		case CMD_TICK:
+#ifdef _DEBUG
+			ticks++;
+#endif
 			if (m_iAutoArpKeyCount == 1 || !theApp.GetSettings()->Midi.bMidiArpeggio)
 				return 0;
 			// auto arpeggio
@@ -1355,7 +1449,12 @@ void CFamiTrackerView::UpdateEditor(LPARAM lHint)
 		case UPDATE_PLAYING:
 			// Pattern player, allow fast updates
 			m_pPatternView->Invalidate(false);
+			// TODO RESTORE THIS
+#ifdef _DEBUG
+			Invalidate();
+#else
 			RedrawWindow(m_pPatternView->GetActiveRect(), NULL, RDW_INVALIDATE);
+#endif
 			m_pPatternView->AdjustCursor();	// Fix frame editor cursor
 			DrawFrameWindow();
 			break;
@@ -2265,9 +2364,27 @@ bool CFamiTrackerView::EditEffNumberColumn(stChanNote &Note, unsigned char nChar
 			}
 		}
 	}
-	else if (Chip == SNDCHIP_FDS) {
+	else if (Chip == SNDCHIP_VRC7) {
 		// VRC7 effects
-		//const char VRC7_EFFECTS[] = {};
+		/*
+		const char VRC7_EFFECTS[] = {EF_VRC7_MODULATOR, EF_VRC7_CARRIER, EF_VRC7_LEVELS};
+		for (int i = 0; i < sizeof(VRC7_EFFECTS) && !bValidEffect; ++i) {
+			if (nChar == EFF_CHAR[VRC7_EFFECTS[i] - 1]) {
+				bValidEffect = true;
+				Effect = VRC7_EFFECTS[i];
+			}
+		}
+		*/
+	}
+	else if (Chip == SNDCHIP_S5B) {
+		// Sunsoft effects
+		const char SUNSOFT_EFFECTS[] = {EF_SUNSOFT_ENV_LO, EF_SUNSOFT_ENV_HI, EF_SUNSOFT_ENV_TYPE};
+		for (int i = 0; i < sizeof(SUNSOFT_EFFECTS) && !bValidEffect; ++i) {
+			if (nChar == EFF_CHAR[SUNSOFT_EFFECTS[i] - 1]) {
+				bValidEffect = true;
+				Effect = SUNSOFT_EFFECTS[i];
+			}
+		}
 	}
 
 	for (int i = 0; i < EF_COUNT && !bValidEffect; ++i) {

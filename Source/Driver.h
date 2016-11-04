@@ -25,7 +25,7 @@
 //
 
 // Change this for new versions
-const char DRIVER_ID[] = "NSF-driver v2.7";
+const char DRIVER_ID[] = "NSF-driver v2.8";
 
 #pragma warning( disable : 4309 ) // disable warning 4309: 'initializing' : truncation of constant value
 
@@ -65,6 +65,7 @@ const char NSF_CALLER_BIN_VRC6[] = {
 #include "drivers/drv_mmc5.h"
 #include "drivers/drv_fds.h"
 #include "drivers/drv_n163.h"
+//#include "drivers/drv_s5b.h"
 
 #include "drivers/config.h"
 
@@ -137,3 +138,14 @@ const driver_t DRIVER_PACK_N163 = {
 	DRIVER_RELOC_HIGH_N163, 
 	sizeof(DRIVER_RELOC_LOW_N163)
 };
+/*
+const driver_t DRIVER_PACK_S5B = { 
+	DRIVER_S5B, 
+	sizeof(DRIVER_S5B),
+	DRIVER_RELOC_WORD_S5B, 
+	sizeof(DRIVER_RELOC_WORD_S5B), 
+	DRIVER_RELOC_LOW_S5B, 
+	DRIVER_RELOC_HIGH_S5B, 
+	sizeof(DRIVER_RELOC_LOW_S5B)
+};
+*/

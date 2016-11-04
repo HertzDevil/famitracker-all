@@ -148,6 +148,14 @@ enum {
 
 	EF_DPCM_PITCH,
 
+	EF_SUNSOFT_ENV_LO,
+	EF_SUNSOFT_ENV_HI,
+	EF_SUNSOFT_ENV_TYPE,
+/*
+	EF_VRC7_MODULATOR,
+	EF_VRC7_CARRIER,
+	EF_VRC7_LEVELS,
+*/
 	EF_COUNT
 };
 
@@ -190,8 +198,15 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'H',	// FDS modulation depth
 						 'I',	// FDS modulation speed hi
 						 'J',	// FDS modulation speed lo
-						 'W'	// DPCM Pitch
-						 
+						 'W',	// DPCM Pitch
+						 'H',	// Sunsoft envelope low
+						 'I',	// Sunsoft envelope high
+						 'J',	// Sunsoft envelope type
+						 /*
+						 'H',	// VRC7 modulator
+						 'I',	// VRC7 carrier
+						 'J',	// VRC7 modulator/feedback level
+						 */
 };
 
 

@@ -57,7 +57,7 @@ BEGIN_MESSAGE_MAP(CFamiTrackerApp, CWinApp)
 	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
 	ON_COMMAND(ID_TRACKER_PLAY_START, OnTrackerPlayStart)
 	ON_COMMAND(ID_TRACKER_PLAY_CURSOR, OnTrackerPlayCursor)
-	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
+//	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
 	ON_COMMAND(ID_TRACKER_STOP, OnTrackerStop)
 	ON_COMMAND(ID_TRACKER_TOGGLE_PLAY, OnTrackerTogglePlay)
 	ON_COMMAND(ID_TRACKER_PLAYPATTERN, OnTrackerPlaypattern)
@@ -107,7 +107,11 @@ BOOL CFamiTrackerApp::InitInstance()
 	InitCommonControls();
 
 	CWinApp::InitInstance();
-
+/*
+	if (!AfxOleInit()) {
+		TRACE0("OLE initialization failed\n");
+	}
+*/
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	// of your final executable, you should remove from the following
@@ -343,7 +347,7 @@ void CFamiTrackerApp::CheckAppThemed()
 	if (hinstDll) {
 		typedef BOOL (*ISAPPTHEMEDPROC)();
 		ISAPPTHEMEDPROC pIsAppThemed;
-		pIsAppThemed = (ISAPPTHEMEDPROC) ::GetProcAddress(hinstDll, _T("IsAppThemed"));
+		pIsAppThemed = (ISAPPTHEMEDPROC) ::GetProcAddress(hinstDll, "IsAppThemed");
 
 		if(pIsAppThemed)
 			m_bThemeActive = (pIsAppThemed() == TRUE);
@@ -380,8 +384,8 @@ void CFamiTrackerApp::ShutDownSynth()
 	m_pSoundGenerator->PostThreadMessage(WM_QUIT, 0, 0);
 	SetEvent(m_hNotificationEvent);
 
-	// Wait for thread to exit, timout = 2s
-	DWORD dwResult = ::WaitForSingleObject(hThread, 4000);
+	// Wait for thread to exit, timout = 1s
+	DWORD dwResult = ::WaitForSingleObject(hThread, 1000);
 
 	if (dwResult != WAIT_OBJECT_0 && m_pSoundGenerator != NULL) {
 		TRACE0("App: Closing the sound generator thread failed\n");
@@ -473,7 +477,7 @@ bool CFamiTrackerApp::CheckSingleInstance()
 					// We have the window handle & file, send a message to open the file
 					COPYDATASTRUCT data;
 					data.dwData = cmdInfo.m_bPlay ? IPC_LOAD_PLAY : IPC_LOAD;
-					data.cbData = (DWORD)(strlen(pFilePath) + 1);
+					data.cbData = (DWORD)((_tcslen(pFilePath) + 1) * sizeof(TCHAR));
 					data.lpData = pFilePath;
 					DWORD result;
 					SendMessageTimeout(hWnd, WM_COPYDATA, NULL, (LPARAM)&data, SMTO_NORMAL, 100, &result);
@@ -509,7 +513,7 @@ void CFamiTrackerApp::LoadSoundConfig()
 void CFamiTrackerApp::SilentEverything()
 {
 	GetSoundGenerator()->SilentAll();
-	static_cast<CFamiTrackerView*>(GetActiveView())->MakeSilent() ;
+	CFamiTrackerView::GetView()->MakeSilent();
 }
 
 void CFamiTrackerApp::CheckSynth() 
@@ -584,7 +588,7 @@ void CFamiTrackerApp::ReloadColorScheme(void)
 
 void CFamiTrackerApp::RegisterKeyState(int Channel, int Note)
 {
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(GetActiveView());
+	CFamiTrackerView *pView = CFamiTrackerView::GetView();
 
 	if (pView)
 		pView->RegisterKeyState(Channel, Note);
@@ -664,6 +668,8 @@ void CFamiTrackerApp::ResetPlayer()
 
 // Active document & view
 
+// TODO remove this
+/*
 CDocument *CFamiTrackerApp::GetActiveDocument() const
 {
 	CFrameWnd *pFrameWnd = dynamic_cast<CFrameWnd*>(m_pMainWnd);
@@ -673,7 +679,9 @@ CDocument *CFamiTrackerApp::GetActiveDocument() const
 
 	return pFrameWnd->GetActiveDocument();
 }
-
+*/
+// TODO remove this
+/*
 CView *CFamiTrackerApp::GetActiveView() const
 {
 	CFrameWnd *pFrameWnd = dynamic_cast<CFrameWnd*>(m_pMainWnd);
@@ -683,7 +691,7 @@ CView *CFamiTrackerApp::GetActiveView() const
 	
 	return pFrameWnd->GetActiveView();
 }
-
+*/
 // File load/save
 
 void CFamiTrackerApp::OnFileOpen() 

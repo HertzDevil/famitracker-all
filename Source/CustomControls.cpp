@@ -29,9 +29,14 @@
 
  Contains some custom GUI controls.
 
- CInstrumentList: The instrument list, extended to contain a context menu
- CBannerEdit:	  An edit box that displays a banner when no text is present
- CLockedEdit:	  An edit box that is locked for editing, unlocked with double-click
+ * CInstrumentList
+   - The instrument list, extended to contain a context menu
+ 
+ * CBannerEdit
+   - An edit box that displays a banner when no text is present
+ 
+ * CLockedEdit
+   - An edit box that is locked for editing, unlocked with double-click
 
 */
 
@@ -56,27 +61,24 @@ CInstrumentList::CInstrumentList(CMainFrame *pMainFrame) : m_pMainFrame(pMainFra
 void CInstrumentList::OnContextMenu(CWnd* pWnd, CPoint point)
 {
 	int Instrument(0);
-	char Text[256];
-
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(m_pMainFrame->GetActiveView());
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(m_pMainFrame->GetActiveDocument());
+	TCHAR Text[256];
 
 	if (GetSelectionMark() != -1) {
 		// Select the instrument
 		GetItemText(GetSelectionMark(), 0, Text, 256);
 		_stscanf(Text, _T("%X"), &Instrument);
-		pDoc->GetInstrumentName(Instrument, Text);
-		pView->SetInstrument(Instrument);
+		CFamiTrackerDoc::GetDoc()->GetInstrumentName(Instrument, Text);
+		CFamiTrackerView::GetView()->SetInstrument(Instrument);
 		// TODO: fix??
 		//m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->SetWindowText(Text);
 	}
 
 	// Display the popup menu
-	CMenu *PopupMenu, PopupMenuBar;
+	CMenu *pPopupMenu, PopupMenuBar;
 	PopupMenuBar.LoadMenu(IDR_INSTRUMENT_POPUP);
-	PopupMenu = PopupMenuBar.GetSubMenu(0);
+	pPopupMenu = PopupMenuBar.GetSubMenu(0);
 	// Route the menu messages to mainframe
-	PopupMenu->TrackPopupMenu(TPM_LEFTBUTTON, point.x, point.y, m_pMainFrame);
+	pPopupMenu->TrackPopupMenu(TPM_LEFTBUTTON, point.x, point.y, m_pMainFrame);
 
 	// Return focus to pattern editor
 	m_pMainFrame->GetActiveView()->SetFocus();
@@ -191,7 +193,7 @@ void CLockedEdit::OnSetFocus(CWnd* pOldWnd)
 	CEdit::OnSetFocus(pOldWnd);
 
 	if (!IsEditable())
-		theApp.GetActiveView()->SetFocus();
+		CFamiTrackerView::GetView()->SetFocus();
 }
 
 void CLockedEdit::OnKillFocus(CWnd* pNewWnd)
@@ -201,7 +203,7 @@ void CLockedEdit::OnKillFocus(CWnd* pNewWnd)
 	if (!IsEditable())
 		return;
 	GetWindowText(Text);
-	m_iValue = atoi(Text);
+	m_iValue = _ttoi(Text);
 	m_bUpdate = true;
 	SendMessage(EM_SETREADONLY, TRUE);
 }
@@ -210,7 +212,7 @@ BOOL CLockedEdit::PreTranslateMessage(MSG* pMsg)
 {
 	// For some reason OnKeyDown won't work
 	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN) {
-		theApp.GetActiveView()->SetFocus();
+		CFamiTrackerView::GetView()->SetFocus();
 		return TRUE;
 	}
 

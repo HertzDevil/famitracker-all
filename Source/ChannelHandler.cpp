@@ -23,6 +23,12 @@
 // playing the channels.
 //
 
+/*
+
+ TODO Remove the m_pInstrument pointer, as instruments may get deleted at any time
+
+*/
+
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"

@@ -26,12 +26,12 @@
 #include "SequenceEditor.h"
 #include "InstrumentEditorS5B.h"
 
-LPCTSTR CInstrumentEditorS5B::INST_SETTINGS_VRC6[] = {
+LPCTSTR CInstrumentEditorS5B::INST_SETTINGS_S5B[] = {
 	_T("Volume"), 
 	_T("Arpeggio"), 
 	_T("Pitch"), 
 	_T("Hi-pitch"), 
-	_T("Noise")
+	_T("Noise / mode")
 };
 
 // CInstrumentEditorS5B dialog
@@ -61,7 +61,7 @@ void CInstrumentEditorS5B::SelectInstrument(int Instrument)
 	CInstrumentS5B *pInst = (CInstrumentS5B*)GetDocument()->GetInstrument(Instrument);
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 
-	m_pInstrument = pInst;
+	m_pInstrument = NULL;
 
 	// Update instrument setting list
 	for (int i = 0; i < SEQ_COUNT; ++i) {
@@ -74,6 +74,8 @@ void CInstrumentEditorS5B::SelectInstrument(int Instrument)
 	// Setting text box
 	SetDlgItemInt(IDC_SEQ_INDEX, pInst->GetSeqIndex(m_iSelectedSetting));
 
+	m_pInstrument = pInst;
+
 	// Select new sequence
 	SelectSequence(pInst->GetSeqIndex(m_iSelectedSetting), m_iSelectedSetting);
 }
@@ -81,8 +83,8 @@ void CInstrumentEditorS5B::SelectInstrument(int Instrument)
 void CInstrumentEditorS5B::SelectSequence(int Sequence, int Type)
 {
 	// Selects the current sequence in the sequence editor
-	m_pSequence = GetDocument()->GetSequence(Sequence, Type);
-	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_VRC6);
+	m_pSequence = GetDocument()->GetSequence(SNDCHIP_S5B, Sequence, Type);
+	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_S5B);
 }
 
 void CInstrumentEditorS5B::TranslateMML(CString String, int Max, int Min)
@@ -133,7 +135,7 @@ BOOL CInstrumentEditorS5B::OnInitDialog()
 		pList->InsertItem(0, _T(""), 0);
 		pList->SetCheck(0, 0);
 		pList->SetItemText(0, 1, _T("0"));
-		pList->SetItemText(0, 2, INST_SETTINGS_VRC6[i]);
+		pList->SetItemText(0, 2, INST_SETTINGS_S5B[i]);
 	}
 
 	pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
@@ -195,20 +197,22 @@ void CInstrumentEditorS5B::OnEnChangeSeqIndex()
 	if (Index > (MAX_SEQUENCES - 1))
 		Index = (MAX_SEQUENCES - 1);
 	
-	// Update list
-	CString Text;
-	Text.Format(_T("%i"), Index);
-	pList->SetItemText(m_iSelectedSetting, 1, Text);
+	if (m_pInstrument != NULL) {
+		// Update list
+		CString Text;
+		Text.Format(_T("%i"), Index);
+		pList->SetItemText(m_iSelectedSetting, 1, Text);
 
-	if (m_pInstrument) {
-		m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+		if (m_pInstrument->GetSeqIndex(m_iSelectedSetting) != Index)
+			m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+
 		SelectSequence(Index, m_iSelectedSetting);
 	}
 }
 
 void CInstrumentEditorS5B::OnBnClickedFreeSeq()
 {
-	int FreeIndex = GetDocument()->GetFreeSequence(m_iSelectedSetting);
+	int FreeIndex = GetDocument()->GetFreeSequenceS5B(m_iSelectedSetting);
 	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 

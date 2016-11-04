@@ -53,6 +53,8 @@ void CChannelHandlerVRC7::SetChannelID(int ID)
 	m_iChannel = ID - CHANID_VRC7_CH1;
 }
 
+bool bRegsDirty = false;
+
 void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
 	int PostEffect = 0, PostEffectParam;
@@ -88,6 +90,20 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 			return;
 	}
 */
+
+	if (pNoteData->Note != NONE) {
+		if (pInstrument) {
+			// Patch number
+			m_iPatch = pInstrument->GetPatch();
+
+			// Load custom parameters
+			if (m_iPatch == 0) {
+				for (int i = 0; i < 8; ++i)
+					m_iRegs[i] = pInstrument->GetCustomReg(i);
+			}
+		}
+	}
+
 	// Evaluate effects
 	for (int i = 0; i < EffColumns; ++i) {
 		int EffCmd	 = pNoteData->EffNumber[i];
@@ -113,6 +129,43 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 					case EF_DUTY_CYCLE:
 						Patch = EffParam;
 						break;
+/*
+					case EF_VRC7_MODULATOR:
+						switch (EffParam & 0xF0) {
+							case 0x00:	// Amplitude modulation on/off
+								break;
+							case 0x10:	// Vibrato on/off
+								break;
+							case 0x20:	// Sustain on/off
+								break;
+							case 0x30:	// Wave rectification on/off
+								break;
+							case 0x40:	// Key rate scaling on/off
+								break;
+							case 0x50:	// Key rate level
+								break;
+							case 0x60:	// Mult factor
+								break;
+							case 0x70:	// Attack
+								break;
+							case 0x80:	// Decay
+								break;
+							case 0x90:	// Sustain
+								break;
+							case 0xA0:	// Release
+								break;
+						}
+						break;
+					case EF_VRC7_CARRIER:
+						break;
+					case EF_VRC7_LEVELS:
+						if (EffParam & 0x80)	// Feedback
+							m_iRegs[0x03] = (m_iRegs[0x03] & 0xF8) | (EffParam & 0x07);
+						else
+							m_iRegs[0x02] = (m_iRegs[0x02] & 0xC0) | (EffParam & 0x3F);
+						bRegsDirty = true;
+						break;
+						*/
 				}
 			}
 		}
@@ -175,6 +228,7 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 			}
 		}
 
+		/*
 		if (pInstrument) {
 			// Patch number
 			m_iPatch = pInstrument->GetPatch();
@@ -185,6 +239,7 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 					m_iRegs[i] = pInstrument->GetCustomReg(i);
 			}
 		}
+		*/
 	}
 /*
 	if (Patch != -1)
@@ -265,10 +320,12 @@ void CVRC7Channel::RefreshChannel()
 	Fnum = (m_iPeriod >> 2) - GetVibrato() - GetFinePitch();// (m_iFinePitch - 0x80);
 
 	// Write custom instrument
-	if (Patch == 0 && m_iCommand == CMD_NOTE_TRIGGER) {
+	if (Patch == 0 && (m_iCommand == CMD_NOTE_TRIGGER || bRegsDirty)) {
 		for (int i = 0; i < 8; ++i)
 			RegWrite(i, m_iRegs[i]);
 	}
+
+	bRegsDirty = false;
 
 	int Cmd = 0;
 

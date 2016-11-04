@@ -39,6 +39,7 @@ enum { WM_USER_SILENT_ALL = WM_USER + 1,
 	   WM_USER_STOP,
 	   WM_USER_RESET,
 	   WM_USER_START_RENDER,
+	   WM_USER_STOP_RENDER,
 	   WM_USER_PREVIEW_SAMPLE,
 	   WM_USER_WRITE_APU,
 	   WM_USER_CLOSE_SOUND
@@ -89,7 +90,8 @@ public:
 	void		SetSampleWindow(CSampleWindow *pWnd);
 
 	// Multiple times initialization
-	void		RegisterChannels(int Chip);
+	void		RegisterChannels(int Chip, CFamiTrackerDoc *pDoc);
+	void		SelectChip(int Chip);
 	void		LoadMachineSettings(int Machine, int Rate);
 
 	// Sound
@@ -133,9 +135,9 @@ public:
 	stDPCMState	 GetDPCMState() const;
 
 	// Rendering
-	bool		 RenderToFile(char *File, int SongEndType, int SongEndParam);
+	bool		 RenderToFile(LPTSTR pFile, int SongEndType, int SongEndParam);
 	void		 StopRendering();
-	void		 GetRenderStat(int &Frame, int &Time, bool &Done);
+	void		 GetRenderStat(int &Frame, int &Time, bool &Done, int &FramesToRender);
 	bool		 IsRendering();	
 	void		 CheckRenderStop();
 	void		 SongIsDone();
@@ -298,6 +300,7 @@ public:
 	afx_msg void OnStopPlayer(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnResetPlayer(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnStartRender(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnStopRender(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnPreviewSample(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnWriteAPU(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnCloseSound(WPARAM wParam, LPARAM lParam);

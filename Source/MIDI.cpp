@@ -236,7 +236,7 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 				if (++m_iTimingCounter == 6) {
 					m_iTimingCounter = 0;
 					Enqueue(MsgType, MsgChannel, Data1, Data2);
-					theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
+					CFamiTrackerView::GetView()->PostMessage(MSG_MIDI_EVENT);
 				}
 			}
 			break;
@@ -252,7 +252,7 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 				case MIDI_MSG_NOTE_ON: 
 				case MIDI_MSG_PITCH_WHEEL:
 					Enqueue(MsgType, MsgChannel, Data1, Data2);
-					theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
+					CFamiTrackerView::GetView()->PostMessage(MSG_MIDI_EVENT);
 					break;
 			}
 	}

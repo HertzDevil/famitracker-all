@@ -73,6 +73,7 @@ BEGIN_MESSAGE_MAP(CSoundGen, CWinThread)
 	ON_THREAD_MESSAGE(WM_USER_STOP, OnStopPlayer)
 	ON_THREAD_MESSAGE(WM_USER_RESET, OnResetPlayer)
 	ON_THREAD_MESSAGE(WM_USER_START_RENDER, OnStartRender)
+	ON_THREAD_MESSAGE(WM_USER_STOP_RENDER, OnStopRender)
 	ON_THREAD_MESSAGE(WM_USER_PREVIEW_SAMPLE, OnPreviewSample)
 	ON_THREAD_MESSAGE(WM_USER_WRITE_APU, OnWriteAPU)
 	ON_THREAD_MESSAGE(WM_USER_CLOSE_SOUND, OnCloseSound)
@@ -286,7 +287,7 @@ void CSoundGen::SetSampleWindow(CSampleWindow *pWnd)
 	m_csSampleWndLock.Unlock();
 }
 
-void CSoundGen::RegisterChannels(int Chip)
+void CSoundGen::RegisterChannels(int Chip, CFamiTrackerDoc *pDoc)
 {
 	// Called from the document object (from the main thread)
 	//
@@ -294,6 +295,27 @@ void CSoundGen::RegisterChannels(int Chip)
 	// Called from main thread
 	ASSERT(GetCurrentThreadId() == theApp.m_nThreadID);
 
+	// This affects the sound channel interface so it must be synchronized
+	m_csDocumentLock.Lock();
+
+	// Clear all registered channels
+	pDoc->ResetChannels();
+
+	// Register the channels in the document
+	//
+
+	// Expansion & internal channels
+	for (int i = 0; i < CHANNELS; ++i) {
+		if (m_pTrackerChannels[i] && ((m_pTrackerChannels[i]->GetChip() & Chip) || (i < 5))) {
+			pDoc->RegisterChannel(m_pTrackerChannels[i], i, m_pTrackerChannels[i]->GetChip());
+		}
+	}
+
+	m_csDocumentLock.Unlock();
+}
+
+void CSoundGen::SelectChip(int Chip)
+{
 	if (m_bPlaying)
 		StopPlayer();
 
@@ -301,9 +323,6 @@ void CSoundGen::RegisterChannels(int Chip)
 		TRACE0("CSoundGen: Could not stop player!");
 		return;
 	}
-
-	// This affects the sound channel interface so it must be synchronized
-	m_csDocumentLock.Lock();
 
 	m_pAPU->SetExternalSound(Chip);
 
@@ -315,20 +334,6 @@ void CSoundGen::RegisterChannels(int Chip)
 	if (Chip & SNDCHIP_MMC5)
 		m_pAPU->ExternalWrite(0x5015, 0x03);
 
-	// Clear all registered channels
-	m_pDocument->ResetChannels();
-
-	// Register the channels in the document
-	//
-
-	// Expansion & internal channels
-	for (int i = 0; i < CHANNELS; ++i) {
-		if (m_pTrackerChannels[i] && ((m_pTrackerChannels[i]->GetChip() & Chip) || (i < 5))) {
-			m_pDocument->RegisterChannel(m_pTrackerChannels[i], i, m_pTrackerChannels[i]->GetChip());
-		}
-	}
-
-	m_csDocumentLock.Unlock();
 }
 
 
@@ -876,6 +881,10 @@ void CSoundGen::RunFrame()
 				if (m_iPlayTime >= (unsigned int)m_iRenderEndParam)
 					m_bRequestRenderStop = true;
 			}
+			else if (m_iRenderEndWhen == SONG_LOOP_LIMIT) {
+				if (m_iRenderedFrames >= m_iRenderEndParam)
+					m_bRequestRenderStop = true;
+			}
 		}
 
 		// Calculate playtime
@@ -1207,26 +1216,16 @@ void CSoundGen::EvaluateGlobalEffects(stChanNote *NoteData, int EffColumns)
 			// Bxx: Jump to pattern xx
 			case EF_JUMP:
 				m_iJumpToPattern = EffParam;
-				FrameIsDone(1);
-				if (m_bRendering)
-					CheckRenderStop();
-				FrameIsDone(m_iJumpToPattern);
-				if (m_bRendering)
-					CheckRenderStop();
 				break;
 
 			// Dxx: Skip to next track and start at row xx
 			case EF_SKIP:
 				m_iSkipToRow = EffParam;
-				FrameIsDone(1);
-				if (m_bRendering)
-					CheckRenderStop();
 				break;
 
 			// Cxx: Halt playback
 			case EF_HALT:
 				m_bPlayerHalted = true;
-				//HaltPlayer();
 				if (m_bRendering) {
 					// Unconditional stop
 					m_iRenderedFrames++;
@@ -1239,10 +1238,12 @@ void CSoundGen::EvaluateGlobalEffects(stChanNote *NoteData, int EffColumns)
 
 // File rendering functions
 
-bool CSoundGen::RenderToFile(char *File, int SongEndType, int SongEndParam)
+bool CSoundGen::RenderToFile(LPTSTR pFile, int SongEndType, int SongEndParam)
 {
 	// Called from player thread
 	//ASSERT(GetCurrentThreadId() == m_nThreadID);
+
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 
 	if (m_bPlaying)
 		HaltPlayer();
@@ -1253,13 +1254,13 @@ bool CSoundGen::RenderToFile(char *File, int SongEndType, int SongEndParam)
 
 	if (m_iRenderEndWhen == SONG_TIME_LIMIT) {
 		// This variable is stored in seconds, convert to frames
-		m_iRenderEndParam *= m_pTrackerView->GetDocument()->GetFrameRate();
+		m_iRenderEndParam *= pDoc->GetFrameRate();
 	}
 	else if (m_iRenderEndWhen == SONG_LOOP_LIMIT) {
-		m_iRenderEndParam *= m_pTrackerView->GetDocument()->GetFrameCount();
+		m_iRenderEndParam = pDoc->ScanActualLength(pDoc->GetSelectedTrack(), m_iRenderEndParam);
 	}
 
-	if (!m_wfWaveFile.OpenFile(File, theApp.GetSettings()->Sound.iSampleRate, theApp.GetSettings()->Sound.iSampleSize, 1)) {
+	if (!m_wfWaveFile.OpenFile(pFile, theApp.GetSettings()->Sound.iSampleRate, theApp.GetSettings()->Sound.iSampleSize, 1)) {
 		AfxMessageBox(IDS_FILE_OPEN_ERROR);
 		return false;
 	}
@@ -1274,20 +1275,23 @@ void CSoundGen::StopRendering()
 	if (!IsRendering())
 		return;
 
-	// Send this as message instead
+	m_bPlaying = false;
+	m_bPlayerHalted = false;
 
 	m_bRendering = false;
 	m_pTrackerView->PlayerCommand(CMD_MOVE_TO_START, 0);
 	m_wfWaveFile.CloseFile();
-	
+
+	MakeSilent();
 	ResetBuffer();
 }
 
-void CSoundGen::GetRenderStat(int &Frame, int &Time, bool &Done)
+void CSoundGen::GetRenderStat(int &Frame, int &Time, bool &Done, int &FramesToRender)
 {
 	Frame = m_iRenderedFrames;
 	Time = m_iPlayTime / m_pTrackerView->GetDocument()->GetFrameRate();
 	Done = m_bRendering;
+	FramesToRender = m_iRenderEndParam;
 }
 
 bool CSoundGen::IsRendering()
@@ -1306,7 +1310,8 @@ void CSoundGen::FrameIsDone(int SkipFrames)
 	if (m_bRequestRenderStop)
 		return;
 
-	m_iRenderedFrames += SkipFrames;
+	if (m_iRenderedFrames <= m_iRenderEndParam)
+		++m_iRenderedFrames;
 }
 
 void CSoundGen::CheckRenderStop()
@@ -1609,6 +1614,11 @@ void CSoundGen::OnStartRender(WPARAM wParam, LPARAM lParam)
 	m_bRendering = true;
 	m_iDelayedStart = 5;	// Wait 5 frames until player starts
 	m_iDelayedEnd = 5;
+}
+
+void CSoundGen::OnStopRender(WPARAM wParam, LPARAM lParam)
+{
+	StopRendering();
 }
 
 void CSoundGen::OnPreviewSample(WPARAM wParam, LPARAM lParam)

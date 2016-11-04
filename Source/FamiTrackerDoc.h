@@ -142,6 +142,10 @@ public:
 	static const int CLASS_VERSION = 3;
 	const int GetVersion() const { return m_iVersion; };
 
+	// Static functions
+public:
+	static CFamiTrackerDoc *GetDoc();
+
 // Attributes
 public:
 	CString GetFileTitle() const;
@@ -159,7 +163,11 @@ public:
 	//
 	bool IsFileLoaded();
 	bool HasLastLoadFailed() const;
-	bool ImportFile(LPCTSTR lpszPathName, bool bIncludeInstruments);
+
+	// Import
+	CFamiTrackerDoc *LoadImportFile(LPCTSTR lpszPathName);
+	bool ImportInstruments(CFamiTrackerDoc *pImported, int *pInstTable);
+	bool ImportTrack(int Track, CFamiTrackerDoc *pImported, int *pInstTable);
 
 	//
 	// Interface functions (not related to document data)
@@ -276,6 +284,10 @@ public:
 	void			SetSpeedSplitPoint(int SplitPoint);
 	int				GetSpeedSplitPoint() const;
 
+	void			SetHighlight(int First, int Second);
+	int				GetFirstHighlight() const;
+	int				GetSecondHighlight() const;
+
 	// Track management functions
 	void			SelectTrack(unsigned int Track);
 //	void			SelectTrackFast(unsigned int Track);	//	TODO: should be removed
@@ -329,6 +341,11 @@ public:
 	int				GetSequenceItemCountN163(int Index, int Type) const;
 	int				GetFreeSequenceN163(int Type) const;
 
+	CSequence		*GetSequenceS5B(int Index, int Type);
+	CSequence		*GetSequenceS5B(int Index, int Type) const;
+	int				GetSequenceItemCountS5B(int Index, int Type) const;
+	int				GetFreeSequenceS5B(int Type) const;
+
 	// Read only getter for exporter plugins
 	CSequenceInterface const *GetSequence(int Index, int Type) const;
 
@@ -345,6 +362,8 @@ public:
 
 	// For file version compability
 	void			ConvertSequence(stSequence *OldSequence, CSequence *NewSequence, int Type);
+
+	int				ScanActualLength(int Track, int Count) const;
 
 	// Constants
 public:
@@ -385,6 +404,7 @@ protected:
 	bool			WriteBlock_DSamples(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesN163(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_SequencesS5B(CDocumentFile *pDocFile) const;
 
 	bool			ReadBlock_Parameters(CDocumentFile *pDocFile);
 	bool			ReadBlock_Header(CDocumentFile *pDocFile);
@@ -395,6 +415,7 @@ protected:
 	bool			ReadBlock_DSamples(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesVRC6(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesN163(CDocumentFile *pDocFile);
+	bool			ReadBlock_SequencesS5B(CDocumentFile *pDocFile);
 
 	void			SwitchToTrack(unsigned int Track);
 
@@ -410,6 +431,9 @@ protected:
 	//
 
 	void			AllocateSong(unsigned int Song);
+
+	void			SetupChannels(unsigned char Chip);
+	void			ApplyExpansionChip();
 
 	//
 	// Private variables
@@ -463,6 +487,7 @@ private:
 	CSequence		*m_pSequences2A03[MAX_SEQUENCES][SEQ_COUNT];
 	CSequence		*m_pSequencesVRC6[MAX_SEQUENCES][SEQ_COUNT];
 	CSequence		*m_pSequencesN163[MAX_SEQUENCES][SEQ_COUNT];
+	CSequence		*m_pSequencesS5B[MAX_SEQUENCES][SEQ_COUNT];
 
 	// Module properties
 	unsigned char	m_iExpansionChip;							// Expansion chip
@@ -480,6 +505,9 @@ private:
 	unsigned int	m_iSpeedSplitPoint;							// Speed/tempo split-point
 
 	CString			m_strComment;
+
+	unsigned int	m_iFirstHighlight;
+	unsigned int	m_iSecondHighlight;
 
 	// Things below are for compability with older files
 	stSequence		m_Sequences[MAX_SEQUENCES][SEQ_COUNT];		// Allocate one sequence-list for each effect

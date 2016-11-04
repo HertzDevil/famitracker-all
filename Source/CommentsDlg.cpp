@@ -24,8 +24,9 @@
 #include "MainFrm.h"
 #include "Source\CommentsDlg.h"
 
-
 // CCommentsDlg dialog
+
+LPCTSTR CCommentsDlg::FONT_FACE = _T("Courier");
 
 IMPLEMENT_DYNAMIC(CCommentsDlg, CDialog)
 
@@ -112,6 +113,14 @@ BOOL CCommentsDlg::OnInitDialog()
 	CString comment = pDoc->GetComment();
 
 	SetDlgItemText(IDC_COMMENTS, comment);
+
+	CEdit *pEdit = (CEdit*)GetDlgItem(IDC_COMMENTS);
+
+	CFont *pFont = new CFont();
+	
+	pFont->CreateFont(12, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, FONT_FACE);
+
+	pEdit->SetFont(pFont);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE

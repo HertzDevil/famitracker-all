@@ -18,28 +18,37 @@
 ** must bear this legend.
 */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#pragma once
 
-// Define this for beta builds
-//#define WIP
+class CInstrumentFileTree
+{
+public:
+	CInstrumentFileTree();
+	~CInstrumentFileTree();
 
-// Version info
-#define VERSION_MAJ  0
-#define VERSION_MIN  4
-#define VERSION_REV  1
+	bool BuildMenuTree(CString instrumentPath);
+	CMenu *GetMenu() const;
+	CString GetFile(int Index) const;
+	bool ShouldRebuild() const;
+	void Changed();
 
-#define VERSION_WIP  0
+public:
+	// Limits, to avoid very deep recursions
+	static const int RECURSION_LIMIT = 6;
+	static const int MAX_MENUS = 200;
 
-#ifdef SVN_BUILD
+	static const int MENU_BASE = 0x9000;	// Choose a range where no strings are located
 
-#include "config.h"
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,SVN_VERSION
+protected:
+	bool ScanDirectory(CString path, CMenu *pMenu, int level);
+	void DeleteMenuObjects();
 
-#else
-
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,VERSION_WIP
-
-#endif
-
-#endif /* _VERSION_H_ */
+private:
+	CMenu *m_pRootMenu;
+	int m_iFileIndex;
+	CArray<CString, CString> m_fileList;
+	CArray<CMenu*, CMenu*> m_menuArray;
+	DWORD m_iTimeout;
+	bool m_bShouldRebuild;
+	int m_iTotalMenusAdded;
+};

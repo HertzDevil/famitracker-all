@@ -63,6 +63,9 @@ protected:
 
 	static const int VOLUME_RANGE;
 
+	static LPCTSTR QUALITY_FORMAT;
+	static LPCTSTR GAIN_FORMAT;
+
 protected:
 	CDSample *ConvertFile();
 	//int ReadSample(void);

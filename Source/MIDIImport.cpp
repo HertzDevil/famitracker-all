@@ -112,7 +112,7 @@ bool CMIDIImport::ImportFile(LPCTSTR FileName)
 	
 	CMIDIImportDialog ImportDialog;
 
-	pDocument = (CFamiTrackerDoc*)theApp.GetActiveDocument();
+	pDocument = CFamiTrackerDoc::GetDoc();
 	pMainFrame = (CMainFrame*)theApp.GetMainWnd();
 
 	MTHD_CHUNK MTHD;

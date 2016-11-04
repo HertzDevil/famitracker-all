@@ -26,7 +26,7 @@
 class CWaveFile
 {
 	public:
-		bool	OpenFile(char *Filename, int SampleRate, int SampleSize, int Channels);
+		bool	OpenFile(LPTSTR Filename, int SampleRate, int SampleSize, int Channels);
 		void	CloseFile();
 		void	WriteWave(char *Data, int Size);
 

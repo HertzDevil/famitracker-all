@@ -211,6 +211,8 @@ public:
 
 	void ClearSelection();
 
+	void GetVolumeColumn(CString &str) const;
+
 	// Various
 	void Transpose(int Type);
 	void ScrollValues(int Type);
@@ -266,7 +268,7 @@ private:
 	void DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview);
 
 	void DrawCell(int PosX, int Column, int Channel, bool bInvert, stChanNote *pNoteData, CDC *pDC, RowColorInfo_t *pColorInfo);
-	void DrawChar(int x, int y, char c, COLORREF Color, CDC *pDC);
+	void DrawChar(int x, int y, TCHAR c, COLORREF Color, CDC *pDC);
 	void DrawNoteColumn(unsigned int PosX, unsigned int PosY, CDC *pDC);
 	void DrawInstrumentColumn(unsigned int PosX, unsigned int PosY, CDC *pDC);
 

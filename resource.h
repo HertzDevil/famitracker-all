@@ -2,37 +2,42 @@
 // Microsoft Visual C++ generated include file.
 // Used by FamiTracker.rc
 //
-#define ID_INDICATOR_OCTAVE             1
-#define IDS_SONG_DELETE                 2
+#define VERSION_MAJ                     0
+#define VERSION_WIP                     0
+#define VERSION_REV                     1
 #define ID_INVALID_WAVEFILE             3
 #define IDC_IMPORT                      4
-#define IDS_CLEARPATTERN                4
-#define ID_INDICATOR_CHIP               5
+#define VERSION_MIN                     4
 #define IDC_EDIT                        5
 #define IDC_SAVE                        6
-#define IDS_FILE_VERSION_TOO_NEW        6
 #define IDC_MOVE_UP                     6
-#define IDS_REMOVE_INSTRUMENTS          7
 #define IDC_MOVE_DOWN                   7
-#define IDS_INVALID_INST_FILE           8
-#define IDS_REMOVE_PATTERNS             9
-#define IDS_SOUND_FAIL                  10
-#define IDS_UNDERRUN_MESSAGE            11
-#define IDS_MIDI_ERR_INPUT              12
-#define IDS_MIDI_ERR_OUTPUT             13
-#define IDS_WELCOME_VER                 14
-#define IDS_NEW_SOUND_CONFIG            15
-#define IDS_INST_EDITOR_TITLE           16
 #define IDD_ABOUTBOX                    100
+#define IDS_CLEARPATTERN                101
+#define IDS_CLIPBOARD_COPY_ERROR        102
+#define IDS_CLIPBOARD_PASTE_ERROR       103
+#define IDS_DPCM_SPACE_FORMAT           104
+#define IDS_FILE_VERSION_TOO_NEW        105
+#define IDS_INST_EDITOR_TITLE           106
+#define IDS_INST_VERSION_UNSUPPORTED    107
+#define IDS_INVALID_INST_FILE           108
+#define IDS_MIDI_ERR_INPUT              109
+#define IDS_MIDI_ERR_OUTPUT             110
+#define IDS_NEW_SOUND_CONFIG            111
+#define IDS_REMOVE_INSTRUMENTS          112
+#define IDS_REMOVE_PATTERNS             113
+#define IDS_SONG_DELETE                 114
+#define IDS_SOUND_FAIL                  115
+#define IDS_UNDERRUN_MESSAGE            116
+#define IDS_WELCOME_VER                 117
+#define IDS_INVALID_WAVEFILE            118
 #define ID_NEXT_FRAME                   125
 #define ID_PREV_FRAME                   126
 #define IDC_FOLLOW_TOGGLE               127
 #define IDR_MAINFRAME                   128
 #define ID_CMD_OCTAVE_NEXT              128
-#define ID_INDICATOR_RATE               129
 #define IDR_FamiTrackerTYPE             129
 #define ID_CMD_OCTAVE_PREVIOUS          129
-#define ID_INDICATOR_TIME               130
 #define ID_CMD_PASTE_OVERWRITE          130
 #define IDD_MAINFRAME                   131
 #define IDS_CLIPBOARD_ERROR             131
@@ -66,19 +71,12 @@
 #define ID_BLOCK_END                    145
 #define IDD_SPEED                       146
 #define IDS_OUT_OF_SLOTS                146
-#define ID_INSTRUMENT_ADD_2A03          146
 #define IDD_PCMIMPORT                   147
 #define IDS_OUT_OF_SAMPLEMEM            147
-#define ID_INSTRUMENT_ADD_VRC6          147
-#define ID_INSTRUMENT_ADD_VRC7          148
 #define IDS_SAMPLE_ADJUSTED             148
-#define ID_INSTRUMENT_ADD_FDS           149
 #define IDS_INVALID_RIFF                149
-#define ID_INSTRUMENT_ADD_MMC5          150
 #define IDS_INCLUDE_INSTRUMENTS         150
-#define ID_INSTRUMENT_ADD_N163          151
 #define IDS_IMPORT_FAILED               151
-#define ID_INSTRUMENT_ADD_S5B           152
 #define IDS_IMPORT_CHIP_MISMATCH        152
 #define IDS_IMPORT_INSTRUMENT_COUNT     153
 #define IDS_IMPORT_SAMPLE_SLOTS         154
@@ -118,7 +116,6 @@
 #define IDI_INST_FDS                    246
 #define IDI_INST_5B                     247
 #define IDD_INSTRUMENT_FDS              248
-#define IDD_INSTRUMENTPANEL             250
 #define IDD_FRAMEBAR                    251
 #define IDD_FRAMECONTROLS               251
 #define IDB_TOOLBAR_256                 257
@@ -139,6 +136,7 @@
 #define IDD_INSTRUMENT_N163_WAVE1       293
 #define IDD_INSTRUMENT_N163_WAVE        293
 #define ID_TRACKER_PLAY_CURSOR          300
+#define IDD_IMPORT                      301
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_INSTNAME                    1005
@@ -204,7 +202,9 @@
 #define IDC_ABOUT                       1072
 #define IDC_OPT_PULLUPDELETE            1072
 #define IDC_PATTERNCOLORS               1072
+#define IDC_ABOUT1                      1072
 #define IDC_OPT_BACKUPS                 1073
+#define IDC_ABOUT2                      1073
 #define IDC_SHORTCUTS                   1074
 #define IDC_OPT_SINGLEINSTANCE          1074
 #define IDC_OCTAVE                      1075
@@ -278,7 +278,6 @@
 #define IDC_HIGHLIGHTSPIN2              1168
 #define IDC_SEQUENCE_SPIN               1171
 #define IDC_SEQUENCE_STRING             1172
-#define IDC_EDIT1                       1174
 #define IDC_SAMPLE                      1175
 #define IDC_WAVES                       1175
 #define IDC_M_AM                        1177
@@ -363,8 +362,10 @@
 #define IDC_SHOWONOPEN                  1247
 #define IDC_CHANNELS                    1250
 #define IDC_CHANNELS_NR                 1251
-#define IDC_HOTKEY1                     1253
-#define IDC_HOTKEY                      1253
+#define IDC_COMBO1                      1255
+#define IDC_TRACKS                      1257
+#define IDC_ABOUT3                      1258
+#define IDC_LIST1                       1260
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -481,16 +482,31 @@
 #define ID_TRANSOSE_INCREASEOCTAVE      33088
 #define ID_TRACKER_PLAYFROMCURSOR       33089
 #define ID_TOGGLE_SPEED                 33092
-#define ID_INDICATOR_INSTRUMENT         61204
-#define ID_INDICATOR_TEMPO              61205
+#define ID_POPUP_COPYVOLUMEVALUES       33097
+#define ID_Menu33098                    33098
+#define ID_FRAME_CUT                    33099
+#define ID_FILE_TESTTEST                33100
+#define ID_INSTRUMENT_ADD_2A03          36864
+#define ID_INSTRUMENT_ADD_FDS           36865
+#define ID_INSTRUMENT_ADD_MMC5          36866
+#define ID_INSTRUMENT_ADD_N163          36867
+#define ID_INSTRUMENT_ADD_S5B           36868
+#define ID_INSTRUMENT_ADD_VRC6          36869
+#define ID_INSTRUMENT_ADD_VRC7          36870
+#define ID_INDICATOR_CHIP               53248
+#define ID_INDICATOR_INSTRUMENT         53249
+#define ID_INDICATOR_OCTAVE             53250
+#define ID_INDICATOR_RATE               53251
+#define ID_INDICATOR_TEMPO              53252
+#define ID_INDICATOR_TIME               53253
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        297
-#define _APS_NEXT_COMMAND_VALUE         33094
-#define _APS_NEXT_CONTROL_VALUE         1254
+#define _APS_NEXT_RESOURCE_VALUE        303
+#define _APS_NEXT_COMMAND_VALUE         33102
+#define _APS_NEXT_CONTROL_VALUE         1261
 #define _APS_NEXT_SYMED_VALUE           176
 #endif
 #endif

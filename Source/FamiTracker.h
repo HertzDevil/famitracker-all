@@ -101,8 +101,8 @@ public:
 	CCustomExporters *GetCustomExporters() const;
 
 	// Try to avoid these
-	CDocument		*GetActiveDocument() const;
-	CView			*GetActiveView() const;
+//	CDocument		*GetActiveDocument() const;
+//	CView			*GetActiveView() const;
 
 	//
 	// Private functions

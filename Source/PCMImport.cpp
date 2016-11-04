@@ -41,6 +41,8 @@ const int CPCMImport::SAMPLES_MAX = 0x0FF1;		// Max amount of 8-bit DPCM samples
 
 const int CPCMImport::VOLUME_RANGE = 12;		// +/- dB
 
+LPCTSTR CPCMImport::QUALITY_FORMAT = _T("Quality: %i");
+LPCTSTR CPCMImport::GAIN_FORMAT	   = _T("Gain: %+.0f dB");
 
 // Implement a resampler using CRTP idiom
 class resampler : public jarh::resample<resampler>
@@ -251,10 +253,10 @@ BOOL CPCMImport::OnInitDialog()
 	pVolumeSlider->SetPos(m_iVolume + VOLUME_RANGE);
 	pVolumeSlider->SetTicFreq(3);	// 3dB/tick
 
-	Text.Format(_T("Quality: %i"), m_iQuality);
+	Text.Format(QUALITY_FORMAT, m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format(_T("Gain: %+.0f dB"), float(m_iVolume));
+	Text.Format(GAIN_FORMAT, float(m_iVolume));
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
 
 	UpdateFileInfo();
@@ -276,10 +278,10 @@ void CPCMImport::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	m_iQuality = pQualitySlider->GetPos();
 	m_iVolume = pVolumeSlider->GetPos() - VOLUME_RANGE;
 
-	Text.Format(_T("Quality: %i"), m_iQuality);
+	Text.Format(QUALITY_FORMAT, m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format(_T("Gain: %+.0f dB"), float(m_iVolume));
+	Text.Format(GAIN_FORMAT, float(m_iVolume));
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
 
 	UpdateFileInfo();
@@ -331,10 +333,8 @@ void CPCMImport::UpdateFileInfo()
 	SetDlgItemText(IDC_SAMPLE_RATE, SampleRate);
 
 	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_PERIODS_NTSC[m_iQuality];
-	//float resample_factor = base_freq / (float)m_iSamplesPerSec;
 
 	CString Resampling;
-	//Resampling.Format(_T("Resampling factor: %g"), resample_factor);
 	Resampling.Format(_T("Target sample rate: %g Hz"), base_freq);
 	SetDlgItemText(IDC_RESAMPLING, Resampling);
 }
@@ -437,7 +437,7 @@ bool CPCMImport::OpenWaveFile()
 	m_fSampleFile.Read(Header, 4);
 
 	if (memcmp(Header, "RIFF", 4) != 0) {
-		AfxMessageBox(_T("File is not a valid RIFF!"));
+		AfxMessageBox(_T("File is not a valid RIFF format!"));
 		m_fSampleFile.Close();
 		return false;
 	}
@@ -462,7 +462,7 @@ bool CPCMImport::OpenWaveFile()
 				m_fSampleFile.Seek(BlockSize - ReadSize, CFile::current);
 
 				if (WaveFormat.wf.wFormatTag != WAVE_FORMAT_PCM) {
-					AfxMessageBox(ID_INVALID_WAVEFILE, MB_ICONERROR);
+					AfxMessageBox(IDS_INVALID_WAVEFILE, MB_ICONERROR);
 					m_fSampleFile.Close();
 					return false;
 				}

@@ -70,3 +70,7 @@ enum {
 	ARP_SETTING_FIXED = 1,
 	ARP_SETTING_RELATIVE = 2
 };
+
+// Sunsoft modes
+const int S5B_MODE_SQUARE = 64;
+const int S5B_MODE_NOISE = 128;

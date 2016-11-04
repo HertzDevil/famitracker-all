@@ -146,15 +146,16 @@ void CInstrumentEditor2A03::OnEnChangeSeqIndex()
 		Index = 0;
 	if (Index > (MAX_SEQUENCES - 1))
 		Index = (MAX_SEQUENCES - 1);
-	
-	// Update list
-	CString Text;
-	Text.Format(_T("%i"), Index);
-	pList->SetItemText(m_iSelectedSetting, 1, Text);
 
-	if (m_pInstrument) {
-		if (m_pInstrument->GetSeqIndex(Index) != Index)
+	if (m_pInstrument != NULL) {
+		// Update list
+		CString Text;
+		Text.Format(_T("%i"), Index);
+		pList->SetItemText(m_iSelectedSetting, 1, Text);
+
+		if (m_pInstrument->GetSeqIndex(m_iSelectedSetting) != Index)
 			m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+
 		SelectSequence(Index, m_iSelectedSetting);
 	}
 }
@@ -201,7 +202,7 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 	CInstrument2A03 *pInst = (CInstrument2A03*)GetDocument()->GetInstrument(Instrument);
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 
-	m_pInstrument = pInst;
+	m_pInstrument = NULL;
 
 	// Update instrument setting list
 	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i) {
@@ -213,6 +214,8 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 
 	// Setting text box
 	SetDlgItemInt(IDC_SEQ_INDEX, pInst->GetSeqIndex(m_iSelectedSetting));
+
+	m_pInstrument = pInst;
 
 	// Select new sequence
 	SelectSequence(pInst->GetSeqIndex(m_iSelectedSetting), m_iSelectedSetting);

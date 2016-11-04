@@ -79,7 +79,7 @@ protected:
 // DPCM
 class CDPCMChan : public CChannelHandler2A03 {
 public:
-	CDPCMChan(CSampleMem *pSampleMem) : CChannelHandler2A03(), m_pSampleMem(pSampleMem), m_iRetriggerCntr(0) { m_bEnabled = false; };
+	CDPCMChan(CSampleMem *pSampleMem);
 	virtual void RefreshChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);

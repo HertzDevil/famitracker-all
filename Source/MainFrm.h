@@ -21,7 +21,7 @@
 #pragma once
 
 #include "Famitrackerdoc.h"
-#include "PatternView.h"
+#include "PatternEditor.h"
 #include "Action.h"
 #include "FrameEditor.h"
 #include "InstrumentEditDlg.h"
@@ -33,6 +33,7 @@
 enum FRAME_EDIT_POS { FRAME_EDIT_POS_TOP, FRAME_EDIT_POS_LEFT };
 
 class CSampleWindow;
+class CInstrumentFileTree;
 
 class CMainFrame : public CFrameWnd
 {
@@ -69,9 +70,6 @@ public:
 	void	SetSongInfo(char *Name, char *Artist, char *Copyright);
 	void	SetupColors(void);
 	void	DisplayOctave();
-
-	int		GetHighlightRow() const;
-	int		GetSecondHighlightRow() const;
 
 	void	SetHighlightRow(int Rows);
 	void	SetSecondHighlightRow(int Rows);
@@ -110,8 +108,8 @@ protected:
 	int		GetInstrumentIndex(int ListIndex) const;
 
 	void	UpdateMenu(CMenu *pMenu);
-
 	void	SetFrameEditorPosition(int Position);
+	void	SelectInstrumentFolder();
 
 protected:  // control bar embedded members
 	CStatusBar			m_wndStatusBar;
@@ -157,6 +155,8 @@ protected:  // control bar embedded members
 	CActionHandler		*m_pActionHandler;
 
 	int					m_iFrameEditorPos;
+
+	CInstrumentFileTree	*m_pInstrumentFileTree;
 
 private:
 	// State variables (to be used)
@@ -282,7 +282,8 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnNextInstrument();
 	afx_msg void OnPrevInstrument();
-	afx_msg void OnNewInstrument( NMHDR * pNotifyStruct, LRESULT * result );
+	afx_msg void OnNewInstrumentMenu( NMHDR * pNotifyStruct, LRESULT * result );
+	afx_msg void OnLoadInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result);
 	afx_msg void OnAddInstrument2A03();
 	afx_msg void OnAddInstrumentVRC6();
 	afx_msg void OnAddInstrumentVRC7();

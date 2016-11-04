@@ -114,9 +114,9 @@ BOOL CExportDialog::OnInitDialog()
 		CheckDlgButton(IDC_DUAL, 0);
 	}
 
-	SetDlgItemText(IDC_NAME, pDoc->GetSongName());
-	SetDlgItemText(IDC_ARTIST, pDoc->GetSongArtist());
-	SetDlgItemText(IDC_COPYRIGHT, pDoc->GetSongCopyright());
+	SetDlgItemText(IDC_NAME, CString(pDoc->GetSongName()));
+	SetDlgItemText(IDC_ARTIST, CString(pDoc->GetSongArtist()));
+	SetDlgItemText(IDC_COPYRIGHT, CString(pDoc->GetSongCopyright()));
 
 	// Fill the export box
 	CComboBox *pTypeBox = ((CComboBox*)GetDlgItem(IDC_TYPE));
@@ -309,7 +309,7 @@ void CExportDialog::CreateCustom( CString name )
 
 	CString fileName( FileDialogCustom.GetPathName() );	
 	
-	if(theApp.GetCustomExporters()->GetCurrentExporter().Export( (CFamiTrackerDoc const*)theApp.GetActiveDocument(), fileName ))
+	if(theApp.GetCustomExporters()->GetCurrentExporter().Export( (CFamiTrackerDoc const*)CFamiTrackerDoc::GetDoc(), CStringA(fileName) ))
 	{
 		AfxMessageBox(_T("Successfully exported!"));
 	}
@@ -324,7 +324,7 @@ void CExportDialog::OnBnClickedPlay()
 
 	char *file = "d:\\test.nsf";
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 
 	Compiler.ExportNSF(file, (IsDlgButtonChecked(IDC_PAL) != 0));

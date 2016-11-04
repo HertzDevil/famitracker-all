@@ -18,28 +18,40 @@
 ** must bear this legend.
 */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#pragma once
 
-// Define this for beta builds
-//#define WIP
+#include "FamiTrackerDoc.h"
 
-// Version info
-#define VERSION_MAJ  0
-#define VERSION_MIN  4
-#define VERSION_REV  1
+// CModuleImportDlg dialog
 
-#define VERSION_WIP  0
+class CModuleImportDlg : public CDialog
+{
+	DECLARE_DYNAMIC(CModuleImportDlg)
 
-#ifdef SVN_BUILD
+public:
+	CModuleImportDlg(CFamiTrackerDoc *pDoc);
+	virtual ~CModuleImportDlg();
 
-#include "config.h"
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,SVN_VERSION
+	bool LoadFile(CString Path, CFamiTrackerDoc *pDoc);
 
-#else
+// Dialog Data
+	enum { IDD = IDD_IMPORT };
 
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,VERSION_WIP
+private:
+	CFamiTrackerDoc *m_pDocument;
+	CFamiTrackerDoc *m_pImportedDoc;
 
-#endif
+	int m_iInstrumentTable[MAX_INSTRUMENTS];
 
-#endif /* _VERSION_H_ */
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	bool ImportInstruments();
+	bool ImportTracks();
+
+	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedOk();
+	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedCancel();
+};

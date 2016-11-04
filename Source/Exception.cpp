@@ -73,7 +73,13 @@ LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 	AfxMessageBox(text, MB_ICONSTOP);
 
 	// Try to save the document
-	CDocument *pDoc = theApp.GetActiveDocument();
+	CFrameWnd *pFrameWnd = NULL;
+	CDocument *pDoc = NULL;
+
+	pFrameWnd = (CFrameWnd*)AfxGetApp()->m_pMainWnd;
+
+	if (pFrameWnd)
+		pDoc = pFrameWnd->GetActiveDocument();
 
 	if (pDoc)
 		pDoc->OnSaveDocument(DocDumpFile);

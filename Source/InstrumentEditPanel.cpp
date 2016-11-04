@@ -89,7 +89,7 @@ HBRUSH CInstrumentEditPanel::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 BOOL CInstrumentEditPanel::PreTranslateMessage(MSG* pMsg)
 {
-	char ClassName[256];
+	TCHAR ClassName[256];
 
 	switch (pMsg->message) {
 		case WM_KEYDOWN:
@@ -104,7 +104,7 @@ BOOL CInstrumentEditPanel::PreTranslateMessage(MSG* pMsg)
 				default:	// Note keys
 					// Make sure the dialog is selected when previewing
 					GetClassName(pMsg->hwnd, ClassName, 256);
-					if (strcmp(ClassName, "Edit")) {
+					if (_tcscmp(ClassName, _T("Edit"))) {
 					//if (GetFocus() == this || GetFocus() == GetParent()) {
 					//if (!CDialog::PreTranslateMessage(pMsg)) {
 					
@@ -152,12 +152,12 @@ CFamiTrackerDoc *CInstrumentEditPanel::GetDocument() const
 
 void CInstrumentEditPanel::PreviewNote(unsigned char Key)
 {
-	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+	CFamiTrackerView::GetView()->PreviewNote(Key);
 }
 
 void CInstrumentEditPanel::PreviewRelease(unsigned char Key)
 {
-	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
+	CFamiTrackerView::GetView()->PreviewRelease(Key);
 }
 
 //
@@ -190,12 +190,12 @@ void CSequenceInstrumentEditPanel::PreviewNote(unsigned char Key)
 {
 	// Skip if MML window has focus
 	if (GetDlgItem(IDC_SEQUENCE_STRING) != GetFocus())
-		static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+		CFamiTrackerView::GetView()->PreviewNote(Key);
 }
 
 void CSequenceInstrumentEditPanel::PreviewRelease(unsigned char Key)
 {
-	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
+	CFamiTrackerView::GetView()->PreviewRelease(Key);
 }
 
 void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequence, int Max, int Min)
@@ -209,7 +209,7 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 	pSequence->SetReleasePoint(-1);
 
 	string str;
-	str.assign(String);
+	str.assign(CStringA(String));
 	istringstream values(str);
 	istream_iterator<string> begin(values);
 	istream_iterator<string> end;
@@ -227,7 +227,7 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 		}
 		else {
 			// Convert to number
-			int value = _ttoi(item.c_str());
+			int value = atoi(item.c_str());
 			// Check for invalid chars
 			if (!(value == 0 && item[0] != '0')) {
 				LIMIT(value, Max, Min);

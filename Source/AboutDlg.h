@@ -51,6 +51,8 @@ protected:
 	CLinkLabel *m_pMail, *m_pWeb;
 	CToolTipCtrl m_wndToolTip;
 	
+	CFont *m_pLinkFont, *m_pBoldFont, *m_pTitleFont;
+
 // Implementation
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -58,4 +60,5 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnStnClickedAbout1();
 };

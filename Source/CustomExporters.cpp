@@ -41,7 +41,7 @@ void CCustomExporters::FindCustomExporters( CString PluginPath )
 {
 	CFileFind finder;
 
-	CString path = PluginPath + "\\*.dll";
+	CString path = PluginPath + _T("\\*.dll");
 	BOOL bWorking = finder.FindFile( path );
 	while (bWorking)
 	{

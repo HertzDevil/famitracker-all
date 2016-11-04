@@ -155,7 +155,9 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 
 		switch (InstType) {
 			case INST_2A03: {
-					bool bShowDPCM = (((CFamiTrackerView*)theApp.GetActiveView())->GetSelectedChannel() == 4) || (((CInstrument2A03*)pInst)->AssignedSamples());
+					int Channel = CFamiTrackerView::GetView()->GetSelectedChannel();
+					int Type = CFamiTrackerDoc::GetDoc()->GetChannelType(Channel);
+					bool bShowDPCM = (Type == CHANID_DPCM) || (((CInstrument2A03*)pInst)->AssignedSamples());
 					InsertPane(new CInstrumentEditor2A03(), !bShowDPCM);
 					InsertPane(new CInstrumentEditorDPCM(), bShowDPCM);
 				}
@@ -304,7 +306,7 @@ void CInstrumentEditDlg::ChangeNoteState(int Note)
 
 void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 {
-	CFamiTrackerView *pView = ((CFamiTrackerView*)theApp.GetActiveView());
+	CFamiTrackerView *pView = CFamiTrackerView::GetView();
 	stChanNote NoteData;
 	int Octave;
 	int Note;
@@ -406,7 +408,7 @@ void CInstrumentEditDlg::SwitchOffNote(bool ForceHalt)
 {
 	stChanNote NoteData;
 
-	CFamiTrackerView *pView = (CFamiTrackerView*)theApp.GetActiveView();
+	CFamiTrackerView *pView = CFamiTrackerView::GetView();
 
 	int Channel = pView->GetSelectedChannel();
 

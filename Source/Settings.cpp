@@ -95,7 +95,7 @@ void CSettings::SetupSettings()
 	SETTING_BOOL("General", "Single instance", false, &General.bSingleInstance);
 
 	// Keys
-	SETTING_INT("Keys", "Note cut",		0xE2, &Keys.iKeyNoteCut);
+	SETTING_INT("Keys", "Note cut",		0x31, &Keys.iKeyNoteCut);
 	SETTING_INT("Keys", "Note release", 0xDC, &Keys.iKeyNoteRelease);
 	SETTING_INT("Keys", "Clear field",	0xBD, &Keys.iKeyClear);
 	SETTING_INT("Keys", "Repeat",		0x00, &Keys.iKeyRepeat);
@@ -149,6 +149,8 @@ void CSettings::SetupSettings()
 	SETTING_STRING("Paths", "NSF path", "", &Paths[PATH_NSF]);
 	SETTING_STRING("Paths", "DMC path", "", &Paths[PATH_DMC]);
 	SETTING_STRING("Paths", "WAV path", "", &Paths[PATH_WAV]);
+
+	SETTING_STRING("Paths", "Instrument menu", "", &InstrumentMenuPath);
 
 	/*
 	SETTING_INT("Sound levels", "2A03", 0, &ChipLevels.iLevel2A03);

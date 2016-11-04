@@ -84,7 +84,7 @@ BOOL CSequenceEditor::CreateEditor(CWnd *pParentWnd, const RECT &rect)
 	// Sequence settings editor
 	m_pSetting = new CSequenceSetting(this);
 
-	if (m_pSetting->CreateEx(NULL, NULL, "", WS_CHILD | WS_VISIBLE, menuRect, this, 0) == -1)
+	if (m_pSetting->CreateEx(NULL, NULL, _T(""), WS_CHILD | WS_VISIBLE, menuRect, this, 0) == -1)
 		return -1;
 
 	m_pSetting->Setup(m_pFont);
@@ -194,6 +194,8 @@ void CSequenceEditor::SequenceChangedMessage(bool Changed)
 		((CFrameWnd*)AfxGetMainWnd())->GetActiveDocument()->SetModifiedFlag();
 }
 
+//const int SEQ_SUNSOFT_NOISE = SEQ_DUTYCYCLE + 1;
+
 void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int InstrumentType)
 {
 	// Select a sequence to edit
@@ -216,13 +218,11 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 			m_pGraphEditor = new CPitchGraphEditor(pSequence);
 			break;
 		case SEQ_DUTYCYCLE:
-			m_pGraphEditor = new CBarGraphEditor(pSequence, m_iMaxDuty);
-			break;
-			/*
-		case SEQ_SUNSOFT_NOISE:
-			m_pGraphEditor = new CNoiseEditor(pSequence, 32);
-			break;
-			*/
+			if (InstrumentType == INST_S5B)
+				m_pGraphEditor = new CNoiseEditor(pSequence, 31);
+			else
+				m_pGraphEditor = new CBarGraphEditor(pSequence, m_iMaxDuty);
+			break;		
 	}
 
 	m_pSetting->SelectSequence(pSequence, Type, InstrumentType);

@@ -197,6 +197,8 @@ public:
 
 	bool m_bNamcoMixing;
 
+	CString InstrumentMenuPath;
+
 private:
 	void AddSetting(CSettingBase *pSetting);
 	void SetupSettings();

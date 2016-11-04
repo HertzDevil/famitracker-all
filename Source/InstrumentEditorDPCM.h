@@ -83,7 +83,6 @@ public:
 	afx_msg void OnBnClickedRemove();
 	afx_msg void OnEnChangeLoopPoint();
 	afx_msg void OnBnClickedEdit();
-	afx_msg void OnLvnItemchangedSampleList(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkSampleList(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedPreview();
 	afx_msg void OnNMRClickSampleList(NMHDR *pNMHDR, LRESULT *pResult);

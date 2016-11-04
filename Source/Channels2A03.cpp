@@ -416,6 +416,15 @@ unsigned int CNoiseChan::TriggerNote(int Note)
 // DPCM
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+CDPCMChan::CDPCMChan(CSampleMem *pSampleMem) : 
+	CChannelHandler2A03(), 
+	m_pSampleMem(pSampleMem)
+{ 
+	m_bEnabled = false; 
+	m_cDAC = 255;
+	m_iRetrigger = 0;
+	m_iRetriggerCntr = 0;
+};
 
 void CDPCMChan::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {

@@ -46,7 +46,7 @@ protected:
 	void TranslateMML(CString String, int Max, int Min);
 
 protected:
-	static LPCTSTR INST_SETTINGS_VRC6[];
+	static LPCTSTR INST_SETTINGS_S5B[];
 
 	static const int MAX_VOLUME = 15;
 	static const int MAX_DUTY = 31;

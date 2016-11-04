@@ -2,6 +2,20 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.1
+
+ New stuff:
+  - Added an instrument files menu
+  - Added an option to copy volume column to text (Shift+copy)
+  - Changed default key for note cut to '1'
+ 
+ Fixed bugs:
+  - Fixed some problems with the FTM import feature
+  - Fixed vibrato (4xx) export bug
+  - Fixed volume slide (Axx) export bug
+  - Fixed undo bug after pasting from clipboard
+  - Fixed problem when loading instrument files that contains sequences of max size
+  - Fixed some wave file export bugs
 
 Version 0.4.0
 
@@ -33,7 +47,7 @@ Fixed bugs:
  - Fixed export problem that occured when trying to play unassigned samples
  - Fixed VRC7 custom instrument bug in exported NSFs
  - Fixed tremolo (7xx) bug in exported NSFs
- - Fixed volume problem when using the note halt command on VRC6 and MMC5
+ - Fixed volume problem when using the note halt command on VRC6 and MMC5 
 
 
 Version 0.3.7

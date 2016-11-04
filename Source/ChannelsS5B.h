@@ -35,6 +35,12 @@ protected:
 protected:
 	void WriteReg(int Reg, int Value);
 
+protected:
+	int m_iNoiseOffset;
+	bool m_bEnvEnable;
+
+	bool m_bUpdate;
+
 //	void RunSequence(int Index, CSequence *pSequence);
 /*
 	unsigned char m_cSweep;

@@ -21,7 +21,7 @@
 #include <windows.h>
 #include "wavefile.h"
 
-bool CWaveFile::OpenFile(char *Filename, int SampleRate, int SampleSize, int Channels)
+bool CWaveFile::OpenFile(LPTSTR Filename, int SampleRate, int SampleSize, int Channels)
 {
 	// Open a wave file for streaming
 	//

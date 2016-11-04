@@ -187,7 +187,7 @@ int CInstrumentVRC6::Compile(CChunk *pChunk, int Index)
 	int ModSwitch = 0;
 	int StoredBytes = 0;
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 
 	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
 		ModSwitch = (ModSwitch >> 1) | (GetSeqEnable(i) && (pDoc->GetSequence(SNDCHIP_VRC6, GetSeqIndex(i), i)->GetItemCount() > 0) ? 0x10 : 0);
@@ -212,7 +212,7 @@ bool CInstrumentVRC6::CanRelease() const
 {
 	if (GetSeqEnable(0) != 0) {
 		int index = GetSeqIndex(SEQ_VOLUME);
-		return ((CFamiTrackerDoc*) theApp.GetActiveDocument())->GetSequence(SNDCHIP_VRC6, index, SEQ_VOLUME)->GetReleasePoint() != -1;
+		return CFamiTrackerDoc::GetDoc()->GetSequence(SNDCHIP_VRC6, index, SEQ_VOLUME)->GetReleasePoint() != -1;
 	}
 
 	return false;

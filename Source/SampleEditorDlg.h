@@ -81,6 +81,8 @@ public:
 	CSampleEditorDlg(CWnd* pParent = NULL, CDSample *pSample = NULL);   // standard constructor
 	virtual ~CSampleEditorDlg();
 
+	void CopySample(CDSample *pTarget);
+
 // Dialog Data
 	enum { IDD = IDD_SAMPLE_EDITOR };
 
@@ -101,8 +103,6 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	afx_msg void OnBnClickedOk();
-	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedPlay();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedDelete();

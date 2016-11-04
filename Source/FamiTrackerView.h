@@ -59,6 +59,9 @@ protected: // create from serialization only
 	CFamiTrackerView();
 	DECLARE_DYNCREATE(CFamiTrackerView)
 
+public:
+	static CFamiTrackerView *GetView();
+
 // Attributes
 public:
 	CFamiTrackerDoc* GetDocument() const;
@@ -209,6 +212,10 @@ private:
 	
 	// Other
 	bool	AddAction(CAction *pAction) const;
+
+	// Copy
+	void	CopyVolumeColumn();
+
 
 //
 // Constants

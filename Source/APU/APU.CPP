@@ -587,6 +587,8 @@ void CAPU::LogExternalWrite(uint16 Address, uint8 Value)
 		m_iRegsVRC6[Address - 0xA000 + 3] = Value;
 	else if (Address >= 0xB000 && Address <= 0xB003)
 		m_iRegsVRC6[Address - 0xB000 + 6] = Value;
+	else if (Address >= 0x4080 && Address <= 0x408F)
+		m_iRegsFDS[Address - 0x4080] = Value;
 }
 
 uint8 CAPU::GetReg(int Chip, int Reg) const 
@@ -598,6 +600,8 @@ uint8 CAPU::GetReg(int Chip, int Reg) const
 			return m_iRegsVRC6[Reg & 0x1F]; 
 		case SNDCHIP_N163:
 			return m_pN163->ReadMem(Reg);
+		case SNDCHIP_FDS:
+			return m_iRegsFDS[Reg & 0x1F];
 	}
 
 	return 0;

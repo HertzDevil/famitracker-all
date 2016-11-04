@@ -27,7 +27,7 @@
 
 PSG *psg;
 
-float CS5B::AMPLIFY = 4.0f;
+float CS5B::AMPLIFY = 2.0f;
 
 CS5B::CS5B(CMixer *pMixer)
 {
@@ -55,7 +55,7 @@ void CS5B::Process(uint32 Time)
 	m_iTime += Time;
 }
 
-int16 m_pBuffer[2000];
+int16 m_pBuffer[4000];
 uint32 m_iBufferPtr = 0;
 
 void CS5B::EndFrame()

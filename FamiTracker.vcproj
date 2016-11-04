@@ -276,6 +276,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\InstrumentFileTree.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\MainFrm.cpp"
 				>
 				<FileConfiguration
@@ -385,6 +389,10 @@
 							ObjectFile="$(IntDir)/$(InputName)1.obj"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Source\ModuleImportDlg.cpp"
+					>
 				</File>
 				<File
 					RelativePath=".\Source\ModulePropertiesDlg.cpp"
@@ -987,13 +995,21 @@
 				Name="Pattern Editor"
 				>
 				<File
-					RelativePath=".\Source\PatternView.cpp"
+					RelativePath=".\Source\PatternAction.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\PatternEditor.cpp"
 					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Frame Editor"
 				>
+				<File
+					RelativePath=".\Source\FrameAction.cpp"
+					>
+				</File>
 				<File
 					RelativePath=".\Source\FrameEditor.cpp"
 					>
@@ -1051,6 +1067,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\Graphics.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\InstrumentFileTree.h"
 				>
 			</File>
 			<File
@@ -1282,6 +1302,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\MIDIImportDialog.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\ModuleImportDlg.h"
 					>
 				</File>
 				<File
@@ -1553,7 +1577,7 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\PatternView.h"
+					RelativePath=".\Source\PatternEditor.h"
 					>
 				</File>
 			</Filter>

@@ -35,6 +35,8 @@
 									  (GREEN(c1) * level) / 100 + (GREEN(c2) * (100 - level)) / 100, \
 									  (BLUE(c1) * level) / 100 + (BLUE(c2) * (100 - level)) / 100)) \
 
+#define INTENSITY(c) ((((c >> 16) & 0xFF) + ((c >> 8) & 0xFF) + (c & 0xFF)) / 3)
+
 // Functions
 
 void GradientRectTriple(CDC *pDC, int x, int y, int w, int h, COLORREF c1, COLORREF c2, COLORREF c3);

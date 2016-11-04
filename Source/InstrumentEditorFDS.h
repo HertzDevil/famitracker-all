@@ -49,7 +49,6 @@ protected:
 	virtual	void PreviewNote(unsigned char Key);
 
 	void EnableModControls(bool enable);
-	int GetModRate() const;
 
 protected:
 	CInstrumentFDS		*m_pInstrument;

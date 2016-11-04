@@ -45,6 +45,7 @@
 #include "MIDI.h"
 #include "TrackerChannel.h"
 #include "CommentsDlg.h"
+#include "InstrumentFileTree.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -116,7 +117,8 @@ CMainFrame::CMainFrame() :
 	m_pInstrumentList(NULL),
 	m_iInstrument(0),
 	m_iTrack(0),
-	m_pActionHandler(NULL)
+	m_pActionHandler(NULL),
+	m_pInstrumentFileTree(NULL)
 {
 	_dpiX = DEFAULT_DPI;
 	_dpiY = DEFAULT_DPI;
@@ -139,6 +141,7 @@ CMainFrame::~CMainFrame()
 	SAFE_RELEASE(m_pInstrumentList);
 	SAFE_RELEASE(m_pSampleWindow);
 	SAFE_RELEASE(m_pActionHandler);
+	SAFE_RELEASE(m_pInstrumentFileTree);
 }
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
@@ -461,7 +464,7 @@ bool CMainFrame::CreateDialogPanels()
 		TRACE0("Failed to create dialog bar\n");
 		return false;
 	}
-
+	
 	m_wndDialogBar.ShowWindow(SW_SHOW);
 
 	// Subclass edit boxes
@@ -557,7 +560,7 @@ bool CMainFrame::CreateInstrumentToolbar()
 	// Setup the instrument toolbar
 	REBARBANDINFO rbi;
 
-	if (!m_wndInstToolBarWnd.CreateEx(0, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(SX(288), SY(173), SX(456), SY(199)), (CWnd*)&m_wndDialogBar, 0))
+	if (!m_wndInstToolBarWnd.CreateEx(0, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(SX(288), SY(173), SX(472), SY(199)), (CWnd*)&m_wndDialogBar, 0))
 		return false;
 
 	if (!m_wndInstToolReBar.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), &m_wndInstToolBarWnd, AFX_IDW_REBAR))
@@ -592,6 +595,8 @@ bool CMainFrame::CreateInstrumentToolbar()
 
 	// Turn add new instrument button into a drop-down list
 	m_wndInstToolBar.SetButtonStyle(0, TBBS_DROPDOWN);
+	// Turn load instrument button into a drop-down list
+	m_wndInstToolBar.SetButtonStyle(4, TBBS_DROPDOWN);
 
 	return true;
 }
@@ -656,7 +661,7 @@ void CMainFrame::ResizeFrameWindow()
 	m_wndDialogBar.MoveWindow(DialogStartPos, 2, ParentRect.Width() - DialogStartPos, ParentRect.Height() - 4);
 	m_wndDialogBar.GetWindowRect(&ChildRect);
 	m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS)->MoveWindow(SX(288), SY(10), ChildRect.Width() - SX(296), SY(158));
-	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->MoveWindow(SX(458), SY(175), ChildRect.Width() - SX(466), SY(22));
+	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->MoveWindow(SX(478), SY(175), ChildRect.Width() - SX(486), SY(22));
 
 	m_pFrameEditor->RedrawWindow();
 }
@@ -677,6 +682,9 @@ void CMainFrame::SetTempo(int Tempo)
 	LIMIT(Tempo, MAX_TEMPO, MinTempo);
 	pDoc->SetSongTempo(Tempo);
 	theApp.GetSoundGenerator()->ResetTempo();
+
+	if (m_wndDialogBar.GetDlgItemInt(IDC_TEMPO) != Tempo)
+		m_wndDialogBar.SetDlgItemInt(IDC_TEMPO, Tempo, FALSE);
 }
 
 void CMainFrame::SetSpeed(int Speed)
@@ -686,6 +694,9 @@ void CMainFrame::SetSpeed(int Speed)
 	LIMIT(Speed, MaxSpeed, MIN_SPEED);
 	pDoc->SetSongSpeed(Speed);
 	theApp.GetSoundGenerator()->ResetTempo();
+
+	if (m_wndDialogBar.GetDlgItemInt(IDC_SPEED) != Speed)
+		m_wndDialogBar.SetDlgItemInt(IDC_SPEED, Speed, FALSE);
 }
 
 void CMainFrame::SetRowCount(int Count)
@@ -713,6 +724,9 @@ void CMainFrame::SetRowCount(int Count)
 			pAction->Update(this);
 		}
 	}
+
+	if (m_wndDialogBar.GetDlgItemInt(IDC_ROWS) != Count)
+		m_wndDialogBar.SetDlgItemInt(IDC_ROWS, Count, FALSE);
 }
 
 void CMainFrame::SetFrameCount(int Count)
@@ -740,21 +754,14 @@ void CMainFrame::SetFrameCount(int Count)
 			pAction->Update(this);
 		}
 	}
+
+	if (m_wndDialogBar.GetDlgItemInt(IDC_FRAMES) != Count)
+		m_wndDialogBar.SetDlgItemInt(IDC_FRAMES, Count, FALSE);
 }
 
 void CMainFrame::UpdateControls()
 {
 	m_wndDialogBar.UpdateDialogControls(&m_wndDialogBar, TRUE);
-}
-
-int CMainFrame::GetHighlightRow() const
-{
-	return m_wndOctaveBar.GetDlgItemInt(IDC_HIGHLIGHT1);
-}
-
-int CMainFrame::GetSecondHighlightRow() const
-{
-	return m_wndOctaveBar.GetDlgItemInt(IDC_HIGHLIGHT2);
 }
 
 void CMainFrame::SetHighlightRow(int Rows)
@@ -1271,30 +1278,33 @@ void CMainFrame::OnSaveInstrument()
 	pDoc->SaveInstrument(pView->GetInstrument(), FileDialog.GetPathName());
 
 	theApp.GetSettings()->SetPath(FileDialog.GetPathName(), PATH_FTI);
+
+	if (m_pInstrumentFileTree)
+		m_pInstrumentFileTree->Changed();
 }
 
 void CMainFrame::OnDeltaposSpeedSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Speed = m_wndDialogBar.GetDlgItemInt(IDC_SPEED, 0, 0);
-	SetSpeed(Speed - ((NMUPDOWN*)pNMHDR)->iDelta);
+	int NewSpeed = CFamiTrackerDoc::GetDoc()->GetSongSpeed() - ((NMUPDOWN*)pNMHDR)->iDelta;
+	SetSpeed(NewSpeed);
 }
 
 void CMainFrame::OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Tempo = m_wndDialogBar.GetDlgItemInt(IDC_TEMPO, 0, 0);
-	SetTempo(Tempo - ((NMUPDOWN*)pNMHDR)->iDelta);
+	int NewTempo = CFamiTrackerDoc::GetDoc()->GetSongTempo() - ((NMUPDOWN*)pNMHDR)->iDelta;
+	SetTempo(NewTempo);
 }
 
 void CMainFrame::OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Rows = m_wndDialogBar.GetDlgItemInt(IDC_ROWS);
-	SetRowCount(Rows - ((NMUPDOWN*)pNMHDR)->iDelta);
+	int NewRows = CFamiTrackerDoc::GetDoc()->GetPatternLength() - ((NMUPDOWN*)pNMHDR)->iDelta;
+	SetRowCount(NewRows);
 }
 
 void CMainFrame::OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Frames = m_wndDialogBar.GetDlgItemInt(IDC_FRAMES);
-	SetFrameCount(Frames - ((NMUPDOWN*)pNMHDR)->iDelta);
+	int NewFrames = CFamiTrackerDoc::GetDoc()->GetFrameCount() - ((NMUPDOWN*)pNMHDR)->iDelta;
+	SetFrameCount(NewFrames);
 }
 
 void CMainFrame::OnTrackerKillsound()
@@ -1424,7 +1434,7 @@ void CMainFrame::OnUpdateSBTempo(CCmdUI *pCmdUI)
 	CString String;
 	CSoundGen *pSoundGen = theApp.GetSoundGenerator();
 	if (pSoundGen) {
-		int Highlight = GetHighlightRow();
+		int Highlight = m_wndOctaveBar.GetDlgItemInt(IDC_HIGHLIGHT1);
 		if (Highlight == 0)
 			Highlight = 4;
 		int BPM = (pSoundGen->GetTempo() * 4) / Highlight;
@@ -1954,7 +1964,12 @@ void CMainFrame::OnUpdateHighlight(CCmdUI *pCmdUI)
 	Highlight1 = m_wndOctaveBar.GetDlgItemInt(IDC_HIGHLIGHT1);
 	Highlight2 = m_wndOctaveBar.GetDlgItemInt(IDC_HIGHLIGHT2);
 	if (Highlight1 != LastHighlight1 || Highlight2 != LastHighlight2) {
-		GetActiveDocument()->UpdateAllViews(NULL, UPDATE_HIGHLIGHT);
+
+		CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+
+		pDoc->SetHighlight(Highlight1, Highlight2);
+		pDoc->UpdateAllViews(NULL, UPDATE_HIGHLIGHT);
+
 		LastHighlight1 = Highlight1;
 		LastHighlight2 = Highlight2;
 	}
@@ -2084,17 +2099,25 @@ int CMainFrame::GetSelectedTrack() const
 
 BOOL CMainFrame::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
+    LPNMTOOLBAR lpnmtb = (LPNMTOOLBAR) lParam;
+	
 	// Handle new instrument menu
 	switch (((LPNMHDR)lParam)->code) {
 		case TBN_DROPDOWN:
-			OnNewInstrument((LPNMHDR)lParam, pResult);
-			return FALSE;
+			switch (lpnmtb->iItem) {
+				case ID_INSTRUMENT_NEW:
+					OnNewInstrumentMenu((LPNMHDR)lParam, pResult);
+					return FALSE;
+				case ID_INSTRUMENT_LOAD:
+					OnLoadInstrumentMenu((LPNMHDR)lParam, pResult);
+					return FALSE;
+			}
 	}
 
 	return CFrameWnd::OnNotify(wParam, lParam, pResult);
 }
 
-void CMainFrame::OnNewInstrument( NMHDR * pNotifyStruct, LRESULT * result )
+void CMainFrame::OnNewInstrumentMenu( NMHDR * pNotifyStruct, LRESULT * result )
 {
 	CRect rect;
 	::GetWindowRect(pNotifyStruct->hwndFrom, &rect);
@@ -2146,8 +2169,67 @@ void CMainFrame::OnNewInstrument( NMHDR * pNotifyStruct, LRESULT * result )
 			menu.SetDefaultItem(ID_INSTRUMENT_ADD_S5B);
 			break;
 	}
-
+	
 	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, this);
+}
+
+void CMainFrame::OnLoadInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result)
+{
+	CRect rect;
+	::GetWindowRect(pNotifyStruct->hwndFrom, &rect);
+
+	// Build menu tree
+	if (!m_pInstrumentFileTree) {
+		m_pInstrumentFileTree = new CInstrumentFileTree();
+		m_pInstrumentFileTree->BuildMenuTree(theApp.GetSettings()->InstrumentMenuPath);
+	}
+	else if (m_pInstrumentFileTree->ShouldRebuild()) {
+		m_pInstrumentFileTree->BuildMenuTree(theApp.GetSettings()->InstrumentMenuPath);
+	}
+
+	UINT retValue = m_pInstrumentFileTree->GetMenu()->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY, rect.left, rect.bottom, this);
+
+	if (retValue == CInstrumentFileTree::MENU_BASE) {
+		// Open file
+		OnLoadInstrument();
+	}
+	else if (retValue == CInstrumentFileTree::MENU_BASE + 1) {
+		// Select dir
+		SelectInstrumentFolder();
+	}
+	else if (retValue >= CInstrumentFileTree::MENU_BASE + 2) {
+		// A file
+		CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+
+		int Index = pDoc->LoadInstrument(m_pInstrumentFileTree->GetFile(retValue));
+
+		if (Index == -1)
+			return;
+
+		AddInstrument(Index);
+	}
+}
+
+void CMainFrame::SelectInstrumentFolder()
+{
+	BROWSEINFOA Browse;	
+	LPITEMIDLIST lpID;
+	char Path[MAX_PATH];
+
+	Browse.lpszTitle	= _T("Choose a folder where you have instrument files");
+	Browse.hwndOwner	= m_hWnd;
+	Browse.pidlRoot		= NULL;
+	Browse.lpfn			= NULL;
+	Browse.ulFlags		= BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	Browse.pszDisplayName = Path;
+
+	lpID = SHBrowseForFolder(&Browse);
+
+	if (lpID != NULL) {
+		SHGetPathFromIDList(lpID, Path);
+		theApp.GetSettings()->InstrumentMenuPath = Path;
+		m_pInstrumentFileTree->Changed();
+	}
 }
 
 BOOL CMainFrame::OnCopyData(CWnd* pWnd, COPYDATASTRUCT* pCopyDataStruct)
@@ -2163,8 +2245,8 @@ BOOL CMainFrame::OnCopyData(CWnd* pWnd, COPYDATASTRUCT* pCopyDataStruct)
 			if (_tcslen((LPCTSTR)pCopyDataStruct->lpData) > 0)
 				theApp.OpenDocumentFile((LPCTSTR)pCopyDataStruct->lpData);
 			// and play
-			if (((CFamiTrackerDoc*)theApp.GetActiveDocument())->IsFileLoaded() &&
-				!((CFamiTrackerDoc*)theApp.GetActiveDocument())->HasLastLoadFailed())
+			if (CFamiTrackerDoc::GetDoc()->IsFileLoaded() &&
+				!CFamiTrackerDoc::GetDoc()->HasLastLoadFailed())
 				theApp.GetSoundGenerator()->StartPlayer(MODE_PLAY_START);
 			return TRUE;
 	}

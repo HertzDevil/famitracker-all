@@ -40,6 +40,7 @@
  *  - Remove duplicated FDS waves
  *  - What to do with the bank value in CHUNK_SONG??
  *  - Derive classes for each output format instead of separate functions
+ *  - Create a config file for NSF driver optimizations
  *
  */
 
@@ -880,7 +881,7 @@ void CCompiler::AllocateData()
 	// Resolve label addresses
 	//
 
-	CMap<CString, LPCSTR, int, int> labelMap;
+	CMap<CString, LPCTSTR, int, int> labelMap;
 	int Offset = 0;
 
 	// Pass 1, collect labels
@@ -908,7 +909,7 @@ void CCompiler::AllocateDataBankswitched()
 	// Resolve label addresses, with bankswitching enabled
 	//
 
-	CMap<CString, LPCSTR, int, int> labelMap;
+	CMap<CString, LPCTSTR, int, int> labelMap;
 	int Offset = 0;
 	int Bank = 3;
 
@@ -1232,7 +1233,7 @@ void CCompiler::CreateMainHeader()
 
 	unsigned short DividerNTSC, DividerPAL;
 
-	CChunk *pChunk = CreateChunk(CHUNK_HEADER, "");
+	CChunk *pChunk = CreateChunk(CHUNK_HEADER, _T(""));
 
 	if (TicksPerSec == 0) {
 		// Default
@@ -1836,7 +1837,7 @@ void CCompiler::WriteSamplesAssembly(CFile *pFile)
 	// Store DPCM samples in file, assembly format
 	CString str;
 
-	str.Format("\n; DPCM samples (located at DPCM segment)\n\t.segment \"DPCM\"\n");
+	str.Format(_T("\n; DPCM samples (located at DPCM segment)\n\t.segment \"DPCM\"\n"));
 	pFile->Write(str.GetBuffer(), str.GetLength());
 
 	unsigned int Address = PAGE_SAMPLES;
@@ -1844,18 +1845,18 @@ void CCompiler::WriteSamplesAssembly(CFile *pFile)
 
 	for (unsigned int i = 0; i < m_vSamples.size(); ++i) {
 		CDSample *pDSample = m_vSamples[i];
-		str.Format("; Sample %i\n\t.byte ", i);
+		str.Format(_T("; Sample %i\n\t.byte "), i);
 		int cntr = 0;
 		for (unsigned int j = 0; j < pDSample->SampleSize; ++j) {
 			unsigned char c = pDSample->SampleData[j];
-			str.AppendFormat("$%02X", c);
+			str.AppendFormat(_T("$%02X"), c);
 			// Insert line breaks
 			if (cntr++ == 30 && j < pDSample->SampleSize - 1) {
-				str.Append("\n\t.byte ");
+				str.Append(_T("\n\t.byte "));
 				cntr = 0;
 			}
 			else if (j < pDSample->SampleSize - 1) {
-				str.Append(", ");
+				str.Append(_T(", "));
 			}
 		}
 
@@ -1867,10 +1868,10 @@ void CCompiler::WriteSamplesAssembly(CFile *pFile)
 			int PadSize = 0x40 - (Address & 0x3F);
 			TotalSize += PadSize;
 			Address	  += PadSize;
-			str.Append("\n\t.align 64\n");
+			str.Append(_T("\n\t.align 64\n"));
 		}
 
-		str.Append("\n");
+		str.Append(_T("\n"));
 		pFile->Write(str.GetBuffer(), str.GetLength());
 
 	}
