@@ -46,6 +46,13 @@
 #define HID_FRAME_REMOVE                        0x18057
 #define HID_EDIT_FRAME                          0x18058
 #define HID_TRACKER_PLAYROW                     0x1805A
+#define HID_FILE_IMPORTMIDI                     0x1805F
+#define HID_CREATE_NSF                          0x18063
+#define HID_HELP_RELOADDEFAULTSETTINGS          0x18064
+#define HID_HELP_LOADDEFAULTSETTINGS            0x18065
+#define HID_BUTTON32870                         0x18066
+#define HID_BUTTON32871                         0x18067
+#define HID_BUTTON32872                         0x18068
 #define HID_INDICATOR_INSTRUMENT                0x1EF14
 #define HID_INDICATOR_PATTERN                   0x1EF15
 #define HID_INDICATOR_TEMPO                     0x1EF15
@@ -54,23 +61,32 @@
  
 // Resources (IDR_*) 
 #define HIDR_HTML_PERFORMANCEDLG                0x20067
+#define HIDR_HTML_CONFIGMIDI                    0x20069
 #define HIDR_MAINFRAME                          0x20080
 #define HIDR_FamiTrackerTYPE                    0x20081
+#define HIDR_INSTRUMENT                         0x200BB
  
 // Dialogs (IDD_*) 
 #define HIDD_ABOUTBOX                           0x20064
 #define HIDD_MAINFRAME                          0x20083
 #define HIDD_SND_SETTINGS                       0x20088
 #define HIDD_NSF                                0x20089
+#define HIDD_EXPORTNSF                          0x20089
 #define HIDD_PERFORMANCE                        0x20091
 #define HIDD_SPEED                              0x20092
 #define HIDD_PCMIMPORT                          0x20093
-#define HIDD_OPTIONS                            0x20094
 #define HIDD_MIDICONFIG                         0x20095
 #define HIDD_DPCM                               0x2009D
 #define HIDD_INSTRUMENT_INTERNAL                0x2009E
 #define HIDD_INSTRUMENT_DPCM                    0x2009F
 #define HIDD_INSTRUMENT                         0x200A0
+#define HIDD_CONFIG_APPEARANCE                  0x200B4
+#define HIDD_MIDIIMPORT                         0x200B5
+#define HIDD_CONFIG_GENERAL                     0x200B7
+#define HIDD_PROPERTIES                         0x200B9
+#define HIDD_COMMENTS                           0x200BA
+#define HIDD_DIALOG1                            0x200C2
+#define HIDD_CONFIG_MIDI                        0x200C2
  
 // Frame Controls (IDW_*) 
 // This is a part of the Microsoft Foundation Classes C++ library.

@@ -1,142 +1,134 @@
 <HTML>
 	<HEAD>
 		<TITLE></TITLE>
+		<meta name="vs_snapToGrid" content="False">
 		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
 	</HEAD>
 	<BODY>
 		<H2><FONT face="Verdana">The&nbsp;pattern field</FONT></H2>
-		<P>
-			The&nbsp;pattern field consists of the avaliable channels.&nbsp;Each 
-			channel&nbsp;has&nbsp;four columns.
-			<BR>
-			The first column&nbsp;defines what note and octave&nbsp;to play, the second 
-			defines the instrument used, the third&nbsp;sets volume&nbsp;and the last one 
-			is used for channel&nbsp;effects.</P>
-		<P><STRONG><FONT size="4">Channel info</FONT></STRONG></P>
-		<P>It's possible to disable channels by clicking its name on top of pattern.</P>
-		<P dir="ltr" style="MARGIN-RIGHT: 0px"><STRONG>Square 1 &amp; 2</STRONG></P>
+		<P><FONT face="Verdana" size="2"> The pattern field is&nbsp;made&nbsp;of all avaliable 
+				channels, where&nbsp;each channel by default&nbsp;have&nbsp;four columns.</FONT></P>
+		<P><FONT face="Verdana" size="4"><STRONG>Columns</STRONG></FONT></P>
+		<UL>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>1. Note column<BR>
+					</STRONG>The note and octave&nbsp;to play.<BR>
+				</FONT>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>2. Instrument column<BR>
+					</STRONG>The instrument to use, range 00 - 3F. May be&nbsp;empty for no new 
+					instrument. It's possible to change instrument without retriggering the note.<BR>
+				</FONT>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>3. Volume column<BR>
+					</STRONG>The volume column, range: 1 - F. Only&nbsp;works for the square and 
+					noise channels.<BR>
+				</FONT>
+			<LI>
+				<FONT size="2"><FONT face="Verdana"><STRONG>4. (5, 6, 7)&nbsp;Effect columns<BR>
+						</STRONG>Used for track effects. Format is <STRONG>Xxx</STRONG>, where <STRONG>X</STRONG>
+						= effect number and <STRONG>xx</STRONG> = effect parameter. A list of the 
+						effects is below.<BR>
+						Additional effect columns are available by clicking the arrows in channel 
+						headers.</FONT></FONT></LI></UL>
+		<P><FONT face="Verdana" size="2">Use the keyboard&nbsp;letters to enter notes, and 
+				function keys <STRONG>F2 - F9</STRONG> to select octave.</FONT></P>
+		<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys"><FONT color="#000000">
+					C-4 01 F <STRONG>---</STRONG></FONT> </FONT><FONT face="Verdana" size="2">(Plays 
+				a <STRONG>C 4</STRONG> note&nbsp;using instrument <STRONG>1</STRONG> and volume <STRONG>
+					F</STRONG>, no effect is used. C is on the&nbsp;'Q'-key)</FONT></P>
+		<H3><FONT face="Verdana">Channels</FONT></H3>
+		<P><FONT face="Verdana" size="2">Each channel got it name from what kind of sound the 
+				produce.<BR>
+			</FONT><FONT face="Verdana" size="2">It's possible to disable channels by clicking 
+				its name on top of pattern.</FONT></P>
+		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Square 1 &amp; 2</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P dir="ltr" style="MARGIN-RIGHT: 0px">
-				Produces&nbsp;square&nbsp;waveforms.&nbsp;<BR>
-				They cannot produce sound below A-0 (G-0 for PAL). Both channels&nbsp;are 
-				identical.</P>
-		</BLOCKQUOTE>
-		<P dir="ltr"><STRONG>Triangle</STRONG></P>
+			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana"><FONT size="2">Produces&nbsp;square-shaped&nbsp;waveforms.&nbsp;The 
+						lowest&nbsp;note&nbsp;that's possible to play is A-0 (G-0 for PAL). Both 
+						channels are identical.<STRONG></P>
+		</BLOCKQUOTE></STRONG></FONT></FONT>
+		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Triangle</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P>
-				Produces a&nbsp;triangle-formed waveform. It isn't possible to set 
-				volume,&nbsp;so&nbsp;the volume&nbsp;column have no effect on this channel.<BR>
-				It's&nbsp;one octave lower than the square channels and cannot 
-				produce&nbsp;sound below&nbsp;A-0 (G-0 for PAL).</P>
+			<P><FONT face="Verdana" size="2">Produces&nbsp;triangle-shaped waveforms. It isn't 
+					possible to set volume,&nbsp;so&nbsp;the volume&nbsp;column have no effect on 
+					this channel.<BR>
+					It's&nbsp;one octave lower than the square channels and cannot 
+					produce&nbsp;sound below&nbsp;A-0 (G-0 for PAL).</FONT></P>
 		</BLOCKQUOTE>
-		<P dir="ltr"><STRONG>Noise</STRONG></P>
+		<H3 dir="ltr"><FONT face="Verdana" size="2">Noise</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P>Produces white-noise&nbsp;sound.<BR>
-				It's only possible to play 16 different frequencies, where the lowest frequency 
-				is played at&nbsp;C-0 and highest at D#1 (going out of that range will wrap).</P>
+			<P><FONT face="Verdana" size="2">Produces white-noise&nbsp;sound.<BR>
+					It's only possible to play 16 different frequencies, where the lowest frequency 
+					is played at&nbsp;C-0 and highest at D#1 (going out of that range will wrap).</FONT></P>
 		</BLOCKQUOTE>
-		<P dir="ltr"><STRONG>DPCM</STRONG></P>
+		<H3 dir="ltr"><FONT face="Verdana" size="2">DPCM</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P dir="ltr" style="MARGIN-RIGHT: 0px">
-				This one&nbsp;plays&nbsp;samples that are&nbsp;loaded from 
-				files.&nbsp;Instrument effects are not used at all.<BR>
-				It is only able to play samples at&nbsp;16&nbsp;different pitches, defined in 
-				the instrument settings (DPCM samples-tab).<BR>
-				Notes above octave 5 will&nbsp;cause samples to loop.</P>
+			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2"> This 
+					one&nbsp;plays&nbsp;samples that are&nbsp;loaded from files,&nbsp;instrument 
+					effects are not used at all. It isn't possible to set volume for this channel 
+					either.<BR>
+					It is only able to play samples at&nbsp;16&nbsp;different pitches, defined in 
+					the instrument settings (DPCM samples-tab).<BR>
+					Notes above octave 5 will&nbsp;cause samples to loop.</FONT></P>
 		</BLOCKQUOTE>
-		<P><STRONG><FONT size="4">Channel effects</FONT></STRONG></P>
+		<H3><FONT face="Verdana">Channel effect codes</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P>
-				Effects&nbsp;are entered&nbsp;in the last column, in form of <STRONG>Xxx</STRONG>. 
-				(<STRONG>X</STRONG> - Effect number, <STRONG>xx</STRONG> - Effect parameter)</P>
-		</BLOCKQUOTE>
-		<P>
-			<TABLE id="Table1" height="216" cellSpacing="0" cellPadding="0" width="848" border="0">
-				<TR>
-					<TD width="38" height="3">
-						<P>&nbsp;</P>
-					</TD>
-					<TD width="42" height="3">
-						<P><STRONG><FONT face="Fixedsys">Axx</FONT></STRONG></P>
-					</TD>
-					<TD height="3">
-						<P>Set speed to <STRONG>xx.</STRONG> &nbsp;Speed is divided by the frame rate, 
-							lower <STRONG>xx</STRONG> means faster.
-						</P>
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="16"></TD>
-					<TD width="42" height="16">
-						<P><STRONG><STRONG><FONT face="Fixedsys">Bxx</FONT></STRONG></STRONG></P>
-					</TD>
-					<TD height="16">Jump to frame <STRONG>xx</STRONG>
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="5"></TD>
-					<TD width="42" height="5">
-						<P><STRONG><FONT face="Fixedsys">Cxx</FONT></STRONG>
-						</P>
-					</TD>
-					<TD height="5">Skip to next frame and start at row <STRONG>xx</STRONG></TD>
-				</TR>
-				<TR>
-					<TD width="38" height="4"></TD>
-					<TD width="42" height="4"><STRONG><FONT face="Fixedsys">Dxx</FONT> </STRONG>
-					</TD>
-					<TD height="4">Halt (<STRONG>xx</STRONG> doesn't do anything)
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="2"></TD>
-					<TD width="42" height="2"><STRONG><FONT face="Fixedsys">Exx</FONT> </STRONG>
-					</TD>
-					<TD height="2">Set volume (<STRONG>xx = </STRONG>0 - 15). <EM>Obsolete, use the volume 
-							column instead!</EM>
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="10"></TD>
-					<TD width="42" height="10"><STRONG><FONT face="Fixedsys">Fxx</FONT> </STRONG>
-					</TD>
-					<TD height="10">Portamento on (slide&nbsp;to new notes),&nbsp;<STRONG>xx</STRONG>&nbsp;= 
-						speed
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="10"></TD>
-					<TD width="42" height="10"><STRONG><FONT face="Fixedsys">Gxx</FONT> </STRONG>
-					</TD>
-					<TD height="10">Portamento&nbsp;off (<STRONG>xx </STRONG>doesn't do anything)
-					</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="1"></TD>
-					<TD width="42" height="1"><STRONG><FONT face="Fixedsys">Hxy</FONT> </STRONG>
-					</TD>
-					<TD height="1">Trigger hardware sweep up, <STRONG>x - </STRONG>period (0 - 7), <STRONG>y 
-							- </STRONG>shift (1 - 7). This feature is only avaliable for the square 
-						channels.</TD>
-				</TR>
-				<TR>
-					<TD width="38" height="1"></TD>
-					<TD width="42" height="1"><STRONG><FONT face="Fixedsys">Ixy</FONT></STRONG></TD>
-					<TD height="1">
-						<P>Trigger hardware sweep down, <STRONG>x - </STRONG>period (0 - 7), <STRONG>y - </STRONG>
-							shift (1 - 7). This feature is only avaliable&nbsp;for the square channels.</P>
-					</TD>
-				</TR>
-			</TABLE>
-			<EM><STRONG></STRONG>
-		</P>
-		<DL>
-			</EM>
+			<P><FONT face="Verdana" size="2"> Effects&nbsp;are entered&nbsp;in the last column, in 
+					form of <STRONG>Xxx</STRONG>. (<STRONG>X</STRONG> - Effect number, <STRONG>xx</STRONG>
+					- Effect parameter)</FONT></P>
+			<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys">C-4&nbsp;-- - 
+					047</FONT><FONT face="Verdana" size="2">, plays a C-note with 047-arpeggio. 
+					(Commonly used for C-chords)</FONT></P>
+			<UL>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">0xy</FONT>&nbsp;- Arpeggio, <STRONG>
+							x</STRONG> and <STRONG>y</STRONG> halfnotes above the row-note</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">1xx</FONT> - Portamento on 
+						(slide to new notes), <STRONG>xx</STRONG> = speed</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">2xx</FONT> - Portamento off (<STRONG>xx</STRONG>
+						doesn't do anything)</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">4xy</FONT> - Vibrato (alters 
+						the frequency from a sine wave), <STRONG>x</STRONG> = speed <EM>(0 - disable),</EM>
+						<STRONG>y </STRONG>= depth</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">7xy</FONT> - Tremolo (alters 
+						the&nbsp;volume from a sine wave), <STRONG>x</STRONG> = speed <EM>(0 - disable),</EM>
+						<STRONG>y </STRONG>= depth</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Bxx</FONT> - Jump to frame <STRONG>xx</STRONG></FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Cxx</FONT> - Halt (<STRONG>xx</STRONG>
+						doesn't do anything)</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Dxx</FONT> - Skip to next frame 
+						and start at row <STRONG>xx</STRONG></FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Exx</FONT> - Set volume (<STRONG>xx </STRONG>
+						= <EM>0 - 15</EM> ) <EM>Obsolete, use the volume column instead</EM></FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Fxx</FONT> - Set speed/tempo to <STRONG>
+							xx</STRONG> (<STRONG>xx</STRONG> &lt; 20 sets the speed, <STRONG>xx</STRONG>
+						&gt; 20 sets the tempo)</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Hxy</FONT> - Trigger hardware 
+						sweep up, <STRONG>x</STRONG> = period (<EM>0 - 7</EM> ), <STRONG>y</STRONG> = 
+						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT>
+				<LI>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Ixy</FONT> - Trigger hardware 
+						sweep down, <STRONG>x</STRONG> = period (<EM>0 - 7</EM>), <STRONG>y</STRONG> = 
+						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT></LI></UL>
+		</BLOCKQUOTE><EM><STRONG></STRONG>
+			<DL>
+		</EM>
+		<DD>
+			<FONT face="Verdana"><FONT size="2"><EM>Notes: E won't work if an instrument volume effect 
+						loop is used.&nbsp;1 </EM><EM>&nbsp;won't work if an instrument&nbsp;frequency 
+						effect loop is used. (Pitch, Hi-pitch&nbsp;and Arpeggio)</EM> </FONT></FONT>
 			<DD>
-				<EM>Notes: E won't work if an instrument volume effect loop is used. </EM><EM>F&nbsp;&amp;&nbsp;G 
-					won't work if an instrument&nbsp;frequency effect loop is used. (Pitch, 
-					Hi-pitch&nbsp;and Arpeggio)</EM>
-			</DD>
-		</DL>
+				&nbsp;</DD></DL>
 	</BODY>
 </HTML>

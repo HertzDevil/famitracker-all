@@ -4,6 +4,7 @@
 	Version="7.10"
 	Name="FamiTracker"
 	ProjectGUID="{92FE0690-CE4F-4CCF-A52C-23265AE7429F}"
+	RootNamespace="FamiTracker"
 	Keyword="MFCProj">
 	<Platforms>
 		<Platform
@@ -20,12 +21,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="./;./Include/"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				StructMemberAlignment="0"
 				TreatWChar_tAsBuiltInType="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile="$(IntDir)/$(TargetName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"/>
@@ -73,11 +77,12 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="./Include/;./"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="FALSE"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="TRUE"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="3"/>
@@ -127,80 +132,122 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\Compile.cpp">
+				RelativePath=".\Source\DocumentFile.cpp">
 			</File>
 			<File
-				RelativePath=".\DocumentFile.cpp">
+				RelativePath=".\Source\FamiTracker.cpp">
 			</File>
 			<File
-				RelativePath=".\FamiTracker.cpp">
-			</File>
-			<File
-				RelativePath=".\FamiTrackerDoc.cpp">
-			</File>
-			<File
-				RelativePath=".\FamiTrackerView.cpp">
-			</File>
-			<File
-				RelativePath=".\MainFrm.cpp">
-			</File>
-			<File
-				RelativePath=".\MIDI.cpp">
-			</File>
-			<File
-				RelativePath=".\Settings.cpp">
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp">
+				RelativePath=".\Source\FamiTrackerDoc.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\FamiTrackerView.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\MainFrm.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\Settings.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\stdafx.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 			</File>
 			<Filter
 				Name="Sound Driver"
 				Filter="">
 				<File
-					RelativePath=".\player\DSound.cpp">
+					RelativePath=".\sound driver\DSound.cpp">
 				</File>
 				<File
-					RelativePath=".\SoundGen.cpp">
+					RelativePath=".\sound driver\SoundGen.cpp">
 				</File>
 				<Filter
 					Name="APU"
 					Filter="">
 					<File
-						RelativePath=".\player\Apu.cpp">
+						RelativePath=".\sound driver\Apu.cpp">
 					</File>
 					<File
-						RelativePath=".\player\Dpcm.cpp">
+						RelativePath=".\sound driver\Dpcm.cpp">
 					</File>
 					<File
-						RelativePath=".\player\Mixer.cpp">
+						RelativePath=".\sound driver\Mixer.cpp">
 					</File>
 					<File
-						RelativePath=".\player\Noise.cpp">
+						RelativePath=".\sound driver\Noise.cpp">
 					</File>
 					<File
-						RelativePath=".\player\Square.cpp">
+						RelativePath=".\sound driver\Square.cpp">
 					</File>
 					<File
-						RelativePath=".\player\Triangle.cpp">
+						RelativePath=".\sound driver\Triangle.cpp">
 					</File>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer"
 					Filter="">
 					<File
-						RelativePath=".\player\blip buffer\Blip_Buffer.cpp">
+						RelativePath=".\sound driver\blip buffer\Blip_Buffer.cpp">
 					</File>
 				</Filter>
 			</Filter>
@@ -208,44 +255,268 @@
 				Name="Dialog Boxes"
 				Filter="">
 				<File
-					RelativePath=".\InstrumentDPCM.cpp">
+					RelativePath=".\Source\MIDIImportDialog.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\InstrumentEditDlg.cpp">
+					RelativePath=".\Source\NSFDialog.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\InstrumentSettings.cpp">
+					RelativePath=".\Source\PerformanceDlg.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\MIDIConfig.cpp">
+					RelativePath=".\Source\SoundSettings.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\NSFDialog.cpp">
+					RelativePath=".\Source\SpeedDlg.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
-				<File
-					RelativePath=".\OptionsDlg.cpp">
-				</File>
-				<File
-					RelativePath=".\PCMImport.cpp">
-				</File>
-				<File
-					RelativePath=".\PerformanceDlg.cpp">
-				</File>
-				<File
-					RelativePath=".\SoundSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\SpeedDlg.cpp">
-				</File>
+				<Filter
+					Name="Config"
+					Filter="">
+					<File
+						RelativePath=".\Source\ConfigAppearance.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\Source\ConfigGeneral.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\Source\ConfigMIDI.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\Source\ConfigWindow.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+				</Filter>
+				<Filter
+					Name="Instrument"
+					Filter="">
+					<File
+						RelativePath=".\Source\InstrumentDPCM.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentEditDlg.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentSettings.cpp">
+						<FileConfiguration
+							Name="Debug|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32">
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+						</FileConfiguration>
+					</File>
+					<Filter
+						Name="Related"
+						Filter="">
+						<File
+							RelativePath=".\Source\PCMImport.cpp">
+							<FileConfiguration
+								Name="Debug|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32">
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+							</FileConfiguration>
+						</File>
+					</Filter>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Windows"
 				Filter="">
 				<File
-					RelativePath=".\PatternWnd.cpp">
+					RelativePath=".\Source\PatternWnd.cpp">
 				</File>
 				<File
-					RelativePath=".\SampleWindow.cpp">
+					RelativePath=".\Source\SampleWindow.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="2"/>
+					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="NSF"
+				Filter="">
+				<File
+					RelativePath=".\Source\Compile.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="MIDI"
+				Filter="">
+				<File
+					RelativePath=".\Source\MIDI.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Source\MIDIImport.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 		</Filter>
@@ -254,137 +525,74 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\Compile.h">
+				RelativePath=".\Include\DocumentFile.h">
 			</File>
 			<File
-				RelativePath=".\DocumentFile.h">
+				RelativePath=".\Include\FamiTracker.h">
 			</File>
 			<File
-				RelativePath=".\Driver.h">
+				RelativePath=".\Include\FamiTrackerDoc.h">
 			</File>
 			<File
-				RelativePath=".\FamiTracker.h">
+				RelativePath=".\Include\FamiTrackerView.h">
 			</File>
 			<File
-				RelativePath=".\FamiTrackerDoc.h">
+				RelativePath=".\Include\MainFrm.h">
 			</File>
 			<File
-				RelativePath=".\FamiTrackerView.h">
+				RelativePath=".\resource.h">
 			</File>
 			<File
-				RelativePath=".\MainFrm.h">
+				RelativePath=".\Include\Settings.h">
 			</File>
 			<File
-				RelativePath=".\MIDI.h">
-			</File>
-			<File
-				RelativePath=".\Resource.h">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Generating map file for help compiler..."
-						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-"
-						Outputs="hlp\HTMLDefines.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Generating map file for help compiler..."
-						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
-"
-						Outputs="hlp\HTMLDefines.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Settings.h">
-			</File>
-			<File
-				RelativePath=".\stdafx.h">
+				RelativePath=".\Include\stdafx.h">
 			</File>
 			<Filter
 				Name="Sound Driver Headers"
 				Filter="">
 				<File
-					RelativePath=".\player\Common.h">
+					RelativePath=".\sound driver\Common.h">
 				</File>
 				<File
-					RelativePath=".\player\DSound.h">
+					RelativePath=".\sound driver\DSound.h">
 				</File>
 				<File
-					RelativePath=".\SoundGen.h">
+					RelativePath=".\sound driver\SoundGen.h">
 				</File>
 				<Filter
 					Name="APU Headers"
 					Filter="">
 					<File
-						RelativePath=".\player\Apu.h">
+						RelativePath=".\sound driver\Apu.h">
 					</File>
 					<File
-						RelativePath=".\player\Channel.h">
+						RelativePath=".\sound driver\Channel.h">
 					</File>
 					<File
-						RelativePath=".\player\Dpcm.h">
+						RelativePath=".\sound driver\Dpcm.h">
 					</File>
 					<File
-						RelativePath=".\player\Envelope.h">
+						RelativePath=".\sound driver\Envelope.h">
 					</File>
 					<File
-						RelativePath=".\player\Mixer.h">
+						RelativePath=".\sound driver\Mixer.h">
 					</File>
 					<File
-						RelativePath=".\player\Noise.h">
+						RelativePath=".\sound driver\Noise.h">
 					</File>
 					<File
-						RelativePath=".\player\Square.h">
+						RelativePath=".\sound driver\Square.h">
 					</File>
 					<File
-						RelativePath=".\player\Triangle.h">
+						RelativePath=".\sound driver\Triangle.h">
 					</File>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer Headers"
 					Filter="">
 					<File
-						RelativePath=".\player\blip buffer\blargg_common.h">
-					</File>
-					<File
-						RelativePath=".\player\blip buffer\Blip_Buffer.h">
-					</File>
-					<File
-						RelativePath=".\player\blip buffer\Blip_Synth.h">
+						RelativePath=".\sound driver\blip buffer\Blip_Buffer.h">
 					</File>
 				</Filter>
 			</Filter>
@@ -392,44 +600,85 @@ makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &q
 				Name="Dialog Boxes Headers"
 				Filter="">
 				<File
-					RelativePath=".\InstrumentDPCM.h">
+					RelativePath=".\Include\MIDIImportDialog.h">
 				</File>
 				<File
-					RelativePath=".\InstrumentEditDlg.h">
+					RelativePath=".\Include\NSFDialog.h">
 				</File>
 				<File
-					RelativePath=".\InstrumentSettings.h">
+					RelativePath=".\Include\PerformanceDlg.h">
 				</File>
 				<File
-					RelativePath=".\MIDIConfig.h">
+					RelativePath=".\Include\SoundSettings.h">
 				</File>
 				<File
-					RelativePath=".\NSFDialog.h">
+					RelativePath=".\Include\SpeedDlg.h">
 				</File>
-				<File
-					RelativePath=".\OptionsDlg.h">
-				</File>
-				<File
-					RelativePath=".\PCMImport.h">
-				</File>
-				<File
-					RelativePath=".\PerformanceDlg.h">
-				</File>
-				<File
-					RelativePath=".\SoundSettings.h">
-				</File>
-				<File
-					RelativePath=".\SpeedDlg.h">
-				</File>
+				<Filter
+					Name="Config Headers"
+					Filter="">
+					<File
+						RelativePath=".\Include\ConfigAppearance.h">
+					</File>
+					<File
+						RelativePath=".\Include\ConfigGeneral.h">
+					</File>
+					<File
+						RelativePath=".\Include\ConfigMIDI.h">
+					</File>
+					<File
+						RelativePath=".\Include\ConfigWindow.h">
+					</File>
+				</Filter>
+				<Filter
+					Name="Instrument Headers"
+					Filter="">
+					<File
+						RelativePath=".\Include\InstrumentDPCM.h">
+					</File>
+					<File
+						RelativePath=".\Include\InstrumentEditDlg.h">
+					</File>
+					<File
+						RelativePath=".\Include\InstrumentSettings.h">
+					</File>
+					<Filter
+						Name="Related Headers"
+						Filter="">
+						<File
+							RelativePath=".\Include\PCMImport.h">
+						</File>
+					</Filter>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Windows Headers"
 				Filter="">
 				<File
-					RelativePath=".\PatternWnd.h">
+					RelativePath=".\Include\PatternWnd.h">
 				</File>
 				<File
-					RelativePath=".\SampleWindow.h">
+					RelativePath=".\Include\SampleWindow.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="NSF Headers"
+				Filter="">
+				<File
+					RelativePath=".\Include\Compile.h">
+				</File>
+				<File
+					RelativePath=".\Include\Driver.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="MIDI Headers"
+				Filter="">
+				<File
+					RelativePath=".\Include\MIDI.h">
+				</File>
+				<File
+					RelativePath=".\Include\MIDIImport.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -441,28 +690,23 @@ makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &q
 				RelativePath=".\res\Application.ico">
 			</File>
 			<File
-				RelativePath=".\res\bitmap1.bmp">
-			</File>
-			<File
 				RelativePath=".\res\bitmap2.bmp">
 			</File>
 			<File
-				RelativePath=".\res\bmp00001.bmp">
-			</File>
-			<File
-				RelativePath=".\res\bmp00002.bmp">
-			</File>
-			<File
-				RelativePath=".\res\bmp00003.bmp">
-			</File>
-			<File
-				RelativePath=".\FamiTracker.rc">
+				RelativePath=".\FamiTracker.rc"
+				DeploymentContent="TRUE">
 			</File>
 			<File
 				RelativePath=".\res\FamiTrackerDoc.ico">
 			</File>
 			<File
+				RelativePath=".\res\ico00001.ico">
+			</File>
+			<File
 				RelativePath=".\res\icon2.ico">
+			</File>
+			<File
+				RelativePath=".\res\icon3.ico">
 			</File>
 			<File
 				RelativePath=".\res\Inst_2A03.ico">
@@ -554,27 +798,11 @@ echo.
 				DeploymentContent="TRUE">
 			</File>
 			<File
-				RelativePath=".\hlp\menu_edit.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
-				RelativePath=".\hlp\menu_file.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
-				RelativePath=".\hlp\menu_help.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
-				RelativePath=".\hlp\menu_tracker.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
-				RelativePath=".\hlp\menu_view.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
 				RelativePath=".\hlp\midi_settings.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\nsf_export.htm"
 				DeploymentContent="TRUE">
 			</File>
 			<File
@@ -591,6 +819,9 @@ echo.
 		</File>
 		<File
 			RelativePath=".\FamiTracker.reg">
+		</File>
+		<File
+			RelativePath=".\Texts\FastTracker effects.txt">
 		</File>
 		<File
 			RelativePath=".\gpl.txt">
