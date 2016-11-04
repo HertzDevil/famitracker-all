@@ -330,6 +330,7 @@ private:
 };
 
 // This takes care of reference counting
+// TODO replace this with boost shared_ptr
 template <class T>
 class CInstrumentContainer {
 public:

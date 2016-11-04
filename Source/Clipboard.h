@@ -21,26 +21,23 @@
 #pragma once
 
 
-// Application version information
+// Clipboard wrapper class, using this ensures that clipboard is closed when finished
+class CClipboard
+{
+public:
+	CClipboard(CWnd *pWnd, UINT Clipboard);
+	~CClipboard();
 
-// Define this for beta builds
-//#define WIP
+	bool	IsOpened() const;
+	HGLOBAL AllocMem(UINT Size) const;
+	void	SetData(HGLOBAL hMemory) const;
+	bool	SetDataPointer(LPVOID pData, UINT Size) const;
+	HGLOBAL GetData() const;
+	LPVOID	GetDataPointer();
+	bool	IsDataAvailable()const;
 
-// Version info
-#define VERSION_MAJ  0
-#define VERSION_MIN  4
-#define VERSION_REV  6
-
-#define VERSION_WIP  0
-
-#ifdef RELEASE_BUILD
-
-#include "config.h"
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,SVN_VERSION
-
-#else
-
-#define VERSION VERSION_MAJ,VERSION_MIN,VERSION_REV,VERSION_WIP
-
-#endif /* RELEASE_BUILD */
-
+private:
+	bool m_bOpened;
+	UINT m_iClipboard;
+	HGLOBAL m_hMemory;
+};

@@ -21,15 +21,8 @@
 #pragma once
 
 //
-// Chunk renderers
+// Text chunk renderer
 //
-
-class CChunkRender
-{
-public:
-	virtual ~CChunkRender() {};
-	virtual void StoreChunk(CChunk *pChunk, CFile *pFile) = 0;
-};
 
 class CChunkRenderText;
 
@@ -43,7 +36,9 @@ struct stChunkRenderFunc {
 class CChunkRenderText
 {
 public:
-	void StoreChunks(std::vector<CChunk*> &m_vChunks, CFile *pFile);
+	CChunkRenderText(CFile *pFile);
+	void StoreChunks(const std::vector<CChunk*> &Chunks);
+	void StoreSamples(const std::vector<const CDSample*> &Samples);
 
 private:
 	static const stChunkRenderFunc RENDER_FUNCTIONS[];
@@ -51,7 +46,8 @@ private:
 private:
 	void DumpStrings(const CStringA &preStr, const CStringA &postStr, CStringArray &stringArray, CFile *pFile) const;
 	void WriteFileString(const CStringA &str, CFile *pFile) const;
-	void StoreByteString(CChunk *pChunk, CStringA &str, int LineBreak) const;
+	void StoreByteString(const char *pData, int Len, CStringA &str, int LineBreak) const;
+	void StoreByteString(const CChunk *pChunk, CStringA &str, int LineBreak) const;
 
 private:
 	void StoreHeaderChunk(CChunk *pChunk, CFile *pFile);
@@ -81,10 +77,5 @@ private:
 	CStringArray m_wavetableStrings;
 	CStringArray m_wavesStrings;
 
-};
-
-class CChunkRenderBinary : public CChunkRender
-{
-public:
-	void StoreChunk(CChunk *pChunk, CFile *pFile);
+	CFile *m_pFile;
 };

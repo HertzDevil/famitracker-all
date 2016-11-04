@@ -18,11 +18,10 @@
 ** must bear this legend.
 */
 
-
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "ModuleImportDlg.h"
-
 
 // CModuleImportDlg dialog
 
@@ -78,6 +77,11 @@ void CModuleImportDlg::OnBnClickedOk()
 	if (!(ImportInstruments() && ImportTracks()))
 		AfxMessageBox(IDS_IMPORT_FAILED, MB_ICONERROR);
 
+	// TODO another way to do this?
+	m_pDocument->UpdateAllViews(NULL, UPDATE_PATTERN);
+	m_pDocument->UpdateAllViews(NULL, UPDATE_FRAME);
+	m_pDocument->UpdateAllViews(NULL, UPDATE_INSTRUMENT);
+
 	OnOK();
 }
 
@@ -132,8 +136,8 @@ bool CModuleImportDlg::ImportTracks()
 
 	// Rebuild instrument list
 	m_pDocument->SetModifiedFlag();
-	m_pDocument->UpdateAllViews(NULL, UPDATE_INSTRUMENTS);
-	m_pDocument->UpdateAllViews(NULL, CHANGED_PATTERN);
+	m_pDocument->UpdateAllViews(NULL, UPDATE_INSTRUMENT);
+	m_pDocument->UpdateAllViews(NULL, UPDATE_PATTERN);
 
 	return true;
 }

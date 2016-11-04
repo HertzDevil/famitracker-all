@@ -18,8 +18,8 @@
 ** must bear this legend.
 */
 
-
 #pragma once
+
 
 #include "FamiTrackerTypes.h"
 #include "PatternData.h"

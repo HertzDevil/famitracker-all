@@ -9,7 +9,11 @@
  The export plugin support is written by Gradualore
  An example exporter can be found here: http://famitracker.com/files/exporterplugin.zip
 
- Icon is made by Kuhneghetz
+---------------------------
+
+Credits:
+
+ Application icons are made by Kuhneghetz
  Toolbar icons are made by ilkke
 
 Other code that is not mine:
@@ -20,27 +24,13 @@ Other code that is not mine:
  YM2149 emulator by Mitsutaka Okazaki (same)
  FDS sound emulator from nezplug (improved by rainwarrior)
  PCM import resampler by Jarhmander
+ Text import/export code is by rainwarrior
+ Contributions also by coda
 
-A quick file guide for beginners:
- - FamiTracker.cpp:			contains the main app class and is responsible for initializing and shutting down the app
- - MainFrm.cpp:				contains the main window code
- - FamiTrackerDoc.cpp:		holds the module data and is responsible for file saving/loading
- - FamiTrackerView.cpp:		used to draw the module on screen and handles keyboard input
- 
- - PatternView.cpp:			used to display the pattern
- - FrameEditor.cpp:			the frame (order) window
- - SampleWindow.cpp:		draws the sample graph
+---------------------------
 
- - Accelerator.cpp:			translates key shortcuts into commands
- - Settings.cpp:			responsible for loading/saving program settings
- 
- - SoundGen.cpp:			contains the main class for the sound player
- - TrackerChannel.cpp:		the interface between doc/view and sound player
- - ChannelMap:				contains info about the expansion chips (and will later contain the active channel set, currently located in document)
-
- This project is based on MFC so learning the basics about that is a good start.
- 
- If you got any questions then you may contact me
+If you got any questions then you may contact me here:
  
  E-mail: jsr@famitracker.com
  IRC: #famitracker on espernet
+

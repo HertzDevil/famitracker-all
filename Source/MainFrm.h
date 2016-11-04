@@ -20,6 +20,9 @@
 
 #pragma once
 
+
+// CMainFrame, the main window class
+
 #include "InstrumentEditDlg.h"
 #include "PerformanceDlg.h"
 #include "DialogReBar.h"
@@ -79,6 +82,7 @@ public:
 	void	UpdateInstrumentList();
 	void	SelectInstrument(int Index);
 	int		GetSelectedInstrument() const;
+	void	SwapInstruments(int First, int Second);
 
 	// Track
 	int		GetSelectedTrack() const;
@@ -171,6 +175,7 @@ private:  // control bar embedded members
 	CInstrumentFileTree	*m_pInstrumentFileTree;
 
 	// State variables
+	int					m_iOctave;					// Selected octave
 	int					m_iInstrument;				// Selected instrument
 	int					m_iTrack;					// Selected track
 
@@ -282,6 +287,7 @@ public:
 	afx_msg void OnToggleFollow();
 	afx_msg void OnViewControlpanel();
 	afx_msg void OnTrackerDPCM();
+	afx_msg void OnTrackerDisplayRegisterState();
 	afx_msg void OnSelectPatternEditor();
 	afx_msg void OnSelectFrameEditor();
 	afx_msg void OnHelpEffecttable();
@@ -289,7 +295,7 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnNextInstrument();
 	afx_msg void OnPrevInstrument();
-	afx_msg void OnNewInstrumentMenu( NMHDR * pNotifyStruct, LRESULT * result );
+	afx_msg void OnNewInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result);
 	afx_msg void OnLoadInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result);
 	afx_msg void OnAddInstrument2A03();
 	afx_msg void OnAddInstrumentVRC6();

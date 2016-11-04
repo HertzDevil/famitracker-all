@@ -2,6 +2,36 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.6
+
+ New stuff:
+  - Pattern rows with unspecified instruments will use the selected instrument
+
+ Fixed bugs:
+  - Fixed some rendering bugs
+  - Fixed instrument clone command bug
+
+
+Version 0.4.5
+
+ New stuff:
+  - Improved VRC7 emulation, clipping will occur when audio is too loud
+  - Improved accuracy of tempo calculation
+  - Added multi-channel support to the insert command
+  - Added song selector to the wave export dialog
+  - Added drag and drop support to instrument list for instrument reordering
+  - Added hex support to macro sequence strings and waves (x00 and $00)
+  - Added option to display channel register values
+  
+ Fixed bugs:
+  - Fixed a bug with the transpose command when used without an active selection
+  - Fixed a portamento up/down effect bug when used on a silent channel
+  - Fixed a bug with Sxx effect on DPCM affecting the pulse 1 channel when exported to NSF
+  - Fixed a bug when using delayed notes on the last row of a pattern
+  - Fixed a few pattern editor render bugs
+  - Fixed MIDI note on/off priority problem
+
+
 Version 0.4.4
 
  Fixed bugs:

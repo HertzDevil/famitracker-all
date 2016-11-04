@@ -28,6 +28,8 @@
 LPCTSTR LINK_WEB  = _T("http://www.famitracker.com");
 LPCTSTR LINK_MAIL = _T("mailto:jsr@famitracker.com");
 
+// CLinkLabel
+
 BEGIN_MESSAGE_MAP(CLinkLabel, CStatic)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_LBUTTONUP()
@@ -85,15 +87,7 @@ void CLinkLabel::OnMouseMove(UINT nFlags, CPoint point)
 	CStatic::OnMouseMove(nFlags, point);
 }
 
-class CHead : public CStatic
-{
-public:
-	CHead();
-protected:
-	DECLARE_MESSAGE_MAP()
-public:
-	virtual void CHead::DrawItem(LPDRAWITEMSTRUCT);
-};
+// CHead
 
 BEGIN_MESSAGE_MAP(CHead, CStatic)
 END_MESSAGE_MAP()
@@ -116,6 +110,8 @@ void CHead::DrawItem(LPDRAWITEMSTRUCT lpDraw)
 	pDC->BitBlt(0, 0, 434, 80, &dcImage, 0, 0, SRCCOPY);
 }
 
+// CAboutDlg
+
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
@@ -125,7 +121,8 @@ CAboutDlg::CAboutDlg() :
 	m_pWeb(NULL), 
 	m_pLinkFont(NULL), 
 	m_pBoldFont(NULL),
-	m_pTitleFont(NULL)
+	m_pTitleFont(NULL),
+	m_pHead(NULL)
 {
 }
 
@@ -142,8 +139,6 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
-
-CHead *m_pHead;
 
 BOOL CAboutDlg::OnInitDialog()
 {

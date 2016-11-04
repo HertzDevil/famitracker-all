@@ -48,7 +48,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				AdditionalIncludeDirectories="$(BOOST_DIR)\;$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -224,7 +224,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="1"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				AdditionalIncludeDirectories="$(BOOST_DIR)\;$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				StringPooling="true"
 				RuntimeLibrary="0"
@@ -564,30 +564,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Source\Accelerator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\Action.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\ChannelMap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\ControlPanelDlg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\CustomControls.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\DocumentFile.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Source\Exception.cpp"
 				>
 			</File>
@@ -700,67 +676,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Source\Graphics.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\InstrumentFileTree.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Source\MainFrm.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release 64|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release 64|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Source\Settings.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -862,10 +778,6 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Source\WaveFile.cpp"
-				>
 			</File>
 			<Filter
 				Name="Dialog Boxes"
@@ -1447,14 +1359,6 @@
 				Name="Exporter"
 				>
 				<File
-					RelativePath=".\Source\Chunk.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\ChunkRender.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\Source\CommandLineExport.cpp"
 					>
 				</File>
@@ -1499,6 +1403,22 @@
 					>
 					<File
 						RelativePath=".\Source\TextExporter.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Chunk"
+					>
+					<File
+						RelativePath=".\Source\Chunk.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChunkRenderBinary.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChunkRenderText.cpp"
 						>
 					</File>
 				</Filter>
@@ -1578,6 +1498,10 @@
 			<Filter
 				Name="Sound Driver"
 				>
+				<File
+					RelativePath=".\Source\ChannelMap.cpp"
+					>
+				</File>
 				<File
 					RelativePath=".\Source\SoundGen.cpp"
 					>
@@ -1783,11 +1707,19 @@
 				Name="Pattern Editor"
 				>
 				<File
+					RelativePath=".\Source\Clipboard.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\PatternAction.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\Source\PatternEditor.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\PatternEditorTypes.cpp"
 					>
 				</File>
 			</Filter>
@@ -1803,36 +1735,108 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Custom Controls"
+				>
+				<File
+					RelativePath=".\Source\ControlPanelDlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomControls.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\InstrumentListCtrl.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Components"
+				>
+				<File
+					RelativePath=".\Source\Accelerator.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Action.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\DocumentFile.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Graphics.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\InstrumentFileTree.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Settings.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Source\WaveFile.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\Source\Accelerator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\Action.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\ChannelMap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\ControlPanelDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\CustomControls.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\DocumentFile.h"
-				>
-			</File>
 			<File
 				RelativePath=".\Source\Exception.h"
 				>
@@ -1851,14 +1855,6 @@
 			</File>
 			<File
 				RelativePath=".\Source\FamiTrackerView.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\Graphics.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Source\InstrumentFileTree.h"
 				>
 			</File>
 			<File
@@ -1930,10 +1926,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Source\Settings.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Source\stdafx.h"
 				>
 			</File>
@@ -1941,13 +1933,13 @@
 				RelativePath=".\version.h"
 				>
 			</File>
-			<File
-				RelativePath=".\Source\WaveFile.h"
-				>
-			</File>
 			<Filter
 				Name="Sound Driver Headers"
 				>
+				<File
+					RelativePath=".\Source\ChannelMap.h"
+					>
+				</File>
 				<File
 					RelativePath=".\Source\Common.h"
 					>
@@ -2137,10 +2129,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Source\MIDIImportDialog.h"
-					>
-				</File>
-				<File
 					RelativePath=".\Source\ModuleImportDlg.h"
 					>
 				</File>
@@ -2275,6 +2263,10 @@
 							>
 						</File>
 						<File
+							RelativePath=".\Source\InstrumentEditorN163.h"
+							>
+						</File>
+						<File
 							RelativePath=".\Source\InstrumentEditorN163Wave.h"
 							>
 						</File>
@@ -2325,14 +2317,6 @@
 				Name="Export Headers"
 				>
 				<File
-					RelativePath=".\Source\Chunk.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\ChunkRender.h"
-					>
-				</File>
-				<File
 					RelativePath=".\Source\CommandLineExport.h"
 					>
 				</File>
@@ -2346,10 +2330,6 @@
 				</File>
 				<File
 					RelativePath=".\Source\PatternCompiler.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\TextExporter.h"
 					>
 				</File>
 				<Filter
@@ -2373,6 +2353,30 @@
 					</File>
 					<File
 						RelativePath=".\Source\DocumentWrapper.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Chunk Headers"
+					>
+					<File
+						RelativePath=".\Source\Chunk.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChunkRenderBinary.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChunkRenderText.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Text Headers"
+					>
+					<File
+						RelativePath=".\Source\TextExporter.h"
 						>
 					</File>
 				</Filter>
@@ -2404,10 +2408,6 @@
 					RelativePath=".\Source\MIDI.h"
 					>
 				</File>
-				<File
-					RelativePath=".\Source\MIDIImport.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Document Data Type Headers"
@@ -2437,6 +2437,10 @@
 				Name="Pattern Editor Headers"
 				>
 				<File
+					RelativePath=".\Source\Clipboard.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\ColorScheme.h"
 					>
 				</File>
@@ -2446,6 +2450,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\PatternEditor.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\PatternEditorTypes.h"
 					>
 				</File>
 			</Filter>
@@ -2458,6 +2466,50 @@
 				</File>
 				<File
 					RelativePath=".\Source\FrameEditor.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Custom Control Headers"
+				>
+				<File
+					RelativePath=".\Source\ControlPanelDlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomControls.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Components Headers"
+				>
+				<File
+					RelativePath=".\Source\Accelerator.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Action.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\DocumentFile.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Graphics.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\InstrumentFileTree.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Settings.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\WaveFile.h"
 					>
 				</File>
 			</Filter>
