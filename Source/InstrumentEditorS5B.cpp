@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -221,6 +221,8 @@ void CInstrumentEditorS5B::OnEnChangeSeqIndex()
 void CInstrumentEditorS5B::OnBnClickedFreeSeq()
 {
 	int FreeIndex = GetDocument()->GetFreeSequenceS5B(m_iSelectedSetting);
+	if (FreeIndex == -1)
+		FreeIndex = 0;
 	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 

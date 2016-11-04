@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ public:
 	void			ClearEnumeration();
 	BOOL			EnumerateCallback(LPGUID lpGuid, LPCTSTR lpcstrDescription, LPCTSTR lpcstrModule, LPVOID lpContext);
 	unsigned int	GetDeviceCount() const;
-	LPCTSTR			GetDeviceName(int iDevice) const;
+	LPCTSTR			GetDeviceName(unsigned int iDevice) const;
 	int				MatchDeviceID(LPCTSTR Name) const;
 
 public:

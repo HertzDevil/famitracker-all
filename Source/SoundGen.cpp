@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 //  - Break out actual player functions to a new class CPlayer
 //  - Create new interface for CFamiTrackerView with thread-safe functions
 //  - Same for CFamiTrackerDoc
+//  - Perhaps this should be a worker thread and not GUI thread?
 //
 
 #include "stdafx.h"
@@ -122,10 +123,14 @@ CSoundGen::CSoundGen() :
 	m_iQueuedFrame(-1),
 	m_iPlayFrame(0),
 	m_iPlayRow(0),
+	m_iPlayTrack(0),
 	m_iPlayTicks(0),
 	m_bBufferUnderrun(false),
 	m_bAudioClipping(false),
-	m_iClipCounter(0)
+	m_iClipCounter(0),
+	m_pSequencePlayPos(NULL),
+	m_iSequencePlayPos(0),
+	m_iSequenceTimeout(0)
 {
 	TRACE0("SoundGen: Object created\n");
 
@@ -355,12 +360,12 @@ void CSoundGen::DocumentPropertiesChange(CFamiTrackerDoc *pDocument)
 // Interface functions
 //
 
-void CSoundGen::StartPlayer(int Mode)
+void CSoundGen::StartPlayer(play_mode_t Mode, int Track)
 {
 	if (!m_hThread)
 		return;
 
-	PostThreadMessage(WM_USER_PLAY, Mode, 0);
+	PostThreadMessage(WM_USER_PLAY, Mode, Track);
 }
 
 void CSoundGen::StopPlayer()
@@ -371,12 +376,12 @@ void CSoundGen::StopPlayer()
 	PostThreadMessage(WM_USER_STOP, 0, 0);
 }
 
-void CSoundGen::ResetPlayer()
+void CSoundGen::ResetPlayer(int Track)
 {
 	if (!m_hThread)
 		return;
 
-	PostThreadMessage(WM_USER_RESET, 0, 0);
+	PostThreadMessage(WM_USER_RESET, Track, 0);
 }
 
 void CSoundGen::LoadSettings()
@@ -833,7 +838,7 @@ int CSoundGen::ReadNamcoPeriodTable(int index) const
 	return m_iNoteLookupTableN163[index];
 }
 
-void CSoundGen::BeginPlayer(play_mode_t Mode)
+void CSoundGen::BeginPlayer(play_mode_t Mode, int Track)
 {
 	// Called from player thread
 	ASSERT(GetCurrentThreadId() == m_nThreadID);
@@ -879,6 +884,7 @@ void CSoundGen::BeginPlayer(play_mode_t Mode)
 	m_bUpdateRow		= true;
 	m_iPlayMode			= Mode;
 	m_bDirty			= true;
+	m_iPlayTrack		= Track;
 
 	memset(m_bFramePlayed, false, sizeof(bool) * MAX_FRAMES);
 
@@ -959,6 +965,12 @@ void CSoundGen::MakeSilent()
 	}
 }
 
+void CSoundGen::ResetState()
+{
+	// Called when a new module is loaded
+	m_iPlayTrack = 0;
+}
+
 // Get tempo values from the document
 void CSoundGen::ResetTempo()
 {
@@ -967,8 +979,8 @@ void CSoundGen::ResetTempo()
 	if (!m_pDocument)
 		return;
 
-	m_iSpeed = m_pDocument->GetSongSpeed();
-	m_iTempo = m_pDocument->GetSongTempo();
+	m_iSpeed = m_pDocument->GetSongSpeed(m_iPlayTrack);
+	m_iTempo = m_pDocument->GetSongTempo(m_iPlayTrack);
 
 	m_iTempoAccum = 0;
 	m_iTempoFrames = 0;
@@ -1354,6 +1366,7 @@ void CSoundGen::EvaluateGlobalEffects(stChanNote *NoteData, int EffColumns)
 {
 	// Handle global effects (effects that affects all channels)
 	for (int i = 0; i < EffColumns; ++i) {
+
 		unsigned char EffNum   = NoteData->EffNumber[i];
 		unsigned char EffParam = NoteData->EffParam[i];
 
@@ -1449,7 +1462,7 @@ void CSoundGen::StopRendering()
 void CSoundGen::GetRenderStat(int &Frame, int &Time, bool &Done, int &FramesToRender) const
 {
 	Frame = m_iFramesPlayed;
-	Time = m_iPlayTicks / m_pTrackerView->GetDocument()->GetFrameRate();
+	Time = m_iPlayTicks / m_pDocument->GetFrameRate();
 	Done = m_bRendering;
 	FramesToRender = m_iRenderEndParam;
 }
@@ -1470,14 +1483,15 @@ bool CSoundGen::IsBackgroundTask() const
 
 // DPCM handling
 
-void CSoundGen::PlaySample(CDSample *pSample, int Offset, int Pitch)
+void CSoundGen::PlaySample(const CDSample *pSample, int Offset, int Pitch)
 {
 	SAFE_RELEASE(m_pPreviewSample);
 
-	m_pSampleMem->SetMem(pSample->SampleData, pSample->SampleSize);
+	// Sample may not be removed when used by the sample memory class!
+	m_pSampleMem->SetMem(pSample->GetData(), pSample->GetSize());
 
 	int Loop = 0;
-	int Length = ((pSample->SampleSize - 1) >> 4) - (Offset << 2);
+	int Length = ((pSample->GetSize() - 1) >> 4) - (Offset << 2);
 
 	m_pAPU->Write(0x4010, Pitch | Loop);
 	m_pAPU->Write(0x4012, Offset);			// load address, start at $C000
@@ -1486,7 +1500,7 @@ void CSoundGen::PlaySample(CDSample *pSample, int Offset, int Pitch)
 	m_pAPU->Write(0x4015, 0x1F);			// fire sample
 	
 	// Auto-delete samples with no name
-	if (pSample->Name[0] == 0)
+	if (*pSample->GetName() == 0)
 		m_pPreviewSample = pSample;
 }
 
@@ -1672,7 +1686,7 @@ void CSoundGen::PlayChannelNotes()
 		// Check if new note data has been queued for playing
 		if (m_pTrackerChannels[Channel]->NewNoteData()) {
 			stChanNote Note = m_pTrackerChannels[Channel]->GetNote();
-			PlayNote(Channel, &Note, m_pDocument->GetEffColumns(i) + 1);
+			PlayNote(Channel, &Note, m_pDocument->GetEffColumns(m_iPlayTrack, i) + 1);
 		}
 
 		// Pitch wheel
@@ -1755,7 +1769,7 @@ void CSoundGen::UpdateAPU()
 
 void CSoundGen::OnStartPlayer(WPARAM wParam, LPARAM lParam)
 {
-	BeginPlayer((play_mode_t)wParam);
+	BeginPlayer((play_mode_t)wParam, lParam);
 }
 
 void CSoundGen::OnSilentAll(WPARAM wParam, LPARAM lParam)
@@ -1782,8 +1796,9 @@ void CSoundGen::OnResetPlayer(WPARAM wParam, LPARAM lParam)
 	// Called when the selected song has changed
 
 	if (IsPlaying())
-		BeginPlayer(m_iPlayMode);
+		BeginPlayer(m_iPlayMode, wParam);
 
+	m_iPlayTrack = wParam;
 	m_iPlayFrame = 0;
 	m_iPlayRow = 0;
 }
@@ -1842,7 +1857,7 @@ void CSoundGen::OnVerifyExport(WPARAM wParam, LPARAM lParam)
 #ifdef EXPORT_TEST
 	m_pExportTest = reinterpret_cast<CExportTest*>(wParam);
 	m_bExportTesting = true;
-	BeginPlayer(MODE_PLAY_START);
+	BeginPlayer(MODE_PLAY_START, lParam);
 #endif /* EXPORT_TEST */
 }
 
@@ -1888,7 +1903,7 @@ void CSoundGen::ReadPatternRow()
 	stChanNote NoteData;
 
 	for (int i = 0; i < Channels; ++i) {
-		m_pDocument->GetNoteData(m_iPlayFrame, i, m_iPlayRow, &NoteData);
+		m_pDocument->GetNoteData(m_iPlayTrack, m_iPlayFrame, i, m_iPlayRow, &NoteData);
 		
 		if (!m_bMuteChannels[i]) {
 			// Let view know what is about to play
@@ -1898,7 +1913,7 @@ void CSoundGen::ReadPatternRow()
 		else {
 			// These effects will pass even if the channel is muted
 			const int PASS_EFFECTS[] = {EF_HALT, EF_JUMP, EF_SPEED, EF_SKIP};
-			int Columns = m_pDocument->GetEffColumns(i) + 1;
+			int Columns = m_pDocument->GetEffColumns(m_iPlayTrack, i) + 1;
 			bool ValidCommand = false;
 			
 			NoteData.Note		= HALT;
@@ -1925,7 +1940,7 @@ void CSoundGen::ReadPatternRow()
 
 void CSoundGen::PlayerStepRow()
 {
-	int PatternLen = m_pDocument->GetPatternLength();
+	int PatternLen = m_pDocument->GetPatternLength(m_iPlayTrack);
 
 	if (++m_iPlayRow >= PatternLen) {
 		m_iPlayRow = 0;
@@ -1938,7 +1953,7 @@ void CSoundGen::PlayerStepRow()
 
 void CSoundGen::PlayerStepFrame()
 {
-	int Frames = m_pDocument->GetFrameCount();
+	int Frames = m_pDocument->GetFrameCount(m_iPlayTrack);
 
 	m_bFramePlayed[m_iPlayFrame] = true;
 
@@ -1958,7 +1973,7 @@ void CSoundGen::PlayerStepFrame()
 
 void CSoundGen::PlayerJumpTo(int Frame)
 {
-	int Frames = m_pDocument->GetFrameCount();
+	int Frames = m_pDocument->GetFrameCount(m_iPlayTrack);
 
 	m_bFramePlayed[m_iPlayFrame] = true;
 
@@ -1976,8 +1991,8 @@ void CSoundGen::PlayerJumpTo(int Frame)
 
 void CSoundGen::PlayerSkipTo(int Row)
 {
-	int Frames = m_pDocument->GetFrameCount();
-	int Rows = m_pDocument->GetPatternLength();
+	int Frames = m_pDocument->GetFrameCount(m_iPlayTrack);
+	int Rows = m_pDocument->GetPatternLength(m_iPlayTrack);
 	
 	m_bFramePlayed[m_iPlayFrame] = true;
 
@@ -1994,7 +2009,7 @@ void CSoundGen::PlayerSkipTo(int Row)
 	m_bDirty = true;
 }
 
-void CSoundGen::QueueNote(int Channel, stChanNote &NoteData, int Priority) const
+void CSoundGen::QueueNote(int Channel, stChanNote &NoteData, note_prio_t Priority) const
 {
 	if (m_pDocument == NULL)
 		return;
@@ -2017,6 +2032,11 @@ int	CSoundGen::GetPlayerRow() const
 int CSoundGen::GetPlayerFrame() const
 {
 	return m_iPlayFrame;
+}
+
+int CSoundGen::GetPlayerTrack() const
+{
+	return m_iPlayTrack;
 }
 
 int CSoundGen::GetPlayerTicks() const
@@ -2134,3 +2154,26 @@ void CSoundGen::CompareRegisters()
 }
 
 #endif /* EXPORT_TEST */
+
+void CSoundGen::SetSequencePlayPos(const CSequence *pSequence, int Pos)
+{
+	if (pSequence == m_pSequencePlayPos) {
+		m_iSequencePlayPos = Pos;
+		m_iSequenceTimeout = 5;
+	}
+}
+
+int CSoundGen::GetSequencePlayPos(const CSequence *pSequence)
+{
+	if (m_pSequencePlayPos != pSequence)
+		m_iSequencePlayPos = -1;
+
+	if (m_iSequenceTimeout == 0)
+		m_iSequencePlayPos = -1;
+	else
+		--m_iSequenceTimeout;
+
+	int Ret = m_iSequencePlayPos;
+	m_pSequencePlayPos = pSequence;
+	return Ret;
+}

@@ -12,6 +12,9 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
@@ -103,6 +106,93 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="false"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				StructMemberAlignment="0"
+				TreatWChar_tAsBuiltInType="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile="$(IntDir)/$(TargetName).pch"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
@@ -129,6 +219,98 @@
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
 				MkTypLibCompatible="false"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP"
+				Optimization="1"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				TreatWChar_tAsBuiltInType="true"
+				UsePrecompiledHeader="0"
+				AssemblerOutput="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				Version=""
+				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
+				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			UseOfATL="0"
+			CharacterSet="2"
+			WholeProgramOptimization="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -167,7 +349,188 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				TargetMachine="1"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release 64|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			UseOfATL="0"
+			CharacterSet="2"
+			WholeProgramOptimization="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="1"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				RuntimeLibrary="0"
+				TreatWChar_tAsBuiltInType="true"
+				UsePrecompiledHeader="0"
+				AssemblerOutput="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				Version=""
+				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x64\;"
+				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release 64|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			UseOfATL="0"
+			CharacterSet="2"
+			WholeProgramOptimization="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="false"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="1"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				RuntimeLibrary="0"
+				TreatWChar_tAsBuiltInType="true"
+				UsePrecompiledHeader="0"
+				AssemblerOutput="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				Version=""
+				LinkIncremental="0"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x64\;"
+				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="17"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -244,7 +607,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -264,7 +659,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -292,7 +719,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -312,7 +771,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -332,7 +823,39 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -387,7 +910,39 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -407,7 +962,39 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -430,7 +1017,39 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
+							Name="Debug|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -450,7 +1069,39 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
+							Name="Debug|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -470,7 +1121,39 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
+							Name="Debug|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -506,7 +1189,39 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
+							Name="Debug|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
 							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|x64"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)/$(InputName)1.obj"
+							/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release 64|x64"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -533,7 +1248,39 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
+								Name="Debug|x64"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
 								Name="Release|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|x64"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release 64|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release 64|x64"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -609,7 +1356,39 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
+								Name="Debug|x64"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
 								Name="Release|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|x64"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release 64|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release 64|x64"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -687,10 +1466,6 @@
 					RelativePath=".\Source\PatternCompiler.cpp"
 					>
 				</File>
-				<File
-					RelativePath=".\Source\TextExporter.cpp"
-					>
-				</File>
 				<Filter
 					Name="Custom Exporter"
 					>
@@ -706,12 +1481,24 @@
 						RelativePath=".\Source\CustomExporters.cpp"
 						>
 					</File>
+					<File
+						RelativePath=".\Source\DocumentWrapper.cpp"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="Test"
 					>
 					<File
 						RelativePath=".\Source\ExportTest\ExportTest.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Text"
+					>
+					<File
+						RelativePath=".\Source\TextExporter.cpp"
 						>
 					</File>
 				</Filter>
@@ -951,7 +1738,39 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
+						Name="Debug|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
 						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)/$(InputName)1.obj"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release 64|x64"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1060,7 +1879,47 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1114,6 +1973,10 @@
 					</File>
 					<File
 						RelativePath=".\Source\Apu\Mixer.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\APU\Types.h"
 						>
 					</File>
 					<Filter
@@ -1508,6 +2371,10 @@
 						RelativePath=".\Source\CustomExporters.h"
 						>
 					</File>
+					<File
+						RelativePath=".\Source\DocumentWrapper.h"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="Test Headers"
@@ -1574,6 +2441,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Source\PatternAction.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\PatternEditor.h"
 					>
 				</File>
@@ -1581,6 +2452,10 @@
 			<Filter
 				Name="Frame Editor Headers"
 				>
+				<File
+					RelativePath=".\Source\FrameAction.h"
+					>
+				</File>
 				<File
 					RelativePath=".\Source\FrameEditor.h"
 					>
@@ -1593,94 +2468,102 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\res\About.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Application.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Document.ico"
-				>
-			</File>
-			<File
 				RelativePath=".\FamiTracker.rc"
 				DeploymentContent="true"
 				>
 			</File>
-			<File
-				RelativePath=".\res\Inst_2A03.ico"
+			<Filter
+				Name="Icons"
 				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_2A07.ico"
+				<File
+					RelativePath=".\res\Application.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Document.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_2A03.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_2A07.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_FDS.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_N163.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_S5B.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_VRC6.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\Inst_VRC7.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\LeftArrow.ico"
+					>
+				</File>
+				<File
+					RelativePath=".\res\RightArrow.ico"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Bitmaps"
 				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_FDS.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_N163.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_S5B.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_VRC6.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Inst_VRC7.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\InstrumentToolbar-16.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\InstrumentToolbar-256.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\key_black_pressed.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\key_black_unpressed.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\key_white_pressed.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\key_white_unpressed.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\LeftArrow.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MainToolbar-16.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MainToolbar-256.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\RightArrow.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\VisualizerBg.bmp"
-				>
-			</File>
+				<File
+					RelativePath=".\res\About.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\InstrumentToolbar-16.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\InstrumentToolbar-256.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\key_black_pressed.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\key_black_unpressed.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\key_white_pressed.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\key_white_unpressed.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\MainToolbar-16.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\MainToolbar-256.bmp"
+					>
+				</File>
+				<File
+					RelativePath=".\res\VisualizerBg.bmp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="HTML Help Files"
@@ -1709,7 +2592,51 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;&#x0D;&#x0A;if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;&#x0D;&#x0A;if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;&#x0D;&#x0A;if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;&#x0D;&#x0A;if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release 64|x64"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -2113,7 +3040,39 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
+				Name="Debug|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
 				Name="Release|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|x64"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release 64|Win32"
+				ExcludedFromBuild="true"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release 64|x64"
 				ExcludedFromBuild="true"
 				>
 				<Tool

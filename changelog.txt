@@ -2,6 +2,20 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.4
+
+ Fixed bugs:
+  - Fixed a problem with fixed arpeggio not playing the final note
+  - Fixed muting / unmuting channels affecting all channels when preview full row was enabled
+  - Fixed toolbar icons not being visible in Windows XP
+  - Fixed a problem that caused the 64th sample not staying assigned when file is loaded
+  - Fixed note slides clearing the slide effect after reaching target note
+  - Fixed the Select All (Ctrl+A) command behaviour to be more similar to IT
+  - Fixed skip command (Dxx) in NSF code when skipping to any other row than 0 
+  - Fixed NES export
+  - Updated PAL DPCM period table
+
+
 Version 0.4.3
 
  New stuff:

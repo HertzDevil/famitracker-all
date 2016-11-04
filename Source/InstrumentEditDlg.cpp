@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -394,8 +394,8 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 	else {
 		NoteData.Note			= pView->DoRelease() ? RELEASE : HALT;//HALT;
 		NoteData.Octave			= 0;
-		NoteData.Vol			= 0;
-		NoteData.Instrument		= 0;
+		NoteData.Vol			= 0x10;
+		NoteData.Instrument		= pFrameWnd->GetSelectedInstrument();;
 		memset(NoteData.EffNumber, 0, 4);
 		memset(NoteData.EffParam, 0, 4);
 

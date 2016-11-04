@@ -320,7 +320,7 @@ void CPCMImport::OnBnClickedOk()
 	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
 
 	// Set the name
-	strcpy_s(pSample->Name, 256, (char*)(LPCSTR)m_strFileName);
+	pSample->SetName((LPCSTR)m_strFileName);
 
 	m_pImported = pSample;
 	m_pCachedSample = NULL;
@@ -367,7 +367,7 @@ CDSample *CPCMImport::GetSample()
 		SAFE_RELEASE(m_pCachedSample);
 		m_pCachedSample = ConvertFile();
 		// This sample may not be auto-deleted
-		strcpy_s(m_pCachedSample->Name, 256, "cached");
+		m_pCachedSample->SetName("cached");
 	}
 
 	m_iCachedQuality = m_iQuality;
@@ -490,8 +490,7 @@ bool CPCMImport::OpenWaveFile()
 		TCHAR   szCause[255];
 		CString strFormatted;
 		ex.GetErrorMessage(szCause, 255);
-		strFormatted.LoadString(IDS_OPEN_FILE_ERROR);
-		strFormatted += szCause;
+		AfxFormatString1(strFormatted, IDS_OPEN_FILE_ERROR, szCause);
 		AfxMessageBox(strFormatted);
 		return false;
 	}

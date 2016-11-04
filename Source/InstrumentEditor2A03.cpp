@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -169,6 +169,8 @@ void CInstrumentEditor2A03::OnEnChangeSeqIndex()
 void CInstrumentEditor2A03::OnBnClickedFreeSeq()
 {
 	int FreeIndex = GetDocument()->GetFreeSequence(m_iSelectedSetting);
+	if (FreeIndex == -1)
+		FreeIndex = 0;
 	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 
@@ -237,7 +239,7 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 void CInstrumentEditor2A03::SelectSequence(int Sequence, int Type)
 {
 	// Selects the current sequence in the sequence editor
-	m_pSequence = GetDocument()->GetSequence(Sequence, Type);
+	m_pSequence = GetDocument()->GetSequence(unsigned(Sequence), Type);
 	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_2A03);
 }
 
@@ -269,7 +271,9 @@ void CInstrumentEditor2A03::OnCloneSequence()
 {
 	CFamiTrackerDoc *pDoc = GetDocument();
 	int FreeIndex = pDoc->GetFreeSequence(m_iSelectedSetting);
-	CSequence *pSeq = pDoc->GetSequence(SNDCHIP_NONE, FreeIndex, m_iSelectedSetting);
-	pSeq->Copy(m_pSequence);
-	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);
+	if (FreeIndex != -1) {
+		CSequence *pSeq = pDoc->GetSequence(SNDCHIP_NONE, FreeIndex, m_iSelectedSetting);
+		pSeq->Copy(m_pSequence);
+		SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);
+	}
 }

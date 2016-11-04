@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ const struct {
 	static const COLORREF FRAME_DARK		= 0x00808080;	// 3D frame
 } STATIC_COLOR_SCHEME;
 
-// Blend levels
+// Blending levels
 const struct {
 	static const int SEPARATOR		= 75;	// Channel separators
 	static const int EMPTY_BG		= 70;	// Empty background

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,8 +28,7 @@
 // Support DLL translations
 #define SUPPORT_TRANSLATIONS
 
-//#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
-#define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));//  if (v > max) v = max; else if (v < min) v = min;
+#define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));
 
 #ifndef __AFXWIN_H__
 	#error include 'stdafx.h' before including this file for PCH
@@ -77,6 +76,8 @@ class CCustomExporters;
 
 class CMutex;
 
+enum play_mode_t;	// Defined in soundgen.h
+
 // CFamiTrackerApp:
 // See FamiTracker.cpp for the implementation of this class
 //
@@ -100,7 +101,7 @@ public:
 	void			ThreadDisplayMessage(UINT nIDPrompt, UINT nType = 0, UINT nIDHelp = 0);
 
 	// Tracker player functions
-	void			StartPlayer(int Mode);
+	void			StartPlayer(play_mode_t Mode);
 	void			StopPlayer();
 	void			StopPlayerAndWait();
 	void			TogglePlayer();

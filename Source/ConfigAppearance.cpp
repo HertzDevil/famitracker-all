@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -221,23 +221,20 @@ BOOL CConfigAppearance::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
 
-	CDC *pDC = GetDC();
-	LOGFONT LogFont;
-
 	const CSettings *pSettings = theApp.GetSettings();
-
 	m_strFont = pSettings->General.strFont;
 
-	memset(&LogFont, 0, sizeof(LOGFONT));
-	LogFont.lfCharSet = DEFAULT_CHARSET;
+	CDC *pDC = GetDC();
+	if (pDC != NULL) {
+		LOGFONT LogFont;
+		memset(&LogFont, 0, sizeof(LOGFONT));
+		LogFont.lfCharSet = DEFAULT_CHARSET;
+		EnumFontFamiliesEx(pDC->m_hDC, &LogFont, (FONTENUMPROC)EnumFontFamExProc, (LPARAM)this, 0);
+		ReleaseDC(pDC);
+	}
 
 	CComboBox *pFontList = static_cast<CComboBox*>(GetDlgItem(IDC_FONT));
 	CComboBox *pFontSizeList = static_cast<CComboBox*>(GetDlgItem(IDC_FONT_SIZE));
-
-	EnumFontFamiliesEx(pDC->m_hDC, &LogFont, (FONTENUMPROC)EnumFontFamExProc, (LPARAM)this, 0);
-
-	ReleaseDC(pDC);
-
 	CComboBox *pItemsBox = static_cast<CComboBox*>(GetDlgItem(IDC_COL_ITEM));
 
 	for (int i = 0; i < COLOR_ITEM_COUNT; ++i) {

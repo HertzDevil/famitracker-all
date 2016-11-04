@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2013  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -188,12 +188,12 @@ UINT CVisualizerWnd::ThreadProc()
 		m_csBuffer.Lock();
 
 		CDC *pDC = GetDC();
-
-		m_pStates[m_iCurrentState]->SetSampleData(pDrawBuffer, m_iBufferSize);
-		m_pStates[m_iCurrentState]->Draw();
-		m_pStates[m_iCurrentState]->Display(pDC, false);
-
-		ReleaseDC(pDC);
+		if (pDC != NULL) {
+			m_pStates[m_iCurrentState]->SetSampleData(pDrawBuffer, m_iBufferSize);
+			m_pStates[m_iCurrentState]->Draw();
+			m_pStates[m_iCurrentState]->Display(pDC, false);
+			ReleaseDC(pDC);
+		}
 
 		m_csBuffer.Unlock();
 	}
@@ -306,21 +306,23 @@ void CVisualizerWnd::OnRButtonUp(UINT nFlags, CPoint point)
 void CVisualizerWnd::OnDestroy()
 {
 	// Shut down worker thread
-	HANDLE hThread = m_pWorkerThread->m_hThread;
-	
-	m_bThreadRunning = false;
-	::SetEvent(m_hNewSamples);
+	if (m_pWorkerThread != NULL) {
+		HANDLE hThread = m_pWorkerThread->m_hThread;
+		
+		m_bThreadRunning = false;
+		::SetEvent(m_hNewSamples);
 
-	TRACE0("Visualizer: Joining thread...\n");
-	if (::WaitForSingleObject(hThread, 5000) == WAIT_OBJECT_0) {
-		::CloseHandle(m_hNewSamples);
-		m_hNewSamples = NULL;
-		m_pWorkerThread = NULL;
+		TRACE0("Visualizer: Joining thread...\n");
+		if (::WaitForSingleObject(hThread, 5000) == WAIT_OBJECT_0) {
+			::CloseHandle(m_hNewSamples);
+			m_hNewSamples = NULL;
+			m_pWorkerThread = NULL;
+			TRACE0("Visualizer: Thread has finished.\n");
+		}
+		else {
+			TRACE0("Visualizer: Could not shutdown worker thread\n");
+		}
 	}
-	else {
-		TRACE0("Visualizer: Could not shutdown worker thread\n");
-	}
-	TRACE0("Visualizer: Thread has finished.\n");
 
 	CWnd::OnDestroy();
 }

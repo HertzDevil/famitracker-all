@@ -170,7 +170,7 @@ BOOL CFamiTrackerApp::InitInstance()
 		m_pSettings->DefaultSettings();
 		m_pSettings->SaveSettings();
 		// Show message and quit
-		AfxMessageBox(IDS_SOUNDGEN_ERROR, MB_ICONERROR);
+		AfxMessageBox(IDS_START_ERROR, MB_ICONERROR);
 		return FALSE;
 	}
 
@@ -583,7 +583,7 @@ void CFamiTrackerApp::LoadSoundConfig()
 {
 	GetSoundGenerator()->LoadSettings();
 	GetSoundGenerator()->Interrupt();
-	((CFrameWnd*)GetMainWnd())->SetMessageText(IDS_NEW_SOUND_CONFIG);
+	static_cast<CFrameWnd*>(GetMainWnd())->SetMessageText(IDS_NEW_SOUND_CONFIG);
 }
 
 // Silences everything
@@ -646,10 +646,11 @@ void CFamiTrackerApp::OnAppAbout()
 
 // CFamiTrackerApp message handlers
 
-void CFamiTrackerApp::StartPlayer(int Mode)
+void CFamiTrackerApp::StartPlayer(play_mode_t Mode)
 {
+	int Track = static_cast<CMainFrame*>(GetMainWnd())->GetSelectedTrack();
 	if (m_pSoundGenerator)
-		m_pSoundGenerator->StartPlayer(Mode);
+		m_pSoundGenerator->StartPlayer(Mode, Track);
 }
 
 void CFamiTrackerApp::StopPlayer()
@@ -692,9 +693,10 @@ bool CFamiTrackerApp::IsPlaying() const
 
 void CFamiTrackerApp::ResetPlayer()
 {
-	// Called when changing song
+	// Called when changing track
+	int Track = static_cast<CMainFrame*>(GetMainWnd())->GetSelectedTrack();
 	if (m_pSoundGenerator)
-		m_pSoundGenerator->ResetPlayer();
+		m_pSoundGenerator->ResetPlayer(Track);
 }
 
 // File load/save
@@ -794,7 +796,7 @@ void CFamiTrackerApp::VerifyExport() const
 	if (pExportTest->Setup()) {
 		const CMainFrame *pMainFrame = static_cast<CMainFrame*>(m_pMainWnd);
 		pExportTest->RunInit(pMainFrame->GetSelectedTrack());
-		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, 0);
+		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, pMainFrame->GetSelectedTrack());
 	}
 	else
 		delete pExportTest;
@@ -809,7 +811,7 @@ void CFamiTrackerApp::VerifyExport(LPCTSTR File) const
 	if (pExportTest->Setup(File)) {
 		const CMainFrame *pMainFrame = static_cast<CMainFrame*>(m_pMainWnd);
 		pExportTest->RunInit(pMainFrame->GetSelectedTrack());
-		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, 0);
+		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, pMainFrame->GetSelectedTrack());
 	}
 	else
 		delete pExportTest;
