@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 */
 
 //
-// The NES APU (2A03/2A07) (Audio Processing Unit) emulation core
+// The NES APU + Expansion chips (2A03/2A07) emulation core
 //
 // Written by Jonathan Liss 2002 - 2003
 //
@@ -38,27 +38,27 @@
 
 #include <cstdio>
 #include <memory>
-#include "APU/apu.h"
-#include "APU/square.h"
-#include "APU/triangle.h"
-#include "APU/noise.h"
-#include "APU/dpcm.h"
+#include "apu.h"
+#include "square.h"
+#include "triangle.h"
+#include "noise.h"
+#include "dpcm.h"
 
-const int		CAPU::SEQUENCER_PERIOD		= 7458;
-//const int		CAPU::SEQUENCER_PERIOD_PAL	= 7458;		// ????
-const uint32	CAPU::BASE_FREQ_NTSC		= 1789773; // 772.7272...
-const uint32	CAPU::BASE_FREQ_PAL			= 1662607;
-const uint8		CAPU::FRAME_RATE_NTSC		= 60;
-const uint8		CAPU::FRAME_RATE_PAL		= 50;
+const int	 CAPU::SEQUENCER_PERIOD		= 7458;
+//const int	 CAPU::SEQUENCER_PERIOD_PAL	= 7458;		// ????
+const uint32 CAPU::BASE_FREQ_NTSC		= 1789773; // 772.7272...
+const uint32 CAPU::BASE_FREQ_PAL	 	= 1662607;
+const uint8	 CAPU::FRAME_RATE_NTSC		= 60;
+const uint8	 CAPU::FRAME_RATE_PAL		= 50;
 
-const uint8		CAPU::LENGTH_TABLE[]		= {0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06,
-											   0xA0, 0x08, 0x3C, 0x0A, 0x0E, 0x0C, 0x1A, 0x0E,
-											   0x0C, 0x10, 0x18, 0x12, 0x30, 0x14, 0x60, 0x16,
-											   0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E};
+const uint8 CAPU::LENGTH_TABLE[] = {0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06,
+								    0xA0, 0x08, 0x3C, 0x0A, 0x0E, 0x0C, 0x1A, 0x0E,
+								    0x0C, 0x10, 0x18, 0x12, 0x30, 0x14, 0x60, 0x16,
+								    0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E};
 
 CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem)
 {	
-	m_pMixer	= new CMixer();
+	m_pMixer = new CMixer();
 
 	m_pMixer->Init();
 
@@ -68,13 +68,11 @@ CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem)
 	NoiseCh		= new CNoise(m_pMixer, CHANID_NOISE);
 	DPCMCh		= new CDPCM(m_pMixer, pSampleMem, CHANID_DPCM);
 
-	VRC6.Init(m_pMixer);
-	//MMC5.Init(m_pMixer);
-	FDS.Init(m_pMixer);
-	N106.Init(m_pMixer);
-	VRC7.Init(m_pMixer);
-
-	MMC5 = new CMMC5(m_pMixer);
+	m_pMMC5 = new CMMC5(m_pMixer);
+	m_pVRC6 = new CVRC6(m_pMixer);
+	m_pVRC7 = new CVRC7(m_pMixer);
+	m_pFDS = new CFDS(m_pMixer);
+	m_pN106 = new CN106(m_pMixer);
 
 	DPCMCh->SetSpeed(SPEED_NTSC);
 
@@ -153,7 +151,7 @@ void CAPU::Shutdown()
 	// Delete allocated memory
 	//
 
-	VRC7.Shutdown();
+	m_pVRC7->Shutdown();
 
 	delete SquareCh1;
 	delete SquareCh2;
@@ -161,6 +159,12 @@ void CAPU::Shutdown()
 	delete NoiseCh;
 	delete DPCMCh;
 	
+	delete m_pMMC5;
+	delete m_pVRC6;
+	delete m_pVRC7;
+	delete m_pFDS;
+	delete m_pN106;
+
 	m_pMixer->Shutdown();
 
 	delete m_pMixer;
@@ -176,29 +180,27 @@ void CAPU::Process()
 	static uint32 Time;
 	uint32 ClockCycles;
 
-	if (m_iNextStopTime < m_iCurrentTime)
+	if (m_iNextStopTime <= m_iCurrentTime)
 		return;
 
 	ClockCycles = m_iNextStopTime - m_iCurrentTime;
 
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
-		VRC6.Process(ClockCycles);
+		m_pVRC6->Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5->Process(ClockCycles);
+		m_pMMC5->Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
-		FDS.Process(ClockCycles);
+		m_pFDS->Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_N106)
-		N106.Process(ClockCycles);
+		m_pN106->Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_VRC7)
-		VRC7.Process(ClockCycles);
+		m_pVRC7->Process(ClockCycles);
 
 	while (m_iNextStopTime > m_iCurrentTime) {
 		ClockCycles = m_iNextStopTime - m_iCurrentTime;
 
 		if (ClockCycles > FrameClock)
 			Time = FrameClock;
-//		else if (ClockCycles > 500)
-//			Time = 500;
 		else
 			Time = ClockCycles;
 
@@ -231,15 +233,15 @@ void CAPU::EndFrame()
 	DPCMCh->EndFrame();
 
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
-		VRC6.EndFrame();
+		m_pVRC6->EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5->EndFrame();
+		m_pMMC5->EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
-		FDS.EndFrame();
+		m_pFDS->EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_N106)
-		N106.EndFrame();	
+		m_pN106->EndFrame();	
 	if (m_iExternalSoundChip & SNDCHIP_VRC7)
-		VRC7.EndFrame();
+		m_pVRC7->EndFrame();
 
 //	m_pMixer->FinishBuffer(FrameCycles);
 //	m_pMixer->FlushBuffer(m_pSoundInterface, SoundBufferSamples, m_bStereoEnabled);
@@ -252,6 +254,7 @@ void CAPU::EndFrame()
 
 	FrameCycles = 0;
 	m_iCurrentTime = 0;
+	m_iNextStopTime = 0;
 }
 
 void CAPU::Reset()
@@ -275,11 +278,11 @@ void CAPU::Reset()
 	
 	m_pMixer->ClearBuffer();
 
-	VRC6.Reset();
-	MMC5->Reset();
-	FDS.Reset();
-	N106.Reset();
-	VRC7.Reset();
+	m_pVRC6->Reset();
+	m_pMMC5->Reset();
+	m_pFDS->Reset();
+	m_pN106->Reset();
+	m_pVRC7->Reset();
 }
 
 void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume) const
@@ -344,7 +347,7 @@ bool CAPU::SetupSound(int SampleRate, int NrChannels, int Machine)
 	if (SoundBuffer == NULL)
 		return false;
 	
-	VRC7.SetSampleSpeed(SampleRate, (Machine == MACHINE_NTSC ? BASE_FREQ_NTSC : BASE_FREQ_PAL));
+	m_pVRC7->SetSampleSpeed(SampleRate, (Machine == MACHINE_NTSC ? BASE_FREQ_NTSC : BASE_FREQ_PAL));
 
 	return true;
 }
@@ -444,21 +447,22 @@ uint8 CAPU::Read4015()
 
 void CAPU::ExternalWrite(uint16 Address, uint8 Value)
 {
-	// Data was written to an external sound chip (this doesn't really belong in the APU)
+	// Data was written to an external sound chip 
+	// (this doesn't really belong in the APU but are here for convenience)
 	//
 
 	Process();
 
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
-		VRC6.Write(Address, Value);
+		m_pVRC6->Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5->Write(Address, Value);
+		m_pMMC5->Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
-		FDS.Write(Address, Value);
+		m_pFDS->Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_N106)
-		N106.Write(Address, Value);
+		m_pN106->Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_VRC7)
-		VRC7.Write(Address, Value);
+		m_pVRC7->Write(Address, Value);
 }
 
 uint8 CAPU::ExternalRead(uint16 Address)
@@ -474,9 +478,9 @@ uint8 CAPU::ExternalRead(uint16 Address)
 		Value = Address >> 8;
 
 	if (m_iExternalSoundChip & SNDCHIP_N106 && !Value)
-		Value = N106.Read(Address);
+		Value = m_pN106->Read(Address);
 	if (m_iExternalSoundChip & SNDCHIP_FDS && !Value)
-		Value = FDS.Read(Address);
+		Value = m_pFDS->Read(Address);
 
 	return Value;
 }
@@ -496,4 +500,9 @@ uint8 CAPU::GetSamplePos()
 uint8 CAPU::GetDeltaCounter()
 {
 	return DPCMCh->GetDeltaCounter();
+}
+
+bool CAPU::DPCMPlaying()
+{
+	return DPCMCh->IsPlaying();
 }

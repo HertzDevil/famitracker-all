@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "ConfigSound.h"
 #include "SoundGen.h"
-#include "..\include\configsound.h"
-
+#include "Settings.h"
 
 // CConfigSound dialog
 
@@ -50,6 +50,7 @@ BEGIN_MESSAGE_MAP(CConfigSound, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_DEVICES, OnCbnSelchangeDevices)
 END_MESSAGE_MAP()
 
+int iDeviceIndex;
 
 // CConfigSound message handlers
 
@@ -62,10 +63,10 @@ BOOL CConfigSound::OnInitDialog()
 	CComboBox	*SampleRate, *SampleSize, *Devices;
 	CSliderCtrl	*Slider, *BassSlider, *TrebleSliderFreq, *TrebleSliderDamping, *VolumeSlider;
 
-	SampleRate	= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLE_RATE));
-	SampleSize	= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLE_SIZE));
-	Devices		= static_cast<CComboBox*>(GetDlgItem(IDC_DEVICES));
-	Slider		= static_cast<CSliderCtrl*>(GetDlgItem(IDC_BUF_LENGTH));
+	SampleRate	= (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
+	SampleSize	= (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
+	Devices		= (CComboBox*)GetDlgItem(IDC_DEVICES);
+	Slider		= (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
 
 	BassSlider			= (CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ);
 	TrebleSliderFreq	= (CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ);
@@ -90,8 +91,8 @@ BOOL CConfigSound::OnInitDialog()
 	}
 
 	switch (theApp.m_pSettings->Sound.iSampleSize) {
-		case 16:	SampleSize->SelectString(0, "16 bit"); break;
-		case 8:		SampleSize->SelectString(0, "8 bit"); break;
+		case 16: SampleSize->SelectString(0, "16 bit"); break;
+		case 8:	 SampleSize->SelectString(0, "8 bit"); break;
 	}
 
 	Slider->SetPos(theApp.m_pSettings->Sound.iBufferLength);
@@ -121,13 +122,14 @@ BOOL CConfigSound::OnInitDialog()
 	Text.Format("%i %%", ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos());
 	SetDlgItemText(IDC_VOLUME_T, Text);
 
-	CDSound *pDSound = reinterpret_cast<CSoundGen*>(theApp.GetSoundGenerator())->GetSoundInterface();
-	unsigned int iCount = pDSound->GetDeviceCount();
+	CDSound *pDSound = theApp.GetSoundGenerator()->GetSoundInterface();
+	int iCount = pDSound->GetDeviceCount();
 
-	for (unsigned int i = 0; i < iCount; i++)
+	for (int i = 0; i < iCount; i++)
 		Devices->AddString(pDSound->GetDeviceName(i));
 
-	Devices->SetCurSel(pDSound->MatchDeviceID(theApp.m_pSettings->strDevice.GetBuffer()));
+//	Devices->SetCurSel(pDSound->MatchDeviceID(theApp.m_pSettings->strDevice.GetBuffer()));
+	Devices->SetCurSel(theApp.m_pSettings->Sound.iDevice);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -159,9 +161,10 @@ void CConfigSound::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 BOOL CConfigSound::OnApply()
 {
-	CComboBox	*SampleRate, *SampleSize;
+	CComboBox	*SampleRate, *SampleSize, *Devices;
 	CSliderCtrl	*Slider;
 
+	Devices = (CComboBox*)GetDlgItem(IDC_DEVICES);
 	SampleRate = (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
 	SampleSize = (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
 	Slider = (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
@@ -185,7 +188,9 @@ BOOL CConfigSound::OnApply()
 	theApp.m_pSettings->Sound.iTrebleDamping	= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos();
 	theApp.m_pSettings->Sound.iMixVolume		= ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos();
 
-	GetDlgItemText(IDC_DEVICES, theApp.m_pSettings->strDevice);
+	theApp.m_pSettings->Sound.iDevice			= Devices->GetCurSel();
+
+//	GetDlgItemText(IDC_DEVICES, theApp.m_pSettings->strDevice);
 
 	theApp.LoadSoundConfig();
 

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,27 +18,28 @@
 ** must bear this legend.
 */
 
-#include "stdafx.h"
-#include "FamiTracker.h"
+#include "../stdafx.h"
 #include <memory>
-#include "common.h"
-#include "apu/apu.h"
+#include "../FamiTracker.h"
+#include "../common.h"
+#include "apu.h"
 
-const int32 AMPLIFY = 2;
+const double AMPLIFY = 1.1;
 const uint32 OPL_CLOCK = 3579545;
 
-void CVRC7::Init(CMixer *pMixer)
+CVRC7::CVRC7(CMixer *pMixer) : m_pBuffer(NULL)
 {
 	m_pMixer = pMixer;
-	m_pBuffer = NULL;
-
 	OPLL_init(OPL_CLOCK, 44100);
-
 	OPLLInt = OPLL_new();
-
 	OPLL_reset(OPLLInt);
 	OPLL_reset_patch(OPLLInt, 1);
 	OPLLInt->masterVolume = 70;
+}
+
+CVRC7::~CVRC7()
+{
+	OPLL_delete(OPLLInt);
 }
 
 void CVRC7::Shutdown()
@@ -73,7 +74,6 @@ void CVRC7::Write(uint16 Address, uint8 Value)
 			break;
 		case 0x9030:
 			OPLL_writeReg(OPLLInt, m_iSoundReg, Value);
-			TRACE("VRC7: %02X: %02X\n", m_iSoundReg, Value);
 			break;
 	}
 }
@@ -83,7 +83,7 @@ void CVRC7::EndFrame()
 	uint32 WantSamples = m_pMixer->GetMixSampleCount(m_iFrameCycles);
 
 	while (m_iBufferPtr < WantSamples)
-		m_pBuffer[m_iBufferPtr++] = OPLL_calc(OPLLInt) * AMPLIFY;
+		m_pBuffer[m_iBufferPtr++] = (int)((double)OPLL_calc(OPLLInt) * AMPLIFY);
 
 	m_pMixer->MixSamples((blip_sample_t*)m_pBuffer, WantSamples);
 

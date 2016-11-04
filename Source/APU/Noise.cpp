@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,11 +18,12 @@
 ** must bear this legend.
 */
 
-#include "APU/apu.h"
-#include "APU/noise.h"
+#include "apu.h"
+#include "noise.h"
 
-const uint16 CNoise::NOISE_FREQ[] = {0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 
-								     0xCA, 0xFE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4};
+const uint16 CNoise::NOISE_FREQ[] = 
+	{0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 
+	 0xCA, 0xFE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4};
 
 CNoise::CNoise(CMixer *pMixer, int ID)
 {

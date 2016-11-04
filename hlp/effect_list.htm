@@ -2,167 +2,179 @@
 	<HEAD>
 		<TITLE></TITLE>
 		<META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
+        <link href="style.css" rel="stylesheet" type="text/css" />
+	    <style type="text/css">
+            .style1
+            {
+                width: 50px;
+            }
+        </style>
 	</HEAD>
-	<BODY style="FONT-WEIGHT: normal; FONT-SIZE: 9pt; FONT-FAMILY: Arial;">
-        <span style="font-size: 16pt; color: gray; font-family: Verdana"><strong>
-
-            Effect list</strong></span>
-        <br />
-            
-            <hr />
-        <br />
-
-			<table style="FONT-SIZE: 9pt; table-layout: fixed; width: 100%; font-family: Arial; border-collapse: collapse; background-color: ghostwhite;" cellpadding="2" cellspacing="2" id="TABLE1" border="1">
-                <tr>
-                    <td style="width: 100px; height: 20px">
-                        <strong>Effect number</strong></td>
-                    <td>
-                        <strong>Description</strong></td>
-                </tr>
-				<tr>
-					<td style="width: 100px; height: 20px">
-						<strong>0xy</strong></td>
-					<td>
-						Arpeggio, <strong>x</strong> = second note, <strong>y</strong>
-                        = third note
-					</td>
-				</tr>
-				<tr>
-					<td style="width: 100px; height: 20px">
-						<strong>1xx</strong></td>
-					<td>
-						Pitch slide up, <strong>xx</strong> = speed (<strong>00</strong> to disable)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>2xx</strong></td>
-					<td>
-						Pitch slide down, <strong>xx</strong> = speed (<strong>00</strong> to disable)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>3xx</strong></td>
-					<td>
-						Automatic portamento, slides to new notes <strong>xx</strong> = speed
-                        (<strong>00</strong> to 
-						disable)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px; height: 20px;">
-						<strong>4xy</strong></td>
-					<td style="height: 20px">
-                        Vibrato effect, <strong>x</strong> = speed (<strong>0</strong>
-                        to disable), <strong>y</strong> = depth</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>7xy</strong></td>
-					<td>
-                        Tremolo effect, <strong>x</strong> = speed (<strong>0</strong>
-                        to disable), <strong>y</strong> = depth</td>
-				</tr>
-				<tr>
-					<td style="font-weight: 700; width: 100px;">
-						Axy</td>
-					<td>
-						Volume slide, <strong>A0x</strong> = slide down, <strong>Ax0</strong> = slide up</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Bxx</strong></td>
-					<td>
-                        Jump to frame <strong>xx</strong></td>
-				</tr>
-				<tr>
-					<td height="18" style="width: 100px">
-						<strong>Cxx</strong></td>
-					<td>
-						Halt, stopping the song (<strong>xx</strong> doesn't do anything)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Dxx</strong></td>
-					<td>
-                        Skip to next frame and start at row <strong>xx</strong></td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Exx</strong></td>
-					<td>
-						Volume setting. <em>Obsolete, use the volume colum instead.</em></td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Fxx</strong></td>
-					<td>
-						Speed/tempo, sets the speed when <strong>xx </strong>is between <strong>00</strong>
-                        - <strong>19,</strong> and tempo when <strong>xx</strong> is between <strong>20</strong>
-                        - <strong>FF</strong></td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Gxx</strong></td>
-					<td>
-						Note delay, delay before the current row is triggered, <strong>xx</strong> = frames to wait</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Hxy</strong></td>
-					<td>
-						Hardware sweep up, triggers a hardware sweep up (only available for square) <strong>
-                            x</strong> = period (<strong>0</strong> - <strong>7</strong>), <strong>y</strong>
-                        = shift (<strong>1</strong> - <strong>7</strong>)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px; height: 20px;">
-						<strong>Ixy</strong></td>
-					<td style="height: 20px">
-						Hardware sweep down, triggers a hardware sweep down (only avaliable for 
-						square), 
-                        <strong>x</strong> = period (<strong>0</strong> - <strong>7</strong>), y = shift
-                        (<strong>1</strong> - <strong>7</strong>)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Pxx</strong></td>
-					<td style="height: 20px">
-						Fine pitch, fine pitch offset setting, <strong>xx</strong> = offset (<strong>80</strong>
-                        is default)</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<b>Qxy</b></td>
-					<td style="height: 20px">
-						Note slide up, <strong>x</strong> = speed, <strong>y</strong> = number of notes</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<b>Rxy</b></td>
-					<td>
-						Note slide down, <strong>x</strong> = speed, <strong>y</strong> = number of notes</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Vxx</strong></td>
-					<td>
-						Square duty / noise mode, sets the square duty and noise mode setting, <strong>xx</strong>
-                        = <strong>00</strong> - <strong>03</strong> for square and <strong>00</strong> -
-                        <strong>01</strong> for noise</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Yxx</strong></td>
-					<td>
-						DPCM sample offset, each step adds 64 bytes</td>
-				</tr>
-				<tr>
-					<td style="width: 100px">
-						<strong>Zxx</strong></td>
-					<td>
-						DPCM delta counter, changes the delta counter directly (through a write to $4011), 
-						affects volume of noise and triangle.&nbsp; <strong>xx</strong> is between <strong>00</strong> - <strong>80</strong></td>
-				</tr>
-			</table>
-		
+	<BODY bgcolor="#ffffff">
+        <span class="topic">Effect list</span><hr /><br />
+		<table cellpadding="3" cellspacing="0" border="1" bgcolor="#FCFCFC" 
+            class="table">
+            <tr>
+                <td class="style1">
+                    <strong class="bold">Effect</strong></td>
+                <td>
+                    <strong class="bold">Description</strong></td>
+            </tr>
+			<tr>
+				<td class="style1">
+					<strong>0xy</strong></td>
+				<td>
+					Arpeggio, <strong>x</strong> = second note, <strong>y</strong>
+                    = third note
+				</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>1xx</strong></td>
+				<td>
+					Pitch slide up, <strong>xx</strong> = speed (<strong>00</strong> to disable)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>2xx</strong></td>
+				<td>
+					Pitch slide down, <strong>xx</strong> = speed (<strong>00</strong> to disable)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>3xx</strong></td>
+				<td>
+					Automatic portamento, slides to new notes <strong>xx</strong> = speed
+                    (<strong>00</strong> to 
+					disable)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>4xy</strong></td>
+				<td>
+                    Vibrato effect, <strong>x</strong> = speed (<strong>0</strong>
+                    to disable), <strong>y</strong> = depth</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>7xy</strong></td>
+				<td>
+                    Tremolo effect, <strong>x</strong> = speed (<strong>0</strong>
+                    to disable), <strong>y</strong> = depth</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Axy</strong></td>
+				<td>
+					Volume slide, <strong>A0x</strong> = slide down, <strong>Ax0</strong> = slide up</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Bxx</strong></td>
+				<td>
+                    Jump to frame <strong>xx</strong></td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Cxx</strong></td>
+				<td>
+					Halt, stopping the song (<strong>xx</strong> doesn't do anything)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Dxx</strong></td>
+				<td>
+                    Skip to next frame and start at row <strong>xx</strong></td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Exx</strong></td>
+				<td>
+					Volume setting. <em>Obsolete, <span lang="sv">please </span>use the volume colum instead.</em></td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Fxx</strong></td>
+				<td>
+					Speed/tempo, sets the speed when <strong>xx </strong>is between <strong>00</strong>
+                    - <strong>19,</strong> and tempo when <strong>xx</strong> is between <strong>20</strong>
+                    - <strong>FF</strong></td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Gxx</strong></td>
+				<td>
+					Note delay, delay before the current row is triggered, <strong>xx</strong> = frames to wait</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Hxy</strong></td>
+				<td>
+					Hardware sweep up, triggers a hardware sweep up (only available for square) <strong>
+                        x</strong> = period (<strong>0</strong> - <strong>7</strong>), <strong>y</strong>
+                    = shift (<strong>1</strong> - <strong>7</strong>)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Ixy</strong></td>
+				<td>
+					Hardware sweep down, triggers a hardware sweep down (only avaliable for 
+					square), 
+                    <strong>x</strong> = period (<strong>0</strong> - <strong>7</strong>), y = shift
+                    (<strong>1</strong> - <strong>7</strong>)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Pxx</strong></td>
+				<td>
+					Fine pitch, fine pitch offset setting, <strong>xx</strong> = offset (<strong>80</strong>
+                    is default)</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<b>Qxy</b></td>
+				<td>
+					Note slide up, <strong>x</strong> = speed, <strong>y</strong> = number of notes</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<b>Rxy</b></td>
+				<td>
+					Note slide down, <strong>x</strong> = speed, <strong>y</strong> = number of notes</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<b>Sxx</b></td>
+				<td>
+					<span lang="sv">Delayed n</span>ote cut. Cuts note after xx number of frames.</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Vxx</strong></td>
+				<td>
+					Square duty / noise mode, sets the square duty and noise mode setting, <strong>xx</strong>
+                    = <strong>00</strong> - <strong>03</strong> for square and <strong>00</strong> -
+                    <strong>01</strong> for noise</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<b>Xxx</b></td>
+				<td>
+					DPCM retrigger, xx = length in frames between retrigger.</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Yxx</strong></td>
+				<td>
+					DPCM sample offset, each step adds 64 bytes</td>
+			</tr>
+			<tr>
+				<td class="style1">
+					<strong>Zxx</strong></td>
+				<td>
+					DPCM delta counter, changes the delta counter directly (through a write to $4011), 
+					affects volume of noise and triangle.&nbsp; <strong>xx</strong> is between <strong>00</strong> - <strong>80</strong></td>
+			</tr>
+		</table>		
 	</BODY>
 </HTML>

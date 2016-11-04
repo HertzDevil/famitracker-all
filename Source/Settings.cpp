@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,13 +19,12 @@
 */
 
 /*
-
-	When new settings are added, don't forget to update load, store and default setting routines
-
-*/
+ *	When new settings are added, don't forget to update load, store and default settings routines
+ */
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "Settings.h"
 
@@ -87,7 +86,8 @@ void CSettings::LoadSettings()
 	Keys.iKeyRepeat						= GetAppProfileInt("Keys", "Repeat", 0x00);
 
 	// Sound
-	strDevice							= GetAppProfileString("Sound", "Device", "");
+//	strDevice							= GetAppProfileString("Sound", "Device", "");
+	Sound.iDevice						= GetAppProfileInt("Sound", "Audio Device", 0);
 	Sound.iSampleRate					= GetAppProfileInt("Sound", "Sample rate", 44100);
 	Sound.iSampleSize					= GetAppProfileInt("Sound", "Sample size", 16);
 	Sound.iBufferLength					= GetAppProfileInt("Sound", "Buffer length", 40);
@@ -134,6 +134,7 @@ void CSettings::LoadSettings()
 	Paths[PATH_NSF]						= GetAppProfileString("Paths", "NSF path", "");
 	Paths[PATH_DMC]						= GetAppProfileString("Paths", "DMC path", "");
 	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");
+	Paths[PATH_PLUGIN]                  = GetAppProfileString("Paths", "PLUGIN path", ".\\plugins");
 }
 
 void CSettings::SaveSettings()
@@ -169,7 +170,8 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("Sound", "Treble filter freq",	 Sound.iTrebleFilter);
 	WriteAppProfileInt("Sound", "Treble filter damping", Sound.iTrebleDamping);
 	WriteAppProfileInt("Sound", "Volume",				 Sound.iMixVolume);
-	WriteAppProfileString("Sound", "Device",			 strDevice);
+	WriteAppProfileInt("Sound", "Audio Device",			 Sound.iDevice);
+	//WriteAppProfileString("Sound", "Device",			 strDevice);
 
 	// Midi
 	WriteAppProfileInt("MIDI", "Device",		   Midi.iMidiDevice);
@@ -209,6 +211,7 @@ void CSettings::SaveSettings()
 	WriteAppProfileString("Paths", "NSF path", Paths[PATH_NSF]);
 	WriteAppProfileString("Paths", "DMC path", Paths[PATH_DMC]);
 	WriteAppProfileString("Paths", "WAV path", Paths[PATH_WAV]);
+	WriteAppProfileString("Paths", "PLUGIN path", Paths[PATH_PLUGIN]);
 }
 
 void CSettings::DefaultSettings()
@@ -237,7 +240,8 @@ void CSettings::DefaultSettings()
 	Keys.iKeyRepeat			= 0x00;	// ?
 
 	// Sound
-	strDevice				= "";
+//	strDevice				= "";
+	Sound.iDevice			= 0;
 	Sound.iSampleRate		= 44100;
 	Sound.iSampleSize		= 16;
 	Sound.iBufferLength		= 50;

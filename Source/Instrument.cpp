@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,26 +21,17 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "Instrument.h"
 
 /*
- * class CInstrument
+ * class CInstrument, base class for instruments
  *
  */
 
-CInstrument::CInstrument()
+CInstrument::CInstrument() : m_iType(0)
 {
-	m_bFree = true;
-}
-
-bool CInstrument::IsFree()
-{
-	return m_bFree;
-}
-
-void CInstrument::SetFree(bool Free)
-{
-	m_bFree = Free;
+	memset(m_cName, 0, 128);
 }
 
 void CInstrument::SetName(char *Name)
@@ -53,105 +44,7 @@ void CInstrument::GetName(char *Name) const
 	strcpy(Name, m_cName);
 }
 
-/*
- * class CInstrument2A03
- *
- */
-
-CInstrument2A03::CInstrument2A03()
+char *CInstrument::GetName()
 {
-	for (int i = 0; i < OCTAVE_RANGE; i++) {
-		for (int j = 0; j < 12; j++) {
-			m_cSamples[i][j] = 0;
-			m_cSamplePitch[i][j] = 0;
-		}
-	}
-}
-
-int	CInstrument2A03::GetModEnable(int Index)
-{
-	return m_iModEnable[Index];
-}
-
-int	CInstrument2A03::GetModIndex(int Index)
-{
-	return m_iModIndex[Index];
-}
-
-void CInstrument2A03::SetModEnable(int Index, int Value)
-{
-	m_iModEnable[Index] = Value;
-}
-
-void CInstrument2A03::SetModIndex(int Index, int Value)
-{
-	m_iModIndex[Index] = Value;
-}
-
-char CInstrument2A03::GetSample(int Octave, int Note)
-{
-	return m_cSamples[Octave][Note];
-}
-
-char CInstrument2A03::GetSamplePitch(int Octave, int Note)
-{
-	return m_cSamplePitch[Octave][Note];
-}
-
-void CInstrument2A03::SetSample(int Octave, int Note, char Sample)
-{
-	m_cSamples[Octave][Note] = Sample;
-}
-
-void CInstrument2A03::SetSamplePitch(int Octave, int Note, char Pitch)
-{
-	m_cSamplePitch[Octave][Note] = Pitch;
-}
-
-/*
- * class CInstrumentVRC6
- *
- */
-
-CInstrumentVRC6::CInstrumentVRC6()
-{
-	for (int i = 0; i < MOD_COUNT; i++) {
-		m_iModEnable[i] = 0;
-		m_iModIndex[i] = 0;
-	}	
-}
-
-int	CInstrumentVRC6::GetModEnable(int Index)
-{
-	return m_iModEnable[Index];
-}
-
-int	CInstrumentVRC6::GetModIndex(int Index)
-{
-	return m_iModIndex[Index];
-}
-
-void CInstrumentVRC6::SetModEnable(int Index, int Value)
-{
-	m_iModEnable[Index] = Value;
-}
-
-void CInstrumentVRC6::SetModIndex(int Index, int Value)
-{
-	m_iModIndex[Index] = Value;
-}
-
-/*
- * class CInstrumentVRC7
- *
- */
-
-CInstrumentVRC7::CInstrumentVRC7()
-{
-	m_iPatch = 0;
-}
-
-void CInstrumentVRC7::SetPatch(int Patch)
-{
-	m_iPatch = Patch;
+	return m_cName;
 }

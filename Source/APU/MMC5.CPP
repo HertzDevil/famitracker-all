@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,9 +18,8 @@
 ** must bear this legend.
 */
 
-//#include "main.h"
-#include "APU/apu.h"
-#include "apu/square.h"
+#include "apu.h"
+#include "square.h"
 
 static const uint8 /*CSquare::*/DUTY_TABLE[4][16] = {{0, 1, 1, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
 									 {0, 1, 1, 1,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
@@ -30,10 +29,10 @@ static const uint8 /*CSquare::*/DUTY_TABLE[4][16] = {{0, 1, 1, 0,  0, 0, 0, 0,  
 // MMC5 external sound
 
 CMMC5::CMMC5(CMixer *pMixer):
-	m_pEXRAM(new uint8[0x400])
+	m_pEXRAM(new uint8[0x400]),
+	m_pSquare1(new CMMCSquare(pMixer, CHANID_MMC5_SQUARE1)),
+	m_pSquare2(new CMMCSquare(pMixer, CHANID_MMC5_SQUARE2))
 {
-	m_pSquare1 = new CMMCSquare(pMixer, CHANID_MMC5_SQUARE1);
-	m_pSquare2 = new CMMCSquare(pMixer, CHANID_MMC5_SQUARE2);
 }
 
 CMMC5::~CMMC5()

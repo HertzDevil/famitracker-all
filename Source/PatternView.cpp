@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,9 +22,13 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "PatternView.h"
 #include "FontDrawer.h"
+#include "TrackerChannel.h"
+#include "Settings.h"
+#include "MainFrm.h"
 
 const int SELECT_THRESHOLD = 5;
 
@@ -73,13 +77,15 @@ int m_iRedraws = 0, m_iFastRedraws = 0, m_iErases = 0, m_iBuffers = 0, m_iCharsD
 CDC *m_pBackDC = NULL;
 CBitmap *m_pBackBmp = NULL;
 
+// Todo: move these to the class definition
+
 bool m_bSelectionInvalid;
 bool m_bFullRowSelect;
 bool m_bErasedBg;
 
 int m_iCurrentHScrollPos;
 
-int	m_iMouseHoverChan;
+int	m_iMouseHoverChan = -1;
 int m_iMouseHoverEffArrow;
 
 void GradientRect(CDC *pDC, int x, int y, int w, int h, unsigned int c1, unsigned int c2, unsigned int c3)
@@ -91,11 +97,11 @@ void GradientRect(CDC *pDC, int x, int y, int w, int h, unsigned int c1, unsigne
 	int start = y, middle = y + p_range, end = y + h;
 
 	for (i = start; i < middle; i++) {
-		pDC->FillSolidRect(x, i, w, 1, DIM_TO(c2, c1, (i * 100) / p_range) );
+		pDC->FillSolidRect(x, i, w, 1, DIM_TO(c2, c1, ((i - start) * 100) / p_range) );
 	}
 
 	for (i = middle; i < end; i++) {
-		pDC->FillSolidRect(x, i, w, 1/*i*/, DIM_TO(c3, c2, ((i - p_range) * 100) / (range - p_range) ));
+		pDC->FillSolidRect(x, i, w, 1, DIM_TO(c3, c2, (((i - start) - p_range) * 100) / (range - p_range) ));
 	}
 }
 
@@ -268,10 +274,12 @@ bool CPatternView::InitView(UINT ClipBoard)
 		m_pUndoStack[i] = NULL;
 	}
 
-	Invalidate();
+	Invalidate(true);
 
 	return true;
 }
+
+//extern int _dpiY;
 
 void CPatternView::CreateFonts()
 {
@@ -284,6 +292,7 @@ void CPatternView::CreateFonts()
 	memcpy(LogFont.lfFaceName, FontName, strlen(FontName));
 
 	LogFont.lfHeight = -12;
+//	LogFont.lfHeight = -MulDiv(12, _dpiY, 96);
 	LogFont.lfQuality = DRAFT_QUALITY;
 	LogFont.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
 
@@ -329,6 +338,10 @@ void CPatternView::SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView)
 	m_iUndoLevel = 0;
 	m_iRedoLevel = 0;
 
+	m_bDrawEntire = true;
+
+	m_iScrolling = 0;
+
 	for (int i = 0; i < UNDO_LEVELS; i++) {
 		if (m_pUndoStack[i]) {
 			delete m_pUndoStack[i];
@@ -336,7 +349,7 @@ void CPatternView::SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView)
 		}
 	}
 
-	Invalidate();
+	Invalidate(true);
 
 	// Quick fix
 	//m_bIgnoreFirstClick = true;
@@ -344,17 +357,18 @@ void CPatternView::SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView)
 
 void CPatternView::SetWindowSize(int width, int height)
 {
-	m_iWinWidth = width - GetSystemMetrics(SM_CXVSCROLL) - 4;
+	m_iWinWidth = width - GetSystemMetrics(SM_CXVSCROLL) - 3;
 	m_iWinHeight = height - GetSystemMetrics(SM_CXHSCROLL) - 4;
 	m_iVisibleRows = (m_iWinHeight - HEADER_HEIGHT /*- 4*/) / ROW_HEIGHT;
 }
 
 // Draw routines
 
-void CPatternView::Invalidate()
+void CPatternView::Invalidate(bool bEntire)
 {
 	// Called when the pattern editor needs to be redrawn (and not just painted on screen)
 	m_bUpdated = true;
+	m_bDrawEntire = bEntire;
 }
 
 void CPatternView::Modified()
@@ -420,21 +434,65 @@ void CPatternView::AdjustCursorChannel()
 
 	int ChannelCount = m_pDocument->GetAvailableChannels();
 	int i, Offset;
+	bool InvisibleChannels = false;
+//	bool FullErase = false;
 
 	m_iChannelsVisible = ChannelCount - m_iFirstChannel;
 	m_iVisibleWidth = 0;
 	Offset = ROW_COL_WIDTH;
+
 	for (i = m_iFirstChannel; i < ChannelCount; i++) {
 		Offset += m_iChannelWidths[i];
 		m_iVisibleWidth += m_iChannelWidths[i];
 		if (Offset >= m_iWinWidth) {
-			m_iChannelsVisible = i - m_iFirstChannel + 1;
+			int VisibleChannels = i - m_iFirstChannel/* + 1*/;
+//			if (m_iChannelsVisible != VisibleChannels)
+//				FullErase = true;
+			m_iChannelsVisible = VisibleChannels;
+			InvisibleChannels = true;
 			break;
 		}
 	}
 
-	while ((m_iCursorChannel - m_iFirstChannel) > (m_iChannelsVisible - 1))
+	while ((m_iCursorChannel - m_iFirstChannel) > (m_iChannelsVisible - 1)) {
 		m_iFirstChannel++;
+//		FullErase = true;
+	}
+
+	if (InvisibleChannels && m_iChannelsVisible < (ChannelCount - m_iFirstChannel)) {
+		m_iChannelsVisible++;
+	}
+}
+
+bool CPatternView::FullErase() const
+{
+	// This is basically a copy of AdjustCursorChannel but doens't touch any variables
+
+	if (m_iFirstChannel > m_iCursorChannel)
+		return true;
+
+	int ChannelCount = m_pDocument->GetAvailableChannels();
+	int i, Offset;
+	bool InvisibleChannels = false;
+	bool FullErase = false;
+
+	int ChannelsVisible = ChannelCount - m_iFirstChannel;
+	Offset = ROW_COL_WIDTH;
+
+	for (i = m_iFirstChannel; i < ChannelCount; i++) {
+		Offset += m_iChannelWidths[i];
+		if (Offset >= m_iWinWidth) {
+			int VisibleChannels = i - m_iFirstChannel;
+			if (ChannelsVisible != VisibleChannels)
+				return true;
+			break;
+		}
+	}
+
+	if ((m_iCursorChannel - m_iFirstChannel) > (m_iChannelsVisible - 1)) 
+		return true;
+
+	return false;
 }
 
 void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
@@ -464,6 +522,7 @@ void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
 
 	if (m_bUpdated) {
 		AdjustCursor();
+		AdjustCursorChannel();
 
 		// See if a fast redraw is possible
 		if (m_iDrawCursorRow == (m_iCursorRow - 1) && !m_bSelecting && !WasSelecting && !theApp.m_pSettings->General.bFreeCursorEdit && !m_bErasedBg) {
@@ -484,15 +543,13 @@ void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
 
 			m_pBackDC->SetWindowOrg(0, 0);
 
-//			bFast = true;
 			m_iFastRedraws++;
-			//return;
 		} 
 		else {
 			// Save these as those could change during drawing
 			m_iDrawCursorRow = m_iCursorRow;
 			m_iDrawMiddleRow = m_iMiddleRow;
-			AdjustCursorChannel();
+//			AdjustCursorChannel();
 			PaintEditor();
 			m_iRedraws++;
 		}
@@ -521,11 +578,25 @@ void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
 	if (bFast)
 		// Skip header
 		pDC->BitBlt(0, HEADER_HEIGHT, /*m_iPatternWidth*/ m_iVisibleWidth + ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, m_pBackDC, 0, HEADER_HEIGHT, SRCCOPY);
-	else
+	else {
 		// Copy the back buffer to screen
+		if (m_bDrawEntire)
+			DrawUnbufferedArea(pDC);
+		//	pDC->BitBlt(0, 0, /*m_iPatternWidth*/ m_iWinWidth /*+ ROW_COL_WIDTH*/, m_iWinHeight, m_pBackDC, 0, 0, SRCCOPY);
+		//else
+		
 		pDC->BitBlt(0, 0, /*m_iPatternWidth*/ m_iVisibleWidth + ROW_COL_WIDTH, m_iWinHeight, m_pBackDC, 0, 0, SRCCOPY);
-//		UpdateScreen(pDC);
 
+		// Auto-reset this
+		m_bDrawEntire = false;
+
+//		UpdateScreen(pDC);
+	}
+/*
+	// The rest, paint it black (do this properly!)
+	pDC->FillSolidRect(m_iVisibleWidth + ROW_COL_WIDTH, 0, m_iWinWidth - (m_iVisibleWidth + ROW_COL_WIDTH), HEADER_HEIGHT, HEA);
+	pDC->FillSolidRect(m_iVisibleWidth + ROW_COL_WIDTH, HEADER_HEIGHT, m_iWinWidth - (m_iVisibleWidth + ROW_COL_WIDTH), m_iWinHeight - HEADER_HEIGHT, theApp.m_pSettings->Appearance.iColBackground);
+*/
 //	m_TextRender.DrawTextA(pDC, 60, 60, "TEST");
 
 #ifdef _DEBUG
@@ -555,15 +626,18 @@ void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
 	Text.Format("%i (%i) end sel", m_iSelEndChannel, m_pDocument->GetAvailableChannels());
 	pDC->TextOutA(m_iWinWidth - 150, PosY, Text); PosY += 20;
 
+	Text.Format("Channels: %i, %i", m_iFirstChannel, m_iChannelsVisible);
+	pDC->TextOutA(m_iWinWidth - 150, PosY, Text); PosY += 20;
+
 #else
 
-	/*
+#ifdef WIP
 	CString Text;
 	Text.Format("BETA");
 	pDC->SetTextColor(0x00FFFF);
 	pDC->SetBkMode(TRANSPARENT);
 	pDC->TextOutA(m_iWinWidth - 50, m_iWinHeight - 30, Text);
-	*/
+#endif
 
 #endif
 
@@ -593,12 +667,13 @@ void CPatternView::CreateBackground(CDC *pDC, bool bForce)
 	static int LastPatternWidth = 0;
 
 	int ColumnCount = 0, CurrentColumn = 0;
+	int Channels = m_pDocument->GetAvailableChannels();
 
 	m_iErases++;
 	m_iPatternWidth = 0;
 
 	// Calculate channel widths
-	for (int i = 0; i < (signed)m_pDocument->GetAvailableChannels(); i++) {
+	for (int i = 0; i < Channels; i++) {
 		int Width = CHAR_WIDTH * 9 + COLUMN_SPACING * 4 + m_pDocument->GetEffColumns(i) * (3 * CHAR_WIDTH + COLUMN_SPACING);
 		m_iChannelWidths[i] = Width + 1;
 		m_iColumns[i] = 6 + m_pDocument->GetEffColumns(i) * 3;
@@ -615,6 +690,15 @@ void CPatternView::CreateBackground(CDC *pDC, bool bForce)
 	}
 
 	AdjustCursorChannel();
+
+	m_iPatternWidth = 0;
+
+	for (int i = 0; i < m_iChannelsVisible; i++) {
+		m_iPatternWidth += m_iChannelWidths[m_iFirstChannel + i];
+	}
+
+	// Todo: Fix these variables sometime
+	m_iVisibleWidth = m_iPatternWidth;
 
 	m_bErasedBg = true;
 
@@ -637,12 +721,12 @@ void CPatternView::CreateBackground(CDC *pDC, bool bForce)
 		m_pBackDC = new CDC;
 
 		// Setup dc
-		m_pBackBmp->CreateCompatibleBitmap(pDC, m_iPatternWidth + ROW_COL_WIDTH, m_iWinHeight);
+		m_pBackBmp->CreateCompatibleBitmap(pDC, m_iPatternWidth + ROW_COL_WIDTH/* m_iWinWidth*/, m_iWinHeight);
 		m_pBackDC->CreateCompatibleDC(pDC);
 		m_pBackDC->SelectObject(m_pBackBmp);
 
 		EraseBackground(m_pBackDC);
-		Invalidate();
+		Invalidate(false);
 
 		m_iBuffers++;
 
@@ -652,24 +736,33 @@ void CPatternView::CreateBackground(CDC *pDC, bool bForce)
 	}
 
 	// Draw directly on screen
-
 #if 1
-
-	// Channel header background
-	pDC->FillSolidRect(m_iVisibleWidth + ROW_COL_WIDTH, 0, m_iWinWidth - m_iVisibleWidth - ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_BG);
-//	GradientRect(pDC, m_iVisibleWidth + ROW_COL_WIDTH, 0, m_iWinWidth - m_iVisibleWidth - ROW_COL_WIDTH, HEADER_HEIGHT, 0x908080, 0xF0E0E0, 0x806060);
-
-	m_iColEmptyBg = DIM(theApp.m_pSettings->Appearance.iColBackground, 80);
-	
-	// The big empty area
-	pDC->FillSolidRect(/*m_iPatternWidth*/ m_iVisibleWidth + ROW_COL_WIDTH, HEADER_HEIGHT, m_iWinWidth - /*m_iPatternWidth*/ m_iVisibleWidth - ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, m_iColEmptyBg);
-
+	DrawUnbufferedArea(pDC);
 #else
-
 	// Gray
 	pDC->FillSolidRect(m_iPatternWidth + ROW_COL_WIDTH, 0, m_iWinWidth - m_iPatternWidth - ROW_COL_WIDTH, m_iWinHeight, COLOR_FG);
-
 #endif
+}
+
+void CPatternView::DrawUnbufferedArea(CDC *pDC)
+{
+	unsigned int iHeadCol1, iHeadCol2, iHeadCol3;
+
+	iHeadCol1 = GetSysColor(COLOR_3DFACE);
+	iHeadCol2 = GetSysColor(COLOR_BTNHIGHLIGHT);
+	iHeadCol3 = GetSysColor(COLOR_APPWORKSPACE);
+
+	if (m_pView->GetEditMode())
+		iHeadCol3 = DIM_TO(iHeadCol3, 0x0000FF, 80);
+
+	// Channel header background
+	GradientRect(pDC, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_START, m_iWinWidth - m_iVisibleWidth - ROW_COL_WIDTH, HEADER_CHAN_HEIGHT, iHeadCol1, iHeadCol2, iHeadCol3);
+	pDC->Draw3dRect(m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_START, m_iWinWidth - m_iVisibleWidth - ROW_COL_WIDTH - 1, HEADER_CHAN_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
+
+	m_iColEmptyBg = DIM(theApp.m_pSettings->Appearance.iColBackground, 80);
+
+	// The big empty area
+	pDC->FillSolidRect(m_iVisibleWidth + ROW_COL_WIDTH, HEADER_HEIGHT, m_iWinWidth - /*m_iPatternWidth*/ m_iVisibleWidth - ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, m_iColEmptyBg);
 }
 
 void CPatternView::PaintEditor()
@@ -686,30 +779,8 @@ void CPatternView::PaintEditor()
 
 void CPatternView::EraseBackground(CDC *pDC)
 {
-	unsigned int ColBackground	 = theApp.m_pSettings->Appearance.iColBackground;
-	unsigned int ColHiBackground = theApp.m_pSettings->Appearance.iColBackgroundHilite;
-	unsigned int ColText		 = theApp.m_pSettings->Appearance.iColPatternText;
-	unsigned int ColHiText		 = theApp.m_pSettings->Appearance.iColPatternTextHilite;
-
-	// Corner
-	//pDC->FillSolidRect(0, 0, ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_FG);
-
-//	GradientRect(pDC, 0, 0, ROW_COL_WIDTH, HEADER_HEIGHT, 0x908080, 0xF0E0E0, 0x806060);
-//	pDC->Draw3dRect(0, 0, ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
-
-	// Head background
-//	pDC->FillSolidRect(ROW_COL_WIDTH, 0, m_iWinWidth - ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_FOREGROUND);
-
 	// Side row display
-//	pDC->FillSolidRect(0, HEADER_HEIGHT, ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, COLOR_FG);
 	pDC->Draw3dRect(0, HEADER_HEIGHT, ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
-
-
-	// Pattern background
-//	pDC->FillSolidRect(ROW_COL_WIDTH, HEADER_HEIGHT, m_iWinWidth - ROW_COL_WIDTH, m_iWinHeight - HEADER_HEIGHT, ColBackground);
-
-//	pDC->FillSolidRect(ROW_COL_WIDTH, 0, m_iVisibleWidth, HEADER_HEIGHT, COLOR_FG);
-
 }
 
 void CPatternView::UpdateVerticalScroll()
@@ -791,6 +862,9 @@ void CPatternView::DrawRows(CDC *pDC)
 			else
 				ClearRow(pDC, i);
 		}
+		else {
+			ClearRow(pDC, i);
+		}
 		Row++;
 	}
 
@@ -818,20 +892,17 @@ void CPatternView::DrawRows(CDC *pDC)
 
 void CPatternView::ClearRow(CDC *pDC, int Line)
 {
-	int ColBg = m_iColEmptyBg;//theApp.m_pSettings->Appearance.iColBackground;
-
-	pDC->SetWindowOrg(0, -HEADER_HEIGHT);
-	//pDC->FillSolidRect(ROW_COL_WIDTH, Line * ROW_HEIGHT, m_iPatternWidth, ROW_HEIGHT, ColBg);
-	
+	int ColBg = m_iColEmptyBg;
 	int Offset = ROW_COL_WIDTH;
 
-	for (int i = m_iFirstChannel; i < m_iFirstChannel + m_iChannelsVisible /*int(m_pDocument->GetAvailableChannels())*/; i++) {
+	pDC->SetWindowOrg(0, -HEADER_HEIGHT);	
+
+	for (int i = m_iFirstChannel; i < m_iFirstChannel + m_iChannelsVisible; i++) {
 		pDC->FillSolidRect(Offset, Line * ROW_HEIGHT, m_iChannelWidths[i] - 1, ROW_HEIGHT, ColBg);
 		Offset += m_iChannelWidths[i];
 	}
 
 	// Row number
-//	pDC->FillSolidRect(2, Line * ROW_HEIGHT, ROW_COL_WIDTH - 4, ROW_HEIGHT, COLOR_FG);
 	pDC->FillSolidRect(1, Line * ROW_HEIGHT, ROW_COL_WIDTH - 2, ROW_HEIGHT, ColBg);
 }
 
@@ -858,7 +929,7 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 	int i, j;
 	int EffColumns;
 	int SelStart;
-	int Channels = /*m_pDocument->GetAvailableChannels()*/ m_iFirstChannel + m_iChannelsVisible;
+	int Channels = m_iFirstChannel + m_iChannelsVisible /*+ 1*/;
 	int Frames = m_pDocument->GetFrameCount();
 	int PosX = 0;
 	int PosY = Row * ROW_HEIGHT;
@@ -877,7 +948,6 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 	bSecondHighlight = (m_iHighlightSecond > 0) ? !(Row % m_iHighlightSecond) : false;
 
 	// Clear
-//	pDC->FillSolidRect(1, Line * ROW_HEIGHT /*+ 2*/, ROW_COL_WIDTH - 2, ROW_HEIGHT - 1, COLOR_FG);
 	pDC->FillSolidRect(1, Line * ROW_HEIGHT /*+ 2*/, ROW_COL_WIDTH - 2, ROW_HEIGHT, ColBg);
 
 	if (Frame >= Frames) {
@@ -892,7 +962,6 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 	// Draw row number
 	if (bPreview)
 		pDC->SetTextColor(DIM(theApp.m_pSettings->Appearance.iColPatternText, 70));
-//		pDC->SetTextColor(0x808080);
 	else {
 		if (bSecondHighlight)
 			pDC->SetTextColor(theApp.m_pSettings->Appearance.iColPatternTextHilite2);
@@ -901,10 +970,6 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 		else
 			pDC->SetTextColor(theApp.m_pSettings->Appearance.iColPatternText);
 	}
-//		pDC->SetTextColor(0x00);
-
-
-//	CFont *OldFont = pDC->SelectObject(&HeaderFont);
 
 	if (theApp.m_pSettings->General.bRowInHex) {
 		Text.Format(_T("%02X"), Row);
@@ -914,13 +979,6 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 		Text.Format(_T("%03i"), Row);
 		pDC->TextOut(4, Line * ROW_HEIGHT - 1, Text);
 	}
-
-//	pDC->SelectObject(OldFont);
-
-	/*
-	pDC->FillSolidRect(2, (Line ) * ROW_HEIGHT + 1, ROW_COL_WIDTH - 4, 1, 0xFFFFFF);
-	pDC->FillSolidRect(2, (Line ) * ROW_HEIGHT, ROW_COL_WIDTH - 4, 1, 0xB8B8B8);
-	*/
 
 	// Draw channels
 	for (i = m_iFirstChannel; i < Channels; i++) {
@@ -954,6 +1012,9 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 				else
 					BackColor = DIM_TO(0x800000, BackColor, 50);	// Blue
 			}
+			else if (Row == m_iDrawCursorRow && !m_bHasFocus) {
+				BackColor = DIM_TO(0x606060, BackColor, 50);		// Gray
+			}
 
 			pDC->FillSolidRect(0, 0, m_iChannelWidths[i] - 1, ROW_HEIGHT, BackColor);
 		}
@@ -981,6 +1042,7 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 		for (j = 0; j < EffColumns; j++) {
 			if (m_bSelecting && !bPreview) {
 				if (Row >= GetSelectRowStart() && Row <= GetSelectRowEnd()) {
+					// Draw selection
 					int Color = DIM_TO(ColSelect, BackColor, 80);
 					if (i == GetSelectChanStart() && i == GetSelectChanEnd()) {
 						if (j >= GetSelectColStart() && j <= GetSelectColEnd()) {
@@ -1044,6 +1106,7 @@ void CPatternView::DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview
 	}
 
 	if (m_iChannelsVisible < Channels && OffsetX < m_iWinWidth) {
+		// What is this ???
 		pDC->SetWindowOrg(-OffsetX, -HEADER_HEIGHT - (signed)Line * ROW_HEIGHT);
 		pDC->FillSolidRect(0, 0, m_iPatternWidth - OffsetX + ROW_COL_WIDTH, ROW_HEIGHT, ColBg);	// Todo: adjust channel width
 		OffsetX += m_iChannelWidths[i];
@@ -1096,12 +1159,15 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 			break;
 	}
 
-
 	if (!theApp.m_pSettings->General.bPatternColor) {
 		InstCol = VolumeCol = EffCol = NoteCol;
 	}
 
-	if (Instrument < 0x40 && !m_pDocument->IsInstrumentUsed(Instrument)) {
+//	int InstType = m_pDocument->GetInstrument(Instrument)->GetType();
+//	int ChanType = m_pDocument->GetChannelType(Channel);
+
+	// Make non-available instruments red in the pattern editor
+	if (Instrument < 0x40 && (!m_pDocument->IsInstrumentUsed(Instrument))) {
 		InstCol = 0xFF;
 	}
 
@@ -1113,15 +1179,7 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		NoteCol = theApp.m_pSettings->Appearance.iColPatternTextHilite;
 		BgCol = HiBgCol;
 	}
-/*
-	if (bInvert) {
-		NoteCol = NoteCol ^ ColCursor;
-		InstCol = InstCol ^ ColCursor;
-		VolumeCol = VolumeCol ^ ColCursor;
-		EffCol = EffCol ^ ColCursor;
-	}
-*/
-//	unsigned int ShadedCol = DIM(NoteCol, 40);
+	
 	unsigned int ShadedCol = DIM_TO(NoteCol, BackColor, 40);
 
 	if (bShaded) {
@@ -1157,9 +1215,8 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 					break;
 				case RELEASE:
 					// Note release
-					dc->FillSolidRect(PosX + 2, PosY + 6, CHAR_WIDTH - 5, 4, NoteCol);
-					dc->FillSolidRect(PosX + CHAR_WIDTH + 2, PosY + 6, CHAR_WIDTH - 5, 4, NoteCol);
-					dc->FillSolidRect(PosX + CHAR_WIDTH * 2 + 2, PosY + 6, CHAR_WIDTH - 5, 4, NoteCol);
+					dc->FillSolidRect(PosX + 4, 3, CHAR_WIDTH * 3 - 12, 2, NoteCol);
+					dc->FillSolidRect(PosX + 4, 7, CHAR_WIDTH * 3 - 12, 2, NoteCol);
 					break;
 				default:
 					if (Channel == 3) {
@@ -1178,7 +1235,6 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		case 1:
 			// Instrument x0
 			if (Instrument == MAX_INSTRUMENTS || Note == HALT)
-				//dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, HEX[Instrument >> 4], InstCol, dc);
@@ -1186,15 +1242,13 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		case 2:
 			// Instrument 0x
 			if (Instrument == MAX_INSTRUMENTS || Note == HALT)
-//				dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, HEX[Instrument & 0x0F], InstCol, dc);
 			return;
 		case 3:
 			// Volume (skip triangle)
-			if (Vol == 0x10 || Channel == 2 || Channel == 4)
-//				dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
+			if (Vol == 0x10 || /*Channel == 2 ||*/ Channel == 4)
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, HEX[Vol & 0x0F], VolumeCol, dc);
@@ -1202,7 +1256,6 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		case 4: case 7: case 10: case 13:
 			// Effect type
 			if (EffNumber == 0)
-//				dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, EFF_CHAR[EffNumber - 1], EffCol, dc);
@@ -1210,7 +1263,6 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		case 5: case 8: case 11: case 14:
 			// Effect param x
 			if (EffNumber == 0)
-//				dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, HEX[(EffParam >> 4) & 0x0F], NoteCol, dc);
@@ -1218,7 +1270,6 @@ void CPatternView::DrawCell(int PosX, int Column, int Channel, bool bHighlight, 
 		case 6: case 9: case 12: case 15:
 			// Effect param y
 			if (EffNumber == 0)
-//				dc->FillSolidRect(PosX + 2, PosY + 7, CHAR_WIDTH - 6, 1, ShadedCol);
 				BAR(PosX, PosY);
 			else
 				DrawChar(PosX, PosY, HEX[EffParam & 0x0F], NoteCol, dc);
@@ -1233,16 +1284,6 @@ void CPatternView::DrawHeader(CDC *pDC)
 
 void CPatternView::DrawChannelNames(CDC *pDC)
 {
-	const char *CHAN_NAMES[] = {"Square 1", "Square 2", "Triangle", "Noise", "DPCM",		// 2A03
-								"Square 1", "Square 2", "Sawtooth",							// VRC6
-								"Channel 1", "Channel 2", "Channel 3",						// VRC7
-								"Channel 4", "Channel 5", "Channel 6",	
-								"Square 1", "Square 2",	"(Voice)",							// MMC5
-								"Square 1", "Square 2", "Square 3",							// 5B
-								"Channel 1", "Channel 2", "Channel 3", "Channel 4",			// N106 
-								"Channel 5", "Channel 6", "Channel 7", "Channel 8",
-								"FDS"};														// FDS
-
 	const char *pChanName;
 
 	unsigned int Offset = ROW_COL_WIDTH;
@@ -1260,62 +1301,71 @@ void CPatternView::DrawChannelNames(CDC *pDC)
 
 	CObject *pOldBrush, *pOldPen;
 
-//	pOldPen = pDC->SelectObject(&Pen);
 	OldFont = pDC->SelectObject(&HeaderFont);
 	pDC->SetBkMode(TRANSPARENT);
 
-	// Head background
-//	pDC->FillSolidRect(ROW_COL_WIDTH, 0, m_iWinWidth - ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_FG);
-
-	// Restore background
-//	pDC->BitBlt(0, 0, m_iVisibleWidth, HEADER_HEIGHT, m_pBackDC, 0, 6, SRCCOPY);
-
-//	pDC->FillSolidRect(ROW_COL_WIDTH, 0, m_iVisibleWidth, HEADER_HEIGHT, COLOR_FG);
-
-//	unsigned int ChanNameBgCol = DIM_TO(0x807070, theApp.m_pSettings->Appearance.iColBackground, 75);
 	unsigned int iHeadCol1, iHeadCol2, iHeadCol3;
 
 	iHeadCol1 = GetSysColor(COLOR_3DFACE);
 	iHeadCol2 = GetSysColor(COLOR_BTNHIGHLIGHT);// 0xFFFFFF;
 	iHeadCol3 = GetSysColor(COLOR_APPWORKSPACE);
 
-	if (m_pView->GetEditMode()) {
-		//iHeadCol1 = DIM_TO(iHeadCol1, 0x0000FF, 85);
+	if (m_pView->GetEditMode())
 		iHeadCol3 = DIM_TO(iHeadCol3, 0x0000FF, 80);
-	}
 
-	GradientRect(pDC, 0, 0, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_HEIGHT, iHeadCol1, iHeadCol2, iHeadCol3);
+	// Chip header background
+	// This turned out to be not very beautiful
+	/*
+	GradientRect(pDC, ROW_COL_WIDTH, 0, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_START, iHeadCol3, iHeadCol1, iHeadCol1);
+	pDC->Draw3dRect(ROW_COL_WIDTH, 0, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_START, COLOR_FG_DARK, COLOR_FG_LIGHT);
+
+	pDC->SetTextColor(0x606060);
+	pDC->TextOut(ROW_COL_WIDTH + 10, 1, "2A03/2A07");
+
+	GradientRect(pDC, 0, 0, ROW_COL_WIDTH, HEADER_CHAN_START, iHeadCol1, iHeadCol2, iHeadCol1);
+	*/
+
+	// Channel header background
+	GradientRect(pDC, 0, HEADER_CHAN_START, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_HEIGHT, iHeadCol1, iHeadCol2, iHeadCol3);
+//	pDC->Draw3dRect(m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_START, m_iVisibleWidth + ROW_COL_WIDTH, HEADER_CHAN_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
 
 	// Corner box
-	pDC->Draw3dRect(0, 0, ROW_COL_WIDTH, HEADER_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
+	pDC->Draw3dRect(0, HEADER_CHAN_START, ROW_COL_WIDTH, HEADER_CHAN_HEIGHT, COLOR_FG_LIGHT, COLOR_FG_DARK);
 
 	for (i = m_iFirstChannel; i < AvailableChannels; i++) {
 		// Frame
-		pDC->Draw3dRect(Offset, 0, m_iChannelWidths[i], HEADER_HEIGHT, COLOR_FG_LIGHT, iHeadCol3);
+		pDC->Draw3dRect(Offset, HEADER_CHAN_START, m_iChannelWidths[i], HEADER_CHAN_HEIGHT, COLOR_FG_LIGHT, iHeadCol3);
+
 		// Text
-		pChanName = CHAN_NAMES[m_pDocument->GetChannelType(i)];
+		CTrackerChannel *pChannel = m_pDocument->GetChannel(i);
+		pChanName = pChannel->GetChannelName();
+
 		// Shadow
-		pDC->SetTextColor(0xD0D0D0);
-		pDC->TextOut(Offset + 11, 6, pChanName);
+		pDC->SetTextColor(m_pView->IsChannelMuted(i) ? 0xD0D0F0 : 0xD0D0D0);
+		pDC->TextOut(Offset + 11, HEADER_CHAN_START + 6, pChanName);
+
 		// Foreground
-		pDC->SetTextColor(m_pView->IsChannelMuted(i) ? 0x0000F0 : 0x202020);
-		pDC->TextOut(Offset + 10, 5, pChanName);
+		if (m_iMouseHoverChan == i)
+			pDC->SetTextColor(m_pView->IsChannelMuted(i) ? 0x4040F0 : 0x505050);
+		else
+			pDC->SetTextColor(m_pView->IsChannelMuted(i) ? 0x0000F0 : 0x202020);
+		pDC->TextOut(Offset + 10, HEADER_CHAN_START + 5, pChanName);
 
 		// Effect columns
 		pDC->SetTextColor(0x404040);
 		if (m_pDocument->GetEffColumns(i) > 0)
-			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING + 2, HEADER_HEIGHT - 16, "fx2");
+			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING + 2, HEADER_CHAN_START + HEADER_CHAN_HEIGHT - 16, "fx2");
 		if (m_pDocument->GetEffColumns(i) > 1)
-			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING * 2 + CHAR_WIDTH * 3 + 2, HEADER_HEIGHT - 16, "fx3");
+			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING * 2 + CHAR_WIDTH * 3 + 2, HEADER_CHAN_START + HEADER_CHAN_HEIGHT - 16, "fx3");
 		if (m_pDocument->GetEffColumns(i) > 2)
-			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING * 3 + (CHAR_WIDTH * 2) * 3 + 2, HEADER_HEIGHT - 16, "fx4");
+			pDC->TextOut(Offset + CHANNEL_WIDTH + COLUMN_SPACING * 3 + (CHAR_WIDTH * 2) * 3 + 2, HEADER_CHAN_START + HEADER_CHAN_HEIGHT - 16, "fx4");
 
 
 		// Arrows for expanding/removing fx columns
 		if (m_pDocument->GetEffColumns(i) > 0) {
-			ArrowPoints[0].SetPoint(Offset + CHANNEL_WIDTH - 17,	 6);
-			ArrowPoints[1].SetPoint(Offset + CHANNEL_WIDTH - 17,	 6 + 10);
-			ArrowPoints[2].SetPoint(Offset + CHANNEL_WIDTH - 17 - 5, 6 + 5);
+			ArrowPoints[0].SetPoint(Offset + CHANNEL_WIDTH - 17,	 HEADER_CHAN_START + 6);
+			ArrowPoints[1].SetPoint(Offset + CHANNEL_WIDTH - 17,	 HEADER_CHAN_START + 6 + 10);
+			ArrowPoints[2].SetPoint(Offset + CHANNEL_WIDTH - 17 - 5, HEADER_CHAN_START + 6 + 5);
 
 			if (m_iMouseHoverChan == i && m_iMouseHoverEffArrow == 1) {
 				pOldBrush = pDC->SelectObject(&HoverBrush);
@@ -1331,9 +1381,9 @@ void CPatternView::DrawChannelNames(CDC *pDC)
 		}
 
 		if (m_pDocument->GetEffColumns(i) < (MAX_EFFECT_COLUMNS - 1)) {
-			ArrowPoints[0].SetPoint(Offset + CHANNEL_WIDTH - 11,	 6);
-			ArrowPoints[1].SetPoint(Offset + CHANNEL_WIDTH - 11,	 6 + 10);
-			ArrowPoints[2].SetPoint(Offset + CHANNEL_WIDTH - 11 + 5, 6 + 5);
+			ArrowPoints[0].SetPoint(Offset + CHANNEL_WIDTH - 11,	 HEADER_CHAN_START + 6);
+			ArrowPoints[1].SetPoint(Offset + CHANNEL_WIDTH - 11,	 HEADER_CHAN_START + 6 + 10);
+			ArrowPoints[2].SetPoint(Offset + CHANNEL_WIDTH - 11 + 5, HEADER_CHAN_START + 6 + 5);
 
 			if (m_iMouseHoverChan == i && m_iMouseHoverEffArrow == 2) {
 				pOldBrush = pDC->SelectObject(&HoverBrush);
@@ -1363,7 +1413,7 @@ void CPatternView::DrawMeters(CDC *pDC)
 	const unsigned int COL_DARK_SHADOW = DIM(COL_DARK, 80);
 	const unsigned int COL_LIGHT_SHADOW = DIM(COL_LIGHT, 60);
 
-	const int BAR_TOP	 = 5+18;
+	const int BAR_TOP	 = 5+18 + HEADER_CHAN_START;
 	const int BAR_LEFT	 = ROW_COL_WIDTH + 7;
 	const int BAR_SIZE	 = 6;
 	const int BAR_SPACE	 = 1;
@@ -1394,8 +1444,10 @@ void CPatternView::DrawMeters(CDC *pDC)
 	}
 
 	for (c = m_iFirstChannel; c < AvailableChannels; c++) {
+		CTrackerChannel *pChannel = m_pDocument->GetChannel(c);
+
 		for (i = 0; i < 15; i++) {
-			if (i < m_iVolLevels[c]) {
+			if (i < pChannel->GetVolumeMeter()) {
 				pDC->FillSolidRect(Offset + (i * BAR_SIZE) + BAR_SIZE - 1, BAR_TOP + 1, 1, BAR_HEIGHT, colors_shadow[i]);
 				pDC->FillSolidRect(Offset + (i * BAR_SIZE) + 1, BAR_TOP + BAR_HEIGHT, BAR_SIZE - 1, 1, colors_shadow[i]);
 				pDC->FillSolidRect(CRect(Offset + (i * BAR_SIZE), BAR_TOP, Offset + (i * BAR_SIZE) + (BAR_SIZE - BAR_SPACE), BAR_TOP + BAR_HEIGHT), colors[i]);
@@ -1408,7 +1460,7 @@ void CPatternView::DrawMeters(CDC *pDC)
 			}
 		}
 
-		Offset += m_iChannelWidths[c]; //CHANNEL_WIDTH + m_pDocument->GetEffColumns(c) * (CHAR_WIDTH * 3 + COLUMN_SPACING) + CHANNEL_SPACING * 2;
+		Offset += m_iChannelWidths[c];
 	}
 
 	// DPCM
@@ -1416,14 +1468,29 @@ void CPatternView::DrawMeters(CDC *pDC)
 		if (theApp.GetMainWnd()->GetMenu()->GetMenuState(ID_TRACKER_DPCM, MF_BYCOMMAND) == MF_CHECKED) {
 			CString Text;		   
 
+			pDC->SetBkMode(TRANSPARENT);
 			pDC->SetBkColor(COLOR_BG);
-			pDC->SetTextColor(COLOR_FG);
+			pDC->SetTextColor(COLOR_BG);
+
+			unsigned int iHeadCol1, iHeadCol2, iHeadCol3;
+
+			iHeadCol1 = GetSysColor(COLOR_3DFACE);
+			iHeadCol2 = GetSysColor(COLOR_BTNHIGHLIGHT);// 0xFFFFFF;
+			iHeadCol3 = GetSysColor(COLOR_APPWORKSPACE);
+
+			if (m_pView->GetEditMode())
+				iHeadCol3 = DIM_TO(iHeadCol3, 0x0000FF, 80);
+
+			GradientRect(pDC, Offset + 10, 0, 150, HEADER_CHAN_HEIGHT, iHeadCol1, iHeadCol2, iHeadCol3);
+
+			pDC->FillSolidRect(Offset + 10, 0, 150, 1, COLOR_FG_LIGHT);
+			pDC->FillSolidRect(Offset + 10, HEADER_CHAN_HEIGHT - 1, 150, 1, COLOR_FG_DARK);
 
 			Text.Format("Sample position: %02X", m_DPCMState.SamplePos);
-			pDC->TextOut(Offset + 20, 5, Text);
+			pDC->TextOut(Offset + 20, 3, Text);
 
 			Text.Format("Delta counter: %02X", m_DPCMState.DeltaCntr);
-			pDC->TextOut(Offset + 20, 19, Text);
+			pDC->TextOut(Offset + 20, 17, Text);
 
 			LastSamplePos = m_DPCMState.SamplePos;
 			LastDeltaPos = m_DPCMState.DeltaCntr;
@@ -1431,11 +1498,6 @@ void CPatternView::DrawMeters(CDC *pDC)
 	}
 
 	pDC->SelectObject(pOldFont);
-}
-
-void CPatternView::SetMeterValue(int Channel, int Value)
-{
-	m_iVolLevels[Channel] = Value;
 }
 
 void CPatternView::SetDPCMState(stDPCMState State)
@@ -1451,7 +1513,6 @@ void CPatternView::DrawChar(int x, int y, char c, int Color, CDC *pDC)
 	pDC->SetTextColor(Color);
 	pDC->TextOut(x, y, Text);
 	m_iCharsDrawn++;
-//	m_TextRender.DrawChar(pDC, x, y, c);
 }
 
 // Private //////////////////
@@ -1522,14 +1583,14 @@ void CPatternView::UpdateSelection()
 
 void CPatternView::MoveDown(int Step)
 {
-	Step = Step == 0 ? 1 : Step;
+	Step = (Step == 0) ? 1 : Step;
 	MoveToRow(m_iCursorRow + Step);
 	UpdateSelection();
 }
 
 void CPatternView::MoveUp(int Step)
 {
-	Step = Step == 0 ? 1 : Step;
+	Step = (Step == 0) ? 1 : Step;
 	MoveToRow(m_iCursorRow - Step);
 	UpdateSelection();
 }
@@ -1896,6 +1957,8 @@ void CPatternView::OnMouseDown(CPoint point)
 
 void CPatternView::OnMouseUp(CPoint point)
 {
+	m_iScrolling = 0;
+
 	if (point.y < HEADER_HEIGHT) {
 		// Channel headers
 		if (m_bDragging) {
@@ -1944,7 +2007,7 @@ void CPatternView::OnMouseUp(CPoint point)
 					m_iDragColEnd = 15;
 
 				// Move or copy selected pattern data
-				stClipData2 ClipData;
+				stClipData ClipData;
 				AddUndo();
 				Copy(&ClipData);
 				if (!m_bControlPressed && !m_bShiftPressed)
@@ -2010,6 +2073,7 @@ bool CPatternView::OnMouseHover(UINT nFlags, CPoint point)
 			return bRedraw;
 		}
 
+		bRedraw = m_iMouseHoverChan != Channel;
 		m_iMouseHoverChan = Channel;
 
 		if (Column == 5) {
@@ -2025,12 +2089,13 @@ bool CPatternView::OnMouseHover(UINT nFlags, CPoint point)
 			}
 		}
 		else {
-			bRedraw = m_iMouseHoverEffArrow != 0;
+			bRedraw = m_iMouseHoverEffArrow != 0 || bRedraw;
 			m_iMouseHoverEffArrow = 0;
 		}
 	}
 	else {
-		bRedraw = m_iMouseHoverEffArrow != 0;
+		bRedraw = (m_iMouseHoverEffArrow != 0) || (m_iMouseHoverChan != -1);
+		m_iMouseHoverChan = -1;
 		m_iMouseHoverEffArrow = 0;
 	}
 
@@ -2039,8 +2104,9 @@ bool CPatternView::OnMouseHover(UINT nFlags, CPoint point)
 
 bool CPatternView::OnMouseNcMove()
 {
-	bool bRedraw = m_iMouseHoverEffArrow != 0;
+	bool bRedraw = (m_iMouseHoverEffArrow != 0) || (m_iMouseHoverChan != -1);
 	m_iMouseHoverEffArrow = 0;
+	m_iMouseHoverChan = -1;
 	return bRedraw;	
 }
 
@@ -2115,19 +2181,26 @@ void CPatternView::OnMouseMove(UINT nFlags, CPoint point)
 				}
 			}
 
+			m_ScrollMousePos = point;
+			m_nScrollFlags = nFlags;
+
 			// Scroll
-			if ((Row - m_iMiddleRow) == (m_iVisibleRows / 2) - 1) {
+			if ((Row - m_iMiddleRow) == (m_iVisibleRows / 2) /*- 1*/) {
 				if (m_iCursorRow < m_iPatternLength && m_iMiddleRow < (m_iPatternLength - (m_iVisibleRows / 2))) {
-					m_iCursorRow++;
-					m_iMiddleRow++;
+					m_iScrolling = 2;
 				}
+				else
+					m_iScrolling = 0;
 			}
 			else if ((Row - m_iMiddleRow) == -(m_iVisibleRows / 2)) {
 				if (m_iCursorRow > 0 && m_iMiddleRow > (m_iVisibleRows / 2)) {
-					m_iCursorRow--;
-					m_iMiddleRow--;
+					m_iScrolling = 1;
 				}
+				else
+					m_iScrolling = 0;
 			}
+			else
+				m_iScrolling = 0;
 		}
 	}
 }
@@ -2305,6 +2378,7 @@ int CPatternView::GetSelectRowEnd() const
 int CPatternView::GetSelectColStart() const 
 {
 	int Col;
+
 	if (m_iSelStartChannel == m_iSelEndChannel)
 		Col = (m_iSelEndColumn > m_iSelStartColumn ? m_iSelStartColumn : m_iSelEndColumn); 
 	else if (m_iSelEndChannel > m_iSelStartChannel)
@@ -2355,7 +2429,7 @@ int CPatternView::GetSelectChanEnd() const
 
 // Copy and paste ///////////////////////////////////////////////////////////////////////////////////////////
 
-void CPatternView::Copy(stClipData2 *pClipData)
+void CPatternView::Copy(stClipData *pClipData)
 {
 	// Copy selection
 
@@ -2418,7 +2492,7 @@ void CPatternView::Cut()
 	// Cut selection
 }
 
-void CPatternView::Paste(stClipData2 *pClipData)
+void CPatternView::Paste(stClipData *pClipData)
 {
 	// Paste
 
@@ -2492,7 +2566,7 @@ void CPatternView::Paste(stClipData2 *pClipData)
 	}
 }
 
-void CPatternView::PasteMix(stClipData2 *pClipData)
+void CPatternView::PasteMix(stClipData *pClipData)
 {
 	// Paste and mix
 
@@ -2831,13 +2905,13 @@ stUndoBlock *CPatternView::SaveUndoState()
 
 	pUndoBlock = new stUndoBlock;
 
-	// Save cursor
+	// Save current state
 	pUndoBlock->Channel	= m_iCursorChannel;
 	pUndoBlock->Row		= m_iCursorRow;
 	pUndoBlock->Column	= m_iCursorColumn;
 	pUndoBlock->Frame	= m_iCurrentFrame;
 	pUndoBlock->PatternLen = m_iPatternLength;
-	pUndoBlock->Track = m_pDocument->GetSelectedTrack();
+	pUndoBlock->Track	= m_pDocument->GetSelectedTrack();
 
 	for (i = 0; i < (signed)m_pDocument->GetAvailableChannels(); i++) {
 		for (j = 0; j < m_iPatternLength; j++) {
@@ -2847,6 +2921,30 @@ stUndoBlock *CPatternView::SaveUndoState()
 	}
 
 	return pUndoBlock;
+}
+
+void CPatternView::RestoreState(stUndoBlock *pUndoBlock)
+{
+	int i, j;
+
+	// Restore saved state
+	if (m_pDocument->GetSelectedTrack() != pUndoBlock->Track)
+		m_pDocument->SelectTrack(pUndoBlock->Track);
+
+	m_iCursorChannel	= pUndoBlock->Channel;
+	m_iCursorRow		= pUndoBlock->Row;
+	m_iCursorColumn		= pUndoBlock->Column;
+	m_iCurrentFrame		= pUndoBlock->Frame;
+	m_iPatternLength	= pUndoBlock->PatternLen;
+
+	m_pDocument->SetPatternLength(m_iPatternLength);
+
+	for (i = 0; i < (signed)m_pDocument->GetAvailableChannels(); i++) {
+		m_pDocument->SetPatternAtFrame(m_iCurrentFrame, i, pUndoBlock->Patterns[i]);
+		for (j = 0; j < m_iPatternLength; j++) {
+			m_pDocument->SetNoteData(m_iCurrentFrame, i, j, &pUndoBlock->ChannelData[i][j]);
+		}
+	}
 }
 
 void CPatternView::AddUndo()
@@ -2876,8 +2974,6 @@ void CPatternView::AddUndo()
 
 void CPatternView::Undo()
 {
-	int i, j;
-
 	if (!m_iUndoLevel)
 		return;
 
@@ -2891,20 +2987,7 @@ void CPatternView::Undo()
 	m_iRedoLevel++;
 	m_iUndoLevel--;
 
-	if (m_pDocument->GetSelectedTrack() != m_pUndoStack[m_iUndoLevel]->Track)
-		m_pDocument->SelectTrack(m_pUndoStack[m_iUndoLevel]->Track);
-
-	m_iCursorChannel	= m_pUndoStack[m_iUndoLevel]->Channel;
-	m_iCursorRow		= m_pUndoStack[m_iUndoLevel]->Row;
-	m_iCursorColumn		= m_pUndoStack[m_iUndoLevel]->Column;
-	m_iCurrentFrame		= m_pUndoStack[m_iUndoLevel]->Frame;
-
-	for (i = 0; i < (signed)m_pDocument->GetAvailableChannels(); i++) {
-		m_pDocument->SetPatternAtFrame(m_iCurrentFrame, i, m_pUndoStack[m_iUndoLevel]->Patterns[i]);
-		for (j = 0; j < m_iPatternLength; j++) {
-			m_pDocument->SetNoteData(m_iCurrentFrame, i, j, &m_pUndoStack[m_iUndoLevel]->ChannelData[i][j]);
-		}
-	}
+	RestoreState(m_pUndoStack[m_iUndoLevel]);
 
 	CString Text;
 	Text.Format(_T("Undo (%i / %i)"), m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
@@ -2913,30 +2996,13 @@ void CPatternView::Undo()
 
 void CPatternView::Redo()
 {
-	int Track = m_pDocument->GetSelectedTrack();
-
 	if (!m_iRedoLevel)
 		return;
 
 	m_iUndoLevel++;
 	m_iRedoLevel--;
 
-	int i, j;
-
-	if (m_pDocument->GetSelectedTrack() != m_pUndoStack[m_iUndoLevel]->Track)
-		m_pDocument->SelectTrack(m_pUndoStack[m_iUndoLevel]->Track);
-
-	m_iCursorChannel	= m_pUndoStack[m_iUndoLevel]->Channel;
-	m_iCursorRow		= m_pUndoStack[m_iUndoLevel]->Row;
-	m_iCursorColumn		= m_pUndoStack[m_iUndoLevel]->Column;
-	m_iCurrentFrame		= m_pUndoStack[m_iUndoLevel]->Frame;
-
-	for (i = 0; i < (signed)m_pDocument->GetAvailableChannels(); i++) {
-		m_pDocument->SetPatternAtFrame(m_iCurrentFrame, i, m_pUndoStack[m_iUndoLevel]->Patterns[i]);
-		for (j = 0; j < m_iPatternLength; j++) {
-			m_pDocument->SetNoteData(m_iCurrentFrame, i, j, &m_pUndoStack[m_iUndoLevel]->ChannelData[i][j]);
-		}
-	}
+	RestoreState(m_pUndoStack[m_iUndoLevel]);
 
 	CString Text;
 	Text.Format(_T("Redo (%i / %i)"), m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
@@ -3076,7 +3142,6 @@ void CPatternView::Interpolate()
 	}
 }
 
-
 void CPatternView::Reverse()
 {
 	stChanNote ReverseBuffer[MAX_PATTERN_LENGTH];
@@ -3115,4 +3180,173 @@ void CPatternView::Reverse()
 			m_pDocument->SetNoteData(m_iCurrentFrame, i, j, &NoteData);
 		}
 	}
+}
+
+void CPatternView::ReplaceInstrument(int Instrument)
+{
+	stChanNote Note;
+	int i, j;
+
+	if (!m_bSelecting)
+		return;
+
+	AddUndo();
+
+	for (i = GetSelectChanStart(); i <= GetSelectChanEnd(); i++) {
+		for (j = GetSelectRowStart(); j <= GetSelectRowEnd(); j++) {
+			m_pDocument->GetNoteData(m_iCurrentFrame, i, j, &Note);
+			if (Note.Instrument != MAX_INSTRUMENTS) {
+				Note.Instrument = Instrument;
+			}
+			m_pDocument->SetNoteData(m_iCurrentFrame, i, j, &Note);
+		}
+	}
+}
+
+bool CPatternView::IsPlayCursorVisible()
+{
+	if (m_iPlayFrame > (m_iCurrentFrame + 1))
+		return false;
+
+	if (m_iPlayFrame < (m_iCurrentFrame - 1))
+		return false;
+
+	if (m_iPlayFrame != (m_iCurrentFrame + 1) && m_iPlayFrame != (m_iCurrentFrame - 1)) {
+		
+		if (m_iPlayRow > (m_iMiddleRow + (m_iVisibleRows / 2) + 1))
+			return false;
+
+		if (m_iPlayRow < (m_iMiddleRow - (m_iVisibleRows / 2) - 1))
+			return false;
+	}
+
+	return true;
+}
+
+CString CPatternView::GetMMLString()
+{
+	// Returns a MML translation of copied pattern
+
+	int i, j;
+	stChanNote NoteData;
+
+	CString MML;
+
+	int Octave, Note, Duration;
+
+	for (i = GetSelectChanStart(); i <= GetSelectChanEnd(); i++) {
+		if (i < 0 || i > (signed)m_pDocument->GetAvailableChannels())
+			continue;
+
+		switch (i) {
+			case 0: MML.Append("A "); break;
+			case 1: MML.Append("B "); break;
+			case 2: MML.Append("C "); break;
+			case 3: MML.Append("D "); break;
+			case 4: MML.Append("E "); break;
+		}
+
+		Octave = -1;
+		Note = -1;
+
+		for (j = GetSelectRowStart(); j <= (GetSelectRowEnd() + 1); j++) {
+			if (j < 0 || j > m_iPatternLength)
+				continue;
+
+			m_pDocument->GetNoteData(m_iCurrentFrame, i, j, &NoteData);
+			if (IsColumnSelected(COLUMN_NOTE, i)) {
+				int n = NoteData.Note;
+				int o = NoteData.Octave;
+
+				bool DumpNote = false;
+
+				// First note
+				/*
+				if (Note == -1) {
+					Note = n;
+					Octave = o;
+					Duration = 0;
+				}
+*/
+				if (j == GetSelectRowEnd())
+					DumpNote = true;
+
+				//if (n > 0 && n != Note) {
+				if (n > 0 || Note == -1) {
+					if (Note == -1) {
+						Note = n;
+						Octave = o;
+						Duration = 0;
+					}
+					else
+						DumpNote = true;
+				}
+				else {
+					Duration++;
+				}
+
+				if (DumpNote) {
+/*
+					if (o != Octave && n > 0) {
+						MML.AppendFormat("o%i", Octave);
+						Octave = o;
+					}
+*/
+					switch (Note) {
+						case 0: MML.Append("r"); break;
+						case 1: MML.Append("c"); break;
+						case 2: MML.Append("c#"); break;
+						case 3: MML.Append("d"); break;
+						case 4: MML.Append("d#"); break;
+						case 5: MML.Append("e"); break;
+						case 6: MML.Append("f"); break;
+						case 7: MML.Append("f#"); break;
+						case 8: MML.Append("g"); break;
+						case 9: MML.Append("g#"); break;
+						case 10: MML.Append("a"); break;
+						case 11: MML.Append("a#"); break;
+						case 12: MML.Append("b"); break;
+					}
+
+					switch (Duration) {
+						case 0: MML.Append("16"); break;		// 16th note
+						case 1: MML.Append("8"); break;			// 8th note
+						case 2: MML.Append("8."); break;		// 8th dotted
+						case 3: MML.Append("4"); break;			// 4th note
+						
+//						case 4: MML.Append("4"); break;			// 4th note
+//						case 5: MML.Append("4"); break;			// 4th note						
+//						case 6: MML.Append("4"); break;			// 4th note
+
+						case 7: MML.Append("2"); break;			// 2th note
+						case 15: MML.Append("1"); break;		// 1th note
+
+					}
+
+					Note = n;
+					Duration = 0;
+				}
+			}
+		}
+	}
+
+	return MML;
+}
+
+bool CPatternView::ScrollTimer()
+{
+	if (m_iScrolling == 1) {
+		m_iCursorRow--;
+		m_iMiddleRow--;
+		OnMouseMove(m_nScrollFlags, m_ScrollMousePos);
+		return true;
+	}
+	else if (m_iScrolling == 2) {
+		m_iCursorRow++;
+		m_iMiddleRow++;
+		OnMouseMove(m_nScrollFlags, m_ScrollMousePos);
+		return true;
+	}
+
+	return false;
 }

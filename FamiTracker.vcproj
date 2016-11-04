@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -131,7 +131,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="1"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -155,6 +155,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				Version=""
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
@@ -215,7 +216,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -281,6 +282,10 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\Source\AboutDlg.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\Source\Accelerator.cpp"
 				>
@@ -444,6 +449,10 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\TrackerChannel.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\Source\WaveFile.cpp"
@@ -676,34 +685,6 @@
 					Name="Instrument"
 					>
 					<File
-						RelativePath=".\Source\InstrumentDPCM.cpp"
-						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
 						RelativePath=".\Source\InstrumentEditDlg.cpp"
 						>
 						<FileConfiguration
@@ -731,45 +712,13 @@
 							/>
 						</FileConfiguration>
 					</File>
-					<File
-						RelativePath=".\Source\InstrumentSettings.cpp"
-						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath=".\Source\InstrumentSettingsVRC6.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\Source\InstrumentSettingsVRC7.cpp"
-						>
-					</File>
 					<Filter
 						Name="Related"
 						>
+						<File
+							RelativePath=".\Source\ModSequenceEditor.cpp"
+							>
+						</File>
 						<File
 							RelativePath=".\Source\PCMImport.cpp"
 							>
@@ -799,11 +748,87 @@
 							</FileConfiguration>
 						</File>
 						<File
-							RelativePath=".\Source\SequenceEditor.cpp"
+							RelativePath=".\Source\SampleEditorDlg.cpp"
 							>
 						</File>
 						<File
-							RelativePath=".\Source\SequenceEditorVRC6.cpp"
+							RelativePath=".\Source\WaveEditor.cpp"
+							>
+						</File>
+						<Filter
+							Name="Sequence editor"
+							>
+							<File
+								RelativePath=".\Source\GraphEditor.cpp"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\SequenceEditor.cpp"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\SizeEditor.cpp"
+								>
+							</File>
+						</Filter>
+					</Filter>
+					<Filter
+						Name="Instrument panels"
+						>
+						<File
+							RelativePath=".\Source\InstrumentEditor2A03.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorDPCM.cpp"
+							>
+							<FileConfiguration
+								Name="Debug|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+							<FileConfiguration
+								Name="Release_upx|Win32"
+								>
+								<Tool
+									Name="VCCLCompilerTool"
+									ObjectFile="$(IntDir)/$(InputName)1.obj"
+								/>
+							</FileConfiguration>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorFDS.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorFDSEnvelope.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorN106.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorVRC6.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorVRC7.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditPanel.cpp"
 							>
 						</File>
 					</Filter>
@@ -822,10 +847,18 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="Export"
+				Name="Exporter"
 				>
 				<File
 					RelativePath=".\Source\Compiler.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomExporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomExporters.cpp"
 					>
 				</File>
 				<File
@@ -837,17 +870,45 @@
 				Name="Document Data Types"
 				>
 				<File
-					RelativePath=".\Source\Instrument.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\Source\PatternData.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\Source\SampleBank.cpp"
+					RelativePath=".\Source\Sequence.cpp"
 					>
 				</File>
+				<Filter
+					Name="Instruments"
+					>
+					<File
+						RelativePath=".\Source\Instrument.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\Instrument2A03.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\Instrument5B.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentFDS.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentN106.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentVRC6.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentVRC7.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Windows"
@@ -908,7 +969,7 @@
 					Name="APU"
 					>
 					<File
-						RelativePath=".\Source\Apu\Apu.cpp"
+						RelativePath=".\Source\Apu\APU.cpp"
 						>
 					</File>
 					<File
@@ -939,11 +1000,7 @@
 						Name="External"
 						>
 						<File
-							RelativePath=".\Source\APU\emu2413.c"
-							>
-						</File>
-						<File
-							RelativePath=".\Source\APU\FDS.CPP"
+							RelativePath=".\Source\APU\FDS2.cpp"
 							>
 						</File>
 						<File
@@ -955,20 +1012,28 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\Apu\Vrc6.cpp"
+							RelativePath=".\Source\Apu\VRC6.cpp"
 							>
 						</File>
 						<File
 							RelativePath=".\Source\APU\VRC7.cpp"
 							>
 						</File>
+						<Filter
+							Name="OPLL"
+							>
+							<File
+								RelativePath=".\Source\APU\emu2413.c"
+								>
+							</File>
+						</Filter>
 					</Filter>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer"
 					>
 					<File
-						RelativePath=".\Source\Blip_Buffer.cpp"
+						RelativePath=".\Source\Blip_Buffer\Blip_Buffer.cpp"
 						>
 					</File>
 				</Filter>
@@ -988,7 +1053,15 @@
 						>
 					</File>
 					<File
+						RelativePath=".\Source\ChannelsFDS.cpp"
+						>
+					</File>
+					<File
 						RelativePath=".\Source\ChannelsMMC5.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsN106.cpp"
 						>
 					</File>
 					<File
@@ -1076,39 +1149,43 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Include\Accelerator.h"
+				RelativePath=".\Source\AboutDlg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\ControlPanelDlg.h"
+				RelativePath=".\Source\Accelerator.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\DocumentFile.h"
+				RelativePath=".\Source\ControlPanelDlg.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\FamiTracker.h"
+				RelativePath=".\Source\DocumentFile.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\FamiTrackerDoc.h"
+				RelativePath=".\Source\FamiTracker.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\FamiTrackerView.h"
+				RelativePath=".\Source\FamiTrackerDoc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\FontDrawer.h"
+				RelativePath=".\Source\FamiTrackerView.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\MainFrm.h"
+				RelativePath=".\Source\FontDrawer.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\PatternView.h"
+				RelativePath=".\Source\MainFrm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\PatternView.h"
 				>
 			</File>
 			<File
@@ -1116,64 +1193,68 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Include\Settings.h"
+				RelativePath=".\Source\Settings.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\stdafx.h"
+				RelativePath=".\Source\stdafx.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Include\WaveFile.h"
+				RelativePath=".\Source\TrackerChannel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\WaveFile.h"
 				>
 			</File>
 			<Filter
 				Name="Sound Driver Headers"
 				>
 				<File
-					RelativePath=".\Include\Common.h"
+					RelativePath=".\Source\Common.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\DirectSound.h"
+					RelativePath=".\Source\DirectSound.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\SoundGen.h"
+					RelativePath=".\Source\SoundGen.h"
 					>
 				</File>
 				<Filter
 					Name="APU Headers"
 					>
 					<File
-						RelativePath=".\Include\Apu\APU.h"
+						RelativePath=".\Source\Apu\APU.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\Apu\Channel.h"
+						RelativePath=".\Source\Apu\Channel.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\Apu\Mixer.h"
+						RelativePath=".\Source\Apu\Mixer.h"
 						>
 					</File>
 					<Filter
 						Name="Internal Headers"
 						>
 						<File
-							RelativePath=".\Include\Apu\DPCM.h"
+							RelativePath=".\Source\Apu\DPCM.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\Apu\Noise.h"
+							RelativePath=".\Source\Apu\Noise.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\Apu\Square.h"
+							RelativePath=".\Source\Apu\Square.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\Apu\Triangle.h"
+							RelativePath=".\Source\Apu\Triangle.h"
 							>
 						</File>
 					</Filter>
@@ -1181,44 +1262,52 @@
 						Name="External Headers"
 						>
 						<File
-							RelativePath=".\Include\APU\2413tone.h"
+							RelativePath=".\Source\Apu\External.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\Apu\External.h"
+							RelativePath=".\Source\APU\FDS.H"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\APU\FDS.H"
+							RelativePath=".\Source\APU\MMC5.H"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\APU\MMC5.H"
+							RelativePath=".\Source\APU\N106.H"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\APU\N106.H"
+							RelativePath=".\Source\Apu\Vrc6.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\Apu\Vrc6.h"
+							RelativePath=".\Source\APU\VRC7.h"
 							>
 						</File>
-						<File
-							RelativePath=".\Include\APU\VRC7.h"
+						<Filter
+							Name="OPLL"
 							>
-						</File>
-						<File
-							RelativePath=".\Include\APU\vrc7tone.h"
-							>
-						</File>
+							<File
+								RelativePath=".\Source\APU\2413tone.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\APU\emu2413.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\APU\vrc7tone.h"
+								>
+							</File>
+						</Filter>
 					</Filter>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer Headers"
 					>
 					<File
-						RelativePath=".\Include\Blip_Buffer.h"
+						RelativePath=".\Source\Blip_Buffer.h"
 						>
 					</File>
 				</Filter>
@@ -1226,23 +1315,35 @@
 					Name="Channels Headers"
 					>
 					<File
-						RelativePath=".\Include\ChannelHandler.h"
+						RelativePath=".\Source\ChannelHandler.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\Channels2A03.h"
+						RelativePath=".\Source\Channels2A03.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ChannelsMMC5.h"
+						RelativePath=".\Source\Channels5B.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ChannelsVRC6.h"
+						RelativePath=".\Source\ChannelsFDS.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ChannelsVRC7.h"
+						RelativePath=".\Source\ChannelsMMC5.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsN106.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsVRC6.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsVRC7.h"
 						>
 					</File>
 				</Filter>
@@ -1251,66 +1352,66 @@
 				Name="Dialog Boxes Headers"
 				>
 				<File
-					RelativePath=".\Include\CreateWaveDlg.h"
+					RelativePath=".\Source\CreateWaveDlg.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\DialogReBar.h"
+					RelativePath=".\Source\DialogReBar.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\ExportDialog.h"
+					RelativePath=".\Source\ExportDialog.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\MIDIImportDialog.h"
+					RelativePath=".\Source\MIDIImportDialog.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\ModulePropertiesDlg.h"
+					RelativePath=".\Source\ModulePropertiesDlg.h"
 					>
 				</File>
 				<File
-					RelativePath=".\OctaveDlgBar.h"
+					RelativePath=".\Source\OctaveDlgBar.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\PerformanceDlg.h"
+					RelativePath=".\Source\PerformanceDlg.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\SpeedDlg.h"
+					RelativePath=".\Source\SpeedDlg.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\WavProgressDlg.h"
+					RelativePath=".\Source\WavProgressDlg.h"
 					>
 				</File>
 				<Filter
 					Name="Config Headers"
 					>
 					<File
-						RelativePath=".\Include\ConfigAppearance.h"
+						RelativePath=".\Source\ConfigAppearance.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ConfigGeneral.h"
+						RelativePath=".\Source\ConfigGeneral.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ConfigMIDI.h"
+						RelativePath=".\Source\ConfigMIDI.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ConfigShortcuts.h"
+						RelativePath=".\Source\ConfigShortcuts.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ConfigSound.h"
+						RelativePath=".\Source\ConfigSound.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\ConfigWindow.h"
+						RelativePath=".\Source\ConfigWindow.h"
 						>
 					</File>
 				</Filter>
@@ -1318,38 +1419,78 @@
 					Name="Instrument Headers"
 					>
 					<File
-						RelativePath=".\Include\InstrumentDPCM.h"
-						>
-					</File>
-					<File
-						RelativePath=".\Include\InstrumentEditDlg.h"
-						>
-					</File>
-					<File
-						RelativePath=".\Include\InstrumentSettings.h"
-						>
-					</File>
-					<File
-						RelativePath=".\Include\InstrumentSettingsVRC6.h"
-						>
-					</File>
-					<File
-						RelativePath=".\Include\InstrumentSettingsVRC7.h"
+						RelativePath=".\Source\InstrumentEditDlg.h"
 						>
 					</File>
 					<Filter
 						Name="Related Headers"
 						>
 						<File
-							RelativePath=".\Include\PCMImport.h"
+							RelativePath=".\Source\ModSequenceEditor.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\SequenceEditor.h"
+							RelativePath=".\Source\PCMImport.h"
 							>
 						</File>
 						<File
-							RelativePath=".\Include\SequenceEditorVRC6.h"
+							RelativePath=".\Source\SampleEditorDlg.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\WaveEditor.h"
+							>
+						</File>
+						<Filter
+							Name="Sequence editor Headers"
+							>
+							<File
+								RelativePath=".\Source\GraphEditor.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\SequenceEditor.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\SizeEditor.h"
+								>
+							</File>
+						</Filter>
+					</Filter>
+					<Filter
+						Name="Instrument dialog"
+						>
+						<File
+							RelativePath=".\Source\InstrumentEditor2A03.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorDPCM.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorFDS.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorFDSEnvelope.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorN106.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorVRC6.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorVRC7.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditPanel.h"
 							>
 						</File>
 					</Filter>
@@ -1359,26 +1500,26 @@
 				Name="Windows Headers"
 				>
 				<File
-					RelativePath=".\Include\FrameBoxWnd.h"
+					RelativePath=".\Source\FrameBoxWnd.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\SampleWindow.h"
+					RelativePath=".\Source\SampleWindow.h"
 					>
 				</File>
 				<Filter
 					Name="Sample window state headers"
 					>
 					<File
-						RelativePath=".\Include\SWLogo.h"
+						RelativePath=".\Source\SWLogo.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\SWSampleScope.h"
+						RelativePath=".\Source\SWSampleScope.h"
 						>
 					</File>
 					<File
-						RelativePath=".\Include\SWSpectrum.h"
+						RelativePath=".\Source\SWSpectrum.h"
 						>
 					</File>
 				</Filter>
@@ -1387,15 +1528,23 @@
 				Name="Export Headers"
 				>
 				<File
-					RelativePath=".\Include\Compiler.h"
+					RelativePath=".\Source\Compiler.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\Driver.h"
+					RelativePath=".\Source\CustomExporter.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\PatternCompiler.h"
+					RelativePath=".\Source\CustomExporters.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\Driver.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\PatternCompiler.h"
 					>
 				</File>
 			</Filter>
@@ -1415,11 +1564,11 @@
 				Name="MIDI Headers"
 				>
 				<File
-					RelativePath=".\Include\MIDI.h"
+					RelativePath=".\Source\MIDI.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\MIDIImport.h"
+					RelativePath=".\Source\MIDIImport.h"
 					>
 				</File>
 			</Filter>
@@ -1427,17 +1576,25 @@
 				Name="Document Data Type Headers"
 				>
 				<File
-					RelativePath=".\Include\Instrument.h"
+					RelativePath=".\Source\PatternData.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\PatternData.h"
+					RelativePath=".\Source\SampleBank.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Include\SampleBank.h"
+					RelativePath=".\Source\Sequence.h"
 					>
 				</File>
+				<Filter
+					Name="Instrument Headers"
+					>
+					<File
+						RelativePath=".\Source\Instrument.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -1447,6 +1604,10 @@
 			>
 			<File
 				RelativePath=".\res\Application.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\bitmap1.bmp"
 				>
 			</File>
 			<File
@@ -1483,6 +1644,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\ico00005.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\icon1.ico"
 				>
 			</File>
@@ -1503,6 +1668,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\inst_toolbar.bmp"
+				>
+			</File>
+			<File
 				RelativePath=".\res\key_black_pressed.bmp"
 				>
 			</File>
@@ -1520,6 +1689,14 @@
 			</File>
 			<File
 				RelativePath=".\res\SampleBg.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\res\Toolbar-d5.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
@@ -1591,47 +1768,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\hlp\configuration.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\dpcm_import.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\effect_list.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\instruments.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
 				RelativePath=".\hlp\main_index.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\nsf_export.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\pattern_editor.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\shortcuts.htm"
-				DeploymentContent="true"
-				>
-			</File>
-			<File
-				RelativePath=".\hlp\sound.htm"
 				DeploymentContent="true"
 				>
 			</File>
@@ -1643,11 +1780,19 @@
 					>
 				</File>
 				<File
-					RelativePath=".\hlp\img\inst_edit_1.png"
+					RelativePath=".\hlp\img\inst_2a03.png"
 					>
 				</File>
 				<File
-					RelativePath=".\hlp\img\inst_edit_2.png"
+					RelativePath=".\hlp\img\inst_dpcm.PNG"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\img\inst_fds.PNG"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\img\inst_vrc7.PNG"
 					>
 				</File>
 				<File
@@ -1663,6 +1808,145 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="Chips"
+				>
+				<File
+					RelativePath=".\hlp\2a03.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\fds.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\mmc5.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\sound_overview.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\vrc6.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\vrc7.htm"
+					DeploymentContent="true"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="CSS"
+				>
+				<File
+					RelativePath=".\hlp\style.css"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Interface"
+				>
+				<File
+					RelativePath=".\hlp\configuration.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\dpcm_editor.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\dpcm_import.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\effect_list.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\menus.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\nsf_export.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\pattern_editor.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\properties.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\shortcuts.htm"
+					DeploymentContent="true"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="NSF driver"
+			>
+			<File
+				RelativePath="..\nsf driver\apu.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\driver.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\effects.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\fds.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\init.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\instrument.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\mmc5.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\n106.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\player.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\vrc6.s"
+				>
+			</File>
+			<File
+				RelativePath="..\nsf driver\vrc7.s"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\res\FamiTracker.manifest"
@@ -1698,6 +1982,10 @@
 		</File>
 		<File
 			RelativePath=".\Texts\FastTracker effects.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\FTM documentation.txt"
 			>
 		</File>
 		<File

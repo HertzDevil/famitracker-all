@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,28 +23,21 @@
 #include <cmath>
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "Channels2A03.h"
+#include "Settings.h"
 
-void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
+void CChannelHandler2A03::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 {
-	CInstrument2A03 *Inst;
+	CInstrument2A03 *Inst = NULL;
 	unsigned int Note, Octave;
 	unsigned char Sweep = 0;
 	unsigned int Instrument, Volume, LastInstrument;
 	bool Sweeping = false;
 
 	int	InitVolume = 0x0F;
-
-	if (HandleDelay(NoteData, EffColumns))
-		return;
-
-//	if (!CChannelHandler::CheckNote(NoteData, INST_2A03))
-//		return;
-
-	if (!NoteData)
-		return;
 
 	Note		= NoteData->Note;
 	Octave		= NoteData->Octave;
@@ -53,10 +46,18 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 
 	LastInstrument = m_iInstrument;
 
-	if (Note == HALT || Note == RELEASE) {
+	if (Note == HALT) {
 		Instrument	= MAX_INSTRUMENTS;
 		Volume		= 0x10;
-		Octave		= 0;
+	}
+
+	if (Note == RELEASE)
+		m_bRelease = true;
+	else if (Note != NONE)
+		m_bRelease = false;
+
+	if (Note != 0) {
+		m_iNoteCut = 0;
 	}
 
 	int PostEffect = 0, PostEffectParam = 0;
@@ -69,8 +70,10 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 		#define GET_SLIDE_SPEED(x) (((x & 0xF0) >> 3) + 1)
 
 		if (!CheckCommonEffects(EffNum, EffParam)) {
+			// Custom effects
 			switch (EffNum) {
 				case EF_VOLUME:
+					// Kill this maybe?
 					InitVolume = EffParam;
 					if (Note == 0)
 						m_iOutVol = InitVolume;
@@ -86,7 +89,7 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 					Sweeping = true;
 					break;
 				case EF_DUTY_CYCLE:
-					m_iDefaultDuty = m_cDutyCycle = EffParam;
+					m_iDefaultDuty = m_iDutyPeriod = EffParam;
 					break;
 				case EF_SLIDE_UP:
 				case EF_SLIDE_DOWN:
@@ -99,7 +102,7 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 	}
 
 	// Change instrument
-	if (Instrument != LastInstrument) {
+ 	if (Instrument != LastInstrument /*|| (m_iLastInstrument == MAX_INSTRUMENTS && Instrument != MAX_INSTRUMENTS)*/) {
 		if (Instrument == MAX_INSTRUMENTS)
 			Instrument = LastInstrument;
 		else
@@ -111,12 +114,11 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 		if (Inst->GetType() != INST_2A03)
 			return;
 
-		for (int i = 0; i < MOD_COUNT; i++) {
-			if (ModIndex[i] != Inst->GetModIndex(i)) {
-				ModEnable[i]	= Inst->GetModEnable(i);
-				ModIndex[i]		= Inst->GetModIndex(i);
-				ModPointer[i]	= 0;
-				ModDelay[i]		= 1;
+		for (int i = 0; i < SEQ_COUNT; i++) {
+			if (m_iSeqIndex[i] != Inst->GetSeqIndex(i)) {
+				m_iSeqEnabled[i] = Inst->GetSeqEnable(i);
+				m_iSeqIndex[i]	 = Inst->GetSeqIndex(i);
+				m_iSeqPointer[i] = 0;
 			}
 		}
 
@@ -128,22 +130,25 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 		else
 			m_iLastInstrument = Instrument;
 
-		if ((Inst = (CInstrument2A03*)m_pDocument->GetInstrument(Instrument)) == NULL)
-			return;
-		if (Inst->GetType() != INST_2A03)
-			return;
+		if (Instrument < MAX_INSTRUMENTS) {
+			if ((Inst = (CInstrument2A03*)m_pDocument->GetInstrument(Instrument)) == NULL)
+				return;
+			if (Inst->GetType() != INST_2A03)
+				return;
+		}
 	}
 
 	if (Volume < 0x10)
 		m_iVolume = Volume << VOL_SHIFT;
 
-	if (Note == 0) {
+	if (Note == NONE) {
 		if (Sweeping)
 			m_cSweep = Sweep;
+		// No note specified, stop here
 		return;
 	}
 	
-	if (Note == HALT || Note == RELEASE) {
+	if (Note == HALT) {
 		KillChannel();
 		return;
 	}
@@ -158,20 +163,36 @@ void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 		m_iLastFrequency = 0xFFFF;
 	}
 
-	// Trigger instrument
-	for (int i = 0; i < MOD_COUNT; i++) {
-		ModEnable[i]	= Inst->GetModEnable(i);
-		ModIndex[i]		= Inst->GetModIndex(i);
-		ModPointer[i]	= 0;
-		ModDelay[i]		= 1;
+	if (!m_bRelease) {
+
+		if (Inst == NULL)
+			return;
+
+		// Trigger instrument
+		for (int i = 0; i < SEQ_COUNT; i++) {
+			m_iSeqEnabled[i] = Inst->GetSeqEnable(i);
+			m_iSeqIndex[i]	 = Inst->GetSeqIndex(i);
+			m_iSeqPointer[i] = 0;
+		}
+
+		m_iNote			= RunNote(Octave, Note);
+		m_iDutyPeriod	= m_iDefaultDuty;
+		m_iOutVol		= InitVolume;
+		m_bEnabled		= true;
 	}
+	else {
+		ReleaseNote();
 
-	RunNote(Octave, Note);
-
-	m_cDutyCycle	= m_iDefaultDuty;
-	m_iNote			= MIDI_NOTE(Octave, Note);
-	m_iOutVol		= InitVolume;
-	m_bEnabled		= true;
+		for (int i = 0; i < SEQ_COUNT; ++i) {
+			if (m_iSeqEnabled[i] == 1) {
+				CSequence *pSeq = m_pDocument->GetSequence(m_iSeqIndex[i], i);
+				int ReleasePoint = pSeq->GetReleasePoint();
+				if (ReleasePoint != -1) {
+					m_iSeqPointer[i] = ReleasePoint;
+				}
+			}
+		}
+	}
 
 	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
 		m_iEffect = EF_NONE;
@@ -193,55 +214,24 @@ void CChannelHandler2A03::ProcessChannel()
 		return;
 
 	// Sequences
-	for (int i = 0; i < MOD_COUNT; i++)
-		RunSequence(i, m_pDocument->GetSequence(ModIndex[i], i));
+	for (int i = 0; i < SEQ_COUNT; i++)
+		CChannelHandler::RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], i));
 }
 
-void CChannelHandler2A03::RunSequence(int Index, CSequence *pSequence)
+void CChannelHandler2A03::ResetChannel()
 {
-	int Value;
-
-	if (ModEnable[Index]) {
-
-		Value = pSequence->GetItem(ModPointer[Index]);
-
-		switch (Index) {
-			// Volume modifier
-			case MOD_VOLUME:
-				m_iOutVol = Value;
-				break;
-			// Arpeggiator
-			case MOD_ARPEGGIO:
-				m_iFrequency = TriggerNote(m_iNote + Value);
-				break;
-			// Hi-pitch
-			case MOD_HIPITCH:
-				m_iFrequency += Value << 4;
-				LimitFreq();
-				break;
-			// Pitch
-			case MOD_PITCH:
-				m_iFrequency += Value;
-				LimitFreq();
-				break;
-			// Duty cycling
-			case MOD_DUTYCYCLE:
-				m_cDutyCycle = Value;
-				break;
-		}
-
-		ModPointer[Index]++;
-
-		if (ModPointer[Index] == pSequence->GetItemCount()) {
-			if (pSequence->GetLoopPoint() != -1)
-				// Loop
-				ModPointer[Index] = pSequence->GetLoopPoint();
-			else
-				// End of sequence
-				ModEnable[Index] = 0;
-		}
-	}
+	CChannelHandler::ResetChannel();
 }
+
+int CChannelHandler2A03::LimitFreq(int Freq)
+{
+	if (Freq > 0x7FF)
+		Freq = 0x7FF;
+	if (Freq < 0)
+		Freq = 0;
+	return Freq;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Square 1 
@@ -250,20 +240,16 @@ void CChannelHandler2A03::RunSequence(int Index, CSequence *pSequence)
 void CSquare1Chan::RefreshChannel()
 {
 	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq/*, LastHiFreq*/;
+	unsigned char LastLoFreq;
 
 	char DutyCycle;
 	int Volume, Freq, TremVol;
-
 	int VibFreq;
-
-//	if (!m_bEnabled)
-//		return;
 
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	if (Freq > 0x7FF)
 		Freq = 0x7FF;
@@ -272,7 +258,7 @@ void CSquare1Chan::RefreshChannel()
 	LoFreq		= (Freq >> 8);
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
-	DutyCycle	= (m_cDutyCycle & 0x03);
+	DutyCycle	= (m_iDutyPeriod & 0x03);
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -336,14 +322,13 @@ void CSquare2Chan::RefreshChannel()
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
-//	LastHiFreq	= (m_iLastFrequency & 0xFF);
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
-	DutyCycle	= (m_cDutyCycle & 0x03);
+	DutyCycle	= (m_iDutyPeriod & 0x03);
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -353,7 +338,6 @@ void CSquare2Chan::RefreshChannel()
 
 	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;
-
 
 	m_iLastFrequency = Freq;
 
@@ -405,7 +389,7 @@ void CTriangleChan::RefreshChannel()
 
 	VibFreq = GetVibrato();
 
-	Freq	= m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq	= m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 	HiFreq	= (Freq & 0xFF);
 	LoFreq	= (Freq >> 8);
 	
@@ -421,7 +405,7 @@ void CTriangleChan::RefreshChannel()
 void CTriangleChan::ClearRegisters()
 {
 	m_pAPU->Write(0x4008, 0);
-//	m_pAPU->Write(0x4009, 0);		// those has to be disabled as the triangle generator is now better (more accurate)
+//	m_pAPU->Write(0x4009, 0);		// these had to be disabled as the triangle generator is now better (more accurate)
 //	m_pAPU->Write(0x400A, 0);
 //	m_pAPU->Write(0x400B, 0);
 }
@@ -432,9 +416,6 @@ void CTriangleChan::ClearRegisters()
 
 void CNoiseChan::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq, LastHiFreq;
-
 	char NoiseMode;
 	int Volume, Freq, VibFreq, TremVol;
 
@@ -444,26 +425,24 @@ void CNoiseChan::RefreshChannel()
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
-	HiFreq		= (Freq & 0xFF);
-	LoFreq		= (Freq >> 8);
-	LastHiFreq	= (m_iLastFrequency & 0xFF);
-	LastLoFreq	= (m_iLastFrequency >> 8);
-
-	NoiseMode	= (m_cDutyCycle & 0x01) << 7;
-	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
+	NoiseMode = (m_iDutyPeriod & 0x01) << 7;
+	Volume = (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
 		Volume = 0;
 	if (Volume > 15)
 		Volume = 15;
 
+	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
+		Volume = 1;
+
 	m_iLastFrequency = Freq;
 
 	m_pAPU->Write(0x400C, 0x30 | Volume);
 	m_pAPU->Write(0x400D, 0x00);
-	m_pAPU->Write(0x400E, ((HiFreq & 0x0F) ^ 0x0F) | NoiseMode);
+	m_pAPU->Write(0x400E, ((Freq & 0x0F) ^ 0x0F) | NoiseMode);
 	m_pAPU->Write(0x400F, 0x00);
 }
 
@@ -494,6 +473,14 @@ void CDPCMChan::RefreshChannel()
 		m_cDAC = 255;
 	}
 
+	if (m_iRetrigger != 0) {
+		m_iRetriggerCntr--;
+		if (m_iRetriggerCntr == 0) {
+			m_iRetriggerCntr = m_iRetrigger;
+			m_bEnabled = true;
+		}
+	}
+
 	if (!m_bEnabled)
 		return;
 
@@ -501,9 +488,15 @@ void CDPCMChan::RefreshChannel()
 
 	m_pAPU->Write(0x4010, 0x00 | (HiFreq & 0x0F) | m_iLoop);
 	m_pAPU->Write(0x4012, m_iOffset);							// load address, start at $C000
-	m_pAPU->Write(0x4013, (Length >> 4) - (m_iOffset << 2));	// length
+	m_pAPU->Write(0x4013, m_iSampleLength);						// length
 	m_pAPU->Write(0x4015, 0x0F);
 	m_pAPU->Write(0x4015, 0x1F);								// fire sample
+
+	// Loop offset
+	if (m_iLoopOffset > 0) {
+		m_pAPU->Write(0x4012, m_iLoopOffset);
+		m_pAPU->Write(0x4013, m_iLoopLength);
+	}
 
 	m_bEnabled = false;		// don't write to this channel anymore
 }
@@ -513,42 +506,58 @@ void CDPCMChan::ClearRegisters()
 	m_pAPU->Write(0x4015, 0x0F);
 	m_pAPU->Write(0x4010, 0);
 	
-	if (!m_bKeyRelease || !theApp.m_pSettings->General.bNoDPCMReset)
+	if (/*!m_bKeyRelease ||*/ !theApp.m_pSettings->General.bNoDPCMReset || theApp.IsPlaying()) {
 		m_pAPU->Write(0x4011, 0);		// regain full volume for TN
+	}
 
 	m_pAPU->Write(0x4012, 0);
 	m_pAPU->Write(0x4013, 0);
 
-	m_cDAC = 0;
 	m_iOffset = 0;
+	m_cDAC = 255;
 }
 
-void CDPCMChan::PlayNote(stChanNote *NoteData, int EffColumns)
+void CDPCMChan::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 {
 	unsigned int Note, Octave, SampleIndex, LastInstrument;
+	int EffPitch = -1;
 	CInstrument2A03 *Inst;
-
-	if (HandleDelay(NoteData, EffColumns))
-		return;
 
 	Note	= NoteData->Note;
 	Octave	= NoteData->Octave;
 
+	m_iRetrigger = 0;
+
 	for (int i = 0; i < EffColumns; i++) {
-		if (NoteData->EffNumber[i] == EF_DAC)
+		switch (NoteData->EffNumber[i]) {
+		case EF_DAC:
 			m_cDAC = NoteData->EffParam[i] & 0x7F;
-		else if (NoteData->EffNumber[i] == EF_SAMPLE_OFFSET)
+			break;
+		case EF_SAMPLE_OFFSET:
 			m_iOffset = NoteData->EffParam[i];
+			break;
+		case EF_DPCM_PITCH:
+			EffPitch = NoteData->EffParam[i];
+			break;
+		case EF_RETRIGGER:
+//			if (NoteData->EffParam[i] > 0) {
+				m_iRetrigger = NoteData->EffParam[i] + 1;
+				if (m_iRetriggerCntr == 0)
+					m_iRetriggerCntr = m_iRetrigger;
+//			}
+//			m_iEnableRetrigger = 1;
+			break;
+		}
 	}
 
 	if (Note == 0)
 		return;
-
+/*
 	if (Note == RELEASE)
 		m_bKeyRelease = true;
 	else
 		m_bKeyRelease = false;
-
+*/
 	if (Note == HALT || Note == RELEASE) {
 		KillChannel();
 		return;
@@ -590,6 +599,11 @@ void CDPCMChan::PlayNote(stChanNote *NoteData, int EffColumns)
 		else
 			m_iLoop = 0;
 
+		if (EffPitch != -1)
+			Pitch = EffPitch;
+
+		m_iLoopOffset = Inst->GetSampleLoopOffset(Octave, Note - 1);
+
 		CDSample *DSample = m_pDocument->GetDSample(SampleIndex - 1);
 
 		int SampleSize = DSample->SampleSize;
@@ -598,7 +612,11 @@ void CDPCMChan::PlayNote(stChanNote *NoteData, int EffColumns)
 			m_pSampleMem->SetMem(DSample->SampleData, SampleSize);
 			Length = SampleSize;		// this will be adjusted
 			m_iFrequency = Pitch & 0x0F;
+			m_iSampleLength = (SampleSize >> 4) - (m_iOffset << 2);
+			m_iLoopLength = SampleSize - m_iLoopOffset;
 			m_bEnabled = true;
+
+			m_iRetriggerCntr = m_iRetrigger;
 		}
 	}
 

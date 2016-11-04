@@ -19,9 +19,9 @@
 */
 
 #include <memory>
-#include "common.h"
-#include "APU/APU.h"
-#include "APU/FDS.h"
+#include "../common.h"
+#include "APU.h"
+#include "FDS.h"
 
 //
 // This was made out of Disch's FDS documentation

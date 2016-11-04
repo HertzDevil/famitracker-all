@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "MIDI.h"
+#include "Settings.h"
 
 //#define MIDI_NOTE(n, o) ((n - 1) + (o * 12))
 
@@ -41,7 +43,7 @@ CMIDI::~CMIDI()
 
 const int MAX_QUEUE = 100;
 
-char MsgTypeQueue[MAX_QUEUE], MsgChanQueue[MAX_QUEUE], NoteQueue[MAX_QUEUE], Data2Queue[MAX_QUEUE];
+char MsgTypeQueue[MAX_QUEUE], MsgChanQueue[MAX_QUEUE], Data1Queue[MAX_QUEUE], Data2Queue[MAX_QUEUE];
 
 int QueuePtr = 0;
 int QueueHead = 0, QueueTail = 0;
@@ -60,7 +62,7 @@ void Enqueue(unsigned char MsgType, unsigned char MsgChannel, unsigned char Data
 {
 	MsgTypeQueue[QueueHead] = MsgType;
 	MsgChanQueue[QueueHead] = MsgChannel;
-	NoteQueue[QueueHead]	= Data1;
+	Data1Queue[QueueHead]	= Data1;
 	Data2Queue[QueueHead]	= Data2;
 
 	QueueHead = (QueueHead + 1) % MAX_QUEUE;
@@ -228,6 +230,7 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 	switch (MsgType) {
 		case MIDI_MSG_NOTE_OFF:
 		case MIDI_MSG_NOTE_ON: 
+		case MIDI_MSG_PITCH_WHEEL:
 			Enqueue(MsgType, MsgChannel, Data1, Data2);
 			theApp.MidiEvent();
 			break;
@@ -243,24 +246,25 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 	}
 }
 
-bool CMIDI::ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Note, unsigned char & Octave, unsigned char & Velocity)
+//bool CMIDI::ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Note, unsigned char & Octave, unsigned char & Velocity)
+bool CMIDI::ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Data1, unsigned char & Data2)
 {
 	if (QueueHead == QueueTail)
 		return false;
 
 	LastMsgType = MsgTypeQueue[QueueTail];
 	LastMsgChan = MsgChanQueue[QueueTail];
-	LastNote = NoteQueue[QueueTail];
-
-	Velocity = Data2Queue[QueueTail];
+	/*LastNote*/ Data1 = Data1Queue[QueueTail];
+	/*Velocity*/ Data2 = Data2Queue[QueueTail];
 
 	QueueTail = (QueueTail + 1) % MAX_QUEUE;
 
 	Message = LastMsgType;
 	Channel = LastMsgChan;
+	/*
 	Note	= (LastNote % 12) + 1;
 	Octave	= (LastNote / 12) - 2;
-
+	*/
 	return true;
 }
 

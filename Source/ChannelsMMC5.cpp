@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,11 +23,12 @@
 #include <cmath>
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "ChannelsMMC5.h"
 
-void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
+void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 {
 	CInstrument2A03 *Inst;
 	unsigned int Note, Octave;
@@ -36,15 +37,6 @@ void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
 
 	int	InitVolume = 0x0F;
 
-	if (HandleDelay(NoteData, EffColumns))
-		return;
-
-//	if (!CChannelHandler::CheckNote(NoteData, INST_2A03))
-//		return;
-
-	if (!NoteData)
-		return;
-
 	Note		= NoteData->Note;
 	Octave		= NoteData->Octave;
 	Volume		= NoteData->Vol;
@@ -52,11 +44,15 @@ void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
 
 	LastInstrument = m_iInstrument;
 
-	if (Note == HALT || Note == RELEASE) {
+	if (Note == HALT) {
 		Instrument	= MAX_INSTRUMENTS;
 		Volume		= 0x10;
-		Octave		= 0;
 	}
+
+	if (Note == RELEASE)
+		m_bRelease = true;
+	else if (Note != NONE)
+		m_bRelease = false;
 
 	int PostEffect = 0, PostEffectParam = 0;
 
@@ -75,7 +71,7 @@ void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
 						m_iOutVol = InitVolume;
 					break;
 				case EF_DUTY_CYCLE:
-					m_iDefaultDuty = m_cDutyCycle = EffParam;
+					m_iDefaultDuty = m_iDutyPeriod = EffParam;
 					break;
 				case EF_SLIDE_UP:
 				case EF_SLIDE_DOWN:
@@ -100,12 +96,11 @@ void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
 		if (Inst->GetType() != INST_2A03)
 			return;
 
-		for (int i = 0; i < MOD_COUNT; i++) {
-			if (ModIndex[i] != Inst->GetModIndex(i)) {
-				ModEnable[i]	= Inst->GetModEnable(i);
-				ModIndex[i]		= Inst->GetModIndex(i);
-				ModPointer[i]	= 0;
-				ModDelay[i]		= 1;
+		for (int i = 0; i < SEQ_COUNT; i++) {
+			if (m_iSeqIndex[i] != Inst->GetSeqIndex(i)) {
+				m_iSeqEnabled[i] = Inst->GetSeqEnable(i);
+				m_iSeqIndex[i]	 = Inst->GetSeqIndex(i);
+				m_iSeqPointer[i] = 0;
 			}
 		}
 
@@ -127,41 +122,31 @@ void CChannelHandlerMMC5::PlayNote(stChanNote *NoteData, int EffColumns)
 		m_iVolume = Volume << VOL_SHIFT;
 
 	if (Note == 0) {
-//		if (Sweeping)
-//			m_cSweep = Sweep;
 		return;
 	}
 	
-	if (Note == HALT || Note == RELEASE) {
+	if (Note == HALT) {
 		KillChannel();
 		return;
 	}
-/*
-	if (!Sweeping && (m_cSweep != 0 || Sweep != 0)) {
-		Sweep = 0;
-		m_cSweep = 0;
-		m_iLastFrequency = 0xFFFF;
+
+	if (!m_bRelease) {
+
+		// Trigger instrument
+		for (int i = 0; i < SEQ_COUNT; i++) {
+			m_iSeqEnabled[i]	= Inst->GetSeqEnable(i);
+			m_iSeqIndex[i]		= Inst->GetSeqIndex(i);
+			m_iSeqPointer[i]	= 0;
+		}
+
+		m_iNote			= RunNote(Octave, Note);
+		m_iDutyPeriod	= m_iDefaultDuty;
+		m_iOutVol		= InitVolume;
+		m_bEnabled		= true;
 	}
-	else if (Sweeping) {
-		m_cSweep = Sweep;
-		*/
-	//	m_iLastFrequency = 0xFFFF;
-//	}
-
-	// Trigger instrument
-	for (int i = 0; i < MOD_COUNT; i++) {
-		ModEnable[i]	= Inst->GetModEnable(i);
-		ModIndex[i]		= Inst->GetModIndex(i);
-		ModPointer[i]	= 0;
-		ModDelay[i]		= 1;
+	else {
+		ReleaseNote();
 	}
-
-	RunNote(Octave, Note);
-
-	m_cDutyCycle	= m_iDefaultDuty;
-	m_iNote			= MIDI_NOTE(Octave, Note);
-	m_iOutVol		= InitVolume;
-	m_bEnabled		= true;
 
 	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
 		m_iEffect = EF_NONE;
@@ -179,56 +164,23 @@ void CChannelHandlerMMC5::ProcessChannel()
 		return;
 
 	// Sequences
-	for (int i = 0; i < MOD_COUNT; i++)
-		RunSequence(i, m_pDocument->GetSequence(ModIndex[i], i));
+	for (int i = 0; i < SEQ_COUNT; i++)
+		RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], i));
 }
 
-void CChannelHandlerMMC5::RunSequence(int Index, CSequence *pSequence)
+void CChannelHandlerMMC5::ResetChannel()
 {
-	int Value;
-
-	if (ModEnable[Index]) {
-
-		Value = pSequence->GetItem(ModPointer[Index]);
-
-		switch (Index) {
-			// Volume modifier
-			case MOD_VOLUME:
-				m_iOutVol = Value;
-				break;
-			// Arpeggiator
-			case MOD_ARPEGGIO:
-				m_iFrequency = TriggerNote(m_iNote + Value);
-				break;
-			// Hi-pitch
-			case MOD_HIPITCH:
-				m_iFrequency += Value << 4;
-				LimitFreq();
-				break;
-			// Pitch
-			case MOD_PITCH:
-				m_iFrequency += Value;
-				LimitFreq();
-				break;
-			// Duty cycling
-			case MOD_DUTYCYCLE:
-				m_cDutyCycle = Value;
-				break;
-		}
-
-		ModPointer[Index]++;
-
-		if (ModPointer[Index] == pSequence->GetItemCount()) {
-			if (pSequence->GetLoopPoint() != -1)
-				// Loop
-				ModPointer[Index] = pSequence->GetLoopPoint();
-			else
-				// End of sequence
-				ModEnable[Index] = 0;
-		}
-	}
+	CChannelHandler::ResetChannel();
 }
 
+int CChannelHandlerMMC5::LimitFreq(int Freq)
+{
+	if (Freq > 0x7FF)
+		Freq = 0x7FF;
+	if (Freq < 0)
+		Freq = 0;
+	return Freq;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Square 1 
@@ -237,42 +189,23 @@ void CChannelHandlerMMC5::RunSequence(int Index, CSequence *pSequence)
 void CMMC5Square1Chan::RefreshChannel()
 {
 	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq/*, LastHiFreq*/;
+	unsigned char LastLoFreq;
 
 	char DutyCycle;
-	unsigned int Volume, Freq, TremVol;
-
+	int Volume, Freq, TremVol;
 	int VibFreq;
 
 	VibFreq = GetVibrato();
-
-//	VibFreq	= sinf(float(m_iVibratoPhase) / 10.0f) * float(m_iVibratoDepth);
-
-//	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-	//VibFreq = sinf(m_iVibratoPhase / 2) * 10;
-
-//	if ((m_iVibratoDepth & 1) == 0)
-//		VibFreq -= (VibFreq >> 1);
-
-	/*
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
-		*/
-
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
-
-	if (Freq > 0x7FF)
-		Freq = 0x7FF;
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
+	Freq = LimitFreq(Freq);
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
-	DutyCycle	= (m_cDutyCycle & 0x03);
+	DutyCycle	= (m_iDutyPeriod & 0x03);
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -285,11 +218,11 @@ void CMMC5Square1Chan::RefreshChannel()
 
 	m_iLastFrequency = Freq;
 
-//	Volume = 15;
 	m_pAPU->ExternalWrite(0x5015, 0x03);
 
 	m_pAPU->ExternalWrite(0x5000, (DutyCycle << 6) | 0x30 | Volume);
 	m_pAPU->ExternalWrite(0x5002, HiFreq);
+
 	if (LoFreq != LastLoFreq)
 		m_pAPU->ExternalWrite(0x5003, LoFreq);
 }
@@ -311,37 +244,19 @@ void CMMC5Square2Chan::RefreshChannel()
 	unsigned char LastLoFreq;
 
 	char DutyCycle;
-	int Volume, Freq, VibFreq, TremVol;
-
-//	if (!m_bEnabled)
-//		return;
-/*
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-*/
+	int Volume, Freq, TremVol;
+	int VibFreq;
 
 	VibFreq = GetVibrato();
-
-//	VibFreq	= sinf(float(m_iVibratoPhase) / 10.0f) * float(m_iVibratoDepth);
-
-	/*
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
-*/
-
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
-	DutyCycle	= (m_cDutyCycle & 0x03);
+	DutyCycle	= (m_iDutyPeriod & 0x03);
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -354,8 +269,11 @@ void CMMC5Square2Chan::RefreshChannel()
 
 	m_iLastFrequency = Freq;
 
+	m_pAPU->ExternalWrite(0x5015, 0x03);
+
 	m_pAPU->ExternalWrite(0x5004, (DutyCycle << 6) | 0x30 | Volume);
 	m_pAPU->ExternalWrite(0x5006, HiFreq);
+
 	if (LoFreq != LastLoFreq)
 		m_pAPU->ExternalWrite(0x5007, LoFreq);
 }

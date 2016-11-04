@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,8 +21,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "accelerator.h"
-
-#define MOD_NONE 0
+#include "Settings.h"
 
 static const char *KEY_NAMES[] = {
 	"",			 "",		"",			"",			"",			"",			"",			"",			// 00-07
@@ -59,19 +58,35 @@ static const char *KEY_NAMES[] = {
 	"",			 "",		"",			"",			"",			"",			"",			""			// F8-FF
 };
 
+const char *CAccelerator::MOD_NAMES[] = {
+	"None", 
+	"Alt", 
+	"Ctrl", 
+	"Alt+Ctrl", 
+	"Shift", 
+	"Alt+Shift", 
+	"Ctrl+Shift", 
+	"Alt+Ctrl+Shift"
+};
+
 struct stAccelEntry {
 	char *name;
 	int	 mod;
 	int	 key;
 	int	 id;
+	int	 focus;
 };
 
 const stAccelEntry DEFAULT_TABLE[] = {
 	{"Increase octave",				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
 	{"Decrease octave",				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
 	{"Play / Stop",					MOD_NONE,		VK_RETURN,		ID_TRACKER_TOGGLE_PLAY},
-	{"Play Pattern",				MOD_SHIFT,		VK_RETURN,		ID_TRACKER_PLAYPATTERN},
-	{"Play Row",					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
+	{"Play",						MOD_NONE,		0,				ID_TRACKER_PLAY},
+	{"Play from start",				MOD_NONE,		VK_F5,			ID_TRACKER_PLAY_START},
+	{"Play from cursor",			MOD_NONE,		VK_F7,			ID_TRACKER_PLAY_CURSOR},
+	{"Play and loop pattern",		MOD_NONE,		VK_F6,			ID_TRACKER_PLAYPATTERN},
+	{"Play row",					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
+	{"Stop",						MOD_NONE,		VK_F8,			ID_TRACKER_STOP},
 	{"Edit enable/disable",			MOD_NONE,		VK_SPACE,		ID_TRACKER_EDIT},
 	{"Paste and overwrite",			MOD_CONTROL,	'B',			ID_CMD_PASTEOVERWRITE},
 	{"Paste and mix",				MOD_CONTROL,	'M',			ID_CMD_PASTEMIXED},
@@ -98,6 +113,11 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{"Insert frame",				MOD_NONE,		0,				ID_FRAME_INSERT},
 	{"Remove frame",				MOD_NONE,		0,				ID_FRAME_REMOVE},
 	{"Reverse",						MOD_CONTROL,	'R',			ID_EDIT_REVERSE},
+	{"Select frame editor",			MOD_NONE,		VK_F3,			ID_FOCUS_FRAME_EDITOR},
+	{"Select pattern editor",		MOD_NONE,		VK_F2,			ID_FOCUS_PATTERN_EDITOR},
+	{"Move one step up",			MOD_ALT,		VK_UP,			ID_CMD_STEP_UP},
+	{"Move one step down",			MOD_ALT,		VK_DOWN,		ID_CMD_STEP_DOWN},
+	{"Replace instrument",			MOD_ALT,		'S',			ID_EDIT_REPLACEINSTRUMENT},
 };
 
 const int ACCEL_COUNT = sizeof(DEFAULT_TABLE) / sizeof(stAccelEntry);
@@ -171,14 +191,37 @@ void CAccelerator::KeyReleased(unsigned char nChar)
 
 char *CAccelerator::GetModName(int Item)
 {
+	/*
 	if (EntriesTable[Item].mod & MOD_ALT)
 		return "Alt";
 	else if (EntriesTable[Item].mod & MOD_CONTROL)
 		return "Ctrl";
 	else if (EntriesTable[Item].mod & MOD_SHIFT)
 		return "Shift";
+	*/
+
+	return (char*)MOD_NAMES[EntriesTable[Item].mod];
+
+	/*
+	switch (EntriesTable[Item].mod) {
+		case MOD_ALT:
+			return "Alt";
+		case MOD_CONTROL:
+			return "Control";
+		case MOD_SHIFT:
+			return "Shift";
+		case MOD_ALT | MOD_CONTROL:
+			return "Alt+Control";
+		case MOD_ALT | MOD_SHIFT:
+			return "Alt+Shift";
+		case MOD_CONTROL | MOD_SHIFT:
+			return "Control+Shift";
+		case MOD_ALT | MOD_CONTROL | MOD_SHIFT:
+			return "Alt+Control+Shift";
+	}
 
 	return "None";
+	*/
 }
 
 char *CAccelerator::GetKeyName(int Item)
@@ -250,7 +293,7 @@ void CAccelerator::LoadShortcuts(CSettings *pSettings)
 			EntriesTable[i].key = Setting & 0xFF;
 			EntriesTable[i].mod = Setting >> 8;
 		}
-	}	
+	}
 }
 
 void CAccelerator::LoadDefaults()

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,17 +21,18 @@
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "PCMImport.h"
-#include ".\pcmimport.h"
+#include "Settings.h"
+#include "SoundGen.h"
 
 const int MAX_QUALITY	= 15;
 const int MIN_QUALITY	= 0;
-const int MAX_VOLUME	= 32;
+const int MAX_VOLUME	= 16;
 const int MIN_VOLUME	= 1;
 
 const int DPCM_RATES[]	= {0x01AC, 0x017C, 0x0154, 0x0140, 0x011E, 0x00FE, 0x00E2, 0x00D6, 0x00BE, 0x00A0, 0x008E, 0x0080, 0x006A, 0x0054, 0x0048, 0x0036};
 const int BASE_FREQ		= 1789773;
-const int ZERO_ADJUST	= 0x41;			// Amount of zeroes after sample (pushing delta counter back to 0)
 const int SAMPLES_MAX	= 0x0FF1;		// Max amount of 8-bit DPCM samples
 
 // Derive a new class from CFileDialog with implemented preview of audio files
@@ -91,6 +92,7 @@ BEGIN_MESSAGE_MAP(CPCMImport, CDialog)
 	ON_WM_HSCROLL()
 	ON_BN_CLICKED(IDCANCEL, OnBnClickedCancel)
 	ON_BN_CLICKED(IDOK, OnBnClickedOk)
+	ON_BN_CLICKED(IDC_PREVIEW, &CPCMImport::OnBnClickedPreview)
 END_MESSAGE_MAP()
 
 CDSample *CPCMImport::ShowDialog()
@@ -98,7 +100,6 @@ CDSample *CPCMImport::ShowDialog()
 	// Return import parameters, 0 if cancel
 
 	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||");
-
 /*
 	strcpy(pImported->Name, "");
 	Imported.SampleData = NULL;
@@ -108,18 +109,17 @@ CDSample *CPCMImport::ShowDialog()
 
 	if (OpenFileDialog.DoModal() == IDCANCEL)
 		return NULL;
-//		return &Imported;
 
 	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_WAV);
 
 	m_strPath		= OpenFileDialog.GetPathName();
 	m_strFileName	= OpenFileDialog.GetFileName();
 
-	pImported = new CDSample;
+	m_pImported = NULL;
 
 	CDialog::DoModal();
 
-	return pImported;
+	return m_pImported;
 }
 
 // CPCMImport message handlers
@@ -173,15 +173,43 @@ void CPCMImport::OnBnClickedCancel()
 {
 	m_iQuality = 0;
 	m_iVolume = 0;
+	m_pImported = NULL;
 	OnCancel();
 }
 
 void CPCMImport::OnBnClickedOk()
 {
+	CDSample *pSample = ConvertFile();
+
+	if (pSample == NULL)
+		return;
+
+	// remove .wav
+	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
+	
+	// Set the name
+	strcpy(pSample->Name, (char*)(LPCSTR)m_strFileName);
+
+	m_pImported = pSample;
+
+	OnOK();
+}
+
+void CPCMImport::OnBnClickedPreview()
+{
+	CDSample *pSample = ConvertFile();
+
+	if (!pSample)
+		return;
+
+	// Play sample
+	theApp.GetSoundGenerator()->PreviewSample(pSample, 0, m_iQuality);
+}
+
+CDSample *CPCMImport::ConvertFile()
+{
 	const int		MAXINAMP = 24;
 
-	CProgressCtrl	*ProgressCtrl = (CProgressCtrl*)GetDlgItem(IDC_IMPORT_BAR);
-	
 	PCMWAVEFORMAT	WaveFormat;
 	int				WaveSize;
 
@@ -190,7 +218,7 @@ void CPCMImport::OnBnClickedOk()
 
 	bool	Scanning = true;
 	char	Header[4];
-	int		BlockSize, Dec, i;
+	int		BlockSize, Dec;
 	int		Progress = 0;
 
 	int		dmcbits = 0, dmcshift = 8;
@@ -198,9 +226,11 @@ void CPCMImport::OnBnClickedOk()
 	int		k = 128;
 	int		dmcpos;
 
+	CDSample *pImported;
+
 	if (!m_fSampleFile.Open(m_strPath, CFile::modeRead)) {
 		MessageBox("Could not open file!");
-		return;
+		return NULL;
 	}
 
 	m_fSampleFile.Read(Header, 4);
@@ -208,7 +238,7 @@ void CPCMImport::OnBnClickedOk()
 	if (memcmp(Header, "RIFF", 4) != 0) {
 		MessageBox("File is not a valid RIFF!");
 		m_fSampleFile.Close();
-		return;
+		return NULL;
 	}
 
 	m_fSampleFile.Read(&BlockSize, 4);
@@ -234,7 +264,7 @@ void CPCMImport::OnBnClickedOk()
 				if (WaveFormat.wf.wFormatTag != WAVE_FORMAT_PCM) {
 					theApp.DisplayError(ID_INVALID_WAVEFILE);
 					m_fSampleFile.Close();
-					return;
+					return NULL;
 				}
 			}
 			else if (!memcmp(Header, "data", 4)) {
@@ -250,18 +280,14 @@ void CPCMImport::OnBnClickedOk()
 		}
 	}
 
-	int BlockAlign;
+	// Display wait cursor
+	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	BlockAlign = WaveFormat.wf.nBlockAlign;
-/*
-	if (BlockAlign > 4)
-		BlockAlign = 4;
-*/
 	m_iChannels		= WaveFormat.wf.nChannels;
-	m_iSampleSize	= BlockAlign / m_iChannels;
-	Dec				= BlockAlign;
-	SampleBuf		= new char[0x4000];
-	dmcpos			= 0;//MAXINAMP / 2; //0;//MAXINAMP;
+	m_iSampleSize	= WaveFormat.wf.nBlockAlign / m_iChannels;
+	Dec				= WaveFormat.wf.nBlockAlign;
+	SampleBuf		= new char[SAMPLES_MAX];
+	dmcpos			= 0;
 
 	oversampling = ((BASE_FREQ / DPCM_RATES[m_iQuality]) * 100) / WaveFormat.wf.nSamplesPerSec;
 
@@ -272,11 +298,8 @@ void CPCMImport::OnBnClickedOk()
 	int MaxLen = (SAMPLES_MAX * 8000) / (BASE_FREQ / DPCM_RATES[m_iQuality]);
 
 	if (Len > MaxLen) {
-		ProgressCtrl->SetRange(0, SAMPLES_MAX);
 		WaveSize = (WaveFormat.wf.nAvgBytesPerSec * MaxLen) / 1000;
 	}
-	else
-		ProgressCtrl->SetRange(0, (SAMPLES_MAX * ((Len * 100) / MaxLen)) / 100);
 
 	int Delta, AccReady, DeltaAcc, SubSample, ScaledSample, LastAcc;
 
@@ -288,11 +311,9 @@ void CPCMImport::OnBnClickedOk()
 
 	bool SampleDone = false;
 
-	int Step = 0;
-
 	int Min = -32;
 	int Max = 32;
-
+/*
 	if (IsDlgButtonChecked(IDC_CLIP)) {
 		Min = 0;
 		Max = 63;
@@ -301,7 +322,7 @@ void CPCMImport::OnBnClickedOk()
 		Min = -32;
 		Max = 32;
 	}
-
+*/
 	// Do the conversion, this is based on Damian Yerrick's program
 	do {
 		DeltaAcc >>= 1;
@@ -329,63 +350,36 @@ void CPCMImport::OnBnClickedOk()
 		
 		SubSample += 100;
 
-		while (SubSample > 0 && WaveSize > 0 && Samples < (SAMPLES_MAX - ZERO_ADJUST)) {
+		while (SubSample > 0 && WaveSize > 0 && Samples < SAMPLES_MAX) {
 			ScaledSample = (ReadSample() * m_iVolume) / 16;
 			WaveSize -= Dec;
 			Progress += Dec;
 			SubSample -= oversampling;
 		}
 
-		if (WaveSize <= 0 || Samples >= (SAMPLES_MAX - ZERO_ADJUST)) {
-			// Revert to zero
-			if (Delta > -32) {
-				Step -= (Delta / 6) - 1;
-				if (Step > 40) {
-					ScaledSample--;
-					Step = 0;
-				}
-			}
-			else {
-				SampleDone = true;
-				LastAcc = 0;
-			}
-
-			if (!IsDlgButtonChecked(IDC_RESTORE) || Min == 0)
-				SampleDone = true;
-		}
-
-		ProgressCtrl->SetPos(Samples);
+		if (WaveSize <= 0 && SubSample <= 0)
+			SampleDone = true;
 
 	} while (!SampleDone && (Samples < SAMPLES_MAX));
 	
-	/*(SAMPLES_MAX - ZERO_ADJUST)*/
 	
-	if (Min == 0) {
-		// Add zeroes to the end, adjusting the delta counter back to zero (remove clicks)
-		for (i = (ZERO_ADJUST + 50) - 1; i > 0 && Samples < SAMPLES_MAX; i--) {
-			SampleBuf[Samples++] = 0;
-		}
-		LastAcc = 0;
-	}
-
-	// Adjust to make it even to x * $10 + 1 bytes 
-	while (((Samples & 0x0F) - 1) != 0 && Samples < SAMPLES_MAX) {
-		SampleBuf[Samples++] = LastAcc /*LastAcc*/ /*0*/;
+	// Adjust to make it even to x * $10 + 1 bytes
+	while (Samples < SAMPLES_MAX && ((Samples & 0x0F) - 1) != 0) {
+		SampleBuf[Samples++] = 0;
 	}
 
 	if (Samples > SAMPLES_MAX)
 		Samples = SAMPLES_MAX;
 
-	// remove .wav
-	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
-
+	// Allocate sample object
+	pImported = new CDSample();
 	pImported->SampleData = SampleBuf;
 	pImported->SampleSize = Samples;
-	strcpy(pImported->Name, (char*)(LPCSTR)m_strFileName);
+	memset(pImported->Name, 0, 256);
 
 	m_fSampleFile.Close();
 
-	OnOK();
+	return pImported;
 }
 
 int CPCMImport::ReadSample(void)

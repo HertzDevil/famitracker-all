@@ -14,6 +14,8 @@ const int PLANE_WIDTH	= (LAST_CHAR - FIRST_CHAR) * FONT_CHAR_WIDTH;
 
 //CFont Font;
 
+// This was never used
+
 CFontDrawer::CFontDrawer()
 {
 	m_hFontDC.m_hDC = NULL;

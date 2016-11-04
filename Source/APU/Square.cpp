@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 */
 
 #include <memory>
-#include "APU/apu.h"
-#include "APU/square.h"
+#include "apu.h"
+#include "square.h"
 
 // This is also shared with MMC5
 

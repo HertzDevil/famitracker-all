@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,18 +22,21 @@
 #include "FamiTracker.h"
 #include "DocumentFile.h"
 
-static const char			*FILE_HEADER	= "FamiTracker Module";
-static const char			*FILE_ENDER		= "END";
-static const int			FILE_VER		= 0x0300;				// Current file version (3.00)
-static const int			COMPATIBLE_VER	= 0x0100;				// Compatible file version (1.0)
+// Class constants
+const unsigned int CDocumentFile::FILE_VER		 = 0x0420;				// Current file version (4.20)
+const unsigned int CDocumentFile::COMPATIBLE_VER = 0x0100;				// Compatible file version (1.0)
 
-static const unsigned int	MAX_BLOCK_SIZE	= 0x80000;				// 256 kB for now (should be enough)
+static const char *FILE_HEADER	= "FamiTracker Module";
+static const char *FILE_ENDER	= "END";
+
+static const unsigned int MAX_BLOCK_SIZE = 0x80000;				// 256 kB (should be enough for each block)
 
 // CDocumentFile
 
 CDocumentFile::CDocumentFile()
 {
 	m_pBlockData = NULL;
+	m_cBlockID = new char[16];
 }
 
 CDocumentFile::~CDocumentFile()
@@ -42,17 +45,19 @@ CDocumentFile::~CDocumentFile()
 		delete [] m_pBlockData;
 		m_pBlockData = NULL;
 	}
+
+	delete [] m_cBlockID;
 }
 
-bool CDocumentFile::Finished()
+bool CDocumentFile::Finished() const
 {
 	return m_bFileDone;
 }
 
 void CDocumentFile::BeginDocument()
 {
-	Write(FILE_HEADER,	int(strlen(FILE_HEADER)));
-	Write(&FILE_VER,	sizeof(int));
+	Write(FILE_HEADER, int(strlen(FILE_HEADER)));
+	Write(&FILE_VER, sizeof(int));
 }
 
 void CDocumentFile::EndDocument()
@@ -123,21 +128,26 @@ void CDocumentFile::FlushBlock()
 
 bool CDocumentFile::CheckValidity()
 {
+	// Checks if loaded file is valid
+
 	char Buffer[256];
 
+	// Check ident string
 	Read(Buffer, int(strlen(FILE_HEADER)));
 
 	if (memcmp(Buffer, FILE_HEADER, strlen(FILE_HEADER)) != 0)
 		return FALSE;
 
-	Read(&m_iFileVersion, sizeof(int));
+	// Read file version
+	Read(Buffer, 4);
+	m_iFileVersion = (Buffer[3] << 24) | (Buffer[2] << 16) | (Buffer[1] << 8) | Buffer[0];
 
 	m_bFileDone = false;
 
 	return true;
 }
 
-int CDocumentFile::GetFileVersion()
+int CDocumentFile::GetFileVersion() const
 {
 	return m_iFileVersion & 0xFFFF;
 }
@@ -175,28 +185,29 @@ char *CDocumentFile::GetBlockHeaderID()
 	return m_cBlockID;
 }
 
-int CDocumentFile::GetBlockVersion()
+int CDocumentFile::GetBlockVersion() const
 {
 	return m_iBlockVersion;
+}
+
+void CDocumentFile::RollbackPointer(int count)
+{
+	m_iBlockPointer -= count;
 }
 
 int CDocumentFile::GetBlockInt()
 {
 	int Value;
-
 	memcpy(&Value, m_pBlockData + m_iBlockPointer, sizeof(int));
 	m_iBlockPointer += sizeof(int);
-
 	return Value;
 }
 
 char CDocumentFile::GetBlockChar()
 {
-	int Value;
-
+	char Value;
 	memcpy(&Value, m_pBlockData + m_iBlockPointer, sizeof(char));
 	m_iBlockPointer += sizeof(char);
-
 	return Value;
 }
 
@@ -222,17 +233,17 @@ void CDocumentFile::GetBlock(void *Buffer, int Size)
 	m_iBlockPointer += Size;
 }
 
-bool CDocumentFile::BlockDone()
+bool CDocumentFile::BlockDone() const
 {
 	return (m_iBlockPointer >= m_iBlockSize);
 }
 
-int CDocumentFile::GetBlockPos()
+int CDocumentFile::GetBlockPos() const
 {
 	return m_iBlockPointer;
 }
 
-int CDocumentFile::GetBlockSize()
+int CDocumentFile::GetBlockSize() const
 {
 	return m_iBlockSize;
 }

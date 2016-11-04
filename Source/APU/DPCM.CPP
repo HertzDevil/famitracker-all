@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 ** must bear this legend.
 */
 
-#include "APU/apu.h"
-#include "APU/dpcm.h"
+#include "apu.h"
+#include "dpcm.h"
 
 const uint16 CDPCM::DMC_FREQ_NTSC[] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54};
 const uint16 CDPCM::DMC_FREQ_PAL[]	= {398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50};
@@ -147,6 +147,7 @@ void CDPCM::Process(uint32 Time)
 			if (!m_iDMA_LengthCounter) {
 				switch (m_iPlayMode) {
 					case 0x00:	// Stop
+						m_iEnabled = 0;
 						break;
 					case 0x40:	// Loop
 					case 0xC0:
@@ -154,6 +155,7 @@ void CDPCM::Process(uint32 Time)
 						break;
 					case 0x80:	// Stop and do IRQ (not when an NSF is playing)
 						m_bTriggeredIRQ = true;
+						m_iEnabled = 0;
 						break;
 				}
 			}

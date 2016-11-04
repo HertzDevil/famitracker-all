@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "SoundGen.h"
 #include "WavProgressDlg.h"
@@ -87,9 +88,9 @@ BOOL CWavProgressDlg::OnInitDialog()
 	if (m_sFile.GetLength() == 0)
 		return TRUE;
 
-	pSoundGen = (CSoundGen*)theApp.GetSoundGenerator();
+	pSoundGen = theApp.GetSoundGenerator();
 	pProgressBar = (CProgressCtrl*)GetDlgItem(IDC_PROGRESS_BAR);
-	pView = (CFamiTrackerView*)theApp.GetView();
+	pView = (CFamiTrackerView*)theApp.GetDocumentView();
 	pDoc = (CFamiTrackerDoc*)pView->GetDocument();
 
 	pView->Invalidate();

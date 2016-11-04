@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ enum {
 static const char *MESSAGE_TITLE = "DirectX Error";
 
 static const char *DX_MESSAGES[] = {
-	"Error: DirectSound initialization failed!",
+	"DirectSound initialization failed, audio is not available.\n\nThis could be caused by the selected audio device not being available or bad settings. Open configuration window and change the audio settings.",
 	"DirectSound::OpenChannel - A maximum of %i blocks is allowed!",
 	"DirectSound::OpenChannel - Sample rate above %i kHz is not supported!",
 	"DirectSound::OpenChannel - Buffer length above %i seconds is not supported!",
@@ -59,6 +59,7 @@ static const char *DX_MESSAGES[] = {
 
 const int CDSound::MAX_BLOCKS = 16;
 
+// The single CDSound object
 static CDSound *pObject;
 
 static int CalculateBufferLenght(int BufferLen, int Samplerate, int Samplesize, int Channels)
@@ -77,6 +78,15 @@ CDSound::CDSound()
 {
 	m_iDevices = 0;
 	pObject = this;
+	lpDirectSound = NULL;
+}
+
+CDSound::~CDSound()
+{
+	for (int i = 0; i < (int)m_iDevices; i++) {
+		delete [] m_pcDevice[i];
+		delete [] m_pGUIDs[i];
+	}
 }
 
 bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
@@ -85,6 +95,9 @@ bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 	
 	hNotificationHandle = hNotification;
 	hWndTarget			= hWnd;
+
+	if (Device > (int)m_iDevices)
+		Device = 0;
 
 	hRes = DirectSoundCreate((LPCGUID)m_pGUIDs[Device], &lpDirectSound, NULL);
 
@@ -105,6 +118,9 @@ bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 
 void CDSound::Close()
 {
+	if (!lpDirectSound)
+		return;
+
 	lpDirectSound->Release();
 
 	if (m_iDevices != 0)
@@ -179,6 +195,9 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	int					BlockSize;
 	
 	char				Text[256];
+
+	if (!lpDirectSound)
+		return NULL;
 
 	if (Blocks > MAX_BLOCKS) {
 		sprintf(Text, DX_MESSAGES[MSG_DX_ERROR_BLOCKS], MAX_BLOCKS);

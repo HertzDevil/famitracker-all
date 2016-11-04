@@ -2,34 +2,40 @@
 	<HEAD>
 		<TITLE></TITLE>
 		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+        <link href="style.css" rel="stylesheet" type="text/css" />		
+	    <style type="text/css">
+            .style1
+            {
+                font-family: verdana;
+                font-size: 9pt;
+            }
+        </style>
 	</HEAD>
-	<BODY style="FONT-WEIGHT: normal; FONT-SIZE: 10pt; FONT-FAMILY: Arial">
-			<span style="FONT-SIZE: 16pt; COLOR: gray; font-family: Verdana;">
-				<strong>NSF export</strong></span><span style="FONT-SIZE: 16pt; COLOR: #660099"><strong 
-            style="font-size: 9pt"><hr>
-				<br />
-				</strong>
-			</span>
-            <span style="font-size: 9pt">NSF (Nintendo Sound Format, invented by Kevin Horton) is a type of file used to represent NES music. To create NSF files, select Create NSF
+	<BODY>
+			<span class="topic">NSF export</span><hr>
+				<p>
+                    <span class="text">NSF (Nintendo Sound Format, invented by Kevin Horton) is a type of file used to represent NES music. To create NSF files, select Create NSF
                 from the File menu to open the NSF export window. The song information box allows you to set song name, author and 
 			copyright, as present in NSFs. These are also the text field that are found in 
 			the main tracker window. 
         <br />
         <br />
-                One&nbsp;optional setting is available: create PAL song. It'll set the PAL flag 
+                One&nbsp;optional setting is available: create PAL song, this will set the PAL flag 
             in the exported file.<br />
         <br />
-                Beside NSF, a few other formats are also available.</span><UL>
-			<LI><span style="font-size: 9pt"><strong>NSF - </strong> &nbsp;Creates a NSF file.<STRONG></STRONG>
-            </span>
-            <li><span style="font-size: 9pt"><strong>NES - </strong>&nbsp;Encapsulates the NSF into a
-                NES file that can be played in emulators or with the PowerPak.</span></li>
-            <LI><span style="font-size: 9pt">
-				<STRONG> BIN</STRONG> -&nbsp; Stores only the music data and DPCM samples in separate files, for use with the NSF source. </span>
-			<LI><span style="font-size: 9pt">
-				<STRONG> PRG -&nbsp; </STRONG>Creates a single 32 kB program file, ready to be used with a NROM-compatible cart for playback on NES hardware.
-            </span>
-			</LI>
+                A few other formats beside NFS are also available<span lang="sv">:</span></span></p>
+    <UL class="text">
+			<LI><span class="gray">NSF</span><strong> - </strong>Creates a NSF file.
+            <li><span class="gray">NES</span><strong> - </strong>Encapsulates the NSF into a
+                NES file that can be played in emulators or with <span lang="sv">carts like</span> PowerPak.</li>
+            <LI>
+				<span class="gray">BIN </span>-&nbsp;Stores only the music data and DPCM samples in separate files, for use with the NSF source.
+			<LI>
+				<span class="gray">PRG</span><STRONG> -&nbsp;</STRONG>Creates a single 32 kB program file, ready to be used with a NROM-compatible cart for playback on NES hardware.</LI>
 		</UL>
+	<p class="style1">
+        <span lang="sv">As of version 0.3.5, an export plugin system has been added that 
+        allows exporting from DLL-plugins. More info about this is available on the web 
+        page.</span></p>
 	</BODY>
 </HTML>

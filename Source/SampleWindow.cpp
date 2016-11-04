@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include "SampleWindow.h"
 #include "..\fft\fft.h"
 #include "resource.h"
-#include "..\include\samplewindow.h"
+#include "Settings.h"
 
 #include "SWSampleScope.h"
 #include "SWSpectrum.h"
@@ -34,10 +34,9 @@
 IMPLEMENT_DYNAMIC(CSampleWindow, CWnd)
 
 
-CSampleWindow::CSampleWindow()
+CSampleWindow::CSampleWindow() :
+	m_iCurrentState(0)
 {
-//	m_iMin = m_iSec = m_iMSec = 0;
-	m_iCurrentState = 0;
 }
 
 CSampleWindow::~CSampleWindow()

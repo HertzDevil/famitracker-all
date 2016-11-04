@@ -3,18 +3,8 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
-#include "Include\ModulePropertiesDlg.h"
-
-const char *CHIP_NAMES[] = {"Internal only (2A03/2A07)",
-							"Konami VRC6",
-//							"Konami VRC7",
-//							"Nintendo FDS sound",
-							"Nintendo MMC5",
-//							"Namco N106",
-//							"Sunsoft 5B",
-};
-
-const int CHIP_COUNT = sizeof(*CHIP_NAMES) - 1;// 7;
+#include "FamiTrackerDoc.h"
+#include "ModulePropertiesDlg.h"
 
 const char TRACK_FORMAT[] = "#%02i %s";
 
@@ -54,17 +44,15 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CComboBox *ChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
 	m_pSongList = (CListCtrl*)GetDlgItem(IDC_SONGLIST);
 
-	m_pSongList->InsertColumn(0, "Songs", 0, 160);
+	m_pSongList->InsertColumn(0, "Songs", 0, 150);
 	m_pSongList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
 	CString Text;
 	int ExpChip, Songs;
-
-	m_pDocument = (CFamiTrackerDoc*)theApp.GetDocument();
 	
 	// Song editor
 	Songs = pDoc->GetTrackCount();
@@ -77,60 +65,34 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	SelectSong(0);
 
 	// Expansion chip
-	ExpChip = ((CFamiTrackerDoc*)theApp.GetDocument())->GetExpansionChip();
+	ExpChip = pDoc->GetExpansionChip();
 
-	for (int i = 0; i < CHIP_COUNT; i++)
-		ChipBox->AddString(CHIP_NAMES[i]);
+	for (int i = 0; i < theApp.GetChipCount(); i++)
+		ChipBox->AddString(theApp.GetChipName(i));
 
-	switch (ExpChip) {
-		case SNDCHIP_NONE: ChipBox->SetCurSel(0); break;
-		case SNDCHIP_VRC6: ChipBox->SetCurSel(1); break;
-//		case SNDCHIP_VRC7: ChipBox->SetCurSel(2); break;
-//		case SNDCHIP_FDS: ChipBox->SetCurSel(3); break;
-		case SNDCHIP_MMC5: ChipBox->SetCurSel(2); break;
-//		case SNDCHIP_N106: ChipBox->SetCurSel(5); break;
-//		case SNDCHIP_5B: ChipBox->SetCurSel(6); break;
-	}
-	
+	ChipBox->SetCurSel(theApp.GetChipIndex(ExpChip));
+
+	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
+	pVibratoBox->SetCurSel((pDoc->GetVibratoStyle() == VIBRATO_NEW) ? 0 : 1);
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
 void CModulePropertiesDlg::OnBnClickedOk()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
-//	CSliderCtrl *SubTuneSlider = (CSliderCtrl*)GetDlgItem(IDC_SUBTUNE);
-	CComboBox	*ExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
-
-	unsigned int iExpansionChip;// = ExpansionChipBox->GetCurSel();
-
-//	unsigned int iExpansionChip = ExpansionChipBox->GetCurSel();
-//	if (iExpansionChip > 0)
-//		iExpansionChip = 1 << (iExpansionChip - 1);
-
-//	unsigned int iNewCount = SubTuneSlider->GetPos();
-	switch (ExpansionChipBox->GetCurSel()) {
-		case 0:
-			iExpansionChip = SNDCHIP_NONE;
-			break;
-		case 1:
-			iExpansionChip = SNDCHIP_VRC6;
-			break;
-		case 2:
-			iExpansionChip = SNDCHIP_MMC5;
-			break;
-	}
-
-//	pDoc->SetTracks(iNewCount);
-
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	CComboBox *ExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
+	unsigned int iExpansionChip = theApp.GetChipIdent(ExpansionChipBox->GetCurSel());
 	pDoc->SelectExpansionChip(iExpansionChip);
-
+	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
+	pDoc->SetVibratoStyle((pVibratoBox->GetCurSel() == 0) ? VIBRATO_NEW : VIBRATO_OLD);
 	OnOK();
 }
 
 void CModulePropertiesDlg::OnBnClickedSongAdd()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CString TrackTitle;
 	if (!pDoc->AddTrack())
 		return;
@@ -148,7 +110,7 @@ void CModulePropertiesDlg::OnBnClickedSongAdd()
 
 void CModulePropertiesDlg::OnBnClickedSongRemove()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CString TrackTitle;
 	CString Msg;
 
@@ -177,7 +139,7 @@ void CModulePropertiesDlg::OnBnClickedSongRemove()
 
 void CModulePropertiesDlg::OnBnClickedSongUp()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CString Text;
 
 	if (m_iSelectedSong == 0)
@@ -196,7 +158,7 @@ void CModulePropertiesDlg::OnBnClickedSongUp()
 
 void CModulePropertiesDlg::OnBnClickedSongDown()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CString Text;
 
 	if (pDoc->GetTrackCount() == m_iSelectedSong)
@@ -225,10 +187,10 @@ void CModulePropertiesDlg::OnEnChangeSongname()
 
 	Title.Format(TRACK_FORMAT, m_iSelectedSong + 1, Text);
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	m_pSongList->SetItemText(m_iSelectedSong, 0, Title);
-	m_pDocument->SetTrackTitle(m_iSelectedSong, Text.GetBuffer());
+	pDoc->SetTrackTitle(m_iSelectedSong, Text.GetBuffer());
 }
 
 void CModulePropertiesDlg::OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult)
@@ -241,7 +203,7 @@ void CModulePropertiesDlg::OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CModulePropertiesDlg::SelectSong(int Song)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	if (Song == -1)
 		return;
@@ -269,6 +231,129 @@ void CModulePropertiesDlg::SelectSong(int Song)
 
 void CModulePropertiesDlg::OnBnClickedSongImport()
 {
-//	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
-//	pDoc->ImportFile();
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+
+	CFileDialog OpenFileDlg(TRUE, "ftm", "", OFN_HIDEREADONLY, "FamiTracker files (*.ftm)|*.ftm|All files (*.*)|*.*||", theApp.GetMainWnd(), 0);
+
+	if (OpenFileDlg.DoModal() == IDCANCEL)
+		return;
+
+	int Tracks = pDoc->GetTrackCount() + 1;
+
+	CDocumentFile DocumentFile;
+
+	if (!DocumentFile.Open(OpenFileDlg.GetPathName(), CFile::modeRead)) {
+		theApp.DisplayError(IDS_FILE_OPEN_ERROR);
+		return ;
+	}
+
+	if (!DocumentFile.CheckValidity()) {
+		theApp.DisplayError(IDS_FILE_VALID_ERROR);
+		DocumentFile.Close();
+		return ;
+	}
+
+	const char *FILE_BLOCK_PATTERNS		= "PATTERNS";
+	const char *FILE_BLOCK_PARAMS		= "PARAMS";
+	const char *FILE_BLOCK_FRAMES		= "FRAMES";
+	const char *FILE_BLOCK_HEADER		= "HEADER";
+
+	int TrackCount = 0;
+	int ImportChannels = 0;
+	bool FileFinished = false;
+	char *BlockID;
+
+	// Read all blocks
+	while (!DocumentFile.Finished() && !FileFinished) {
+		DocumentFile.ReadBlock();
+		BlockID = DocumentFile.GetBlockHeaderID();
+		unsigned int Version = DocumentFile.GetBlockVersion();
+
+		if (!strcmp(BlockID, FILE_BLOCK_PARAMS)) {				
+			DocumentFile.GetBlockChar();
+			ImportChannels	= DocumentFile.GetBlockInt();
+			DocumentFile.GetBlockInt();
+			DocumentFile.GetBlockInt();
+			if (DocumentFile.GetBlockVersion() > 2)
+				DocumentFile.GetBlockInt();
+		}
+		else if (!strcmp(BlockID, FILE_BLOCK_HEADER)) {
+			unsigned int i, j;
+			unsigned char ChannelType;
+			TrackCount = DocumentFile.GetBlockChar();
+			for (i = 0; i <= TrackCount; i++) {
+				// Add songs
+				CString TrackTitle, name;
+				name = DocumentFile.ReadString();
+				TrackTitle.Format(TRACK_FORMAT, Tracks + i, name);
+				m_pSongList->InsertItem(Tracks, TrackTitle);
+				pDoc->AddTrack();
+				pDoc->SetTrackTitle(Tracks + i, name);
+			}
+			for (i = 0; i < ImportChannels; i++) {
+				ChannelType = DocumentFile.GetBlockChar();
+				for (j = 0; j <= TrackCount; j++) {
+					pDoc->SelectTrackFast(j + Tracks);
+					int k = DocumentFile.GetBlockChar();
+					pDoc->SetEffColumns(i, k);
+				}
+			}
+		}
+		else if (!strcmp(BlockID, FILE_BLOCK_FRAMES)) {
+			unsigned int i, x, y;
+			for (y = 0; y <= TrackCount; y++) {
+				pDoc->SelectTrackFast(y + Tracks);
+				pDoc->SetFrameCount(DocumentFile.GetBlockInt());				
+				pDoc->SetSongSpeed(DocumentFile.GetBlockInt());
+				pDoc->SetSongTempo(DocumentFile.GetBlockInt());
+				pDoc->SetPatternLength(DocumentFile.GetBlockInt());
+				for (i = 0; i < pDoc->GetFrameCount(); i++) {
+					for (x = 0; x < ImportChannels; x++) {
+						pDoc->SetPatternAtFrame(i, x, DocumentFile.GetBlockChar());
+					}
+				}
+			}
+		}
+		else if (!strcmp(BlockID, FILE_BLOCK_PATTERNS)) {
+			unsigned char Item;
+			unsigned int Channel, Pattern, i, Items, Track;
+			while (!DocumentFile.BlockDone()) {
+				Track = DocumentFile.GetBlockInt();
+				Channel = DocumentFile.GetBlockInt();
+				Pattern = DocumentFile.GetBlockInt();
+				Items = DocumentFile.GetBlockInt();
+
+				pDoc->SelectTrackFast(Track + Tracks);
+
+				for (i = 0; i < Items; i++) {
+					Item = DocumentFile.GetBlockInt();
+					stChanNote Note;
+					pDoc->GetDataAtPattern(Track + Tracks, Pattern, Channel, Item, &Note);
+					memset(&Note, 0, sizeof(stChanNote));
+
+					Note.Note		= DocumentFile.GetBlockChar();
+					Note.Octave		= DocumentFile.GetBlockChar();
+					Note.Instrument	= DocumentFile.GetBlockChar();
+					Note.Vol		= DocumentFile.GetBlockChar();
+
+					int columns = pDoc->GetEffColumns(Channel);
+
+					for (unsigned int n = 0; n < columns + 1; n++) {
+						Note.EffNumber[n] = DocumentFile.GetBlockChar();
+						Note.EffParam[n]  = DocumentFile.GetBlockChar();
+					}
+
+					if (Note.Vol > 0x10)
+						Note.Vol &= 0x0F;
+
+					pDoc->SetDataAtPattern(Track + Tracks, Pattern, Channel, Item, &Note);
+				}			
+			}
+		}
+		else if (!strcmp(BlockID, "END")) {
+			FileFinished = true;
+		}
+	}
+
+	pDoc->SelectTrack(Tracks);
 }

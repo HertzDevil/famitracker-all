@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,26 +19,15 @@
 */
 
 #include <memory>
-#include "common.h"
-#include "APU/APU.h"
-#include "APU/N106.h"
+#include "../common.h"
+#include "APU.h"
+#include "N106.h"
 
 //
 // N106
 //
 
-CN106::CN106()
-{
-	m_pWaveData = NULL;
-}
-
-CN106::~CN106()
-{
-	if (m_pWaveData)
-		delete [] m_pWaveData;
-}
-
-void CN106::Init(CMixer *pMixer)
+CN106::CN106(CMixer *pMixer) : m_iChansInUse(0)
 {
 	m_pWaveData = new uint8[0x40];
 
@@ -50,25 +39,32 @@ void CN106::Init(CMixer *pMixer)
 	m_pChannels[5] = new CN106Chan(pMixer, CHANID_N106_CHAN6, m_pWaveData);
 	m_pChannels[6] = new CN106Chan(pMixer, CHANID_N106_CHAN7, m_pWaveData);
 	m_pChannels[7] = new CN106Chan(pMixer, CHANID_N106_CHAN8, m_pWaveData);
+}
 
-	m_iChansInUse = 0;
+CN106::~CN106()
+{
+	if (m_pWaveData)
+		delete [] m_pWaveData;
+
+	for (int i = 0; i < 8; ++i)
+		delete m_pChannels[i];
 }
 
 void CN106::Reset()
 {
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 8; ++i)
 		m_pChannels[i]->Reset();
 }
 
 void CN106::Process(uint32 Time)
 {
-	for (int i = 7 - m_iChansInUse; i < 8; i++)
+	for (int i = 7 - m_iChansInUse; i < 8; ++i)
 		m_pChannels[i]->Process(Time, m_iChansInUse);
 }
 
 void CN106::EndFrame()
 {
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 8; ++i)
 		m_pChannels[i]->EndFrame();
 }
 
@@ -119,10 +115,10 @@ uint8 CN106::Read(uint16 Address)
 // N106 channels
 //
 
-CN106Chan::CN106Chan(CMixer *pMixer, int ID, uint8 *pWaveData)
+CN106Chan::CN106Chan(CMixer *pMixer, int ID, uint8 *pWaveData) : 
+	CExChannel(pMixer, SNDCHIP_N106, ID),
+	m_pWaveData(pWaveData)
 {
-	CExChannel::Init(pMixer, SNDCHIP_N106, ID);
-	m_pWaveData	= pWaveData;
 }
 
 CN106Chan::~CN106Chan()

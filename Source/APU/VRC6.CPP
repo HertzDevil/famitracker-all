@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 */
 
 #include <memory>
-#include "APU/apu.h"
+#include "APU.h"
 
 // Konami VRC6 external sound chip emulation
 
@@ -129,11 +129,18 @@ void CVRC6_Sawtooth::Process(int Time)
 	m_iFrameCycles += Time;
 }
 
-void CVRC6::Init(CMixer *pMixer)
+CVRC6::CVRC6(CMixer *pMixer)
 {
 	Pulse1	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE1);
 	Pulse2	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE2);
 	Sawtooth = new CVRC6_Sawtooth(pMixer, CHANID_VRC6_SAWTOOTH);
+}
+
+CVRC6::~CVRC6()
+{
+	delete Pulse1;
+	delete Pulse2;
+	delete Sawtooth;
 }
 
 void CVRC6::Reset()

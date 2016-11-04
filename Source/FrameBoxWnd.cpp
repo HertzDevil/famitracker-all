@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,17 +21,25 @@
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
+#include "MainFrm.h"
 #include "FrameBoxWnd.h"
 #include "SoundGen.h"
+#include "Settings.h"
 
-// CFrameBoxWnd
+// CFrameBoxWnd - This is the frame editor to the left in the control panel
+
+// Todo: make this class inherit from CView instead of CWnd
 
 IMPLEMENT_DYNAMIC(CFrameBoxWnd, CWnd)
-CFrameBoxWnd::CFrameBoxWnd():
+CFrameBoxWnd::CFrameBoxWnd(CMainFrame *pMainFrm):
 	m_iFirstChannel(0),
-	m_bInputEnable(false)
+	m_bInputEnable(false),
+	m_bControl(false),
+	m_pMainFrame(pMainFrm)
 {
+	memset(m_iCopiedValues, 0, MAX_CHANNELS * sizeof(int));
 }
 
 CFrameBoxWnd::~CFrameBoxWnd()
@@ -51,9 +59,26 @@ BEGIN_MESSAGE_MAP(CFrameBoxWnd, CWnd)
 	ON_WM_KEYDOWN()
 	ON_WM_TIMER()
 	ON_WM_RBUTTONUP()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_KEYUP()
+	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
+	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
+	ON_COMMAND(ID_FRAME_COPY, OnEditCopy)
+	ON_COMMAND(ID_FRAME_PASTE, OnEditPaste)
+	ON_WM_CREATE()
 END_MESSAGE_MAP()
 
 // CFrameBoxWnd message handlers
+
+int CFrameBoxWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CWnd::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	m_hAccel = LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+
+	return 0;
+}
 
 void CFrameBoxWnd::OnPaint()
 {
@@ -61,8 +86,8 @@ void CFrameBoxWnd::OnPaint()
 
 	// Do not call CWnd::OnPaint() for painting messages
 
-	CFamiTrackerDoc *pDoc = reinterpret_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = reinterpret_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = reinterpret_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = reinterpret_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	CBrush	Brush, *OldBrush;
 	CPen	Pen, *OldPen;
@@ -104,7 +129,7 @@ void CFrameBoxWnd::OnPaint()
 	if (!pDoc->IsFileLoaded())
 		return;
 
-	if (((CSoundGen*)theApp.GetSoundGenerator())->IsRendering())
+	if (theApp.GetSoundGenerator()->IsRendering())
 		return;
 
 	Width	= WinRect.right - WinRect.left;
@@ -123,7 +148,7 @@ void CFrameBoxWnd::OnPaint()
 	FrameCount			= pDoc->GetFrameCount();
 	TotalChannelCount	= pDoc->GetAvailableChannels();
 
-	ChannelCount		= TotalChannelCount;	// 5
+	ChannelCount		= TotalChannelCount;
 
 	if (ActiveChannel < m_iFirstChannel)
 		m_iFirstChannel = ActiveChannel;
@@ -143,12 +168,24 @@ void CFrameBoxWnd::OnPaint()
 
 	dcBack.SetBkMode(TRANSPARENT);
 
+	int TopColor;
+	float Strength;
+
+	if (GetFocus() == this) {
+		TopColor = 0xFF4040;
+		Strength = 60.0f;
+	}
+	else {
+		TopColor = ColTextHilite;
+		Strength = 20.0f;
+	}
+
 	for (i = 0; i < Height; i++) {
 		float Angle = (float) ((i * 100) / Height) * 3.14f * 2;
-		int Level = (int)(cosf(Angle / 100.0f) * 20.0f);
+		int Level = (int)(cosf(Angle / 100.0f) * Strength);
 		if (Level < 0)
 			Level = 0;
-		dcBack.FillSolidRect(0, i, Width, 1, DIM_TO(ColTextHilite, ColBackground, Level));
+		dcBack.FillSolidRect(0, i, Width, 1, DIM_TO(TopColor, ColBackground, Level));
 	}
 	
 	dcBack.SetBkColor(ColBackground);
@@ -169,6 +206,7 @@ void CFrameBoxWnd::OnPaint()
 		dcBack.DrawText(Text, CRect(30 + c * 20, 3, 28 + c * 20 + 20, 3 + 20), DT_LEFT | DT_TOP | DT_NOCLIP);
 	}
 */
+
 	for (i = 0; i < (unsigned)ItemsToDraw; i++) {
 
 		if ((ActiveFrame - (ItemsToDraw / 2) + (signed)i) >= 0 && 
@@ -176,15 +214,20 @@ void CFrameBoxWnd::OnPaint()
 
 			// Play cursor
 			if (pView->GetPlayFrame() == Nr && !pView->GetFollowMode() && theApp.IsPlaying()) {
-				dcBack.FillSolidRect(0, i * 15 + 4, Width, 14, 0x200060);
+				dcBack.FillSolidRect(0, SY(i * 15 + 4), SX(Width), SY(15 - 1), 0x200060);
+			}
+
+			// Queue cursor
+			if (pView->GetFrameQueue() == Nr) {
+				dcBack.FillSolidRect(0, SY(i * 15 + 4), SX(Width), SY(15 - 1), 0x108010);
 			}
 
 			// Cursor box
 			if (i == ItemsToDraw / 2) {
-				dcBack.FillSolidRect(28 + ((ActiveChannel - m_iFirstChannel) * 20), (ItemsToDraw / 2) * 15 + 5, 20, 12, ColCursor);
+				dcBack.FillSolidRect(SX(28 + ((ActiveChannel - m_iFirstChannel) * 20)), SY((ItemsToDraw / 2) * 15 + 5), SX(20), SY(12), ColCursor);
 
 				if (m_bInputEnable && m_bCursor) {
-					dcBack.FillSolidRect(28 + ((ActiveChannel - m_iFirstChannel) * 20) + 10 * m_iCursorPos, (ItemsToDraw / 2) * 15 + 5, 10, 12, 0x202020);
+					dcBack.FillSolidRect(SX(28 + ((ActiveChannel - m_iFirstChannel) * 20) + 10 * m_iCursorPos), SY((ItemsToDraw / 2) * 15 + 5), SX(10), SY(12), ColBackground);
 				}
 			}
 
@@ -194,7 +237,7 @@ void CFrameBoxWnd::OnPaint()
 				sprintf(Text, "%02i", Nr);
 			
 			dcBack.SetTextColor(ColTextHilite);
-			dcBack.TextOut(6, i * 15 + 3, Text);
+			dcBack.TextOut(SX(6), SY(i * 15 + 3), Text);
 
 			if (i == m_iHiglightLine || m_iHiglightLine == -1)
 				CurrentColor = ColText;
@@ -214,16 +257,16 @@ void CFrameBoxWnd::OnPaint()
 //					dcBack.SetTextColor(ColCursor ^ CurrentColor);
 
 				sprintf(Text, "%02X", pDoc->GetPatternAtFrame(Nr, Chan));
-				dcBack.DrawText(Text, CRect(30 + c * FRAME_ITEM_WIDTH, i * 15 + 3, 28 + c * FRAME_ITEM_WIDTH + FRAME_ITEM_WIDTH, i * 15 + 3 + 20), DT_LEFT | DT_TOP | DT_NOCLIP);
+				dcBack.DrawText(Text, CRect(SX(30 + c * FRAME_ITEM_WIDTH), SY(i * 15 + 3), SX(28 + c * FRAME_ITEM_WIDTH + FRAME_ITEM_WIDTH), SY(i * 15 + 3 + 20)), DT_LEFT | DT_TOP | DT_NOCLIP);
 			}
 			Nr++;
 		}
 	}
 
-	dcBack.FillSolidRect(25, 0, 1, Height, 0x808080);
+	dcBack.FillSolidRect(SX(25), 0, SY(1), Height, 0x808080);
 
-	dcBack.Draw3dRect(2, (ItemsToDraw / 2) * 15 + 4, Width - 4, 14, ColCursor, ColCursor);
-	dcBack.Draw3dRect(1, (ItemsToDraw / 2) * 15 + 3, Width - 2, 16, ColCursor2, ColCursor2);
+	dcBack.Draw3dRect(SX(2), SY((ItemsToDraw / 2) * 15 + 4), SX(Width - 4), SY(14), ColCursor, ColCursor);
+	dcBack.Draw3dRect(SX(1), SY((ItemsToDraw / 2) * 15 + 3), SX(Width - 2), SY(16), ColCursor2, ColCursor2);
 
 	dcBack.SelectObject(OldBrush);
 	dcBack.SelectObject(OldPen);
@@ -245,8 +288,8 @@ void CFrameBoxWnd::OnPaint()
 
 void CFrameBoxWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
@@ -277,7 +320,7 @@ void CFrameBoxWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CFrameBoxWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
@@ -301,11 +344,13 @@ void CFrameBoxWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CFrameBoxWnd::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	int FrameDelta, Channel;
 	int NewFrame;
+
+	ScaleMouse(point);
 
 	FrameDelta	= ((point.y - 3) / 15) - 4;
 	Channel		= (point.x - 28) / 20;
@@ -314,16 +359,27 @@ void CFrameBoxWnd::OnLButtonUp(UINT nFlags, CPoint point)
 	if ((NewFrame >= signed(pDoc->GetFrameCount())) || (NewFrame < 0))
 		return;
 
-	pView->SelectFrame(NewFrame);
-
-	if (Channel >= 0)
-		pView->SelectChannel(Channel);
+	if (pView->IsControlPressed() && theApp.IsPlaying()) {
+		// Queue this frame
+		if (NewFrame == pView->GetFrameQueue())
+			pView->SetFrameQueue(-1);	// Remove
+		else
+			pView->SetFrameQueue(NewFrame);
+		RedrawWindow();
+	}
+	else {
+		// Switch to frame
+		pView->SelectFrame(NewFrame);
+		if (Channel >= 0)
+			pView->SelectChannel(Channel);
+	}
 
 	CWnd::OnLButtonDown(nFlags, point);
 }
 
 void CFrameBoxWnd::OnMouseMove(UINT nFlags, CPoint point)
 {
+	ScaleMouse(point);
 	m_iHiglightLine = (point.y - 3) / 15;
 	RedrawWindow();
 	CWnd::OnMouseMove(nFlags, point);
@@ -339,7 +395,7 @@ void CFrameBoxWnd::OnNcMouseMove(UINT nHitTest, CPoint point)
 BOOL CFrameBoxWnd::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: Add your message handler code here and/or call default
-	// cant get this to work
+	// I cant get this to work
 	return CWnd::OnMouseWheel(nFlags, zDelta, pt);
 }
 
@@ -347,11 +403,13 @@ void CFrameBoxWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
 	// Select channel and enable edit mode
 
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	int FrameDelta, Channel;
 	int NewFrame;
+
+	ScaleMouse(point);
 
 	FrameDelta	= ((point.y - 3) / 15) - 4;
 	Channel		= (point.x - 28) / 20;
@@ -366,18 +424,11 @@ void CFrameBoxWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 		pView->SelectChannel(Channel);
 
 	if (m_bInputEnable) {
-		theApp.GetView()->SetFocus();
+		pView->SetFocus();
 		return;
 	}
 
-	SetFocus();
-
-	m_bInputEnable = true;
-	m_bCursor = true;
-	m_iCursorPos = 0;
-	m_iNewPattern = pDoc->GetPatternAtFrame(NewFrame, Channel);
-
-	SetTimer(0, 500, NULL);	// Cursor timer
+	EnableInput();
 
 	CWnd::OnLButtonDblClk(nFlags, point);
 }
@@ -392,8 +443,8 @@ void CFrameBoxWnd::OnKillFocus(CWnd* pNewWnd)
 
 void CFrameBoxWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	int Num = -1;
 
@@ -409,6 +460,9 @@ void CFrameBoxWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		int Frame = pView->GetSelectedFrame();
 
 		switch (nChar) {
+			case VK_CONTROL:
+				m_bControl = true;
+				break;
 			case VK_LEFT:
 				Channel = (Channel == 0) ? (pDoc->GetAvailableChannels() - 1) : (Channel - 1);
 				pView->SelectChannel(Channel);
@@ -422,54 +476,93 @@ void CFrameBoxWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				m_iNewPattern = pDoc->GetPatternAtFrame(Frame, Channel);
 				break;
 			case VK_UP:
-				Frame = (Frame == 0) ? (pDoc->GetFrameCount() - 1) : (Frame - 1);
-				pView->SelectFrame(Frame);
-				m_iCursorPos = 0;
-				m_iNewPattern = pDoc->GetPatternAtFrame(Frame, Channel);
+				if (m_bControl)
+					pView->OnModuleMoveframeup();
+				else {
+					Frame = (Frame == 0) ? (pDoc->GetFrameCount() - 1) : (Frame - 1);
+					pView->SelectFrame(Frame);
+					m_iCursorPos = 0;
+					m_iNewPattern = pDoc->GetPatternAtFrame(Frame, Channel);
+				}
 				break;
 			case VK_DOWN:
-				Frame = (Frame == pDoc->GetFrameCount() - 1) ? 0 : (Frame + 1);
-				pView->SelectFrame(Frame);
-				m_iCursorPos = 0;
-				m_iNewPattern = pDoc->GetPatternAtFrame(Frame, Channel);
+				if (m_bControl)
+					pView->OnModuleMoveframedown();
+				else {
+					Frame = (Frame == pDoc->GetFrameCount() - 1) ? 0 : (Frame + 1);
+					pView->SelectFrame(Frame);
+					m_iCursorPos = 0;
+					m_iNewPattern = pDoc->GetPatternAtFrame(Frame, Channel);
+				}
 				break;
 			case VK_RETURN:
-				theApp.GetView()->SetFocus();
+				pView->SetFocus();
+				break;
+			case VK_INSERT:
+				pView->OnFrameInsert();
+				break;
+			case VK_DELETE:
+				pView->OnFrameRemove();
 				break;
 		}
 
-		if (Num != -1) {
-			if (m_iCursorPos == 0)
-				m_iNewPattern = (m_iNewPattern & 0x0F) | (Num << 4);
-			else if (m_iCursorPos == 1)
-				m_iNewPattern = (m_iNewPattern & 0xF0) | Num;
-
-			if (m_iNewPattern >= MAX_PATTERN)
-				m_iNewPattern = MAX_PATTERN - 1;
-
-			if (pView->ChangeAllPatterns()) {
-				for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++)
-					pDoc->SetPatternAtFrame(pView->GetSelectedFrame(), i, m_iNewPattern);
+		if (m_bControl) {
+			// Control pressed
+			if (nChar == 'C') {
+				/*
+				// Copy
+				for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); ++i) {
+					m_iCopiedValues[i] = pDoc->GetPatternAtFrame(Frame, i);
+				}
+				((CMainFrame*) pView->GetParentFrame())->SetStatusText("Copied frame values");
+				*/
 			}
-			else
-				pDoc->SetPatternAtFrame(pView->GetSelectedFrame(), pView->GetSelectedChannel(), m_iNewPattern);
+			else if (nChar == 'V') {
+				// Paste
+				/*
+				for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); ++i) {
+					pDoc->SetPatternAtFrame(Frame, i, m_iCopiedValues[i]);
+				}
+				*/
+			}
+		}
+		else {
+			// Control not pressed
+			if (Num != -1) {
+				if (m_iCursorPos == 0)
+					m_iNewPattern = (m_iNewPattern & 0x0F) | (Num << 4);
+				else if (m_iCursorPos == 1)
+					m_iNewPattern = (m_iNewPattern & 0xF0) | Num;
 
-			m_iCursorPos++;
-			m_bCursor = true;
+				if (m_iNewPattern >= MAX_PATTERN)
+					m_iNewPattern = MAX_PATTERN - 1;
 
-			if (m_iCursorPos == 2) {
-				if (pView->GetSelectedChannel() == pDoc->GetAvailableChannels() - 1)
-					theApp.GetView()->SetFocus();
-				else {
-					pView->SelectChannel(pView->GetSelectedChannel() + 1);
-					m_iNewPattern = pDoc->GetPatternAtFrame(pView->GetSelectedFrame(), pView->GetSelectedChannel());
-					m_iCursorPos = 0;
+				if (pView->ChangeAllPatterns()) {
+					for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++)
+						pDoc->SetPatternAtFrame(pView->GetSelectedFrame(), i, m_iNewPattern);
+				}
+				else
+					pDoc->SetPatternAtFrame(pView->GetSelectedFrame(), pView->GetSelectedChannel(), m_iNewPattern);
+
+				m_iCursorPos++;
+				m_bCursor = true;
+
+				if (m_iCursorPos == 2) {
+					if (pView->GetSelectedChannel() == pDoc->GetAvailableChannels() - 1)
+						pView->SetFocus();
+					else {
+						pView->SelectChannel(pView->GetSelectedChannel() + 1);
+						m_iNewPattern = pDoc->GetPatternAtFrame(pView->GetSelectedFrame(), pView->GetSelectedChannel());
+						m_iCursorPos = 0;
+					}
 				}
 			}
 		}
 		Invalidate();
 		RedrawWindow();
 	}
+
+	CWnd::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
 void CFrameBoxWnd::OnTimer(UINT_PTR nIDEvent)
@@ -486,6 +579,11 @@ void CFrameBoxWnd::OnTimer(UINT_PTR nIDEvent)
 
 BOOL CFrameBoxWnd::PreTranslateMessage(MSG* pMsg)
 {
+//	CMainFrame *pw;
+
+	if (TranslateAccelerator(m_hWnd, m_hAccel, pMsg))
+		return TRUE;
+
 	if (pMsg->message == WM_KEYDOWN) {
 		OnKeyDown(pMsg->wParam, pMsg->lParam & 0xFFFF, pMsg->lParam & 0xFF0000);
 		// Remove the beep
@@ -499,33 +597,104 @@ void CFrameBoxWnd::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	// Popup menu
 
-	CRect WinRect;
+	// Todo: Move this to the context menu command
+
 	CMenu *PopupMenu, PopupMenuBar;
 	int Item = 0;
 
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
 
 	int FrameDelta, Channel;
-	int NewFrame;
+	unsigned int NewFrame;
+
+	ScaleMouse(point);
 
 	FrameDelta	= ((point.y - 3) / 15) - 4;
 	Channel		= (point.x - 28) / 20;
 	NewFrame	= pView->GetSelectedFrame() + FrameDelta;
 
-	if ((NewFrame >= signed(pDoc->GetFrameCount())) || (NewFrame < 0))
-		return;
+	if (NewFrame < 0)
+		NewFrame = 0;
+	if (NewFrame > (pDoc->GetFrameCount() - 1))
+		NewFrame = pDoc->GetFrameCount() - 1;
 
 	pView->SelectFrame(NewFrame);
 
 	if (Channel >= 0)
 		pView->SelectChannel(Channel);
 
-	GetWindowRect(WinRect);
+	ClientToScreen(&point);
 	PopupMenuBar.LoadMenu(IDR_FRAME_POPUP);
-
 	PopupMenu = PopupMenuBar.GetSubMenu(0);
-	PopupMenu->TrackPopupMenu(TPM_RIGHTBUTTON, point.x + WinRect.left, point.y + WinRect.top, GetParent());
+	PopupMenu->TrackPopupMenu(TPM_RIGHTBUTTON, point.x, point.y, GetParent());
 
 	CWnd::OnRButtonUp(nFlags, point);
+}
+
+void CFrameBoxWnd::EnableInput()
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
+
+	SetFocus();
+
+	m_bInputEnable = true;
+	m_bCursor = true;
+	m_iCursorPos = 0;
+	m_iNewPattern = pDoc->GetPatternAtFrame(pView->GetSelectedFrame(), pView->GetSelectedChannel());
+
+	SetTimer(0, 500, NULL);	// Cursor timer
+}
+
+void CFrameBoxWnd::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
+}
+
+void CFrameBoxWnd::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_CONTROL) {
+		m_bControl = false;
+	}
+
+	CWnd::OnKeyUp(nChar, nRepCnt, nFlags);
+}
+
+void CFrameBoxWnd::OnEditCopy()
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
+
+	int Frame = pView->GetSelectedFrame();
+
+	for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); ++i) {
+		m_iCopiedValues[i] = pDoc->GetPatternAtFrame(Frame, i);
+	}
+
+	m_pMainFrame->SetStatusText("Copied frame values");
+
+	Invalidate();
+	RedrawWindow();
+}
+
+void CFrameBoxWnd::OnEditPaste()
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetDocumentView());
+
+	int Frame = pView->GetSelectedFrame();
+
+	// Paste
+	for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); ++i) {
+		pDoc->SetPatternAtFrame(Frame, i, m_iCopiedValues[i]);
+	}
+
+	Invalidate();
+	RedrawWindow();
+}
+
+bool CFrameBoxWnd::InputEnabled() const
+{
+	return m_bInputEnable;
 }

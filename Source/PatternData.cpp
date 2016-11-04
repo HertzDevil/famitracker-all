@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ bool CPatternData::IsPatternFree(unsigned int Channel, unsigned int Pattern)
 
 stChanNote *CPatternData::GetPatternData(int Channel, int Pattern, int Row)
 {
-	if (!m_pPatternData[Channel][Pattern])		// Allocate pattern if first time access
+	if (!m_pPatternData[Channel][Pattern])		// Allocate pattern if accessed for the first time
 		AllocatePattern(Channel, Pattern);
 
 	return m_pPatternData[Channel][Pattern] + Row;
@@ -143,4 +143,11 @@ void CPatternData::ClearEverything()
 			}
 		}
 	}
+}
+
+void CPatternData::ClearPattern(int Channel, int Pattern)
+{
+	// Deletes a specified pattern in a channel
+	delete [] m_pPatternData[Channel][Pattern];
+	m_pPatternData[Channel][Pattern] = NULL;
 }

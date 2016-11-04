@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,10 +24,32 @@
 // Mixing of internal audio relies on Blargg's findings
 //
 
+/*
+ Mixing of external channles are based on my own research:
+
+ VRC6 (Madara): 
+	Pulse channels has the same amplitude as internal 
+    pulse channels on equal volume levels
+
+ FDS: 
+	Square wave @ v = $1F: 2.4V
+	  			  v = $0F: 1.25V
+	(internal square wave: 1.0V)
+
+ MMC5 (just breed): 
+	MMC5 square @v = $0F: 900mV
+	(Internal square: 760mV, the cart attenuates sound a little)
+
+ ---
+
+ VRC7, N106 & 5B are still unknown
+
+*/
+
 #include <memory>
-#include "APU/mixer.h"
-#include "APU/apu.h"
-#include "blip_buffer.h"
+#include "mixer.h"
+#include "apu.h"
+#include "../Blip_Buffer/blip_buffer.h"
 
 //#define LINEAR_MIXING
 
@@ -67,7 +89,7 @@ inline double CMixer::CalcPin2(double Val1, double Val2, double Val3)
 bool CMixer::Init()
 {
 	memset(Channels, 0, sizeof(int) * CHANNELS);
-	memset(ChannelLevels, 0, sizeof(int) * CHANNELS);
+	memset(ChannelLevels, 0, sizeof(float) * CHANNELS);
 	memset(ChanLevelFallOff, 0, sizeof(int) * CHANNELS);
 //	memset(ExternalSampleBuffer, 0, sizeof(int32) * 1000);
 
@@ -102,15 +124,19 @@ void CMixer::UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVo
 	SynthFDS.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 	SynthN106.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
-	Synth2A03.volume(1.0f * fVol);
-	SynthVRC6.volume(3.98333f * fVol);
-	SynthMMC5.volume(1.0f * fVol);
-	SynthFDS.volume(1.0f);
-	SynthN106.volume(1.0f);
+	// Checked against hardware
+	Synth2A03.volume(fVol * 1.0f);
+	SynthVRC6.volume(fVol * 3.98333f);
+	SynthFDS.volume(fVol * 1.00f);
+	SynthMMC5.volume(fVol * 1.18421f);
+	
+	// Not checked
+	SynthN106.volume(1.0f * fVol);
 }
 
 void CMixer::MixSamples(blip_sample_t *pBuffer, uint32 Count)
 {
+	// For VRC7
 	BlipBuffer.mix_samples(pBuffer, Count);
 }
 
@@ -119,11 +145,13 @@ uint32 CMixer::GetMixSampleCount(int t)
 	return BlipBuffer.count_samples(t);
 }
 
+//const uint32 OPL_CLOCK = 3579545;
+
 bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32 ClockRate, uint8 NrChannels)
 {
 	m_iSampleRate = SampleRate;
 
-	BlipBuffer.sample_rate(SampleRate, (BufferLength * 1000) / SampleRate);
+	BlipBuffer.sample_rate(SampleRate, ((BufferLength * 1000) / SampleRate) * 2);
 	BlipBuffer.clock_rate(ClockRate);
 
 //	SetVolumeLevels();
@@ -133,6 +161,10 @@ bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32
 
 	// Allocate a transfer buffer
 	m_pSampleBuffer = new int32[BufferLength * NrChannels];
+
+	// Setup OPLL
+	// Todo: fix 44100
+//	OPLL_init(OPL_CLOCK, /*44100*/ SampleRate);
 
 	return true;
 }
@@ -157,19 +189,26 @@ int CMixer::FinishBuffer(int t)
 {
 	BlipBuffer.end_frame(t);
 
+	// Get channel levels for VRC7
+	for (int i = 0; i < 6; i++)
+		StoreChannelLevel(CHANID_VRC7_CH1 + i, OPLL_getchanvol(i) >> 6);
+
 	for (int i = 0; i < CHANNELS; i++) {
+
 		if (ChanLevelFallOff[i] > 0)
 			ChanLevelFallOff[i]--;
 		else {
-			ChanLevelFallOff[i] = 1;
+		//ChannelLevels[i] = 0;
+
+//			ChanLevelFallOff[i] = 1;
 			if (ChannelLevels[i] > 0) {
-				if (i == 4) {
-					ChannelLevels[i] -= 8;
-					if (ChannelLevels[i] < 0)
-						ChannelLevels[i] = 0;
-				}
-				else
-					ChannelLevels[i] -= 1;
+//				if (i == 4) {
+//					ChannelLevels[i] -= 8;
+//					if (ChannelLevels[i] < 0)
+//						ChannelLevels[i] = 0;
+//				}
+//				else
+					ChannelLevels[i] -= 0.6f;
 				if (ChannelLevels[i] < 0)
 					ChannelLevels[i] = 0;
 			}
@@ -224,7 +263,7 @@ void CMixer::MixMMC5(int Value, int Time)
 		SynthMMC5.offset(Time, Value, &BlipBuffer);
 }
 
-void CMixer::AddValue(int ChanID, int Chip, int Value, int FrameCycles)
+void CMixer::AddValue(int ChanID, int Chip, int Value, int AbsValue, int FrameCycles)
 {
 	// Add a new channel value to mix
 	//
@@ -232,17 +271,7 @@ void CMixer::AddValue(int ChanID, int Chip, int Value, int FrameCycles)
 //	Channels[ChanID].Left  = int32(float(Value) * Channels[ChanID].VolLeft);
 //	Channels[ChanID].Right = int32(float(Value) * Channels[ChanID].VolRight);
 
-	int AbsVol;
-
-	AbsVol = abs(Value);
-
-	if (ChanID == CHANID_VRC6_SAWTOOTH)
-		AbsVol = (AbsVol * 3) / 4;
-//		AbsVol *= 0.7;
-	if (AbsVol >= ChannelLevels[ChanID]) {
-		ChannelLevels[ChanID] = AbsVol;
-		ChanLevelFallOff[ChanID] = 3;
-	}
+	StoreChannelLevel(ChanID, AbsValue);
 
 	Channels[ChanID] = Value;
 
@@ -274,7 +303,30 @@ int CMixer::ReadBuffer(int Size, void *Buffer, bool Stereo)
 
 int32 CMixer::GetChanOutput(uint8 Chan)
 {
-	int32 Ret = ChannelLevels[Chan];
-//	m_bVolRead = true;
+	int32 Ret = (int32)ChannelLevels[Chan];
+//	if (Chan == CHANID_DPCM)
+//		Ret /= 8;
 	return Ret;
+}
+
+void CMixer::StoreChannelLevel(int Channel, int Value)
+{
+	int AbsVol;
+
+	AbsVol = abs(Value);
+
+	// Adjust channel levels for some channels
+	if (Channel == CHANID_VRC6_SAWTOOTH)
+		AbsVol = (AbsVol * 3) / 4;
+
+	if (Channel == CHANID_DPCM)
+		AbsVol /= 8;
+
+	if (Channel == CHANID_FDS)
+		AbsVol = AbsVol / 38;
+
+	if (float(AbsVol) >= ChannelLevels[Channel]) {
+		ChannelLevels[Channel] = float(AbsVol);
+		ChanLevelFallOff[Channel] = 3;
+	}
 }

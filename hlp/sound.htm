@@ -13,7 +13,16 @@
         }
         .style3
         {
-            font-size: 11pt;
+            font-size: medium;
+            font-weight: bold;
+        }
+        .style4
+        {
+            font-size: medium;
+        }
+        .style5
+        {
+            font-size: small;
             font-weight: bold;
         }
     </style>
@@ -23,11 +32,14 @@
     <strong style="font-size: x-small">
         <br />
     </strong><span style="font-size: x-small">
-    This section explains the sound hardware in NES/Famicom.<br />
+    This section explains the sound hardware in NES/Famicom and some of the 
+    expansion chips found in some carts.<br />
     </span>
     <strong>
         <span class="style2">
     <br />
+        </span>
+        <span class="style4">
         Internal 2A03/2A07 channels</span><span class="style1"><br />
         </span>
     </strong>
@@ -42,7 +54,7 @@
     <br />
     </strong>Produces pulse waves with four duty settings (12.5%, 25%,
     50% and 25% inverted).
-    Have hardware sweep control that can be accessed by the H and I effects.<br />
+    These channels have a hardware sweep unit that can be accessed by the H and I effects.<br />
     Note: There is a bug that resets the duty phase when switching between 
     certain frequencies, this can be heard as a pop and might be noticable when 
     using vibrato or pitch slides across those frequencies.<br />
@@ -55,12 +67,12 @@
     <br />
     <strong>Noise<br />
     <br />
-    </strong>Noise generator. Can produce 32767-bits and 93-bits sequences, selectable
-    from the instruments duty setting.<br />
+    </strong>Noise generator. Can produce 32k-bit and 93-bit sequences, selectable
+    from the instruments duty/noise setting.<br />
     <br />
     <strong>DPCM (Delta PCM)<br />
     <br />
-    </strong>Plays samples. Most of the effects (like arpeggio &amp; pitch slides) does 
+    </strong>Used to play delta modulated samples. Most of the effects (like arpeggio &amp; pitch slides) does 
     not operate on this channel.<br />
     <br />
     <br />
@@ -69,8 +81,10 @@
     The Famicom has the ability to mix sound from expansion chips found in some 
     carts, famitracker now supports a few of those chips. Expansion sound is enabled from the module properties window.<br />
     <br />
-    <br />
-    <strong style="font-size: 9pt">Konami VRC6<br />
+    <span class="style1">
+    <strong>Konami VRC6<br />
+    </strong></span>
+    <strong style="font-size: 9pt">
         <br />
     </strong>The VRC6 chip has two square wave channels and one sawtooth wave 
     channel. This chip was used in games like Akumajou Densetsu and Madara by 
@@ -88,10 +102,20 @@
     still uses that instrument setting to calculate the volume. A volume level too 
     high will cause the wave to wrap around and sounds distorted (happens when duty 
     = 1 and volume = 6).<br />
-    <p>
-        <b>Nintendo MMC5/b></p>
-    <p>
-        TThe MMC5 chip has two square wave channels that are identical to the internal 
+    <p class="style5">
+        Konami VRC7</p>
+<p>
+        The VRC7 chip contains a stripped down OPLL unit and has 6 channels for FM 
+        sound. This chip was used by Lagrange Point.</p>
+<p class="style5">
+        Nintendo FDS</p>
+<p>
+        This is a single channel chip used in the Famicom Disk System hardware by 
+        Nintendo. The channel uses a 64-step customizable waveform and has a simple 
+        frequency modulator.</p>
+<p class="style5">
+        Nintendo MMC5">
+        Nintendo MM        The MMC5 chip has two square wave channels that are identical to the internal 
         2A03 channels except for no hardware sweep function. It was used in the game 
         Just Breed by Enix.</p>
 

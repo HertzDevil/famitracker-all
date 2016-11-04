@@ -2,186 +2,149 @@
 	<HEAD>
 		<TITLE></TITLE>
 		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
-	    <style type="text/css">
-            .style1
-            {
-                font-size: 9pt;
-            }
-        </style>
+        <link href="style.css" rel="stylesheet" type="text/css" />
 	</HEAD>
-	<BODY style="color: #000000">
-		<FONT face="Arial"><span style="font-family: Verdana"><STRONG><SPAN style="FONT-SIZE: 16pt; color: gray;">Change 
-log</SPAN></STRONG></span></FONT><FONT face="Arial">
-			<HR>
-		<STRONG>
-        <br />
-        Version 0.3.0</STRONG><ul>
-                <li class="style1">MMC5 expansion sound support</li>
-                <li class="style1">Improved pattern editor (possible to select multiple channels, drag&#39;n&#39;drop, 
+	<BODY>
+		<span class="topic">Change log</span><HR />
+        <h1>
+            <span class="heading" lang="sv">Version 0.3.5</span></h1>
+<ul>
+    <li class="text">Delete key deleted two rows on the bottom row<span lang="sv">, 
+        fixed</span></li>
+    <li class="text"><span lang="sv">Entering an </span>instrument column<span 
+            lang="sv"> number</span> moves to that instrument</li>
+    <li class="text">Fixed a bug that caused files with 64 instruments to not load</li>
+    <li class="text">Fixed export bug where instruments with empty sequences caused the 
+        file to not work </li>
+    <li class="text">New effect Sxx, cut note after xx frames </li>
+    <li class="text">New effect Xxx, DPCM retrigger, xx = delay in frames </li>
+    <li class="text">Added a feature to remove unused instruments <span lang="sv">&amp; 
+        patterns</span></li>
+    <li class="text">Load/save instrument &amp; DPCM paths bug on Windows Vista &amp; 7 fixed </li>
+    <li class="text">Beeps on Alt+[key] removed </li>
+    <li class="text">Redraws screen on row highlight change </li>
+    <li class="text"><span lang="sv">Fixed p</span>attern display when frame preview is disabled </li>
+    <li class="text">Fixed the tracker/nsf inconcistency when note delay and speed 
+        change was used on the same row </li>
+    <li class="text">DPCM file preview added </li>
+    <li class="text">CTRL+click in frame editor to queue next 
+        frame when playing </li>
+    <li class="text">Added VRC7 &amp; FDS <span lang="sv">expansion chips</span></li>
+    <li class="text">Copy &amp; paste in frame editor. Ctrl+C to copy a row and Ctrl+V to 
+        paste </li>
+    <li class="text">Added note release command. Release-part of sequences are defined 
+        by a &#39;/&#39; in the sequence string. </li>
+    <li class="text">Shortcut editor supports combinations of ctrl+alt+shift </li>
+    <li class="text"><span lang="sv">Added a new vibrato mode that bends both up and 
+        down, old mode is still available as an option</span></li>
+    <li class="text">Fixed a bug that caused corruption when using undo after pattern 
+        size change</li>
+    <li class="text"><span lang="sv">Export plugin support is added</span></li>
+    <li class="text">New commands in the shortcut editor:
+        <br /><i>play song from start (F5)
+        <br />play and repeat pattern (F6)
+        <br />play from cursor (F7)
+        <br />stop (F8)
+        <br />move to pattern (F2) / frame editor (F3)
+        <br />replace instrument (Alt+S) </i></li>
+    <li class="text"><span lang="sv">F</span>rame (order) window<span lang="sv"> now has 
+        an edit mode</span>, double click to 
+        activate <span lang="sv">it</span>. Keys:
+        <br /><i>0-F: selects a pattern
+        <br />Ctrl+Up/Down: moves selected frame up/down
+        <br />Insert/Delete: inserts and deletes frames
+        <br />Ctrl+C: copy current frame, Ctrl+V: paste frame into selected frame</i></li>
+</ul>
+<h1>
+            <span class="heading">Version 0.3.0</span></h1>
+    <ul class="text">
+                <li>MMC5 expansion sound support</li>
+                <li>Improved pattern editor (possible to select multiple channels, drag&#39;n&#39;drop, 
                     control+drag = copy, shift+drag = mix) </li>
-                <li class="style1">Ctrl+wheel = Transpose selected notes </li>
-                <li class="style1">Shift+wheel = Increase/decrease instrument, volume and effect 
+                <li>Ctrl+wheel = Transpose selected notes </li>
+                <li>Shift+wheel = Increase/decrease instrument, volume and effect 
                     values </li>
-                <li class="style1">Scroll lock = Toggle follow mode </li>
-                <li class="style1">Control+D = Duplicate frame </li>
-                <li class="style1">It&#39;s possible to edit directly in the frame editor by double 
+                <li>Scroll lock = Toggle follow mode </li>
+                <li>Control+D = Duplicate frame </li>
+                <li>It&#39;s possible to edit directly in the frame editor by double 
                     clicking </li>
-                <li class="style1">Customizable keys for note cut, repeat and clear field </li>
-                <li class="style1">Added second highlight </li>
-                <li class="style1">Added a repeat action key </li>
-                <li class="style1">Added a second highlight option </li>
-                <li class="style1">Fixed a bug with the tremolo effect</li>
+                <li>Customizable keys for note cut, repeat and clear field </li>
+                <li>Added second highlight </li>
+                <li>Added a repeat action key </li>
+                <li>Added a second highlight option </li>
+                <li>Fixed a bug with the tremolo effect</li>
             </ul>
-            <STRONG>Version 0.2.9</STRONG></FONT><ul>
-                <li><span style="font-size: 9pt"><font face="Arial"><span>New effects Q, R (pitch slide),
-                    A (volume slide)  A (volume slide)</span></font></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Fixed a tempo bug in the tracker</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>VRC6 support added</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Improved the song editor</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Added options to disable follow mode
-                    when playing and customizable row highlighting</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Added clear patterns command</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Wave file 
-                    export</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Added .NES file exporting</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Improved hardware sweep commands
-                    in the tracker again (accurate NSF player is needed to get those right)</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Fixed a bug where NSFs would
-                    fail if there was deleted instruments in the file</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Fixed a 
-                    problem with NSF bankswitching</span></span></span></li>
-                <li><span style="font-family: Arial"><span style="font-size: 9pt"><span>Fixed some problems with note
-                    delay command in tracker and NSF</span></span></span></li>
+            <h1>
+                <span class="heading">
+            <STRONG>Version 0.2.9</STRONG></span></FONT></h1>
+    <ul class="text">
+                <li>New effects Q, R (pitch slide),
+                    A (volume slide)  A (volume slide)</li>
+                <li>Fixed a tempo bug in the tracker</li>
+                <li>VRC6 support added</li>
+                <li>Improved the song editor</li>
+                <li>Added options to disable follow mode
+                    when playing and customizable row highlighting</li>
+                <li>Added clear patterns command</li>
+                <li>Wave file 
+                    export</li>
+                <li>Added .NES file exporting</li>
+                <li>Improved hardware sweep commands
+                    in the tracker again (accurate NSF player is needed to get those right)</li>
+                <li>Fixed a bug where NSFs would
+                    fail if there was deleted instruments in the file</li>
+                <li>Fixed a 
+                    problem with NSF bankswitching</li>
+                <li>Fixed some problems with note
+                    delay command in tracker and NSF</li>
             </ul>
-            <p>
-                <font face="Arial"><strong>Version 0.2.7</strong></font></p>
-			<UL>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">New NSF code,&nbsp;creates&nbsp;smaller NSF 
-						files&nbsp;(and use less 6502&nbsp;CPU).</FONT><span style="font-family: Arial"> </span>
-                </span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">NSF bank switching is used automatically when needed.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">New pattern effects: V, square duty setting/noise mode; 
-						Y, DPCM sample offset</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Settings edit boxes are locked from editing, double 
-						click to unlock.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Fixed some bugs in the instrument editor to avoid 
-						crashes.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added modplug keyboard style when the modplug setting 
-						is enabled.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Optimized screen updates,&nbsp;the tracker should use 
-						less CPU.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Currently selected instrument&nbsp;is highlighted in 
-						the&nbsp;list box.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added an option to mask the instrument when inserting 
-						new&nbsp;notes.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added a tempo box to the song settings.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added multiple-tap-of-home-key functionality.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added an option to&nbsp;select the instrument currently 
-						being played by the selected channel.</FONT><span style="font-family: Arial"> </span>
-                </span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Fixed mixed pasting, instruments is now also pasted.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Fixed the&nbsp;instrument sequence too long crash bug.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added buttons for next/prev song in the toolbar.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Auto-arpeggio works for PC keyboard input.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">The commands speed, jump, skip and halt are 
-						now&nbsp;handled from muted channels.</FONT><span style="font-family: Arial"> </span>
-                </span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Notes won't be retriggered&nbsp;when pushing two 
-						buttons at the same time and then releasing one.</FONT><span style="font-family: Arial">
-                        </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Added a shortcut editor to the option dialog, note that 
-						the default shortcuts will still be shown in menus.</FONT><span style="font-family: Arial">
-                        </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Page up/down jump lenght is customizable from 
-						configuration.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Impulse tracker edit option added.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">The cursor will move with the same length as step 
-						length when moving it.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Fixed a bug that occured when moving the cursor when 
-						multiple effect tracks are visible.</FONT><span style="font-family: Arial"> </span>
-                    </span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Changed the pith sequence interpreter.</FONT><span
-                    style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Volume of channels will be rounded of to 1 instead of 
-						0.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">DPCM delay works in the tracker.</FONT><FONT face="Arial" size="2">
-					</FONT></span>
-                <li><span><font face="Arial" size="2"><span style="font-size: 9pt">
-							<FONT face="Arial" size="2">Fixed a problem that caused 8-bit wave files to fail 
-								when imported to DPCM.</FONT> </span></font></span></li>
-                <li><span><font face="Arial" size="2"><span style="font-size: 9pt">
-							<FONT face="Arial" size="2">Fixed the crash problem when using samples too long.</FONT>&nbsp;
-                </span></font></span></li>
-                <li><span style="font-size: 9pt"><font face="Arial" size="2">
-						Added a value gradients option for the volume column. </font></span></li>
-                <li><span><font face="Arial" size="2"></font><span style="font-size: 9pt"><FONT face="Arial" size="2">Paste works&nbsp;when edit mode&nbsp;is off.</FONT><span style="font-family: Arial">
-                    </span></span></span></li>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Changed the noise channel to display frequencies 
-						instead of useless notes.</FONT><span style="font-family: Arial"> </span></span>
-				<LI><span style="font-size: 9pt">
-					<FONT face="Arial" size="2">Square hardware sweep is adjusted.</FONT><span
-                        style="font-family: Arial"> </span></span>
-				</LI>
-				<LI>
-					<FONT face="Arial" size="2"><FONT face="Arial" size="2"><span style="font-size: 9pt">
-                        Scrolling with the mouse wheel 
-							in free cursor mode will scroll the view and not cursor </span></FONT></FONT>
-				</LI>
-					<LI><span style="font-size: 9pt; font-family: Arial">
-						New keys<BR>
-						Numpad 0 - 9 = Select instrument 0 - 9
-						<BR>
-						Ctrl + Numpad = Set step size
-						<BR>
-                        Alt + F9 = Mute channel
-						<BR>
-                        Alt + F10 = Solo channel
-						<BR>
-						Numpad / = Decrease octave
-						<BR>
-						Numpad * = Increase octave
-						<BR>
-                        Ctrl + up = Next instrument
-						<BR>
-                        Ctrl + Down = Previous instrument
-						<BR>
-                        Alt + T = Mask instrument column </span>
+            <h1 class="heading">
+                Version 0.2.7</h1>
+			<UL class="text">
+				<LI>New NSF code,&nbsp;creates&nbsp;smaller NSF files&nbsp;(and use less 6502&nbsp;CPU).
+				<LI>NSF bank switching is used automatically when needed.
+				<LI>New pattern effects: V, square duty setting/noise mode; Y, DPCM sample offset
+				<LI>Settings edit boxes are locked from editing, double click to unlock.
+				<LI>Fixed some bugs in the instrument editor to avoid crashes.
+				<LI>Added modplug keyboard style when the modplug setting is enabled.
+				<LI>Optimized screen updates,&nbsp;the tracker should use less CPU.
+				<LI>Currently selected instrument&nbsp;is highlighted in the&nbsp;list box.
+				<LI>Added an option to mask the instrument when inserting new&nbsp;notes.
+				<LI>Added a tempo box to the song settings.
+				<LI>Added multiple-tap-of-home-key functionality.
+				<LI>Added an option to&nbsp;select the instrument currently being played by the selected channel.
+				<LI>Fixed mixed pasting, instruments is now also pasted.
+				<LI>Fixed the&nbsp;instrument sequence too long crash bug.
+				<LI>Added buttons for next/prev song in the toolbar.
+				<LI>Auto-arpeggio works for PC keyboard input.
+				<LI>The commands speed, jump, skip and halt are now&nbsp;handled from muted channels.
+				<LI>Notes won't be retriggered&nbsp;when pushing two buttons at the same time and then releasing one.
+				<LI>Added a shortcut editor to the option dialog, note that the default shortcuts will still be shown in menus.
+				<LI>Page up/down jump lenght is customizable from configuration.
+				<LI>Impulse tracker edit option added.
+				<LI>The cursor will move with the same length as step length when moving it.
+				<LI>Fixed a bug that occured when moving the cursor when multiple effect tracks are visible.
+				<LI>Changed the pith sequence interpreter.
+				<LI>Volume of channels will be rounded of to 1 instead of 0.
+				<LI>DPCM delay works in the tracker. </FONT>
+                <li>Fixed a problem that caused 8-bit wave files to fail when imported to DPCM. </font></li>
+                <li>Fixed the crash problem when using samples too long.&nbsp;
+                <li>Added a value gradients option for the volume column.
+                <li>Paste works&nbsp;when edit mode&nbsp;is off.
+				<LI>Changed the noise channel to display frequencies instead of useless notes.
+				<LI>Square hardware sweep is adjusted.
+				<LI>Scrolling with the mouse wheel in free cursor mode will scroll the view and not cursor 
+				<LI>New keys<BR>
+						Numpad 0 - 9 = Select instrument 0 - 9<BR>
+						Ctrl + Numpad = Set step size<BR>
+                        Alt + F9 = Mute channel<BR>
+                        Alt + F10 = Solo channel<BR>
+						Numpad / = Decrease octave<BR>
+						Numpad * = Increase octave<BR>
+                        Ctrl + up = Next instrument<BR>
+                        Ctrl + Down = Previous instrument<BR>
+                        Alt + T = Mask instrument column
 			</UL>
-		<P><FONT face="Arial" size="2"></FONT>&nbsp;</P>
+		<P>&nbsp;</P>
 	</BODY>
 </HTML>

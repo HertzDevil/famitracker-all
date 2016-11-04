@@ -1,11 +1,29 @@
-// ConfigShortcuts.cpp : implementation file
-//
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2010  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
+
 
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ConfigShortcuts.h"
 #include "Accelerator.h"
-#include ".\configshortcuts.h"
+#include "Settings.h"
 
 // CConfigShortcuts dialog
 
@@ -48,8 +66,8 @@ BOOL CConfigShortcuts::OnInitDialog()
 	CComboBox *pKeys = (CComboBox*)GetDlgItem(IDC_KEYS);
 
 	pListView->DeleteAllItems();
-	pListView->InsertColumn(0, "Action", LVCFMT_LEFT, 200);
-	pListView->InsertColumn(1, "Modifier", LVCFMT_LEFT, 75);
+	pListView->InsertColumn(0, "Action", LVCFMT_LEFT, 170);
+	pListView->InsertColumn(1, "Modifier", LVCFMT_LEFT, 105);
 	pListView->InsertColumn(2, "Key", LVCFMT_LEFT, 75);
 
 	int Count = Accelerator.GetItemCount();
@@ -60,10 +78,14 @@ BOOL CConfigShortcuts::OnInitDialog()
 		pListView->SetItemText(i, 2, Accelerator.GetKeyName(i));
 	}
 
-	pModifiers->AddString("None");
-	pModifiers->AddString("Shift");
-	pModifiers->AddString("Ctrl");
-	pModifiers->AddString("Alt");
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_NONE]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_SHIFT]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_CONTROL]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_CONTROL]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_SHIFT]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_CONTROL | MOD_SHIFT]);
+	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_CONTROL | MOD_SHIFT]);
 
 	pKeys->AddString("None");
 
@@ -107,7 +129,7 @@ void CConfigShortcuts::OnNMClickShortcuts(NMHDR *pNMHDR, LRESULT *pResult)
 	if (Item == -1)
 		return;
 
-	pModifiers->SetCurSel(pModifiers->FindStringExact(-1, pAccel->GetModName(Item)));
+	pModifiers->SetCurSel(pModifiers->FindStringExact(/*-1*/0, pAccel->GetModName(Item)));
 	pKeys->SetCurSel(pKeys->FindStringExact(0, pAccel->GetKeyName(Item)));
 
 	*pResult = 0;
@@ -176,14 +198,12 @@ BOOL CConfigShortcuts::OnApply()
 	for (int i = 0; i < Count; i++) {
 		CString ModTxt = pListView->GetItemText(i, 1);
 
-		if (ModTxt == "None")
-			pAccel->SelectMod(i, 0);
-		else if (ModTxt == "Shift")
-			pAccel->SelectMod(i, MOD_SHIFT);
-		else if (ModTxt == "Ctrl")
-			pAccel->SelectMod(i, MOD_CONTROL);
-		else if (ModTxt == "Alt")
-			pAccel->SelectMod(i, MOD_ALT);
+		for (int j = 0; j < 7; ++j) {
+			if (ModTxt == CAccelerator::MOD_NAMES[j]) {
+				pAccel->SelectMod(i, j);
+				break;
+			}
+		}
 
 		pAccel->SelectKey(i, pListView->GetItemText(i, 2));
 	}

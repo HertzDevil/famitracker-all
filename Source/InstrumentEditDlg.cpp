@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,13 +20,24 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "InstrumentEditDlg.h"
+#include "InstrumentEditor2A03.h"
+#include "InstrumentEditorDPCM.h"
+#include "InstrumentEditorVRC6.h"
+#include "InstrumentEditorVRC7.h"
+#include "InstrumentEditorFDS.h"
+#include "InstrumentEditorFDSEnvelope.h"
+#include "InstrumentEditorN106.h"
+#include "MainFrm.h"
 
-const int KEYBOARD_TOP		= 313;
+const int KEYBOARD_TOP		= 323;
 const int KEYBOARD_LEFT		= 12;
 const int KEYBOARD_WIDTH	= 561;
 const int KEYBOARD_HEIGHT	= 58;
+
+const char *CHIP_NAMES[] = {"", "2A03", "VRC6", "VRC7", "FDS", "N106", "5B"};
 
 // CInstrumentEditDlg dialog
 
@@ -36,6 +47,7 @@ CInstrumentEditDlg::CInstrumentEditDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstrumentEditDlg::IDD, pParent)
 {
 	m_bOpened = false;
+	m_iInstrument = -1;
 }
 
 CInstrumentEditDlg::~CInstrumentEditDlg()
@@ -46,7 +58,6 @@ void CInstrumentEditDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
-
 
 BEGIN_MESSAGE_MAP(CInstrumentEditDlg, CDialog)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_INST_TAB, OnTcnSelchangeInstTab)
@@ -61,11 +72,6 @@ END_MESSAGE_MAP()
 
 // CInstrumentEditDlg message handlers
 
-void CInstrumentEditDlg::OnBnClickedClose()
-{
-	EndDialog(0x00);
-}
-
 BOOL CInstrumentEditDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
@@ -74,96 +80,110 @@ BOOL CInstrumentEditDlg::OnInitDialog()
 	m_iLastNote = -1;
 	m_bOpened = true;
 
+	for (int i = 0; i < PANEL_COUNT; i++)
+		m_pPanels[i] = NULL;
+
+	m_iPanels = 0;
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void CInstrumentEditDlg::InsertPane(CDialog *pDlg, char *pTitle, int IDD, bool Show)
+void CInstrumentEditDlg::InsertPane(CInstrumentEditPanel *pPanel, bool Show)
 {
 	CRect Rect, ParentRect;
 	CTabCtrl *pTabControl = static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB));
 
 	pTabControl->GetWindowRect(&ParentRect);
-	pTabControl->InsertItem(1, pTitle);
+	pTabControl->InsertItem(m_iPanels, pPanel->GetTitle());
 
-	pDlg->Create(IDD, this);
-	pDlg->GetWindowRect(&Rect);
-	Rect.MoveToXY(ParentRect.left - Rect.left + 1, ParentRect.top - Rect.top + 21);
-	Rect.bottom -= 2;
-	Rect.right += 1;
-	pDlg->MoveWindow(Rect);
-	pDlg->ShowWindow(Show ? SW_SHOW : SW_HIDE);
+	pPanel->Create(pPanel->GetIDD(), this);
+	pPanel->GetWindowRect(&Rect);
+	Rect.MoveToXY(ParentRect.left - Rect.left + SX(1), ParentRect.top - Rect.top + SY(21));
+	Rect.bottom -= SY(2);
+	Rect.right += SX(1);
+	pPanel->MoveWindow(Rect);
+	pPanel->ShowWindow(Show ? SW_SHOW : SW_HIDE);
+
+	if (Show) {
+		pTabControl->SetCurSel(m_iPanels);
+		pPanel->SetFocus();
+	}
+
+	m_pPanels[m_iPanels++] = pPanel;
 }
 
-void CInstrumentEditDlg::Load2A03()
+void CInstrumentEditDlg::ClearPanels()
 {
 	static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB))->DeleteAllItems();
-	InsertPane(&InstrumentSettings, "Instrument settings", IDD_INSTRUMENT_INTERNAL, true);
-	InsertPane(&InstrumentDPCM, "DPCM samples", IDD_INSTRUMENT_DPCM, false);
-}
 
-void CInstrumentEditDlg::LoadVRC6()
-{
-	static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB))->DeleteAllItems();
-	InsertPane(&InstrumentVRC6, "Konami VRC6", IDD_INSTRUMENT_VRC6, true);
-}
+	for (int i = 0; i < PANEL_COUNT; i++) {
+		if (m_pPanels[i] != NULL) {
+			m_pPanels[i]->DestroyWindow();
+			delete m_pPanels[i];
+			m_pPanels[i] = NULL;
+		}
+	}
 
-void CInstrumentEditDlg::LoadVRC7()
-{
-	static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB))->DeleteAllItems();
-	InsertPane(&InstrumentVRC7, "Konami VRC7", IDD_INSTRUMENT_VRC7, true);
+	m_iPanels = 0;
+	m_iInstrument = -1;
 }
 
 void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
 	CString Title;
 	char Name[256];
+/*
+	if (Index == m_iInstrument)
+		return;
 
-	pDoc->GetInstrumentName(Index, Name);
-	Title.Format("Instrument editor - %s", Name);
-	SetWindowText(Title);
+	m_iInstrument = Index;
+*/
 
 	CInstrument *pInst = pDoc->GetInstrument(Index);
 	int InstType = pInst->GetType();
 
-	if (m_iSelectedInstType != InstType) {
-		switch (m_iSelectedInstType) {
-			case INST_2A03:
-				InstrumentSettings.DestroyWindow();
-				InstrumentDPCM.DestroyWindow();
-				break;
-			case INST_VRC6:
-				InstrumentVRC6.DestroyWindow();
-				break;
-			case INST_VRC7:
-				InstrumentVRC7.DestroyWindow();
-				break;
-		}
+	// Dialog title
+	CString Chip;
+	pDoc->GetInstrumentName(Index, Name);
+	
+	Title.Format("Instrument editor - %02X. %s (%s)", Index, Name, CHIP_NAMES[InstType]);
+	SetWindowText(Title);
+
+	if (InstType != m_iSelectedInstType) {
+
+		ClearPanels();
+
 		switch (InstType) {
-			case INST_2A03:
-				Load2A03();
+			case INST_2A03: {
+				bool bShowDPCM = (((CFamiTrackerView*)theApp.GetDocumentView())->GetSelectedChannel() == 4) || 
+					(((CInstrument2A03*)pInst)->AssignedSamples());
+					InsertPane(new CInstrumentEditor2A03(), !bShowDPCM);
+					InsertPane(new CInstrumentEditorDPCM(), bShowDPCM);
+				}
 				break;
 			case INST_VRC6:
-				LoadVRC6();
+				InsertPane(new CInstrumentEditorVRC6(), true);
 				break;
 			case INST_VRC7:
-				LoadVRC7();
+				InsertPane(new CInstrumentEditorVRC7(), true);
 				break;
+			case INST_FDS:
+				InsertPane(new CInstrumentEditorFDS(), true);
+				InsertPane(new CInstrumentEditorFDSEnvelope(), false);
+				break;
+			case INST_N106:
+				InsertPane(new CInstrumentEditorN106(), true);
 		}
+
+		m_iSelectedInstType = InstType;
 	}
 
-	switch (InstType) {
-		case INST_2A03:
-			InstrumentSettings.SetCurrentInstrument(Index);
-			InstrumentDPCM.SetCurrentInstrument(Index);
-			break;
-		case INST_VRC6:
-			InstrumentVRC6.SetCurrentInstrument(Index);
-			break;
-		case INST_VRC7:
-			InstrumentVRC7.SetCurrentInstrument(Index);
-			break;
+	for (int i = 0; i < PANEL_COUNT; i++) {
+		if (m_pPanels[i] != NULL) {
+			m_pPanels[i]->SelectInstrument(Index);
+		}
 	}
 
 	m_iSelectedInstType = InstType;
@@ -176,16 +196,13 @@ void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
 
 	Selection = pTabControl->GetCurSel();
 
-	switch (Selection) {
-		case 0:
-			InstrumentSettings.ShowWindow(SW_SHOW);
-			InstrumentDPCM.ShowWindow(SW_HIDE);
-			break;
-		case 1:
-			InstrumentSettings.ShowWindow(SW_HIDE);
-			InstrumentDPCM.ShowWindow(SW_SHOW);
-			break;
+	for (int i = 0; i < PANEL_COUNT; i++) {
+		if (m_pPanels[i] != NULL) {
+			m_pPanels[i]->ShowWindow(SW_HIDE);
+		}
 	}
+
+	m_pPanels[Selection]->ShowWindow(SW_SHOW);
 
 	*pResult = 0;
 }
@@ -224,7 +241,6 @@ void CInstrumentEditDlg::OnPaint()
 	OldBlack = BlackKey.SelectObject(&BlackKeyBmp);
 
 	int Pos;
-	int NoteIndex;
 
 	const int WHITE[]	= {0, 2, 4, 5, 7, 9, 11};
 	const int BLACK_1[] = {1, 3};
@@ -237,7 +253,6 @@ void CInstrumentEditDlg::OnPaint()
 		Pos = /*KEYBOARD_LEFT +*/ ((WHITE_KEY_W * 7) * j);
 
 		for (i = 0; i < 7; i++) {
-			NoteIndex = (j * 7 + i);
 			if ((Note == WHITE[i]) && (Octave == j) && m_iLightNote != -1)
 				WhiteKey.SelectObject(WhiteKeyMarkBmp);
 			else
@@ -247,7 +262,6 @@ void CInstrumentEditDlg::OnPaint()
 		}
 
 		for (i = 0; i < 2; i++) {
-			NoteIndex = (j * 7 + i);
 			if ((Note == BLACK_1[i]) && (Octave == j) && m_iLightNote != -1)
 				BlackKey.SelectObject(BlackKeyMarkBmp);
 			else
@@ -269,7 +283,7 @@ void CInstrumentEditDlg::OnPaint()
 	WhiteKey.SelectObject(OldWhite);
 	BlackKey.SelectObject(OldBlack);
 
-	dc.BitBlt(KEYBOARD_LEFT, KEYBOARD_TOP, KEYBOARD_WIDTH, KEYBOARD_HEIGHT, &BackDC, 0, 0, SRCCOPY);
+	dc.BitBlt(SX(KEYBOARD_LEFT - 6) + 6, SY(KEYBOARD_TOP - 12) + 12, KEYBOARD_WIDTH, KEYBOARD_HEIGHT, &BackDC, 0, 0, SRCCOPY);
 
 	BackDC.SelectObject(OldBmp);
 }
@@ -284,12 +298,23 @@ void CInstrumentEditDlg::ChangeNoteState(int Note)
 
 void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 {
+	CFamiTrackerView *pView = ((CFamiTrackerView*)theApp.GetDocumentView());
 	stChanNote NoteData;
 	int Octave;
 	int Note;
 	int KeyPos;
 
-	int Channel = ((CFamiTrackerView*)theApp.GetView())->GetSelectedChannel();
+	// Todo: remove hardcoded numbers
+
+	// Send to DPCM channel if DPCM view is activated
+	if (m_iSelectedInstType == INST_2A03 && m_pPanels[1]->IsWindowVisible())
+		pView->SelectChannel(4);
+
+	// Select FDS channel
+	if (m_iSelectedInstType == INST_FDS)
+		pView->SelectChannel(5);
+
+	int Channel = pView->GetSelectedChannel();
 
 	Octave = (x - KEYBOARD_LEFT) / 70;
 
@@ -348,11 +373,11 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 			NoteData.Note			= Note + 1;
 			NoteData.Octave			= Octave;
 			NoteData.Vol			= 0x0F;
-			NoteData.Instrument		= ((CFamiTrackerView*)theApp.GetView())->GetInstrument();
+			NoteData.Instrument		= pView->GetInstrument();
 			memset(NoteData.EffNumber, 0, 4);
 			memset(NoteData.EffParam, 0, 4);
 
-			((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
+			pView->FeedNote(Channel, &NoteData);
 		}
 
 		m_iLastNote = Note + (Octave * 12);
@@ -365,7 +390,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 		memset(NoteData.EffNumber, 0, 4);
 		memset(NoteData.EffParam, 0, 4);
 
-		((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
+		pView->FeedNote(Channel, &NoteData);
 
 		m_iLastNote = -1;
 	}
@@ -375,24 +400,24 @@ void CInstrumentEditDlg::SwitchOffNote()
 {
 	stChanNote NoteData;
 
-	int Channel = ((CFamiTrackerView*)theApp.GetView())->GetSelectedChannel();
+	int Channel = ((CFamiTrackerView*)theApp.GetDocumentView())->GetSelectedChannel();
 
 	NoteData.Note			= HALT;
 	NoteData.Octave			= 0;
-	NoteData.Vol			= 0;
+	NoteData.Vol			= 0x10;
 	NoteData.Instrument		= 0;
 	memset(NoteData.EffNumber, 0, 4);
 	memset(NoteData.EffParam, 0, 4);
 
-	((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
+	((CFamiTrackerView*)theApp.GetDocumentView())->FeedNote(Channel, &NoteData);
 
 	m_iLastNote = -1;
 }
 
 void CInstrumentEditDlg::OnLButtonDown(UINT nFlags, CPoint point)
 {
+	ScaleMouse(point);
 	SwitchOnNote(point.x, point.y);
-
 	CDialog::OnLButtonDown(nFlags, point);
 }
 
@@ -404,6 +429,8 @@ void CInstrumentEditDlg::OnLButtonUp(UINT nFlags, CPoint point)
 
 void CInstrumentEditDlg::OnMouseMove(UINT nFlags, CPoint point)
 {
+	ScaleMouse(point);
+
 	if (nFlags & MK_LBUTTON)
 		SwitchOnNote(point.x, point.y);
 
@@ -417,23 +444,11 @@ void CInstrumentEditDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 }
 
 BOOL CInstrumentEditDlg::DestroyWindow()
-{
-	if (m_bOpened) {
-		switch (m_iSelectedInstType) {
-			case INST_2A03:
-				InstrumentSettings.DestroyWindow();
-				InstrumentDPCM.DestroyWindow();
-				break;
-			case INST_VRC6:
-				InstrumentVRC6.DestroyWindow();
-				break;
-			case INST_VRC7:
-				InstrumentVRC7.DestroyWindow();
-				break;
-		}
-	}
-	
+{	
+	ClearPanels();
+
 	m_iSelectedInstType = -1;
+	m_iInstrument = -1;
 	m_bOpened = false;
 	
 	return CDialog::DestroyWindow();
@@ -441,8 +456,8 @@ BOOL CInstrumentEditDlg::DestroyWindow()
 
 void CInstrumentEditDlg::OnOK()
 {
-	DestroyWindow();
-	CDialog::OnOK();
+//	DestroyWindow();
+//	CDialog::OnOK();
 }
 
 void CInstrumentEditDlg::OnCancel()
@@ -456,3 +471,9 @@ void CInstrumentEditDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
 	SwitchOffNote();
 	CDialog::OnNcLButtonUp(nHitTest, point);
 }
+
+bool CInstrumentEditDlg::IsOpened()
+{
+	return m_bOpened;
+}
+

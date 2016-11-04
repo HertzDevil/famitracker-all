@@ -55,10 +55,10 @@
 static unsigned char default_inst[OPLL_TONE_NUM][(16+3)*16]=
 {
   { 
-#include "apu/2413tone.h" 
+#include "2413tone.h" 
   },
   { 
-#include "apu/vrc7tone.h" 
+#include "vrc7tone.h" 
   }
 };
 
@@ -1186,6 +1186,14 @@ INLINE static int32 calc_slot_hat(OPLL_SLOT *slot, int32 a, int32 b, int32 c, ui
   }
 }
 
+int32 opll_volumes[10];
+
+int32 OPLL_getchanvol(int i)
+{
+	return opll_volumes[i];
+}
+
+
 int16 OPLL_calc(OPLL *opll)
 {
   int32 inst = 0 , perc = 0 , out = 0 ;
@@ -1197,7 +1205,12 @@ int16 OPLL_calc(OPLL *opll)
 
   for(i = 0 ; i < 6 ; i++)
     if(!(opll->mask&OPLL_MASK_CH(i))&&(opll->CAR(i)->eg_mode!=FINISH))
-      inst += calc_slot_car(opll->CAR(i),calc_slot_mod(opll->MOD(i))) ;
+	{
+		int32 val = calc_slot_car(opll->CAR(i),calc_slot_mod(opll->MOD(i))) ;
+		opll_volumes[i] = val;
+		inst += val;
+	}
+      //inst += calc_slot_car(opll->CAR(i),calc_slot_mod(opll->MOD(i))) ;
 
   if(!opll->rythm_mode)
   {

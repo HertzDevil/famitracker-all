@@ -57,6 +57,7 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 	GraphBgColor = ((GraphBgColor & 0xFF) << 16) | (GraphBgColor & 0xFF00) | ((GraphBgColor & 0xFF0000) >> 16);
 
 	while (i < m_iCount) {
+
 		m_pWindowBuf[m_iWindowBufPtr / 7] = m_pSamples[i++];
 		m_iWindowBufPtr++;
 

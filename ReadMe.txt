@@ -6,14 +6,18 @@ FamiTracker source readme
  Source was created and compiled using Microsoft Visual C++ 2003, but should also compile in 2005
  The NSF driver code is assembled using the CC65 assembler.
 
- This is my first MFC app, things may look messy.
+ The export plugin support is written by Gradualore
 
  Icon is made by Kuhneghetz
-
+ Toolbar icons are made by ilkke
 
 Code that is not mine:
 
  blip_buffer 0.4.0 by blargg (LGPL)
  FFT code by Reliable Software (this is not GPL and cannot actually be spread with this, so please remove it if you republish this source package)
  YM2413 emulator by Mitsutaka Okazaki (doesn't seem to be GPL this either)
+
+Note:
+ Assert errors in blip-buffer is most likely caused by thread synchronization failure
+ between the main thread and the sound player.
 

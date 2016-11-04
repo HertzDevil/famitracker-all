@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -112,8 +112,8 @@ bool CMIDIImport::ImportFile(LPCSTR FileName)
 	
 	CMIDIImportDialog ImportDialog;
 
-	pDocument = (CFamiTrackerDoc*)theApp.GetDocument();
-	pMainFrame = (CMainFrame*)theApp.GetView()->GetParentFrame();
+	pDocument = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	pMainFrame = (CMainFrame*)theApp.GetDocumentView()->GetParentFrame();
 
 	MTHD_CHUNK MTHD;
 
@@ -317,7 +317,7 @@ void CMIDIImport::ReadEventTrackName()
 	if (Slot == -1)
 		return;
 
-	pMainFrame->AddInstrument(Slot, Text, INST_2A03);
+	pMainFrame->AddInstrument(Slot/*, Text, INST_2A03*/);
 }
 
 void CMIDIImport::ReadEventMarker()

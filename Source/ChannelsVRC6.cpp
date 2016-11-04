@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,43 +22,38 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "ChannelsVRC6.h"
 
-void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
+void CChannelHandlerVRC6::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
 	CInstrumentVRC6 *pInst;
-//	int MidiNote;
 	int PostEffect = 0, PostEffectParam;
 
 	int LastInstrument = m_iInstrument;
-
-	if (HandleDelay(pNoteData, EffColumns))
-		return;
 
 	if (!CChannelHandler::CheckNote(pNoteData, INST_VRC6))
 		return;
 
 	if ((pInst = (CInstrumentVRC6*)m_pDocument->GetInstrument(m_iInstrument)) == NULL)
 		return;
-/*
-	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
-		m_iVolume = 0x10;
-		KillChannel();
-		return;
-	}
-*/
 
 	unsigned int Note, Octave;
 	unsigned int Volume;
 
-	Note		= pNoteData->Note;
-	Octave		= pNoteData->Octave;
-	Volume		= pNoteData->Vol;
+	Note	= pNoteData->Note;
+	Octave	= pNoteData->Octave;
+	Volume	= pNoteData->Vol;
 
-	if (Note == HALT || Note == RELEASE) {
-//		m_iInstrument	= MAX_INSTRUMENTS;
+	if (Note != 0)
+		m_bRelease = false;
+
+	if (Note == RELEASE) {
+		m_bRelease = true;
+	}
+	else if (Note == HALT) {
 		m_iInstrument	= LastInstrument;
 		Volume			= 0x10;
 		Octave			= 0;
@@ -72,7 +67,7 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 		if (!CheckCommonEffects(EffCmd, EffParam)) {
 			switch (EffCmd) {
 				case EF_DUTY_CYCLE:
-					m_iDefaultDuty = m_cDutyCycle = EffParam;
+					m_iDefaultDuty = m_iDutyPeriod = EffParam;
 					break;
 				case EF_SLIDE_UP:
 				case EF_SLIDE_DOWN:
@@ -86,11 +81,10 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 
 	if (LastInstrument != m_iInstrument || Note > 0 && Note != HALT) {
 		// Setup instrument
-		for (int i = 0; i < MOD_COUNT; i++) {
-			ModEnable[i]	= pInst->GetModEnable(i);
-			ModIndex[i]		= pInst->GetModIndex(i);
-			ModPointer[i]	= 0;
-			ModDelay[i]		= 1;
+		for (int i = 0; i < SEQ_COUNT; i++) {
+			m_iSeqEnabled[i] = pInst->GetSeqEnable(i);
+			m_iSeqIndex[i]	 = pInst->GetSeqIndex(i);
+			m_iSeqPointer[i] = 0;
 		}
 	}
 
@@ -98,8 +92,7 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 	if (Volume < 0x10)
 		m_iVolume = Volume << VOL_SHIFT;
 
-	if (Note == HALT || Note == RELEASE) {
-		//m_iVolume = 0x0F << VOL_SHIFT;
+	if (Note == HALT) {
 		KillChannel();
 		return;
 	}
@@ -108,14 +101,18 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 	if (!Note)
 		return;
 
-	// Get the note
-	RunNote(Octave, Note);
+	if (!m_bRelease) {
 
-	m_iNote		 = MIDI_NOTE(Octave, Note);
-	m_iOutVol	 = 0xF;
-	m_cDutyCycle = m_iDefaultDuty;
-	m_bEnabled	 = true;
-	m_iLastInstrument = m_iInstrument;
+		// Get the note
+		m_iNote				= RunNote(Octave, Note);
+		m_iOutVol			= 0xF;
+		m_iDutyPeriod		= m_iDefaultDuty;
+		m_bEnabled			= true;
+		m_iLastInstrument	= m_iInstrument;
+	}
+	else {
+		ReleaseNote();
+	}
 
 	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
 		m_iEffect = EF_NONE;
@@ -126,61 +123,29 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 
 void CChannelHandlerVRC6::ProcessChannel()
 {
+	// Default effects
+	CChannelHandler::ProcessChannel();
+
 	if (!m_bEnabled)
 		return;
 
-	// Default effects
-	CChannelHandler::ProcessChannel();
-	
 	// Sequences
-	for (int i = 0; i < MOD_COUNT; i++)
-		RunSequence(i, m_pDocument->GetSequenceVRC6(ModIndex[i], i));
+	for (int i = 0; i < SEQ_COUNT; i++)
+		CChannelHandler::RunSequence(i, m_pDocument->GetSequenceVRC6(m_iSeqIndex[i], i));
 }
 
-void CChannelHandlerVRC6::RunSequence(int Index, CSequence *pSequence)
+void CChannelHandlerVRC6::ResetChannel()
 {
-	int Value;
+	CChannelHandler::ResetChannel();
+}
 
-	if (ModEnable[Index]) {
-
-		Value = pSequence->GetItem(ModPointer[Index]);
-
-		switch (Index) {
-			// Volume modifier
-			case MOD_VOLUME:
-				m_iOutVol = Value;
-				break;
-			// Arpeggiator
-			case MOD_ARPEGGIO:
-				m_iFrequency = TriggerNote(m_iNote + Value);
-				break;
-			// Pitch
-			case MOD_PITCH:
-				m_iFrequency += Value;
-				LIMIT(m_iFrequency, 0xFFF, 0);
-				break;
-			// Hi-pitch
-			case MOD_HIPITCH:
-				m_iFrequency += Value << 4;
-				LIMIT(m_iFrequency, 0xFFF, 0);
-				break;
-			// Duty cycling
-			case MOD_DUTYCYCLE:
-				m_cDutyCycle = Value;
-				break;
-		}
-
-		ModPointer[Index]++;
-
-		if (ModPointer[Index] == pSequence->GetItemCount()) {
-			if (pSequence->GetLoopPoint() != -1)
-				// Loop
-				ModPointer[Index] = pSequence->GetLoopPoint();
-			else
-				// End of sequence
-				ModEnable[Index] = 0;
-		}
-	}
+int CChannelHandlerVRC6::LimitFreq(int Freq)
+{
+	if (Freq > 0xFFF)
+		Freq = 0xFFF;
+	if (Freq < 0)
+		Freq = 0;
+	return Freq;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +155,7 @@ void CChannelHandlerVRC6::RunSequence(int Index, CSequence *pSequence)
 void CVRC6Square1::RefreshChannel()
 {
 	unsigned char LoFreq, HiFreq;
-	char DutyCycle = m_cDutyCycle << 4;
+	char DutyCycle = m_iDutyPeriod << 4;
 	int Volume, Freq, VibFreq, TremVol;
 
 	if (!m_bEnabled)
@@ -199,7 +164,7 @@ void CVRC6Square1::RefreshChannel()
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
@@ -233,7 +198,7 @@ void CVRC6Square1::ClearRegisters()
 void CVRC6Square2::RefreshChannel()
 {
 	unsigned char LoFreq, HiFreq;
-	char DutyCycle = m_cDutyCycle << 4;
+	char DutyCycle = m_iDutyPeriod << 4;
 	int Volume, Freq, VibFreq, TremVol;
 
 	if (!m_bEnabled)
@@ -242,7 +207,7 @@ void CVRC6Square2::RefreshChannel()
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
@@ -284,14 +249,14 @@ void CVRC6Sawtooth::RefreshChannel()
 	VibFreq = GetVibrato();
 	TremVol = GetTremolo();
 
-	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
+	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
 
 	Volume = (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
-	Volume = (Volume << 1) | ((m_cDutyCycle & 1) << 5);
+	Volume = (Volume << 1) | ((m_iDutyPeriod & 1) << 5);
 
 	if (Volume < 0)
 		Volume = 0;
