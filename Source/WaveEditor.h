@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 
 #pragma once
 
+enum {WM_USER_WAVE_CHANGED = WM_USER};
+
 class CWaveEditor : public CWnd
 {
 public:
@@ -36,6 +38,8 @@ protected:
 	virtual void SetSample(int i, int s) = 0;
 	virtual int GetMaxSamples() const = 0;
 	virtual void DrawRect(CDC *pDC, int x, int y, int sx, int sy) const = 0;
+	virtual bool GetLineMode() const = 0;
+	virtual void SetLineMode(bool Mode) = 0;
 
 protected:
 	int m_iSX, m_iSY;
@@ -45,7 +49,7 @@ protected:
 
 	bool m_bDrawLine;
 
-	static bool m_bLineMode;
+//	static virtual bool m_bLineMode;
 
 public:
 	void WaveChanged();
@@ -77,21 +81,36 @@ protected:
 	virtual void SetSample(int i, int s);
 	virtual int GetMaxSamples() const;
 	virtual void DrawRect(CDC *pDC, int x, int y, int sx, int sy) const;
+	virtual bool GetLineMode() const { return m_bLineMode; };
+	virtual void SetLineMode(bool Mode) { m_bLineMode = Mode; };
+
+protected:
+	static bool m_bLineMode;
+
 protected:
 	CInstrumentFDS *m_pInstrument;
 };
 
-// N106 wave
-class CWaveEditorN106 : public CWaveEditor
+// N163 wave
+class CWaveEditorN163 : public CWaveEditor
 {
 public:
-	CWaveEditorN106(int sx, int sy, int lx, int ly) : CWaveEditor(sx, sy, lx, ly), m_pInstrument(NULL) {};
-	void SetInstrument(CInstrumentN106 *pInst);
+	CWaveEditorN163(int sx, int sy, int lx, int ly) : CWaveEditor(sx, sy, lx, ly), m_pInstrument(NULL), m_iWaveIndex(0) {};
+	void SetLength(int Length);
+	void SetInstrument(CInstrumentN163 *pInst);
+	void SetWave(int i);
 protected:
 	virtual int GetSample(int i) const;
 	virtual void SetSample(int i, int s);
 	virtual int GetMaxSamples() const;
 	virtual void DrawRect(CDC *pDC, int x, int y, int sx, int sy) const;
+	virtual bool GetLineMode() const { return m_bLineMode; };
+	virtual void SetLineMode(bool Mode) { m_bLineMode = Mode; };
+
 protected:
-	CInstrumentN106 *m_pInstrument;
+	static bool m_bLineMode;
+
+protected:
+	CInstrumentN163 *m_pInstrument;
+	int m_iWaveIndex;
 };

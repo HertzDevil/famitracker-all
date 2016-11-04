@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -64,18 +64,18 @@ BOOL CConfigMIDI::OnInitDialog()
 	int		NumDev, i;
 	CString Text;
 
-	CComboBox *InDevices = (CComboBox*)GetDlgItem(IDC_INDEVICES);
-	CComboBox *OutDevices = (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
+	CComboBox *pInDevices = (CComboBox*)GetDlgItem(IDC_INDEVICES);
+	CComboBox *pOutDevices = (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
 
-	InDevices->AddString(_T("<none>"));
-	OutDevices->AddString(_T("<none>"));
+	pInDevices->AddString(_T("<none>"));
+	pOutDevices->AddString(_T("<none>"));
 
 	// Input
 	NumDev = pMIDI->GetNumInputDevices();
 
 	for (i = 0; i < NumDev; ++i) {
 		pMIDI->GetInputDeviceString(i, Text);
-		InDevices->AddString(Text);
+		pInDevices->AddString(Text);
 	}
 
 	// Output
@@ -83,11 +83,11 @@ BOOL CConfigMIDI::OnInitDialog()
 
 	for (i = 0; i < NumDev; ++i) {
 		pMIDI->GetOutputDeviceString(i, Text);
-		OutDevices->AddString(Text);
+		pOutDevices->AddString(Text);
 	}
 
-	InDevices->SetCurSel(pMIDI->GetInputDevice());
-	OutDevices->SetCurSel(pMIDI->GetOutputDevice());
+	pInDevices->SetCurSel(pMIDI->GetInputDevice());
+	pOutDevices->SetCurSel(pMIDI->GetOutputDevice());
 
 	CheckDlgButton(IDC_MASTER_SYNC, theApp.GetSettings()->Midi.bMidiMasterSync	? 1 : 0);
 	CheckDlgButton(IDC_KEY_RELEASE, theApp.GetSettings()->Midi.bMidiKeyRelease	? 1 : 0);

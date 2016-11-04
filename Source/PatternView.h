@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,9 +26,6 @@
 
 enum {TRANSPOSE_DEC_NOTES, TRANSPOSE_INC_NOTES, TRANSPOSE_DEC_OCTAVES, TRANSPOSE_INC_OCTAVES};
 
-// Levels of undo in the editor. Higher value requires more memory
-const int UNDO_LEVELS = 30;
-
 // Graphical layout of pattern editor
 
 // Top header (channel names etc)
@@ -51,18 +48,6 @@ struct stClipData {
 	int StartColumn;	// Start column in first channel
 	int EndColumn;		// End column in last channel
 	stChanNote Pattern[MAX_CHANNELS][MAX_PATTERN_LENGTH];
-};
-
-// Structure used by UNDO
-struct stUndoBlock {
-	stChanNote ChannelData[MAX_CHANNELS][MAX_PATTERN_LENGTH];
-	int Patterns[MAX_CHANNELS];
-	int Track;
-	int Channel;
-	int Row, Column;
-	int Frame;
-	int PatternLen;
-	int ActualPatternLen;
 };
 
 // Row color cache
@@ -92,8 +77,8 @@ public:
 // Selection
 class CSelection {
 public:
-	int GetStartRow() const;
-	int GetEndRow() const;
+	int GetRowStart() const;
+	int GetRowEnd() const;
 	int GetColStart() const;
 	int GetColEnd() const;
 	int GetChanStart() const;
@@ -166,6 +151,7 @@ public:
 	void MoveChannelLeft();
 	void MoveChannelRight();
 	void OnHomeKey();
+	void OnEndKey();
 
 	void MoveToRow(int Row);
 	void MoveToFrame(int Frame);
@@ -204,10 +190,14 @@ public:
 	bool CancelDragging();
 
 	// Edit: Copy & paste, selection
+	void CopyEntire(stClipData *pClipData);
 	void Copy(stClipData *pClipData);
 	void Cut();
+	void PasteEntire(stClipData *pClipData);
 	void Paste(stClipData *pClipData);
 	void PasteMix(stClipData *pClipData);
+	void DeleteSelectionRows(CSelection &selection);
+	void DeleteSelection(CSelection &selection);
 	void Delete();
 	void RemoveSelectedNotes();
 
@@ -218,12 +208,6 @@ public:
 	void Interpolate();
 	void Reverse();
 	void ReplaceInstrument(int Instrument);
-
-	void AddUndo();
-	void Undo();
-	void Redo();
-	bool CanUndo();
-	bool CanRedo();
 
 	void ClearSelection();
 
@@ -253,6 +237,18 @@ public:
 	int GetChannelWidth(int i) const { return m_iChannelWidths[i]; }
 	int GetVisibleWidth() const { return m_iVisibleWidth; }
 
+	CSelection GetSelection() const;
+	void SetSelection(CSelection &selection);
+
+	void DragPaste(stClipData *pClipData, CSelection *pDragTarget, bool bMix);
+
+	void ExpandPattern();
+	void ShrinkPattern();
+
+#ifdef _DEBUG
+	void DrawLog(CDC *pDC);
+#endif
+
 	// Private functions
 private:
 	int  GetRowAtPoint(int PointY) const;
@@ -260,6 +256,8 @@ private:
 	bool IsColumnSelected(int Column, int Channel) const;
 	int  GetSelectColumn(int Column) const;
 	bool IsSingleChannelSelection() const;
+
+	int GetChannelColumns(int Channel) const;
 
 	CCursorPos GetCursorAtPoint(CPoint point) const;
 
@@ -290,9 +288,6 @@ private:
 	// Other
 	int GetCurrentPatternLength(int Frame) const;
 
-	stUndoBlock *SaveUndoState() const;
-	void RestoreState(stUndoBlock *pUndoBlock);
-
 private:
 	static LPCTSTR DEFAULT_HEADER_FONT;
 	static const int DEFAULT_FONT_SIZE;
@@ -322,6 +317,7 @@ private:
 	int	m_iNextPatternLength;
 	int m_iPlayPatternLength;
 
+	int m_iChannels;
 	int m_iChannelWidths[MAX_CHANNELS];
 	int m_iColumns[MAX_CHANNELS];
 
@@ -375,7 +371,7 @@ private:
 	bool m_bDragging;
 	bool m_bSelectedAll;
 
-	CSelection m_selSelection;
+	CSelection m_selection;
 	CCursorPos m_cpSelCursor;
 
 	// Drag
@@ -390,10 +386,6 @@ private:
 	// Keys
 	bool m_bShiftPressed;
 	bool m_bControlPressed;
-
-	// Undo
-	int m_iUndoLevel, m_iRedoLevel;
-	stUndoBlock *m_pUndoStack[UNDO_LEVELS + 1];
 
 	// GDI objects
 	CDC		*m_pBackDC;

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorFDS, CInstrumentEditPanel)
 	ON_BN_CLICKED(IDC_COPY_TABLE, &CInstrumentEditorFDS::OnBnClickedCopyTable)
 	ON_BN_CLICKED(IDC_PASTE_TABLE, &CInstrumentEditorFDS::OnBnClickedPasteTable)
 //	ON_BN_CLICKED(IDC_ENABLE_FM, &CInstrumentEditorFDS::OnBnClickedEnableFm)
+	ON_MESSAGE(WM_USER + 1, OnModChanged)
 END_MESSAGE_MAP()
 
 // CInstrumentEditorFDS message handlers
@@ -135,6 +136,7 @@ void CInstrumentEditorFDS::OnPresetSine()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnPresetTriangle()
@@ -145,6 +147,7 @@ void CInstrumentEditorFDS::OnPresetTriangle()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnPresetPulse50()
@@ -155,6 +158,7 @@ void CInstrumentEditorFDS::OnPresetPulse50()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnPresetPulse25()
@@ -165,6 +169,7 @@ void CInstrumentEditorFDS::OnPresetPulse25()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnPresetSawtooth()
@@ -175,6 +180,7 @@ void CInstrumentEditorFDS::OnPresetSawtooth()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModPresetFlat()
@@ -184,6 +190,7 @@ void CInstrumentEditorFDS::OnModPresetFlat()
 	}
 
 	m_pModSequenceEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModPresetSine()
@@ -204,6 +211,7 @@ void CInstrumentEditorFDS::OnModPresetSine()
 	m_pInstrument->SetModulation(25, 0);
 
 	m_pModSequenceEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 int CInstrumentEditorFDS::GetModRate() const 
@@ -230,6 +238,7 @@ void CInstrumentEditorFDS::OnModRateChange()
 		LIMIT(ModSpeed, 4095, 0);
 		m_pInstrument->SetModulationSpeed(ModSpeed);
 	}
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModDepthChange()
@@ -239,6 +248,7 @@ void CInstrumentEditorFDS::OnModDepthChange()
 		LIMIT(ModDepth, 63, 0);
 		m_pInstrument->SetModulationDepth(ModDepth);
 	}
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModDelayChange()
@@ -248,40 +258,12 @@ void CInstrumentEditorFDS::OnModDelayChange()
 		LIMIT(ModDelay, 255, 0);
 		m_pInstrument->SetModulationDelay(ModDelay);
 	}
-}
-
-BOOL CInstrumentEditorFDS::PreTranslateMessage(MSG* pMsg)
-{
-	// TODO: remove this
-
-	if (pMsg->message == WM_USER) {
-//		WaveChanged();
-		return TRUE;
-	}
-	else if (pMsg->message == WM_USER + 1) {
-//		WaveChanged();
-		return TRUE;
-	}
-	else if (pMsg->message == WM_KEYDOWN) {
-		if (pMsg->wParam == 13) {
-			if (GetFocus() == GetDlgItem(IDC_WAVE)) {
-//				ReadWaveString();
-			}
-			else if (GetFocus() == GetDlgItem(IDC_MODULATION)) {
-//				ReadModString();
-			}
-		}
-	}
-
-	return CInstrumentEditPanel::PreTranslateMessage(pMsg);
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::PreviewNote(unsigned char Key)
 {
-	// Skip if text windows are selected
-	CWnd *pFocus = GetFocus();
-	if (pFocus != GetDlgItem(IDC_WAVE) && pFocus != GetDlgItem(IDC_MODULATION))
-		static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
 }
 
 void CInstrumentEditorFDS::OnBnClickedCopyWave()
@@ -314,7 +296,19 @@ void CInstrumentEditorFDS::OnBnClickedPasteWave()
 		return;
 
 	HANDLE hMem = GetClipboardData(CF_TEXT);
+
+	if (!hMem) {
+		CloseClipboard();
+		return;
+	}
+
 	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);
+	
+	if (!lptstrCopy) {
+		CloseClipboard();
+		return;
+	}
+
 	string str(lptstrCopy);
 	GlobalUnlock(hMem);
 	CloseClipboard();
@@ -331,6 +325,7 @@ void CInstrumentEditorFDS::OnBnClickedPasteWave()
 	}
 
 	m_pWaveEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnBnClickedCopyTable()
@@ -363,7 +358,19 @@ void CInstrumentEditorFDS::OnBnClickedPasteTable()
 		return;
 
 	HANDLE hMem = GetClipboardData(CF_TEXT);
+
+	if (!hMem) {
+		CloseClipboard();
+		return;
+	}
+
 	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);
+
+	if (!lptstrCopy) {
+		CloseClipboard();
+		return;
+	}
+
 	string str(lptstrCopy);
 	GlobalUnlock(hMem);
 	CloseClipboard();
@@ -380,6 +387,7 @@ void CInstrumentEditorFDS::OnBnClickedPasteTable()
 	}
 
 	m_pModSequenceEditor->RedrawWindow();
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnBnClickedEnableFm()
@@ -397,12 +405,18 @@ void CInstrumentEditorFDS::EnableModControls(bool enable)
 		GetDlgItem(IDC_MOD_RATE)->EnableWindow(FALSE);
 		GetDlgItem(IDC_MOD_DEPTH)->EnableWindow(FALSE);
 		GetDlgItem(IDC_MOD_DELAY)->EnableWindow(FALSE);
-		m_pInstrument->SetModulationEnable(false);
+//		m_pInstrument->SetModulationEnable(false);
 	}
 	else {
 		GetDlgItem(IDC_MOD_RATE)->EnableWindow(TRUE);
 		GetDlgItem(IDC_MOD_DEPTH)->EnableWindow(TRUE);
 		GetDlgItem(IDC_MOD_DELAY)->EnableWindow(TRUE);
-		m_pInstrument->SetModulationEnable(true);
+//		m_pInstrument->SetModulationEnable(true);
 	}
+}
+
+LRESULT CInstrumentEditorFDS::OnModChanged(WPARAM wParam, LPARAM lParam)
+{
+	theApp.GetSoundGenerator()->WaveChanged();
+	return 0;
 }

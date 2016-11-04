@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "resource.h"
 #include "ControlPanelDlg.h"
 
+// This class is mainly used to forward messages to the parent window
 
 // CControlPanelDlg dialog
 
@@ -59,16 +60,23 @@ BOOL CControlPanelDlg::PreTranslateMessage(MSG* pMsg)
 BOOL CControlPanelDlg::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
 {
 	// Route command messages to main frame
-	if (nID != IDC_KEYSTEP_SPIN) {
-		if (GetParent()->GetParent()->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+//	if (nID != IDC_KEYSTEP_SPIN) {
+		if (m_pMainFrame->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
 			return TRUE;
-	}
+//		if (GetParent()->GetParent()->OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+//			return TRUE;
+//	}
 	return CDialog::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
 }
 
 BOOL CControlPanelDlg::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 {
 	// Route notify messages to main frame
-	*pResult = GetParent()->GetParent()->SendMessage(WM_NOTIFY, wParam, lParam);
+	//*pResult = GetParent()->GetParent()->SendMessage(WM_NOTIFY, wParam, lParam);
 	return CDialog::OnNotify(wParam, lParam, pResult);
+}
+
+void CControlPanelDlg::SetFrameParent(CWnd *pMainFrm)
+{
+	m_pMainFrame = pMainFrm;
 }

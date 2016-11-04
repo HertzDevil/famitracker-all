@@ -9,14 +9,13 @@
 #define HID_INDICATOR_RATE                      0x10081
 #define HID_CMD_OCTAVE_PREVIOUS                 0x10081
 #define HID_INDICATOR_TIME                      0x10082
-#define HID_CMD_PASTEOVERWRITE                  0x10082
-#define HID_CMD_PASTEMIXED                      0x10083
+#define HID_CMD_PASTE_OVERWRITE                 0x10082
+#define HID_CMD_PASTE_MIXED                     0x10083
 #define HID_CMD_NEXT_INSTRUMENT                 0x10084
 #define HID_CMD_PREV_INSTRUMENT                 0x10085
 #define HID_CMD_INCREASESTEPSIZE                0x10086
 #define HID_CMD_DECREASESTEPSIZE                0x10087
 #define HID_TRACKER_TOGGLE_PLAY                 0x10088
-#define HID_TRACKER_PLAY_CURSOR                 0x10089
 #define HID_TRACKER_PLAY_START                  0x1008A
 #define HID_FOCUS_FRAME_EDITOR                  0x1008B
 #define HID_FOCUS_PATTERN_EDITOR                0x1008C
@@ -30,8 +29,10 @@
 #define HID_INSTRUMENT_ADD_VRC7                 0x10094
 #define HID_INSTRUMENT_ADD_FDS                  0x10095
 #define HID_INSTRUMENT_ADD_MMC5                 0x10096
-#define HID_INSTRUMENT_ADD_N106                 0x10097
+#define HID_INSTRUMENT_ADD_N163                 0x10097
 #define HID_INSTRUMENT_ADD_S5B                  0x10098
+#define HID_CLONE_SEQUENCE                      0x100AF
+#define HID_TRACKER_PLAY_CURSOR                 0x1012C
 #define HID_TRACKER_PLAY                        0x18003
 #define HID_TRACKER_PLAYPATTERN                 0x18007
 #define HID_TRACKER_STOP                        0x18008
@@ -82,29 +83,12 @@
 #define HID_VIEW_CONTROLPANEL                   0x180BC
 #define HID_EDIT_CLEARPATTERNS                  0x180BE
 #define HID_EDIT_INTERPOLATE                    0x180BF
-#define HID_POPUP_REVERSE                       0x180C0
 #define HID_POPUP_SOLOCHANNEL                   0x180C2
 #define HID_POPUP_TOGGLECHANNEL                 0x180C3
 #define HID_MODULE_DUPLICATEFRAME               0x180C4
-#define HID_POPUP_UNDO                          0x180CE
-#define HID_POPUP_RE                            0x180CF
-#define HID_POPUP_INSERTFRAME                   0x180D0
-#define HID_POPUP_REMOVEFRAME                   0x180D1
-#define HID_POPUP_DUPLICATEFRAME                0x180D2
-#define HID_POPUP_MOVEUP                        0x180D3
-#define HID_POPUP_MOVEDOWN                      0x180D4
-#define HID_FRAME_DUPLICATE                     0x180D5
 #define HID_POPUP_DELETE                        0x180D6
-#define HID_TRACKER_DISPLAYDPCMSAMPLE           0x180D7
 #define HID_EDIT_REVERSE                        0x180D8
-#define HID_Menu                                0x180D9
-#define HID_TRACKER_DISPLAYDPCMSTATE            0x180DA
 #define HID_TRACKER_DPCM                        0x180DB
-#define HID_EDIT_REMOVEUNUSEDINSTRUMENTS        0x180DE
-#define HID_POPUP_ADDINSTRUMENT                 0x180DF
-#define HID_POPUP_REMOVEINSTRUMENT              0x180E0
-#define HID_POPUP_EDITINSTRUMENT                0x180E1
-#define HID_POPUP_CLONEINSTRUMENT               0x180E2
 #define HID_INSTRUMENT_ADD                      0x180E3
 #define HID_INSTRUMENT_REMOVE                   0x180E4
 #define HID_INSTRUMENT_EDIT                     0x180E5
@@ -112,34 +96,14 @@
 #define HID_FRAME_COPY                          0x180E8
 #define HID_FRAME_PASTE                         0x180E9
 #define HID_EDIT_REPLACEINSTRUMENT              0x180EA
-#define HID_POPUP_LOAD                          0x180EB
-#define HID_POPUP_UNLOAD                        0x180EC
-#define HID_POPUP_IMPORT                        0x180ED
-#define HID_POPUP_SAVE                          0x180EE
-#define HID_POPUP_EDIT                          0x180EF
-#define HID_POPUP_PREVIEW                       0x180F0
-#define HID_LOAD                                0x180F1
-#define HID_UNLOAD                              0x180F2
-#define HID_SAVE                                0x180F3
-#define HID_IMPORT                              0x180F4
-#define HID_EDIT                                0x180F5
-#define HID_PREVIEW                             0x180F6
-#define HID_EDIT_CLEANUP                        0x180F7
 #define HID_CLEANUP_REMOVEUNUSEDPATTERNS        0x180F8
 #define HID_HELP_EFFECTTABLE                    0x180F9
-#define HID_INSTRUMENT_CLONE33018               0x180FA
-#define HID_FRAME_QUEUE                         0x180FB
 #define HID_CLEANUP_REMOVEUNUSEDINSTRUMENTS     0x180FE
-#define HID_POPUP_SAMEPLGRAPH                   0x18101
 #define HID_POPUP_SAMPLEGRAPH2                  0x18102
 #define HID_POPUP_SPECTRUMANALYZER              0x18103
 #define HID_POPUP_NOTHING                       0x18104
 #define HID_POPUP_SAMPLEGRAPH1                  0x18105
-#define HID_POPUP_PICKUPINSTRUMENT              0x18107
 #define HID_POPUP_PICKUPROW                     0x18108
-#define HID_POPUP_REPLACEINSTRUMENT             0x1810A
-#define HID_POPUP_TOGGLECHANNEL33035            0x1810B
-#define HID_POPUP_SOLOCHANNEL33036              0x1810C
 #define HID_POPUP_UNMUTEALLCHANNELS             0x1810D
 #define HID_MODULE_CHANNELS                     0x1810E
 #define HID_INSTRUMENT_                         0x1810F
@@ -154,6 +118,37 @@
 #define HID_MODULE_FRAME_REMOVE                 0x18118
 #define HID_MODULE_HEJ                          0x18119
 #define HID_MODULE_REMOVEFRAME                  0x1811A
+#define HID_MODULE_COMMENTS                     0x1811B
+#define HID_MODULE_INSERTFRAME                  0x1811C
+#define HID_INSTRUMENT_NEW                      0x1811D
+#define HID_INSTRUMENT_LOAD                     0x1811E
+#define HID_INSTRUMENT_SAVE                     0x1811F
+#define HID_POPUP_DECAY                         0x18129
+#define HID_DECAY_SLOW                          0x1812A
+#define HID_DECAY_FAST                          0x1812B
+#define HID_INSTRUMENT_CLONEINSTRUMENTSEQUENCES 0x1812C
+#define HID_Menu                                0x1812D
+#define HID_INSTRUMENT_DEEPCLONE                0x1812E
+#define HID_INSTRUMENT_CLONEINSTRUMENTSEQUENCES33071	0x1812F
+#define HID_MODULE_DUPLICATEPATTERNS            0x18130
+#define HID_FRAME_DUPLICATEPATTERNS             0x18131
+#define HID_MODULE_DUPLICATEFRAMEPATTERNS       0x18132
+#define HID_EDIT_EXPANDPATTERNS                 0x18133
+#define HID_EDIT_SHRINKPATTERNS                 0x18134
+#define HID_POPUP_EXPANDPATTERN                 0x18135
+#define HID_POPUP_SHRINKPATTERNS                0x18136
+#define HID_TRACKER_PLAYFROMSTART               0x18137
+#define HID_VIEW_FRAMEEDITOR                    0x18138
+#define HID_FRAMEEDITOR_TOP                     0x18139
+#define HID_FRAMEEDITOR_LEFT                    0x1813A
+#define HID_POPUP_TRANSPOSE                     0x1813B
+#define HID_TRANSPOSE_INCREASENOTE33084         0x1813C
+#define HID_TRANSPOSE_DECREASENOTE33085         0x1813D
+#define HID_TRANSPOSE_INCRESAEOCTAVE            0x1813E
+#define HID_TRANSPOSE_DECREASEOCTAVE33087       0x1813F
+#define HID_TRANSOSE_INCREASEOCTAVE             0x18140
+#define HID_TRACKER_PLAYFROMCURSOR              0x18141
+#define HID_TOGGLE_SPEED                        0x18144
 #define HID_INDICATOR_INSTRUMENT                0x1EF14
 #define HID_INDICATOR_TEMPO                     0x1EF15
  
@@ -168,8 +163,8 @@
 #define HIDR_SAMPLES_POPUP                      0x2010A
 #define HIDR_SAMPLE_WND_POPUP                   0x20117
 #define HIDR_INSTRUMENT_TOOLBAR                 0x20118
-#define HIDR_MENU1                              0x2011D
 #define HIDR_PATTERN_HEADER_POPUP               0x2011D
+#define HIDR_FRAMEWND                           0x20123
  
 // Dialogs (IDD_*) 
 #define HIDD_ABOUTBOX                           0x20064
@@ -188,22 +183,23 @@
 #define HIDD_CONFIG_SOUND                       0x200C9
 #define HIDD_CONFIG_SHORTCUTS                   0x200D3
 #define HIDD_OCTAVE                             0x200D4
-#define HIDD_INSTRUMENT_VRC6                    0x200D8
 #define HIDD_EXPORT                             0x200DA
 #define HIDD_INSTRUMENT_VRC7                    0x200E2
 #define HIDD_CREATEWAV                          0x200E8
 #define HIDD_WAVE_PROGRESS                      0x200E9
 #define HIDD_MAINBAR                            0x200EB
 #define HIDD_INSTRUMENT_FDS                     0x200F8
-#define HIDD_INSTRUMENT_N106                    0x200F9
 #define HIDD_INSTRUMENTPANEL                    0x200FA
 #define HIDD_FRAMEBAR                           0x200FB
+#define HIDD_FRAMECONTROLS                      0x200FB
 #define HIDD_SAMPLE_EDITOR                      0x20107
 #define HIDD_INSTRUMENT_FDS_ENVELOPE            0x20108
 #define HIDD_CHANNELS                           0x2011A
 #define HIDD_HEADER                             0x2011B
-#define HIDD_INSTRUMENT_S5B                     0x2011C
-#define HIDD_INSTRUMENT_N106_WAVE               0x2011E
+#define HIDD_COMMENTS                           0x20120
+#define HIDD_CONFIG_LEVELS                      0x20124
+#define HIDD_INSTRUMENT_N163_WAVE1              0x20125
+#define HIDD_INSTRUMENT_N163_WAVE               0x20125
  
 // Frame Controls (IDW_*) 
 // This is a part of the Microsoft Foundation Classes C++ library.
@@ -228,10 +224,19 @@
 // Non-Client HitTest help IDs
 #define HID_HT_NOWHERE                          0x40000
 #define HID_HT_CAPTION                          0x40002
+#define HID_HT_SIZE                             0x40004
 #define HID_HT_HSCROLL                          0x40006
 #define HID_HT_VSCROLL                          0x40007
 #define HID_HT_MINBUTTON                        0x40008
 #define HID_HT_MAXBUTTON                        0x40009
+#define HID_HT_SIZE                             0x4000A // alias: ID_HT_LEFT
+#define HID_HT_SIZE                             0x4000B // alias: ID_HT_RIGHT
+#define HID_HT_SIZE                             0x4000C // alias: ID_HT_TOP
+#define HID_HT_SIZE                             0x4000D // alias: ID_HT_TOPLEFT
+#define HID_HT_SIZE                             0x4000E // alias: ID_HT_TOPRIGHT
+#define HID_HT_SIZE                             0x4000F // alias: ID_HT_BOTTOM
+#define HID_HT_SIZE                             0x40010 // alias: ID_HT_BOTTOMLEFT
+#define HID_HT_SIZE                             0x40011 // alias: ID_HT_BOTTOMRIGHT
 #define HID_HT_SIZE                             0x40012 // alias: ID_HT_BORDER
 #define HID_HT_OBJECT							0x40013
 #define HID_HT_CLOSE							0x40014
@@ -249,12 +254,42 @@
 #define HID_SC_TASKLIST                         0x1EF13
 
 // File MRU and aliases
+#define HID_FILE_MRU_FILE1                      0x1E110
+#define HID_FILE_MRU_FILE1                      0x1E111 // aliases: MRU_2 - MRU_16
+#define HID_FILE_MRU_FILE1                      0x1E112
+#define HID_FILE_MRU_FILE1                      0x1E113
+#define HID_FILE_MRU_FILE1                      0x1E114
+#define HID_FILE_MRU_FILE1                      0x1E115
+#define HID_FILE_MRU_FILE1                      0x1E116
+#define HID_FILE_MRU_FILE1                      0x1E117
+#define HID_FILE_MRU_FILE1                      0x1E118
+#define HID_FILE_MRU_FILE1                      0x1E119
+#define HID_FILE_MRU_FILE1                      0x1E11A
+#define HID_FILE_MRU_FILE1                      0x1E11B
+#define HID_FILE_MRU_FILE1                      0x1E11C
+#define HID_FILE_MRU_FILE1                      0x1E11D
+#define HID_FILE_MRU_FILE1                      0x1E11E
 #define HID_FILE_MRU_FILE1                      0x1E11F
 
 // Window menu list
 #define HID_WINDOW_ALL                          0x1EF1F
 
 // OLE menu and aliases
+#define HID_OLE_VERB_1                          0x1E210
+#define HID_OLE_VERB_1                          0x1E211 // aliases: VERB_2 -> VERB_16
+#define HID_OLE_VERB_1                          0x1E212
+#define HID_OLE_VERB_1                          0x1E213
+#define HID_OLE_VERB_1                          0x1E214
+#define HID_OLE_VERB_1                          0x1E215
+#define HID_OLE_VERB_1                          0x1E216
+#define HID_OLE_VERB_1                          0x1E217
+#define HID_OLE_VERB_1                          0x1E218
+#define HID_OLE_VERB_1                          0x1E219
+#define HID_OLE_VERB_1                          0x1E21A
+#define HID_OLE_VERB_1                          0x1E21B
+#define HID_OLE_VERB_1                          0x1E21C
+#define HID_OLE_VERB_1                          0x1E21D
+#define HID_OLE_VERB_1                          0x1E21E
 #define HID_OLE_VERB_1                          0x1E21F
 
 // Commands (HID_*) 

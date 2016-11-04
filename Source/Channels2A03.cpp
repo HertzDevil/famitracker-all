@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,6 +27,11 @@
 #include "ChannelHandler.h"
 #include "Channels2A03.h"
 #include "Settings.h"
+
+#ifdef _DEBUG
+void ClearLog();
+void AddLog(int Item);
+#endif
 
 CChannelHandler2A03::CChannelHandler2A03() : CChannelHandler()
 {
@@ -108,7 +113,7 @@ void CChannelHandler2A03::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 	if (Volume < 0x10) {
 		m_iVolume = Volume << VOL_SHIFT;
 	}
-
+	
 	// Change instrument
  	if (Instrument != LastInstrument /*|| (m_iLastInstrument == MAX_INSTRUMENTS && Instrument != MAX_INSTRUMENTS)*/) {
 		if (Instrument == MAX_INSTRUMENTS)
@@ -123,7 +128,7 @@ void CChannelHandler2A03::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 			return;
 
 		for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i) {
-			if (m_iSeqIndex[i] != pInstrument->GetSeqIndex(i)) {
+			if (m_iSeqIndex[i] != pInstrument->GetSeqIndex(i) || pInstrument->GetSeqEnable(i) == 0) {
 				m_iSeqEnabled[i] = pInstrument->GetSeqEnable(i);
 				m_iSeqIndex[i]	 = pInstrument->GetSeqIndex(i);
 				m_iSeqPointer[i] = 0;
@@ -190,11 +195,10 @@ void CChannelHandler2A03::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		ReleaseSequences(SNDCHIP_NONE);
 	}
 
-	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
-		m_iEffect = EF_NONE;
-
-	if (PostEffect)
+	if (PostEffect && (m_iEffect == EF_SLIDE_UP || m_iEffect == EF_SLIDE_DOWN))
 		SetupSlide(PostEffect, PostEffectParam);
+	else if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
+		m_iEffect = EF_NONE;
 }
 
 void CChannelHandler2A03::ProcessChannel()
@@ -212,11 +216,18 @@ void CChannelHandler2A03::ProcessChannel()
 	// Sequences
 	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i)
 		CChannelHandler::RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], CInstrument2A03::SEQUENCE_TYPES[i]));
+
+	if (m_bGate && m_iSeqEnabled[SEQ_VOLUME] != 0)
+		m_bGate = !(m_iSeqEnabled[SEQ_VOLUME] == 0);
 }
 
 void CChannelHandler2A03::ResetChannel()
 {
 	CChannelHandler::ResetChannel();
+
+#ifdef _DEBUG
+	ClearLog();
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -225,18 +236,23 @@ void CChannelHandler2A03::ResetChannel()
 
 void CSquare1Chan::RefreshChannel()
 {
-	if (!m_bEnabled)
+	if (!m_bEnabled){
+#ifdef _DEBUG
+		AddLog(0);
+#endif
 		return;
+	}
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	int Volume = CalculateVolume(15);
 	char DutyCycle = (m_iDutyPeriod & 0x03);
 
-	unsigned char HiFreq		= (Period & 0xFF);
-	unsigned char LoFreq		= (Period >> 8);
-	unsigned char LastLoFreq	= (m_iLastPeriod >> 8);
+	unsigned char HiFreq = (Period & 0xFF);
+	unsigned char LoFreq = (Period >> 8);
 
-	m_iLastPeriod = Period;
+#ifdef _DEBUG
+	AddLog(Period);
+#endif
 
 	m_pAPU->Write(0x4000, (DutyCycle << 6) | 0x30 | Volume);
 
@@ -257,10 +273,11 @@ void CSquare1Chan::RefreshChannel()
 		m_pAPU->Write(0x4017, 0x00);
 		m_pAPU->Write(0x4002, HiFreq);
 		
-		if (LoFreq != LastLoFreq)
+		if (LoFreq != (m_iLastPeriod >> 8))
 			m_pAPU->Write(0x4003, LoFreq);
 	}
 
+	m_iLastPeriod = Period;
 }
 
 void CSquare1Chan::ClearRegisters()
@@ -268,7 +285,8 @@ void CSquare1Chan::ClearRegisters()
 	m_pAPU->Write(0x4000, 0x30);
 	m_pAPU->Write(0x4001, 0x08);
 	m_pAPU->Write(0x4002, 0x00);
-	m_pAPU->Write(0x4003, 0x00);	
+	m_pAPU->Write(0x4003, 0x00);
+	m_iLastPeriod = 0xFFFF;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +298,7 @@ void CSquare2Chan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	int Volume = CalculateVolume(15);
 	char DutyCycle = (m_iDutyPeriod & 0x03);
 
@@ -320,6 +338,7 @@ void CSquare2Chan::ClearRegisters()
 	m_pAPU->Write(0x4005, 0x08);
 	m_pAPU->Write(0x4006, 0x00);
 	m_pAPU->Write(0x4007, 0x00);
+	m_iLastPeriod = 0xFFFF;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -331,7 +350,7 @@ void CTriangleChan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Freq = CalculatePeriod();
+	int Freq = CalculatePeriod(false);
 
 	unsigned char HiFreq = (Freq & 0xFF);
 	unsigned char LoFreq = (Freq >> 8);
@@ -367,7 +386,7 @@ void CNoiseChan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	int Volume = CalculateVolume(15);
 	char NoiseMode = (m_iDutyPeriod & 0x01) << 7;
 
@@ -446,7 +465,7 @@ void CDPCMChan::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		return;
 	}
 	else
-		m_bRelease = true;
+		m_bRelease = false;
 
 	if (Note == HALT) {
 		KillChannel();
@@ -528,14 +547,20 @@ void CDPCMChan::RefreshChannel()
 		}
 	}
 
-	/*
+	if (m_bRelease) {
+		m_pAPU->Write(0x4015, 0x0F);
+		m_bEnabled = false;
+		m_bRelease = false;
+	}
+
+/*	
 	if (m_bRelease) {
 		// Release loop flag
 		m_bRelease = false;
 		m_pAPU->Write(0x4010, 0x00 | (m_iPeriod & 0x0F));
 		return;
 	}
-	*/
+*/	
 
 	if (!m_bEnabled)
 		return;

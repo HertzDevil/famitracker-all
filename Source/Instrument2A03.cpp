@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 ** must bear this legend.
 */
 
+#include <vector>
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
@@ -46,7 +47,7 @@ CInstrument2A03::CInstrument2A03() :
 	}
 }
 
-CInstrument *CInstrument2A03::Clone()
+CInstrument *CInstrument2A03::Clone() const
 {
 	CInstrument2A03 *pNew = new CInstrument2A03();
 
@@ -122,8 +123,6 @@ void CInstrument2A03::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 	// Saves an 2A03 instrument
 	// Current version 2.2
 
-//	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-
 	// Sequences
 	unsigned char SeqCount = SEQUENCE_COUNT;
 	pFile->Write(&SeqCount, sizeof(char));
@@ -157,7 +156,7 @@ void CInstrument2A03::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 	unsigned int Count = 0;
 
 	// Count assigned keys
-	for (int i = 0; i < 6; i++) {	// octaves
+	for (int i = 0; i < 8; i++) {	// octaves
 		for (int j = 0; j < 12; j++) {	// notes
 			if (GetSample(i, j) > 0)
 				Count++;
@@ -170,16 +169,16 @@ void CInstrument2A03::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 	memset(UsedSamples, 0, sizeof(bool) * MAX_DSAMPLES);
 
 	// DPCM
-	for (int i = 0; i < 6; ++i) {	// octaves
+	for (int i = 0; i < 8; ++i) {	// octaves
 		for (int j = 0; j < 12; ++j) {	// notes
 			if (GetSample(i, j) > 0) {
-				unsigned char Index = i * 12 + j, Sample, Pitch;
+				unsigned char Index = i * 12 + j;
+				unsigned char Sample = GetSample(i, j);;
+				unsigned char Pitch = GetSamplePitch(i, j);;
 				pFile->Write(&Index, sizeof(char));
-				Sample = GetSample(i, j);
-				Pitch = GetSamplePitch(i, j);
 				pFile->Write(&Sample, sizeof(char));
 				pFile->Write(&Pitch, sizeof(char));
-				UsedSamples[GetSample(i, j) - 1] = true;
+				UsedSamples[Sample - 1] = true;
 			}
 		}
 	}
@@ -195,7 +194,7 @@ void CInstrument2A03::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 	// Write the number
 	pFile->Write(&SampleCount, sizeof(int));
 
-	// List of sample names, the samples itself won't be stored
+	// List of sample names
 	for (int i = 0; i < MAX_DSAMPLES; ++i) {
 		if (pDoc->GetSampleSize(i) > 0 && UsedSamples[i]) {
 			CDSample *pSample = pDoc->GetDSample(i);
@@ -214,7 +213,6 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 	// Reads an FTI file
 	//
 
-	//CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	char SampleNames[MAX_DSAMPLES][256];
 	stSequence OldSequence;
 
@@ -232,6 +230,9 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 			// Read the sequence
 			int Count;
 			pFile->Read(&Count, sizeof(int));
+
+			if (Count < 0 || Count >= MAX_SEQUENCE_ITEMS)
+				return false;
 
 			// Find a free sequence
 			int Index = pDoc->GetFreeSequence(i);
@@ -337,7 +338,7 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 			if (FreeSample != -1) {
 				if ((pDoc->GetTotalSampleSize() + Size) <= MAX_SAMPLE_SPACE) {
 					CDSample *Sample = pDoc->GetDSample(FreeSample);
-					strcpy(Sample->Name, SampleNames[Index]);
+					strcpy_s(Sample->Name, 256, SampleNames[Index]);
 					Sample->SampleSize = Size;
 					Sample->SampleData = SampleData;
 					// Assign it
@@ -351,7 +352,9 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 					}
 				}
 				else {
-					AfxMessageBox(IDS_OUT_OF_SAMPLEMEM, MB_ICONERROR);
+					CString message;
+					message.Format(IDS_OUT_OF_SAMPLEMEM, MAX_SAMPLE_SPACE / 1024);
+					AfxMessageBox(message, MB_ICONERROR);
 					SAFE_RELEASE_ARRAY(SampleData);
 					return false;
 				}
@@ -370,47 +373,25 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 	return true;
 }
 
-int CInstrument2A03::CompileSize(CCompiler *pCompiler)
+int CInstrument2A03::Compile(CChunk *pChunk, int Index)
 {
-	int Size = 1;
-	CFamiTrackerDoc *pDoc = pCompiler->GetDocument();
+	int ModSwitch = 0;
+	int StoredBytes = 0;
+
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetActiveDocument();
 
 	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
-		if (GetSeqEnable(i)) {
-			CSequence *pSeq = pDoc->GetSequence(GetSeqIndex(i), i);
-			if (pSeq->GetItemCount() > 0)
-				Size += 2;
-		}
-	}
-
-	return Size;
-}
-
-int CInstrument2A03::Compile(CCompiler *pCompiler, int Index)
-{
-	int ModSwitch;
-	int StoredBytes = 0;
-	int iAddress;
-	int i;
-
-	CFamiTrackerDoc *pDoc = pCompiler->GetDocument();
-
-	pCompiler->WriteLog("2A03 {");
-	ModSwitch = 0;
-	
-	for (i = 0; i < SEQUENCE_COUNT; ++i) {
 		ModSwitch = (ModSwitch >> 1) | ((GetSeqEnable(i) && (pDoc->GetSequence(GetSeqIndex(i), i)->GetItemCount() > 0)) ? 0x10 : 0);
 	}
 	
-	pCompiler->StoreByte(ModSwitch);
-	pCompiler->WriteLog("%02X ", ModSwitch);
+	pChunk->StoreByte(ModSwitch);
 	StoredBytes++;
 
-	for (i = 0; i < SEQUENCE_COUNT; ++i) {
-		iAddress = (GetSeqEnable(i) == 0 || (pDoc->GetSequence(GetSeqIndex(i), i)->GetItemCount() == 0)) ? 0 : pCompiler->GetSequenceAddress2A03(GetSeqIndex(i), i);
-		if (iAddress > 0) {
-			pCompiler->StoreShort(iAddress);
-			pCompiler->WriteLog("%04X ", iAddress);
+	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
+		if (GetSeqEnable(i) != 0 && (pDoc->GetSequence(GetSeqIndex(i), i)->GetItemCount() != 0)) {
+			CString str;
+			str.Format(CCompiler::LABEL_SEQ_2A03, GetSeqIndex(i) * SEQUENCE_COUNT + i);
+			pChunk->StoreReference(str);
 			StoredBytes += 2;
 		}
 	}
@@ -440,11 +421,15 @@ int	CInstrument2A03::GetSeqIndex(int Index) const
 
 void CInstrument2A03::SetSeqEnable(int Index, int Value)
 {
+	if (m_iSeqEnable[Index] != Value)
+		InstrumentChanged();
 	m_iSeqEnable[Index] = Value;
 }
 
 void CInstrument2A03::SetSeqIndex(int Index, int Value)
 {
+	if (m_iSeqIndex[Index] != Value)
+		InstrumentChanged();
 	m_iSeqIndex[Index] = Value;
 }
 
@@ -471,21 +456,25 @@ char CInstrument2A03::GetSampleLoopOffset(int Octave, int Note) const
 void CInstrument2A03::SetSample(int Octave, int Note, char Sample)
 {
 	m_cSamples[Octave][Note] = Sample;
+	InstrumentChanged();
 }
 
 void CInstrument2A03::SetSamplePitch(int Octave, int Note, char Pitch)
 {
 	m_cSamplePitch[Octave][Note] = Pitch;
+	InstrumentChanged();
 }
 
 void CInstrument2A03::SetSampleLoop(int Octave, int Note, bool Loop)
 {
 	m_cSamplePitch[Octave][Note] = (m_cSamplePitch[Octave][Note] & 0x7F) | (Loop ? 0x80 : 0);
+	InstrumentChanged();
 }
 
 void CInstrument2A03::SetSampleLoopOffset(int Octave, int Note, char Offset)
 {
 	m_cSampleLoopOffset[Octave][Note] = Offset;
+	InstrumentChanged();
 }
 
 bool CInstrument2A03::AssignedSamples() const
@@ -505,6 +494,7 @@ bool CInstrument2A03::AssignedSamples() const
 void CInstrument2A03::SetPitchOption(int Option)
 {
 	m_iPitchOption = Option;
+	InstrumentChanged();
 }
 
 int CInstrument2A03::GetPitchOption() const

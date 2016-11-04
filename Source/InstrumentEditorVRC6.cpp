@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ IMPLEMENT_DYNAMIC(CInstrumentEditorVRC6, CSequenceInstrumentEditPanel)
 CInstrumentEditorVRC6::CInstrumentEditorVRC6(CWnd* pParent) : CSequenceInstrumentEditPanel(CInstrumentEditorVRC6::IDD, pParent),
 	m_pParentWin(pParent),
 	m_pInstrument(NULL),
-	m_pSequence(NULL),
 	m_pSequenceEditor(NULL),
 	m_iSelectedSetting(0)
 {
@@ -109,10 +108,11 @@ void CInstrumentEditorVRC6::SetSequenceString(CString Sequence, bool Changed)
 	}
 }
 
-BEGIN_MESSAGE_MAP(CInstrumentEditorVRC6, CInstrumentEditPanel)
+BEGIN_MESSAGE_MAP(CInstrumentEditorVRC6, CSequenceInstrumentEditPanel)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, OnLvnItemchangedInstsettings)	
 	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
 	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
+	ON_COMMAND(ID_CLONE_SEQUENCE, OnCloneSequence)
 END_MESSAGE_MAP()
 
 // CInstrumentSettings message handlers
@@ -157,22 +157,28 @@ BOOL CInstrumentEditorVRC6::OnInitDialog()
 void CInstrumentEditorVRC6::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
 
-	if (pNMLV->uNewState & LVIS_SELECTED && pNMLV->uNewState & LVIS_FOCUSED) {
-		// If a new item is selected
-		m_iSelectedSetting = pNMLV->iItem;
-		if (m_pInstrument) {
+	if (pNMLV->uChanged & LVIF_STATE && m_pInstrument != NULL) {
+		// Selected new setting
+		if (pNMLV->uNewState & LVNI_SELECTED || pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			m_iSelectedSetting = pNMLV->iItem;
 			int Sequence = m_pInstrument->GetSeqIndex(m_iSelectedSetting);
 			SetDlgItemInt(IDC_SEQ_INDEX, Sequence);
 			SelectSequence(Sequence, m_iSelectedSetting);
+			pList->SetSelectionMark(m_iSelectedSetting);
+			pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED, LVIS_SELECTED);
 		}
-	}
-	else if ((pNMLV->uNewState == 8192 || pNMLV->uNewState == 4096) && (m_pInstrument != NULL)) {
-		// Changed state of checkbox
-		int Item = pNMLV->iItem;
-		CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
-		int Checked = pList->GetCheck(Item);
-		m_pInstrument->SetSeqEnable(Item, (Checked == 1));
+
+		// Changed checkbox
+		switch(pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			case LCTRL_CHECKBOX_CHECKED:	// Checked
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 1);
+				break;
+			case LCTRL_CHECKBOX_UNCHECKED:	// Unchecked
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 0);
+				break;
+		}
 	}
 
 	*pResult = 0;
@@ -195,17 +201,16 @@ void CInstrumentEditorVRC6::OnEnChangeSeqIndex()
 	pList->SetItemText(m_iSelectedSetting, 1, Text);
 
 	if (m_pInstrument) {
-		m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+		if (m_pInstrument->GetSeqIndex(Index) != Index)
+			m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
 		SelectSequence(Index, m_iSelectedSetting);
 	}
 }
 
 void CInstrumentEditorVRC6::OnBnClickedFreeSeq()
 {
-	CString Text;
 	int FreeIndex = GetDocument()->GetFreeSequenceVRC6(m_iSelectedSetting);
-	Text.Format(_T("%i"), FreeIndex);
-	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 
 BOOL CInstrumentEditorVRC6::DestroyWindow()
@@ -237,4 +242,13 @@ void CInstrumentEditorVRC6::OnKeyReturn()
 			TranslateMML(Text, MAX_DUTY, 0);
 			break;
 	}
+}
+
+void CInstrumentEditorVRC6::OnCloneSequence()
+{
+	CFamiTrackerDoc *pDoc = GetDocument();
+	int FreeIndex = pDoc->GetFreeSequenceVRC6(m_iSelectedSetting);
+	CSequence *pSeq = pDoc->GetSequence(SNDCHIP_VRC6, FreeIndex, m_iSelectedSetting);
+	pSeq->Copy(m_pSequence);
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);
 }

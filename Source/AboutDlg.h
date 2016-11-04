@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -49,6 +49,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	CLinkLabel *m_pMail, *m_pWeb;
+	CToolTipCtrl m_wndToolTip;
 	
 // Implementation
 protected:
@@ -56,4 +57,5 @@ protected:
 public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedOk();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

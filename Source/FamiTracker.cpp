@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -35,12 +35,16 @@
 #include "CustomExporters.h"
 
 // Single instance-stuff
-const TCHAR FT_SHARED_MUTEX_NAME[] = _T("FamiTrackerMutex");	// Name of global mutex
-const TCHAR FT_SHARED_MEM_NAME[] = _T("FamiTrackerWnd");		// Name of global memory area
-const int SHARED_MEM_SIZE = 256;
+const TCHAR FT_SHARED_MUTEX_NAME[]	= _T("FamiTrackerMutex");	// Name of global mutex
+const TCHAR FT_SHARED_MEM_NAME[]	= _T("FamiTrackerWnd");		// Name of global memory area
+const DWORD	SHARED_MEM_SIZE			= 256;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
+#endif
+
+#ifdef SVN_BUILD
+#pragma message("Building SVN build...")
 #endif
 
 // CFamiTrackerApp
@@ -133,6 +137,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Load custom accelerator
 	m_pAccel = new CAccelerator();
 	m_pAccel->LoadShortcuts(m_pSettings);
+	m_pAccel->Setup();
 
 	// Create the MIDI interface
 	m_pMIDI = new CMIDI();
@@ -220,23 +225,23 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Used to awake the sound generator thread in case of lockup
 	m_hNotificationEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	
-	// Initialize the sound generator
+	// Start sound generator thread, initially suspended
+	if (!m_pSoundGenerator->CreateThread(CREATE_SUSPENDED)) {
+		// If failed, restore and save default settings
+		m_pSettings->DefaultSettings();
+		m_pSettings->SaveSettings();
+		// Show message and quit
+		AfxMessageBox(IDS_SOUNDGEN_ERROR, MB_ICONERROR);
+		return FALSE;
+	}
+
+	// Initialize the sound interface, also resumes the thread
 	if (!m_pSoundGenerator->InitializeSound(m_pMainWnd->m_hWnd, m_hAliveCheck, m_hNotificationEvent)) {
 		// If failed, restore and save default settings
 		m_pSettings->DefaultSettings();
 		m_pSettings->SaveSettings();
 		// Quit program
 		AfxMessageBox(IDS_START_ERROR, MB_ICONERROR);
-		return FALSE;
-	}
-
-	// Start sound generator thread
-	if (!m_pSoundGenerator->CreateThread()) {
-		// If failed, restore and save default settings
-		m_pSettings->DefaultSettings();
-		m_pSettings->SaveSettings();
-		// Show message and quit
-		AfxMessageBox(IDS_SOUNDGEN_ERROR, MB_ICONERROR);
 		return FALSE;
 	}
 
@@ -252,11 +257,13 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Initialization is done
 	TRACE0("App: InitInstance done\n");
 
-	// Save the window handle to main window
+	// Save the main window handle
 	RegisterSingleInstance();
 
 #ifndef _DEBUG
+	// WIP
 	m_pMainWnd->GetMenu()->GetSubMenu(2)->RemoveMenu(ID_MODULE_CHANNELS, MF_BYCOMMAND);
+	m_pMainWnd->GetMenu()->GetSubMenu(2)->RemoveMenu(ID_MODULE_COMMENTS, MF_BYCOMMAND);
 #endif
 
 	return TRUE;
@@ -281,6 +288,7 @@ int CFamiTrackerApp::ExitInstance()
 
 	if (m_pAccel) {
 		m_pAccel->SaveShortcuts(m_pSettings);
+		m_pAccel->Shutdown();
 		delete m_pAccel;
 		m_pAccel = NULL;
 	}
@@ -308,39 +316,24 @@ int CFamiTrackerApp::ExitInstance()
 
 BOOL CFamiTrackerApp::PreTranslateMessage(MSG* pMsg)
 {
-	CAccelerator *pAccel = theApp.GetAccelerator();
-
-	/*
-	if (pMsg->message == WM_USER + 100) {
-		((CFamiTrackerView*) GetActiveView())->HandleRawData(pMsg->wParam, pMsg->lParam);
+	if (CWinApp::PreTranslateMessage(pMsg)) {
+		return TRUE;
 	}
-	*/
-
-	// Dynamic accelerator translation
-	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) ) {	// WM_SYSKEYDOWN is for ALT
-		BOOL bRes = CWinApp::PreTranslateMessage(pMsg);
-		if (bRes == 0) {
-			// Find an ID
-			unsigned short ID = pAccel->GetAction((unsigned char)pMsg->wParam);
-			// If an ID was found, send a WM_COMMAND to it
-			if (ID != 0 && ((CMainFrame*)GetMainWnd())->HasFocus()) {
-				GetMainWnd()->SendMessage(WM_COMMAND, (0 << 16) | ID, NULL);
-				// Skip internal processing for ALT-keys to avoid beeps
-				if (pMsg->message == WM_SYSKEYDOWN)
-					return TRUE;
-			}
+	else if (m_pMainWnd != NULL && m_pAccel != NULL) {
+		if (m_pAccel->Translate(m_pMainWnd->m_hWnd, pMsg)) {
+			return TRUE;
 		}
-		return bRes;
 	}
-	else if (pMsg->message == WM_KEYUP || pMsg->message == WM_SYSKEYUP) {
-		BOOL bRes = CWinApp::PreTranslateMessage(pMsg);
-//		if (bRes == 0) {
-			pAccel->KeyReleased((unsigned char)pMsg->wParam);
-//		}
-		return bRes;
+
+	return FALSE;
+	/*
+	
+	if (m_pAccel->Translate(m_pMainWnd->m_hWnd, pMsg)) {
+		return TRUE;
 	}
 
 	return CWinApp::PreTranslateMessage(pMsg);
+	*/
 }
 
 void CFamiTrackerApp::CheckAppThemed()
@@ -380,6 +373,9 @@ void CFamiTrackerApp::ShutDownSynth()
 		return;
 	}
 
+	// Resume if thread was suspended
+	m_pSoundGenerator->ResumeThread();
+
 	// Send quit message
 	m_pSoundGenerator->PostThreadMessage(WM_QUIT, 0, 0);
 	SetEvent(m_hNotificationEvent);
@@ -387,7 +383,7 @@ void CFamiTrackerApp::ShutDownSynth()
 	// Wait for thread to exit, timout = 2s
 	DWORD dwResult = ::WaitForSingleObject(hThread, 4000);
 
-	if (dwResult != WAIT_OBJECT_0) {
+	if (dwResult != WAIT_OBJECT_0 && m_pSoundGenerator != NULL) {
 		TRACE0("App: Closing the sound generator thread failed\n");
 #ifdef _DEBUG
 		AfxMessageBox(_T("Error: Could not close sound generator thread"));
@@ -397,7 +393,7 @@ void CFamiTrackerApp::ShutDownSynth()
 	}
 
 	// Object is auto-deleted
-	m_pSoundGenerator = NULL;
+	ASSERT(m_pSoundGenerator == NULL);
 
 	// Close handles
 	CloseHandle(m_hNotificationEvent);
@@ -407,6 +403,12 @@ void CFamiTrackerApp::ShutDownSynth()
 	m_hAliveCheck = NULL;
 
 	TRACE0("App: Sound generator has closed\n");
+}
+
+void CFamiTrackerApp::RemoveSoundGenerator()
+{
+	// Sound generator object is deleted
+	m_pSoundGenerator = NULL;
 }
 
 CCustomExporters* CFamiTrackerApp::GetCustomExporters(void) const
@@ -473,9 +475,11 @@ bool CFamiTrackerApp::CheckSingleInstance()
 					data.dwData = cmdInfo.m_bPlay ? IPC_LOAD_PLAY : IPC_LOAD;
 					data.cbData = (DWORD)(strlen(pFilePath) + 1);
 					data.lpData = pFilePath;
-					SendMessage(hWnd, WM_COPYDATA, NULL, (LPARAM)&data);
+					DWORD result;
+					SendMessageTimeout(hWnd, WM_COPYDATA, NULL, (LPARAM)&data, SMTO_NORMAL, 100, &result);
 					UnmapViewOfFile(pBuf);
 					CloseHandle(hMapFile);
+					TRACE("Found another instance, shutting down\n");
 					// Then close the program
 					return true;
 				}
@@ -485,7 +489,7 @@ bool CFamiTrackerApp::CheckSingleInstance()
 			CloseHandle(hMapFile);
 		}
 	}
-
+	
 	return false;
 }
 
@@ -496,7 +500,7 @@ bool CFamiTrackerApp::CheckSingleInstance()
 // Load sound configuration
 void CFamiTrackerApp::LoadSoundConfig()
 {
-	GetSoundGenerator()->PostThreadMessage(M_LOAD_SETTINGS, 0, 0);
+	GetSoundGenerator()->LoadSettings();
 	SetEvent(m_hNotificationEvent);
 	((CFrameWnd*)GetMainWnd())->SetMessageText(IDS_NEW_SOUND_CONFIG);
 }
@@ -504,8 +508,8 @@ void CFamiTrackerApp::LoadSoundConfig()
 // Silences everything
 void CFamiTrackerApp::SilentEverything()
 {
-	GetSoundGenerator()->PostThreadMessage(M_SILENT_ALL, 0, 0);
-	static_cast<CFamiTrackerView*>(GetActiveView())->MakeSilent();
+	GetSoundGenerator()->SilentAll();
+	static_cast<CFamiTrackerView*>(GetActiveView())->MakeSilent() ;
 }
 
 void CFamiTrackerApp::CheckSynth() 
@@ -598,39 +602,47 @@ void CFamiTrackerApp::OnAppAbout()
 void CFamiTrackerApp::OnTrackerPlay()
 {
 	// Play
-	GetSoundGenerator()->StartPlayer(MODE_PLAY);
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->StartPlayer(MODE_PLAY);
 }
 
 void CFamiTrackerApp::OnTrackerPlaypattern()
 {
 	// Loop pattern
-	GetSoundGenerator()->StartPlayer(MODE_PLAY_REPEAT);
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->StartPlayer(MODE_PLAY_REPEAT);
 }
 
 void CFamiTrackerApp::OnTrackerPlayStart()
 {
 	// Play from start of song
-	GetSoundGenerator()->StartPlayer(MODE_PLAY_START);
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->StartPlayer(MODE_PLAY_START);
 }
 
 void CFamiTrackerApp::OnTrackerPlayCursor()
 {
 	// Play from cursor
-	GetSoundGenerator()->StartPlayer(MODE_PLAY_CURSOR);
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->StartPlayer(MODE_PLAY_CURSOR);
 }
 
 void CFamiTrackerApp::OnTrackerTogglePlay()
 {
-	if (GetSoundGenerator()->IsPlaying())
-		OnTrackerStop();
-	else
-		OnTrackerPlay();
+	if (m_pSoundGenerator) {
+		if (m_pSoundGenerator->IsPlaying())
+			OnTrackerStop();
+		else
+			OnTrackerPlay();
+	}
 }
 
 void CFamiTrackerApp::OnTrackerStop()
 {
 	// Stop tracker
-	GetSoundGenerator()->StopPlayer();
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->StopPlayer();
+
 	m_pMIDI->ResetOutput();
 }
 
@@ -638,17 +650,16 @@ void CFamiTrackerApp::OnTrackerStop()
 
 bool CFamiTrackerApp::IsPlaying() const
 {
-	return GetSoundGenerator()->IsPlaying();
-}
+	if (m_pSoundGenerator)
+		return m_pSoundGenerator->IsPlaying();
 
-void CFamiTrackerApp::StopPlayer()
-{
-	OnTrackerStop();
+	return false;
 }
 
 void CFamiTrackerApp::ResetPlayer()
 {
-	GetSoundGenerator()->ResetPlayer();
+	if (m_pSoundGenerator)
+		m_pSoundGenerator->ResetPlayer();
 }
 
 // Active document & view
@@ -814,3 +825,4 @@ void CFTCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLas
 	// Call default implementation
 	CCommandLineInfo::ParseParam(pszParam, bFlag, bLast);
 }
+

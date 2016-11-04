@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ using namespace std;
 //
 
 IMPLEMENT_DYNAMIC(CInstrumentEditPanel, CDialog)
-CInstrumentEditPanel::CInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent) : CDialog(nIDTemplate, pParent)
+CInstrumentEditPanel::CInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent) : CDialog(nIDTemplate, pParent), m_bShow(false)
 {
 }
 
@@ -89,28 +89,37 @@ HBRUSH CInstrumentEditPanel::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 BOOL CInstrumentEditPanel::PreTranslateMessage(MSG* pMsg)
 {
+	char ClassName[256];
+
 	switch (pMsg->message) {
 		case WM_KEYDOWN:
 			switch (pMsg->wParam) {
-				case 13:	// Return
+				case VK_RETURN:	// Return
 					pMsg->wParam = 0;
 					OnKeyReturn();
 					return TRUE;
-				case 27:	// Esc, close the dialog
+				case VK_ESCAPE:	// Esc, close the dialog
 					((CInstrumentEditDlg*)GetParent())->DestroyWindow();
 					return TRUE;
 				default:	// Note keys
 					// Make sure the dialog is selected when previewing
-					if (GetFocus() == this) {
+					GetClassName(pMsg->hwnd, ClassName, 256);
+					if (strcmp(ClassName, "Edit")) {
+					//if (GetFocus() == this || GetFocus() == GetParent()) {
+					//if (!CDialog::PreTranslateMessage(pMsg)) {
+					
+					//if (DYNAMIC_DOWNCAST(CEdit, GetFocus()) == NULL) {
 						// Remove repeated keys
 						if ((pMsg->lParam & (1 << 30)) == 0)
 							PreviewNote((unsigned char)pMsg->wParam);
 						return TRUE;
 					}
+					
 			}
 			break;
 		case WM_KEYUP:
 			PreviewRelease((unsigned char)pMsg->wParam);
+			return TRUE;
 	}
 
 	return CDialog::PreTranslateMessage(pMsg);
@@ -129,9 +138,10 @@ void CInstrumentEditPanel::OnKeyReturn()
 }
 
 void CInstrumentEditPanel::OnSetFocus(CWnd* pOldWnd)
-{
+{	
 	// Kill the default handler to avoid setting focus to a child control
-	//CDialog::OnSetFocus(pOldWnd);
+	//Invalidate();
+	CDialog::OnSetFocus(pOldWnd);
 }
 
 CFamiTrackerDoc *CInstrumentEditPanel::GetDocument() const
@@ -150,17 +160,16 @@ void CInstrumentEditPanel::PreviewRelease(unsigned char Key)
 	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
 }
 
-
 //
 // CSequenceInstrumentEditPanel
 // 
 // For dialog panels with sequence editors. Can translate MML strings 
 //
 
-IMPLEMENT_DYNAMIC(CSequenceInstrumentEditPanel, CDialog)
+IMPLEMENT_DYNAMIC(CSequenceInstrumentEditPanel, CInstrumentEditPanel)
 
 CSequenceInstrumentEditPanel::CSequenceInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent) 
-	: CInstrumentEditPanel(nIDTemplate, pParent)
+	: CInstrumentEditPanel(nIDTemplate, pParent), m_pSequence(NULL)
 {
 }
 
@@ -173,7 +182,8 @@ void CSequenceInstrumentEditPanel::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CSequenceInstrumentEditPanel, CDialog)
+BEGIN_MESSAGE_MAP(CSequenceInstrumentEditPanel, CInstrumentEditPanel)
+	ON_NOTIFY(NM_RCLICK, IDC_INSTSETTINGS, OnRClickInstSettings)
 END_MESSAGE_MAP()
 
 void CSequenceInstrumentEditPanel::PreviewNote(unsigned char Key)
@@ -227,13 +237,21 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 	}
 
 	pSequence->SetItemCount(AddedItems);
-	
-	// Update editor
-//	m_pSequenceEditor->RedrawWindow();
+}
 
-	// Register a document change
-//	theApp.GetFirstDocument()->SetModifiedFlag();
+void CSequenceInstrumentEditPanel::OnRClickInstSettings(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	POINT oPoint;
+	GetCursorPos(&oPoint);
 
-	// Enable setting
-//	((CListCtrl*)GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);
+	if (m_pSequence == NULL)
+		return;
+
+	// Create a clone option
+	CMenu contextMenu;
+	contextMenu.CreatePopupMenu();
+	contextMenu.AppendMenu(MF_STRING, ID_CLONE_SEQUENCE, _T("Clone sequence"));
+	contextMenu.EnableMenuItem(ID_CLONE_SEQUENCE, (m_pSequence->GetItemCount() != 0) ? FALSE : TRUE);
+	contextMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, oPoint.x, oPoint.y, this);
+	contextMenu.DestroyMenu();
 }

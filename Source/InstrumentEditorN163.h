@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,27 +20,25 @@
 
 #pragma once
 
-class CInstrumentEditorN106 : public CSequenceInstrumentEditPanel
+class CInstrumentEditorN163 : public CSequenceInstrumentEditPanel
 {
-	DECLARE_DYNAMIC(CInstrumentEditorN106)
+	DECLARE_DYNAMIC(CInstrumentEditorN163)
 
 public:
-	CInstrumentEditorN106(CWnd* pParent = NULL);   // standard constructor
-	virtual ~CInstrumentEditorN106();
+	CInstrumentEditorN163(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CInstrumentEditorN163();
 	virtual int GetIDD() const { return IDD; };
 	virtual TCHAR *GetTitle() const { return _T("Envelopes"); };
 
 	// Public
-	void SelectInstrument(int Instrument);
-	void SetSequenceString(CString Sequence, bool Changed);
-
+	virtual void SelectInstrument(int Instrument);
+	virtual void SetSequenceString(CString Sequence, bool Changed);
 
 // Dialog Data
-	enum { IDD = IDD_INSTRUMENT_N106 };
+	enum { IDD = IDD_INSTRUMENT_INTERNAL };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
 	virtual void OnKeyReturn();
 
 	void SelectSequence(int Sequence, int Type);
@@ -50,14 +48,12 @@ protected:
 
 	CWnd				*m_pParentWin;
 	CSequenceEditor		*m_pSequenceEditor;
-	CInstrumentN106		*m_pInstrument;
-	CSequence 			*m_pSequence;
+	CInstrumentN163		*m_pInstrument;
 
 protected:
-	static LPCTSTR INST_SETTINGS_N106[];
+	static LPCTSTR INST_SETTINGS_N163[CInstrumentN163::SEQUENCE_COUNT];
 
 	static const int MAX_VOLUME = 15;
-	static const int MAX_DUTY = 7;
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -67,4 +63,5 @@ public:
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();
+	afx_msg void OnCloneSequence();
 };

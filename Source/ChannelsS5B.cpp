@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -115,7 +115,7 @@ void CS5BChannel1::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	unsigned char LoPeriod = Period & 0xFF;
 	unsigned char HiPeriod = Period >> 8;
 

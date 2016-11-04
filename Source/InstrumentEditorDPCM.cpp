@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -39,6 +39,8 @@ public:
 	CDMCFileSoundDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFileName = NULL, DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, LPCTSTR lpszFilter = NULL, CWnd* pParentWnd = NULL, DWORD dwSize = 0);
 	virtual ~CDMCFileSoundDialog();
 
+	static const int DEFAULT_PREVIEW_PITCH = 15;
+
 protected:
 	virtual void OnFileNameChange();
 	CString m_strLastFile;
@@ -60,7 +62,6 @@ CDMCFileSoundDialog::~CDMCFileSoundDialog()
 void CDMCFileSoundDialog::OnFileNameChange()
 {
 	// Preview DMC file
-
 	if (!GetFileExt().CompareNoCase(_T("dmc")) && theApp.GetSettings()->General.bWavePreview) {
 		DWORD dwAttrib = GetFileAttributes(GetPathName());
 		if (!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY) && GetPathName() != m_strLastFile) {
@@ -69,7 +70,7 @@ void CDMCFileSoundDialog::OnFileNameChange()
 			size = min(size, CDSample::MAX_SIZE);
 			CDSample *pSample = new CDSample((int)size);
 			file.Read(pSample->SampleData, (int)size);
-			theApp.GetSoundGenerator()->PreviewSample(pSample, 0, 15);
+			theApp.GetSoundGenerator()->PreviewSample(pSample, 0, DEFAULT_PREVIEW_PITCH);
 			file.Close();
 			m_strLastFile = GetPathName();
 		}
@@ -240,7 +241,7 @@ void CInstrumentEditorDPCM::BuildSampleList()
 		}
 	}
 
-	Text.Format(_T("Space used %i kB, left %i kB (16 kB available)"), Size / 0x400, (0x4000 - Size) / 0x400);
+	Text.Format(_T("Space used %i kB, left %i kB (%i kB available)"), Size / 0x400, (MAX_SAMPLE_SPACE - Size) / 0x400, MAX_SAMPLE_SPACE / 0x400);
 	SetDlgItemText(IDC_SPACE, Text);
 }
 
@@ -249,12 +250,12 @@ void CInstrumentEditorDPCM::BuildSampleList()
 // TODO: I think I was wrong
 #define ADJUST_FOR_STORAGE(x) (x)
 
-bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
+bool CInstrumentEditorDPCM::LoadSample(CString &FilePath, CString &FileName)
 {
 	CFile SampleFile;
 
 	if (!SampleFile.Open(FilePath, CFile::modeRead)) {
-		AfxMessageBox(_T("Could not open file!"));
+		AfxMessageBox(IDS_FILE_OPEN_ERROR);
 		return false;
 	}
 
@@ -268,7 +269,6 @@ bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
 		Size = min(Size, CDSample::MAX_SIZE);
 		// Make sure size is compatible with DPCM hardware
 		if ((Size & 0xF) != 1) {
-			AfxMessageBox("The sample size has been adjusted to fit the DPCM hardware limitations.");
 			AddSize = 0x10 - ((Size + 0x0F) & 0x0F);
 		}
 		pNewSample->SampleSize = Size + AddSize;
@@ -300,7 +300,9 @@ bool CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
 	int Size = GetDocument()->GetTotalSampleSize();
 	
 	if ((Size + pNewSample->SampleSize) > MAX_SAMPLE_SPACE) {
-		AfxMessageBox(IDS_OUT_OF_SAMPLEMEM, MB_ICONERROR);
+		CString message;
+		message.Format(IDS_OUT_OF_SAMPLEMEM, MAX_SAMPLE_SPACE / 1024);
+		AfxMessageBox(message, MB_ICONERROR);
 	}
 	else {
 		strcpy(pFreeSample->Name, pNewSample->Name);
@@ -331,12 +333,12 @@ void CInstrumentEditorDPCM::OnBnClickedLoad()
 		while (Pos) {
 			CString Path = OpenFileDialog.GetNextPathName(Pos);
 			CString FileName = Path.Right(Path.GetLength() - Path.ReverseFind('\\') - 1);
-			LoadSample(Path.GetBuffer(), FileName.GetBuffer());
+			LoadSample(Path, FileName);
 		}
 	}
 	else {
 		// Single file
-		LoadSample(OpenFileDialog.GetPathName().GetBuffer(), OpenFileDialog.GetFileName().GetBuffer());
+		LoadSample(OpenFileDialog.GetPathName(), OpenFileDialog.GetFileName());
 	}
 }
 
@@ -534,7 +536,7 @@ void CInstrumentEditorDPCM::OnBnClickedSave()
 	Path = SaveFileDialog.GetPathName();
 
 	if (!SampleFile.Open(Path, CFile::modeWrite | CFile::modeCreate)) {
-		AfxMessageBox(_T("Could not open file!"));
+		AfxMessageBox(IDS_FILE_OPEN_ERROR);
 		return;
 	}
 

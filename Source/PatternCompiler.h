@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,9 +40,11 @@ public:
 public:
 	unsigned int	GetDataSize() { return m_iDataPointer; };
 	unsigned char	GetData(unsigned int i) { ASSERT(i < m_iDataPointer); return m_pData[i]; };
+	unsigned char	*GetData() { return m_pData; };
 	unsigned int	GetCompressedDataSize() { return m_iCompressedDataPointer; };
 	unsigned char	GetCompressedData(unsigned int i) { ASSERT(i < m_iCompressedDataPointer); return m_pCompressedData[i]; };
-	bool			EmptyPattern();
+	bool			EmptyPattern() const;
+	unsigned int	GetHash() const;
 
 private:
 	unsigned int FindInstrument(int Instrument, unsigned int *pInstList);
@@ -62,4 +64,5 @@ private:
 	unsigned int	m_iCurrentDefaultDuration;
 	bool			m_bDSamplesAccessed[OCTAVE_RANGE * NOTE_RANGE]; // <- check the range, its not optimal right now
 	bool			m_bEmpty;
+	unsigned int	m_iHash;
 };

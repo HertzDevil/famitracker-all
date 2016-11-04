@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -51,7 +51,9 @@ BEGIN_MESSAGE_MAP(CConfigSound, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_DEVICES, OnCbnSelchangeDevices)
 END_MESSAGE_MAP()
 
-int iDeviceIndex;
+//int iDeviceIndex;
+
+const int MAX_BUFFER_LEN = 500;	// 500 ms
 
 // CConfigSound message handlers
 
@@ -61,76 +63,69 @@ BOOL CConfigSound::OnInitDialog()
 
 	CString Text;
 
-	CComboBox	*SampleRate, *SampleSize, *Devices;
-	CSliderCtrl	*Slider, *BassSlider, *TrebleSliderFreq, *TrebleSliderDamping, *VolumeSlider;
+	CComboBox	*pSampleRate, *pSampleSize, *pDevices;
+	CSliderCtrl	*pBufSlider, *pBassSlider, *pTrebleSliderFreq, *pTrebleSliderDamping, *pVolumeSlider;
 
-	SampleRate	= (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
-	SampleSize	= (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
-	Devices		= (CComboBox*)GetDlgItem(IDC_DEVICES);
-	Slider		= (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
+	pSampleRate	= (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
+	pSampleSize	= (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
+	pDevices	= (CComboBox*)GetDlgItem(IDC_DEVICES);
+	pBufSlider	= (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
 
-	BassSlider			= (CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ);
-	TrebleSliderFreq	= (CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ);
-	TrebleSliderDamping = (CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP);
-	VolumeSlider		= (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
+	pBassSlider			 = (CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ);
+	pTrebleSliderFreq	 = (CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ);
+	pTrebleSliderDamping = (CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP);
+	pVolumeSlider		 = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
 
-	SampleRate->AddString(_T("48 000 Hz"));
-	SampleRate->AddString(_T("44 100 Hz"));
-	SampleRate->AddString(_T("22 050 Hz"));
-	SampleRate->AddString(_T("11 025 Hz"));
 
-	SampleSize->AddString(_T("16 bit"));
-	SampleSize->AddString(_T("8 bit"));
-
-	Slider->SetRange(1, 500);
+	pBufSlider->SetRange(1, MAX_BUFFER_LEN);
 
 	switch (theApp.GetSettings()->Sound.iSampleRate) {
-		case 11025: SampleRate->SelectString(0, _T("11 025 Hz")); break;
-		case 22050: SampleRate->SelectString(0, _T("22 050 Hz")); break;
-		case 44100: SampleRate->SelectString(0, _T("44 100 Hz")); break;
-		case 48000: SampleRate->SelectString(0, _T("48 000 Hz")); break;
+		case 11025: pSampleRate->SelectString(0, _T("11 025 Hz")); break;
+		case 22050: pSampleRate->SelectString(0, _T("22 050 Hz")); break;
+		case 44100: pSampleRate->SelectString(0, _T("44 100 Hz")); break;
+		case 48000: pSampleRate->SelectString(0, _T("48 000 Hz")); break;
+		case 96000: pSampleRate->SelectString(0, _T("96 000 Hz")); break;
 	}
 
 	switch (theApp.GetSettings()->Sound.iSampleSize) {
-		case 16: SampleSize->SelectString(0, _T("16 bit")); break;
-		case 8:	 SampleSize->SelectString(0, _T("8 bit")); break;
+		case 16: pSampleSize->SelectString(0, _T("16 bit")); break;
+		case 8:	 pSampleSize->SelectString(0, _T("8 bit")); break;
 	}
 
-	Slider->SetPos(theApp.GetSettings()->Sound.iBufferLength);
+	pBufSlider->SetPos(theApp.GetSettings()->Sound.iBufferLength);
 
 	Text.Format(_T("%i ms"), theApp.GetSettings()->Sound.iBufferLength);
 	SetDlgItemText(IDC_BUF_LEN, Text);
 
-	BassSlider->SetRange(16, 4000);
-	TrebleSliderFreq->SetRange(20, 20000);
-	TrebleSliderDamping->SetRange(0, 90);
-	VolumeSlider->SetRange(0, 100);
+	pBassSlider->SetRange(16, 4000);
+	pTrebleSliderFreq->SetRange(20, 20000);
+	pTrebleSliderDamping->SetRange(0, 90);
+	pVolumeSlider->SetRange(0, 100);
 
-	BassSlider->SetPos(theApp.GetSettings()->Sound.iBassFilter);
-	TrebleSliderFreq->SetPos(theApp.GetSettings()->Sound.iTrebleFilter);
-	TrebleSliderDamping->SetPos(theApp.GetSettings()->Sound.iTrebleDamping);
-	VolumeSlider->SetPos(theApp.GetSettings()->Sound.iMixVolume);
+	pBassSlider->SetPos(theApp.GetSettings()->Sound.iBassFilter);
+	pTrebleSliderFreq->SetPos(theApp.GetSettings()->Sound.iTrebleFilter);
+	pTrebleSliderDamping->SetPos(theApp.GetSettings()->Sound.iTrebleDamping);
+	pVolumeSlider->SetPos(theApp.GetSettings()->Sound.iMixVolume);
 
-	Text.Format(_T("%i Hz"), ((CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ))->GetPos());
+	Text.Format(_T("%i Hz"), pBassSlider->GetPos());
 	SetDlgItemText(IDC_BASS_FREQ_T, Text);
 
-	Text.Format(_T("%i Hz"), ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ))->GetPos());
+	Text.Format(_T("%i Hz"), pTrebleSliderFreq->GetPos());
 	SetDlgItemText(IDC_TREBLE_FREQ_T, Text);
 
-	Text.Format(_T("-%i dB"), ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos());
+	Text.Format(_T("-%i dB"), pTrebleSliderDamping->GetPos());
 	SetDlgItemText(IDC_TREBLE_DAMP_T, Text);
 
-	Text.Format(_T("%i %%"), ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos());
+	Text.Format(_T("%i %%"), pVolumeSlider->GetPos());
 	SetDlgItemText(IDC_VOLUME_T, Text);
 
 	CDSound *pDSound = theApp.GetSoundGenerator()->GetSoundInterface();
 	int iCount = pDSound->GetDeviceCount();
 
-	for (int i = 0; i < iCount; i++)
-		Devices->AddString(pDSound->GetDeviceName(i));
+	for (int i = 0; i < iCount; ++i)
+		pDevices->AddString(pDSound->GetDeviceName(i));
 
-//	Devices->SetCurSel(pDSound->MatchDeviceID(theApp.m_pSettings->strDevice.GetBuffer()));
-	Devices->SetCurSel(theApp.GetSettings()->Sound.iDevice);
+	pDevices->SetCurSel(theApp.GetSettings()->Sound.iDevice);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -162,34 +157,35 @@ void CConfigSound::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 BOOL CConfigSound::OnApply()
 {
-	CComboBox	*SampleRate, *SampleSize, *Devices;
-	CSliderCtrl	*Slider;
+	CComboBox	*pSampleRate, *pSampleSize, *pDevices;
+	CSliderCtrl	*pBufSlider;
 
-	Devices = (CComboBox*)GetDlgItem(IDC_DEVICES);
-	SampleRate = (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
-	SampleSize = (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
-	Slider = (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
+	pDevices = (CComboBox*)GetDlgItem(IDC_DEVICES);
+	pSampleRate = (CComboBox*)GetDlgItem(IDC_SAMPLE_RATE);
+	pSampleSize = (CComboBox*)GetDlgItem(IDC_SAMPLE_SIZE);
+	pBufSlider = (CSliderCtrl*)GetDlgItem(IDC_BUF_LENGTH);
 
-	switch (SampleRate->GetCurSel()) {
+	switch (pSampleRate->GetCurSel()) {
 		case 0: theApp.GetSettings()->Sound.iSampleRate = 11025; break;
 		case 1: theApp.GetSettings()->Sound.iSampleRate = 22050; break;
 		case 2: theApp.GetSettings()->Sound.iSampleRate = 44100; break;
 		case 3: theApp.GetSettings()->Sound.iSampleRate = 48000; break;
+		case 4: theApp.GetSettings()->Sound.iSampleRate = 96000; break;
 	}
 
-	switch (SampleSize->GetCurSel()) {
+	switch (pSampleSize->GetCurSel()) {
 		case 0: theApp.GetSettings()->Sound.iSampleSize = 16; break;
 		case 1: theApp.GetSettings()->Sound.iSampleSize = 8; break;
 	}
 
-	theApp.GetSettings()->Sound.iBufferLength = Slider->GetPos();
+	theApp.GetSettings()->Sound.iBufferLength = pBufSlider->GetPos();
 
 	theApp.GetSettings()->Sound.iBassFilter		= ((CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ))->GetPos();
-	theApp.GetSettings()->Sound.iTrebleFilter		= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ))->GetPos();
+	theApp.GetSettings()->Sound.iTrebleFilter	= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ))->GetPos();
 	theApp.GetSettings()->Sound.iTrebleDamping	= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos();
 	theApp.GetSettings()->Sound.iMixVolume		= ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos();
 
-	theApp.GetSettings()->Sound.iDevice			= Devices->GetCurSel();
+	theApp.GetSettings()->Sound.iDevice	= pDevices->GetCurSel();
 
 	theApp.LoadSoundConfig();
 

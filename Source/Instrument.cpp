@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,7 +46,18 @@ void CInstrument::GetName(char *Name) const
 	strcpy(Name, m_cName);
 }
 
-char *CInstrument::GetName()
+const char *CInstrument::GetName() const
 {
 	return m_cName;
+}
+
+void CInstrument::InstrumentChanged() const
+{
+	// Set modified flag
+	CFrameWnd *pFrameWnd = ((CFrameWnd*)AfxGetMainWnd());
+	if (pFrameWnd != NULL) {
+		CDocument *pDoc = pFrameWnd->GetActiveDocument();
+		if (pDoc != NULL)
+			pDoc->SetModifiedFlag();
+	}
 }

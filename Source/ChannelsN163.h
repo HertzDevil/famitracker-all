@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
 #pragma once
 
 //
-// Derived channels, N106
+// Derived channels, N163
 //
 
-class CChannelHandlerN106 : public CChannelHandler {
+class CChannelHandlerN163 : public CChannelHandler {
 public:
-	CChannelHandlerN106();
+	CChannelHandlerN163();
 	virtual void ProcessChannel();
 	virtual void RefreshChannel();
 protected:
@@ -36,12 +36,16 @@ private:
 	void WriteReg(int Reg, int Value);
 	void SetAddress(char Addr, bool AutoInc);
 	void WriteData(char Data);
+	void WriteData(int Addr, char Data);
 	void LoadWave();
+	void CheckWaveUpdate();
 private:
-	inline int GetIndex() const { return m_iChannelID - CHANID_N106_CHAN1; }
+	inline int GetIndex() const { return m_iChannelID - CHANID_N163_CHAN1; }
 private:
 	bool m_bLoadWave;
 	int m_iWaveLen;
 	int m_iWavePos;
-	CInstrumentN106 *m_pInstrument;
+	int m_iWaveIndex;
+	int m_iWaveCount;
+	CInstrumentN163 *m_pInstrument;
 };

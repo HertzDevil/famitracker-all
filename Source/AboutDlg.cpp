@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,13 +25,15 @@
 
 // CAboutDlg dialog used for App About
 
+LPCTSTR LINK_WEB  = _T("http://www.famitracker.com");
+LPCTSTR LINK_MAIL = _T("mailto:jsr@famitracker.com");
+
 BEGIN_MESSAGE_MAP(CLinkLabel, CStatic)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSELEAVE()
 	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
-
 
 CLinkLabel::CLinkLabel(CString address)
 {
@@ -113,8 +115,8 @@ BOOL CAboutDlg::OnInitDialog()
 
 	SetDlgItemText(IDC_ABOUT, aboutString);
 
-	m_pMail = new CLinkLabel(_T("mailto:zxy965r@tninet.se"));
-	m_pWeb = new CLinkLabel(_T("http://famitracker.shoodot.net"));
+	m_pMail = new CLinkLabel(LINK_MAIL);
+	m_pWeb = new CLinkLabel(LINK_WEB);
 
 	m_pMail->SubclassDlgItem(IDC_MAIL, this);
 	m_pWeb->SubclassDlgItem(IDC_WEBPAGE, this);
@@ -122,6 +124,14 @@ BOOL CAboutDlg::OnInitDialog()
 	LOGFONT LogFont;
 	CFont *pFont;
 	
+	EnableToolTips(TRUE);
+
+	m_wndToolTip.Create(this, TTS_ALWAYSTIP);
+	m_wndToolTip.Activate(TRUE);
+
+	m_wndToolTip.AddTool(m_pMail, _T("Send mail to jsr@famitracker.com"));
+	m_wndToolTip.AddTool(m_pWeb, _T("Go to http://www.famitracker.com"));
+
 	pFont = m_pMail->GetFont();
 	pFont->GetLogFont(&LogFont);
 	LogFont.lfUnderline = 1;
@@ -133,3 +143,9 @@ BOOL CAboutDlg::OnInitDialog()
 	return TRUE;
 }
 
+
+BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+{
+	m_wndToolTip.RelayEvent(pMsg);
+	return CDialog::PreTranslateMessage(pMsg);
+}

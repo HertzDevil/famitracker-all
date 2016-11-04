@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -55,7 +55,6 @@ protected:
 	CWnd				*m_pParentWin;
 	CSequenceEditor		*m_pSequenceEditor;
 	CInstrumentVRC6		*m_pInstrument;
-	CSequence 			*m_pSequence;
 
 	unsigned int		m_iSelectedSetting;	 // In settings list
 
@@ -67,4 +66,5 @@ public:
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();
+	afx_msg void OnCloneSequence();
 };

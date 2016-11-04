@@ -7,17 +7,21 @@
 ** the Free Software Foundation; either version 2 of the License, or
 ** (at your option) any later version.
 **
-** This program is distributed in the hope that it will be useful, 
+** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+** Library General Public License for more details.  To obtain a
+** copy of the GNU Library General Public License, write to the Free
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
 ** must bear this legend.
 */
 
+#include <numeric>
+#include <algorithm>
+#include <cmath>
+#include "resampler/resample.hpp"
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "FamiTracker.h"
@@ -27,13 +31,113 @@
 #include "SoundGen.h"
 #include "apu/apu.h"
 #include "apu/dpcm.h"
+#include "resampler/resample.inl"
+
 
 const int CPCMImport::MAX_QUALITY = 15;
 const int CPCMImport::MIN_QUALITY = 0;
-const int CPCMImport::MAX_VOLUME = 16;
-const int CPCMImport::MIN_VOLUME = 1;
 
 const int CPCMImport::SAMPLES_MAX = 0x0FF1;		// Max amount of 8-bit DPCM samples
+
+const int CPCMImport::VOLUME_RANGE = 12;		// +/- dB
+
+
+// Implement a resampler using CRTP idiom
+class resampler : public jarh::resample<resampler>
+{
+    typedef jarh::resample<resampler> base;
+public:
+    resampler(const jarh::sinc &sinc, float ratio, int channels, int smpsize,
+              size_t nbsamples, CFile &cfile)
+    // TODO: cutoff is currently fixed to a value (.9f), make it modifiable.
+     : base(sinc), channels_(channels), smpsize_(smpsize),
+       nbsamples_(nbsamples), remain_(nbsamples), cfile_(cfile)
+    {
+        init(ratio, .9f);
+    }
+
+    bool initstream()
+    {
+        // Don't seek to the begin of wave chunk, as it is already done.
+        // This stream will not be reinitialized, then.
+        remain_ = nbsamples_;
+        return true;
+    }
+
+    float *fill(float *first, float *end)
+    {
+        int val;
+        for(;first != end && remain_ && ReadSample(val); ++first, --remain_)
+        {
+            *first = (float)val;
+        }
+        return first;
+    }
+
+private:
+    bool ReadSample(int &v)
+    {
+        int ret, nbytes;
+        if (smpsize_ == 2) {
+            // 16 bit samples
+            short sample_word[2];
+            if (channels_ == 2) {
+                ret = cfile_.Read(sample_word, nbytes = 2*sizeof(short));
+                v = (sample_word[0] + sample_word[1]) / 2;
+            }
+            else {
+                ret = cfile_.Read(sample_word, nbytes = sizeof(short));
+                v = *sample_word;
+            }
+        }
+        else if (smpsize_ == 1) {
+            // 8 bit samples
+            unsigned char sample_byte[2];
+            if (channels_ == 2) {
+                ret = cfile_.Read(sample_byte, nbytes = 2);
+                // convert to a proper signed representation
+                // shift left only by 7; because we want a mean
+                v = ((int)sample_byte[0] + (int)sample_byte[1] - 256) << 7;
+            }
+            else {
+                ret = cfile_.Read(sample_byte, nbytes = 1);
+				v = ((int)(*sample_byte) - 128) << 8;
+            }
+        }
+		else if (smpsize_ == 3) {
+			// 24 bit samples
+	        unsigned char sample_byte[6];
+            if (channels_ == 2) {
+				ret = cfile_.Read(sample_byte, nbytes = 6);
+				v = (*((signed short*)(sample_byte + 1)) + *((signed short*)(sample_byte + 4))) / 2;
+			}
+			else {
+				ret = cfile_.Read(sample_byte, nbytes = 3);
+				v = *((signed short*)(sample_byte + 1));
+			}
+		}
+		else if (smpsize_ == 4) {
+			// 32 bit samples
+	        int sample_word[2];
+            if (channels_ == 2) {
+				ret = cfile_.Read(sample_word, nbytes = 8);
+				v = ((sample_word[0] >> 16) + (sample_word[1] >> 16)) / 2;
+			}
+			else {
+				ret = cfile_.Read(sample_word, nbytes = 4);
+				v = sample_word[0] >> 16;
+			}
+		}
+
+        return ret == nbytes;
+    }
+
+    CFile &cfile_;
+    int    channels_;
+    int    smpsize_;
+    size_t nbsamples_;
+    size_t remain_;
+};
 
 // Derive a new class from CFileDialog with implemented preview of audio files
 
@@ -49,7 +153,7 @@ protected:
 
 //	CFileSoundDialog
 
-CFileSoundDialog::CFileSoundDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt, LPCTSTR lpszFileName, DWORD dwFlags, LPCTSTR lpszFilter, CWnd* pParentWnd, DWORD dwSize) 
+CFileSoundDialog::CFileSoundDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt, LPCTSTR lpszFileName, DWORD dwFlags, LPCTSTR lpszFilter, CWnd* pParentWnd, DWORD dwSize)
 	: CFileDialog(bOpenFileDialog, lpszDefExt, lpszFileName, dwFlags, lpszFilter, pParentWnd, dwSize)
 {
 }
@@ -66,7 +170,7 @@ void CFileSoundDialog::OnFileNameChange()
 
 	if (!GetFileExt().CompareNoCase(_T("wav")) && theApp.GetSettings()->General.bWavePreview)
 		PlaySound(GetPathName(), NULL, SND_FILENAME | SND_NODEFAULT | SND_ASYNC | SND_NOWAIT);
-	
+
 	CFileDialog::OnFileNameChange();
 }
 
@@ -74,12 +178,14 @@ void CFileSoundDialog::OnFileNameChange()
 
 IMPLEMENT_DYNAMIC(CPCMImport, CDialog)
 CPCMImport::CPCMImport(CWnd* pParent /*=NULL*/)
-	: CDialog(CPCMImport::IDD, pParent)
+	: CDialog(CPCMImport::IDD, pParent),
+	m_psinc(new jarh::sinc(512, 32)) // sinc object. TODO: parametrise
 {
 }
 
 CPCMImport::~CPCMImport()
 {
+	SAFE_RELEASE(m_psinc);
 }
 
 void CPCMImport::DoDataExchange(CDataExchange* pDX)
@@ -130,27 +236,32 @@ BOOL CPCMImport::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	CSliderCtrl *QualitySlider = (CSliderCtrl*)GetDlgItem(IDC_QUALITY);
-	CSliderCtrl *VolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
+	CSliderCtrl *pQualitySlider = (CSliderCtrl*)GetDlgItem(IDC_QUALITY);
+	CSliderCtrl *pVolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
 	CString Text;
 
 	// Initial volume & quality
 	m_iQuality = MAX_QUALITY;
-	m_iVolume = MAX_VOLUME / 4;
+	m_iVolume = 0;			// 0dB
 
-	QualitySlider->SetRange(MIN_QUALITY, MAX_QUALITY);
-	QualitySlider->SetPos(m_iQuality);
+	pQualitySlider->SetRange(MIN_QUALITY, MAX_QUALITY);
+	pQualitySlider->SetPos(m_iQuality);
 
-	VolumeSlider->SetRange(MIN_VOLUME, MAX_VOLUME);
-	VolumeSlider->SetPos(m_iVolume);
+	pVolumeSlider->SetRange(0, VOLUME_RANGE * 2);
+	pVolumeSlider->SetPos(m_iVolume + VOLUME_RANGE);
+	pVolumeSlider->SetTicFreq(3);	// 3dB/tick
 
 	Text.Format(_T("Quality: %i"), m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format(_T("Volume: %i"), m_iVolume);
+	Text.Format(_T("Gain: %+.0f dB"), float(m_iVolume));
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
 
 	UpdateFileInfo();
+
+	CString WinTitle;
+	WinTitle.Format(_T("PCM Import - [%s]"), m_strFileName);
+	SetWindowText(WinTitle);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -159,16 +270,16 @@ BOOL CPCMImport::OnInitDialog()
 void CPCMImport::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	CString Text;
-	CSliderCtrl *QualitySlider = (CSliderCtrl*)GetDlgItem(IDC_QUALITY);
-	CSliderCtrl *VolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
+	CSliderCtrl *pQualitySlider = (CSliderCtrl*)GetDlgItem(IDC_QUALITY);
+	CSliderCtrl *pVolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
 
-	m_iQuality = QualitySlider->GetPos();
-	m_iVolume = VolumeSlider->GetPos();
+	m_iQuality = pQualitySlider->GetPos();
+	m_iVolume = pVolumeSlider->GetPos() - VOLUME_RANGE;
 
 	Text.Format(_T("Quality: %i"), m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format(_T("Volume: %i"), m_iVolume);
+	Text.Format(_T("Gain: %+.0f dB"), float(m_iVolume));
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
 
 	UpdateFileInfo();
@@ -193,9 +304,9 @@ void CPCMImport::OnBnClickedOk()
 
 	// remove .wav
 	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
-	
+
 	// Set the name
-	strcpy(pSample->Name, (char*)(LPCSTR)m_strFileName);
+	strcpy_s(pSample->Name, 256, (char*)(LPCSTR)m_strFileName);
 
 	m_pImported = pSample;
 
@@ -218,26 +329,29 @@ void CPCMImport::UpdateFileInfo()
 	CString SampleRate;
 	SampleRate.Format(_T("%i Hz, %i bits, %s"), m_iSamplesPerSec, m_iSampleSize * 8, (m_iChannels == 2) ? _T("Stereo") : _T("Mono"));
 	SetDlgItemText(IDC_SAMPLE_RATE, SampleRate);
-	
+
 	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_PERIODS_NTSC[m_iQuality];
-	float resample_factor = base_freq / (float)m_iSamplesPerSec;
+	//float resample_factor = base_freq / (float)m_iSamplesPerSec;
 
 	CString Resampling;
-	Resampling.Format(_T("Resampling factor: %g"), resample_factor);
+	//Resampling.Format(_T("Resampling factor: %g"), resample_factor);
+	Resampling.Format(_T("Target sample rate: %g Hz"), base_freq);
 	SetDlgItemText(IDC_RESAMPLING, Resampling);
 }
 
 CDSample *CPCMImport::ConvertFile()
 {
 	// Converts a WAV file to a DPCM sample
+	static const int DMC_BIAS = 32;
+
 	unsigned char DeltaAcc = 0;	// DPCM sample accumulator
 	int Sample = 0;				// PCM sample
-	int Delta = 32;				// Delta counter
+	int Delta = DMC_BIAS;		// Delta counter
 	int AccReady = 8;
-	int WaveSize = m_iWaveSize;
 
 	float resample_factor;
-	float resampling = 0.0f;
+
+	float volume = powf(10, float(m_iVolume) / 20.0f);		// Convert dB to linear
 
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
@@ -250,22 +364,22 @@ CDSample *CPCMImport::ConvertFile()
 	int iSamples = 0;
 
 	// Determine resampling factor
-	// To avoid resampling @ quality = 15, use 33144 Hz
 	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_PERIODS_NTSC[m_iQuality];
 	resample_factor = base_freq / (float)m_iSamplesPerSec;
 
+    resampler resmpler(*m_psinc, resample_factor, m_iChannels, m_iSampleSize, m_iWaveSize, m_fSampleFile);
+    float val;
 	// Conversion
-	while ((WaveSize > 0) && (iSamples < SAMPLES_MAX)) {
+	while (resmpler.get(val) && (iSamples < SAMPLES_MAX)) {
 
-		resampling += 1.0f;
+		// when resampling we must clip because of possible ringing.
+		static const int MAX_AMP =  (1 << 16) - 1;
+		static const int MIN_AMP = -(1 << 16) + 1; // just being symetric
+		val = (std::max<float>(std::min<float>(val, (float)MAX_AMP), (float)MIN_AMP));
 
-		// Read & resample PCM sample from file
-		while (resampling > 0.0f && WaveSize > 0) {
-			Sample = ReadSample();
-			Sample = (Sample * m_iVolume) / 16;
-			WaveSize -= m_iBlockAlign;
-			resampling -= resample_factor;
-		}
+        // Volume done this way so it acts as before
+        Sample = (int)((val * volume) / 1024.f)
+                  + DMC_BIAS;
 
 		DeltaAcc >>= 1;
 
@@ -287,7 +401,11 @@ CDSample *CPCMImport::ConvertFile()
 			pSamples[iSamples++] = DeltaAcc;
 			AccReady = 8;
 		}
-	} 
+	}
+
+    // TODO: error handling with th efile
+    // if (!resmpler.eof())
+    //      throw ?? or something else.
 
 	// Adjust sample until size is x * $10 + 1 bytes
 	while (iSamples < SAMPLES_MAX && ((iSamples & 0x0F) - 1) != 0)
@@ -330,7 +448,7 @@ bool CPCMImport::OpenWaveFile()
 	// This is not perfect, but seems to work for the files I tried
 	while (Scanning) {
 		m_fSampleFile.Read(Header, 4);
-		
+
 		if (memcmp(Header, "WAVE", 4)) {
 			m_fSampleFile.Read(&BlockSize, 4);
 
@@ -372,43 +490,4 @@ bool CPCMImport::OpenWaveFile()
 	m_iSamplesPerSec  = WaveFormat.wf.nSamplesPerSec;
 
 	return true;
-}
-
-int CPCMImport::ReadSample(void)
-{
-	int Sample = 0;
-
-	if (m_iSampleSize == 2) {
-		// 16 bit samples
-		short sample_word;
-		if (m_iChannels == 2) {
-			m_fSampleFile.Read(&sample_word, 2);
-			Sample = sample_word;
-			m_fSampleFile.Read(&sample_word, 2);
-			Sample += sample_word;
-			sample_word = Sample >> 1;
-		}
-		else {
-			m_fSampleFile.Read(&sample_word, 2);
-		}
-		Sample = (sample_word + 0x8000) >> 8;
-	}
-	else {
-		// 8 bit samples
-		unsigned char sample_byte;
-		if (m_iChannels == 2) {
-			m_fSampleFile.Read(&sample_byte, 1);
-			Sample = sample_byte;
-			m_fSampleFile.Read(&sample_byte, 1);
-			Sample += sample_byte;
-			sample_byte = Sample >> 1;
-		}
-		else {
-			m_fSampleFile.Read(&sample_byte, 1);
-		}
-		// Convert to signed
-		Sample = ((signed short)sample_byte);
-	}
-
-	return Sample;
 }

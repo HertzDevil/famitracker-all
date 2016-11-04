@@ -4,7 +4,7 @@
 <TITLE></TITLE>
     <link href="style.css" rel="stylesheet" type="text/css" />
     <style type="text/css">
-        .style2
+        .paramTableStyle
         {
             FONT-SIZE: 9pt;
             table-layout: fixed;
@@ -13,304 +13,314 @@
             border-collapse: collapse;
             background-color: #FCFCFC;
         }
-        .style3
-        {
-            width: 50px;
-        }
-        .style5
-        {
-            width: 26px;
-            text-align: left;
-        }
-        .style7
-        {
-            text-align: center;
-            width: 142px;
-        }
-        .style8
+        .tableStyle
         {
             FONT-SIZE: 9pt;
             table-layout: fixed;
-            width: 10%;
+            width: 110px;
             font-family: Arial;
             border-collapse: collapse;
             background-color: #FCFCFC;
-        }
-        .style9
+        }        
+        .tableDescription
         {
-            FONT-SIZE: 9pt;
-            table-layout: fixed;
-            width: 15%;
+            font-size: 9pt;
             font-family: Arial;
-            border-collapse: collapse;
-            background-color: #FCFCFC;
-            height: 15px;
-        }
-        .style11
-        {
-            width: 228px;
-        }
-        .style13
-        {
-            width: 455px;
-        }
-        .style14
-        {
-            text-align: center;
-            width: 166px;
-        }
-        .style15
-        {
-            FONT-SIZE: 9pt;
-            table-layout: fixed;
-            width: 15%;
-            font-family: Arial;
-            border-collapse: collapse;
-            background-color: #FCFCFC;
         }
     </style>
 </HEAD>
 <BODY>
-    <span class="topic">Konami VRC7</span><hr />
-    <h3 class="heading"><span lang="sv">About</span></h3>
+
+    <span class="topic">Konami VRC7</span>
+    <hr />
+    
+    <p class="heading">About</p>
+    
     <p class="text">
-        The VRC7 chip contains a customized OPLL unit<span lang="sv"> (YM2413)</span> <span lang="sv">that</span> has 6 channels for 
-        frequency modulation synthesis. This chip was <span lang="sv">only </span>used in Lagrange Point 
+        The VRC7 chip contains a customized OPLL unit (YM2413) that has 6 channels for 
+        frequency modulation synthesis. This chip was only used in Lagrange Point 
         by Konami.</p>
+        
     <p class="text">
-        It has 15 predefined patches and one user defined patch<span lang="sv">,</span>
-        <span lang="sv">t</span>he <span lang="sv">predefined</span> patches are 
-        customized for VRC7 and <span lang="sv">are </span>not the default 
-        <span lang="sv">YM2413</span> ones.<span lang="sv"> The chip is 
-        also limited to only</span> one user 
+        It has 15 predefined patches and one user defined patch,
+        the predefined patches are 
+        customized for VRC7 and are not the default 
+        YM2413 ones. </p>
+    
+    <p class="text">
+        <b>Note:</b> 
+        The chip is limited to only <b>one</b> user 
         defined patch, so it&#39;s not possible to use different user defined 
         patches in different channels at the same time!
-        Please <span lang="sv">see</span> documents about YM2413 or documents about FM in 
-        general if you need more information.</p>
-<p class="text">
-        <span lang="sv">Note release command can be used on these channels, it will enable the sustain 
-        flag.</span></p>
+        Please see documents about YM2413 or documents about FM in 
+        general if you need more information.       
+    <p class="text">
+        Note release command can be used on these channels, it will enable the sustain 
+        flag.</p>
+    
     <hr />
-    <h1 class="heading">Instruments</h1>
+    <p class="heading">Instruments</p>
+    
     <IMG id="IMG1" src="img/inst_vrc7.png" alt="">
 
     <p class="text">
-        <span lang="sv">Instruments contains a patch setting and the parameters for the 
-        custom patch (patch #0). </span>The predefined patches<span lang="sv"> (patch #1 
-        - #15)</span> are defined in 
-        hardware and cannot be changed<span lang="sv">.</span></p>
+        Instruments contains a patch setting and the parameters for the 
+        custom patch (patch #0). The predefined patches (patch #1 
+        - #15) are defined in 
+        hardware and cannot be changed.</p>
+        
     <p class="text">
-        <span lang="sv">Use copy/paste to create and read MML strings from the clipboard of the  
-        patch settings.</span></p>
+        Use copy/paste to create and read MML strings from the clipboard of the  
+        patch settings.</p>
+    
     <p class="text">
         The custom patch settings are enabled when patch 0 is selected
         and are used to customize the modulator and carrier oscillator, 
-        but it will also display the settings for the internal patches</span>.<span 
-            lang="sv"> </span></p>
-<table border="1" cellpadding="3" cellspacing="0" class="style2" >
-    <tr>
-        <td class="style11">
-            <span class="gray">Attack, Decay, Sustain, Release </span> 
-            </td>
-        <td class="style13">
-            ADSR envelope for the volume level. (0 - 15)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Amplitude modulation </span>
-            </td>
-        <td class="style13">
-            Applies a fixed tremolo effect at 3.7 Hz (on/off)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Vibrato </span> 
-            </td>
-        <td class="style13">
-            Applies a fixed vibrato effect at 6.4 Hz (on/off)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Sustained </span>
-            </td>
-        <td class="style13">
-            Switch between</span> sustained and percussive tone (on/off)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">RATE key scale </span>
-            </td>
-        <td class="style13">
-            Increases<span lang="sv"> the</span> ADSR rate for higher pitches (on/off)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Key Scale Level </span>
-            </td>
-        <td class="style13">
-            The attenuation level for RATE, according to table<span lang="sv"> 1</span> (0 - 3)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Wave rectification </span>
-            </td>
-        <td class="style13">
-            Half wave rectification of the sine wave (on/off)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Multiplication factor </span>
-            </td>
-        <td class="style13">
-            Multiplies the <span lang="sv">pitch</span> with a factor<span lang="sv">, according to</span> table<span 
-                lang="sv"> 2</span> (0 - 15)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span class="gray">Feedback </span>
-            </td>
-        <td class="style13">
-            <span lang="sv">M</span>odulator<span lang="sv"> feedback</span> <span lang="sv">
-            level </span>(0 - 7)</td>
-    </tr>
-    <tr>
-        <td class="style11">
-            <span lang="sv"><span class="gray">Modulator Level</span> </span>
-        </td>
-        <td class="style13">
-            <span lang="sv">Modulator mixing level (0 
-            - 31)</span></td>
-    </tr>
-</table>
-<br />
-    <table class="style2" border="1" cellpadding="3" cellspacing="0">
+        but it will also display the settings for the internal patches.</p>
+        
+    <table border="1" cellpadding="3" cellspacing="0" class="paramTableStyle" >
         <tr>
-            <td class="style5">
-                <span lang="sv">0</span></td>
-            <td class="style14">
-                <span lang="sv">0 dB/oct</span></td>
+            <td width=220px>
+                <b>Parameter</b></td>
+            <td width=350px>
+                <b>Description</b></td>
+            <td width=80px>
+                <b>Range</b></td>
         </tr>
         <tr>
-            <td class="style5">
-                <span lang="sv">1</span></td>
-            <td class="style14">
-                1<span lang="sv">.5 dB/oct</span></td>
+            <td>
+                Attack, Decay, Sustain, Release</td>
+            <td>
+                ADSR envelope for the volume level.</td>
+            <td>
+                0 - 15</td>
         </tr>
         <tr>
-            <td class="style5">2</td>
-            <td class="style14">3 dB/oct</td>
+            <td>
+                Amplitude modulation</td>
+            <td>
+                Applies a fixed tremolo effect at 3.7 Hz</td>
+            <td>
+                on / off</td>
         </tr>
         <tr>
-            <td class="style5">3</td>
-            <td class="style14">6 dB/oct</td>
+            <td>
+                Vibrato</td>
+            <td>
+                Applies a fixed vibrato effect at 6.4 Hz</td>
+            <td>
+                on / off</td>
+        </tr>
+        <tr>
+            <td>
+                Sustained</td>
+            <td>
+                Switch between sustained and percussive tone</td>
+            <td>
+                on / off</td>
+        </tr>
+        <tr>
+            <td>
+                RATE key scale</td>
+            <td>
+                Increases the ADSR rate for higher pitches</td>
+            <td>
+                on / off</td>
+        </tr>
+        <tr>
+            <td>
+                Key Scale Level</td>
+            <td>
+                The attenuation level for RATE, according to table 2</td>
+            <td>
+                0 - 3</td>
+        </tr>
+        <tr>
+            <td>
+                Wave rectification</td>
+            <td>
+                Half wave rectification of the sine wave</td>
+            <td>
+                on / off</td>
+        </tr>
+        <tr>
+            <td>
+                Multiplication factor</td>
+            <td>
+                Multiplies the pitch with a factor, according to table 3</td>
+            <td>
+                0 - 15</td>
+        </tr>
+        <tr>
+            <td>
+                Feedback</td>
+            <td>
+                Modulator feedback level</td>
+            <td>
+                0 - 7</td>
+        </tr>
+        <tr>
+            <td>
+                Modulator Level</td>
+            <td>
+                Modulator mixing level</td>
+            <td>
+                0 - 31</td>
         </tr>
     </table>
-    <span class="style15" lang="sv">Table 1, Key Scale Level Table</span>
-<br />
-<br />
     
-    <table class="style8" border="1" cellpadding="3" cellspacing="0">
+    <span class="tableDescription">Table 1, Instrument parameters</span>
+    <br />
+    <br />
+    
+    <table class="tableStyle" border="1" cellpadding="3" cellspacing="0">
         <tr>
-            <td class="style3">
-                <span lang="sv">0</span></td>
-            <td class="style7">
-                <span lang="sv">½</span></td>
+            <td width=30px>
+                <b>Value</b></td>
+            <td align="center">
+                <b>Rate</b></td>
+        </tr>    
+        <tr>
+            <td>
+                0</td>
+            <td align="center">
+                0 dB/oct</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">1</span></td>
-            <td class="style7">
-                <span lang="sv">1</span></td>
+            <td>
+                1</td>
+            <td align="center">
+                1.5 dB/oct</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">2</span></td>
-            <td class="style7">
-                <span lang="sv">2</span></td>
+            <td>
+                2</td>
+            <td align="center">
+                3 dB/oct</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">3</span></td>
-            <td class="style7">
-                <span lang="sv">3</span></td>
+            <td>
+                3</td>
+            <td align="center">
+                6 dB/oct</td>
+        </tr>
+    </table>
+    
+    <span class="tableDescription">Table 2, Key Scale Level Table</span>
+    <br />
+    <br />
+    
+    <table class="tableStyle" border="1" cellpadding="3" cellspacing="0">
+        <tr>
+            <td width=30px>
+                <b>Value</b></td>
+            <td align="center">
+                <b>Factor</b></td>
+        </tr>    
+        <tr>
+            <td>
+                0</td>
+            <td align="center">
+                ½</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">4</span></td>
-            <td class="style7">
-                <span lang="sv">4</span></td>
+            <td>
+                1</td>
+            <td align="center">
+                1</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">5</span></td>
-            <td class="style7">
-                <span lang="sv">5</span></td>
+            <td>
+                2</td>
+            <td align="center">
+                2</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">6</span></td>
-            <td class="style7">
-                <span lang="sv">6</span></td>
+            <td>
+                3</td>
+            <td align="center">
+                3</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">7</span></td>
-            <td class="style7">
-                <span lang="sv">7</span></td>
+            <td>
+                4</td>
+            <td align="center">
+                4</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">8</span></td>
-            <td class="style7">
-                <span lang="sv">8</span></td>
+            <td>
+                5</td>
+            <td align="center">
+                5</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">9</span></td>
-            <td class="style7">
-                <span lang="sv">9</span></td>
+            <td>
+                6</td>
+            <td align="center">
+                6</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">10</span></td>
-            <td class="style7">
-                <span lang="sv">10</span></td>
+            <td>
+                7</td>
+            <td align="center">
+                7</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">11</span></td>
-            <td class="style7">
-                <span lang="sv">10</span></td>
+            <td>
+                8</td>
+            <td align="center">
+                8</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">12</span></td>
-            <td class="style7">
-                <span lang="sv">12</span></td>
+            <td>
+                9</td>
+            <td align="center">
+                9</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">13</span></td>
-            <td class="style7">
-                <span lang="sv">12</span></td>
+            <td>
+                10</td>
+            <td align="center">
+                10</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">14</span></td>
-            <td class="style7">
-                <span lang="sv">15</span></td>
+            <td>
+                11</td>
+            <td align="center">
+                10</td>
         </tr>
         <tr>
-            <td class="style3">
-                <span lang="sv">15</span></td>
-            <td class="style7">
-                <span lang="sv">15</span></td>
+            <td>
+                12</td>
+            <td align="center">
+                12</td>
+        </tr>
+        <tr>
+            <td>
+                13</td>
+            <td align="center">
+                12</td>
+        </tr>
+        <tr>
+            <td>
+                14</td>
+            <td align="center">
+                15</td>
+        </tr>
+        <tr>
+            <td>
+                15</td>
+            <td align="center">
+                15</td>
         </tr>
     </table>
 
+    <span class="tableDescription">Table 3, Multiplication factor table</span>
 
-<span class="style9" lang="sv">Table 2, Multiplication factor table</span>
-
+    <br />
+    <br />
+    <hr />
+    <span class="footer">Back to <a href="sound_overview.htm">sound hardware</a> &middot; <a href="main_index.htm">main index</a></span>
 
 </BODY>
 </HTML>

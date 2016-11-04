@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 // No unicode allowed here
 
 // Class constants
-const unsigned int CDocumentFile::FILE_VER		 = 0x0420;			// Current file version (4.20)
+const unsigned int CDocumentFile::FILE_VER		 = 0x0430;			// Current file version (4.30)
 const unsigned int CDocumentFile::COMPATIBLE_VER = 0x0100;			// Compatible file version (1.0)
 
 const char *CDocumentFile::FILE_HEADER_ID = "FamiTracker Module";
@@ -278,7 +278,7 @@ CString CDocumentFile::ReadString()
 	char str[1024], c;
 	int str_ptr = 0;
 
-	while (c = GetBlockChar())
+	while ((c = GetBlockChar()) && (str_ptr < 1023))
 		str[str_ptr++] = c;
 
 	str[str_ptr++] = 0;

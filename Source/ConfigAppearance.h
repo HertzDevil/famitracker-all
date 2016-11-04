@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ enum E_COLOR_ITEMS {
 	COLOR_ITEM_COUNT
 };
 
+#include "ColorScheme.h"
+
 // CConfigAppearance dialog
 
 class CConfigAppearance : public CPropertyPage
@@ -54,14 +56,18 @@ protected:
 	static int CALLBACK EnumFontFamExProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 
 	static const TCHAR *COLOR_ITEMS[];
-	static const TCHAR *COLOR_SCHEMES[];
+//	static const TCHAR *COLOR_SCHEMES[];
 	static const int NUM_COLOR_SCHEMES;
+
+	static const COLOR_SCHEME *COLOR_SCHEMES[];
 
 	static const int FONT_SIZES[];
 	static const int FONT_SIZE_COUNT;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	void SelectColorScheme(const COLOR_SCHEME *pColorScheme);
 
 	void SetColor(int Index, int Color);
 	int GetColor(int Index) const;

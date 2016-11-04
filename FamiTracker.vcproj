@@ -204,6 +204,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\Action.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\ChannelMap.cpp"
 				>
 			</File>
@@ -292,10 +296,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Source\PatternView.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Source\Settings.cpp"
 				>
 				<FileConfiguration
@@ -352,6 +352,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\ChannelsDlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CommentsDlg.cpp"
 					>
 				</File>
 				<File
@@ -596,6 +600,18 @@
 								>
 							</File>
 						</Filter>
+						<Filter
+							Name="Resampler"
+							>
+							<File
+								RelativePath=".\Source\resampler\resample.cpp"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\resampler\sinc.cpp"
+								>
+							</File>
+						</Filter>
 					</Filter>
 					<Filter
 						Name="Instrument panels"
@@ -633,11 +649,11 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\InstrumentEditorN106.cpp"
+							RelativePath=".\Source\InstrumentEditorN163.cpp"
 							>
 						</File>
 						<File
-							RelativePath=".\Source\InstrumentEditorN106Wave.cpp"
+							RelativePath=".\Source\InstrumentEditorN163Wave.cpp"
 							>
 						</File>
 						<File
@@ -675,25 +691,37 @@
 				Name="Exporter"
 				>
 				<File
+					RelativePath=".\Source\Chunk.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\ChunkRender.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\Compiler.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporter.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporter_C_Interface.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporters.cpp"
 					>
 				</File>
 				<File
 					RelativePath=".\Source\PatternCompiler.cpp"
 					>
 				</File>
+				<Filter
+					Name="Custom Exporter"
+					>
+					<File
+						RelativePath=".\Source\CustomExporter.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\CustomExporter_C_Interface.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\CustomExporters.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Document Data Types"
@@ -722,7 +750,7 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\InstrumentN106.cpp"
+						RelativePath=".\Source\InstrumentN163.cpp"
 						>
 					</File>
 					<File
@@ -740,12 +768,8 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="Windows"
+				Name="Visualizer"
 				>
-				<File
-					RelativePath=".\Source\FrameBoxWnd.cpp"
-					>
-				</File>
 				<File
 					RelativePath=".\Source\SampleWindow.cpp"
 					>
@@ -829,7 +853,7 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\APU\N106.CPP"
+							RelativePath=".\Source\APU\N163.CPP"
 							>
 						</File>
 						<File
@@ -890,7 +914,7 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\ChannelsN106.cpp"
+						RelativePath=".\Source\ChannelsN163.cpp"
 						>
 					</File>
 					<File
@@ -911,7 +935,7 @@
 				Name="Other"
 				>
 				<File
-					RelativePath=".\Fft\Fft.cpp"
+					RelativePath=".\Source\FFT\Fft.cpp"
 					>
 				</File>
 			</Filter>
@@ -959,6 +983,22 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
+			<Filter
+				Name="Pattern Editor"
+				>
+				<File
+					RelativePath=".\Source\PatternView.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Frame Editor"
+				>
+				<File
+					RelativePath=".\Source\FrameEditor.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -970,11 +1010,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\ChannelMap.h"
+				RelativePath=".\Source\Action.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Source\ColorScheme.h"
+				RelativePath=".\Source\ChannelMap.h"
 				>
 			</File>
 			<File
@@ -1018,10 +1058,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\PatternView.h"
-				>
-			</File>
-			<File
 				RelativePath=".\resource.h"
 				>
 				<FileConfiguration
@@ -1055,6 +1091,10 @@
 			</File>
 			<File
 				RelativePath=".\Source\TrackerChannel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\version.h"
 				>
 			</File>
 			<File
@@ -1127,7 +1167,7 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\APU\N106.H"
+							RelativePath=".\Source\APU\N163.H"
 							>
 						</File>
 						<File
@@ -1196,7 +1236,7 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\ChannelsN106.h"
+						RelativePath=".\Source\ChannelsN163.h"
 						>
 					</File>
 					<File
@@ -1222,6 +1262,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\ChannelsDlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CommentsDlg.h"
 					>
 				</File>
 				<File
@@ -1265,6 +1309,10 @@
 					</File>
 					<File
 						RelativePath=".\Source\ConfigGeneral.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ConfigLevels.h"
 						>
 					</File>
 					<File
@@ -1330,6 +1378,18 @@
 								>
 							</File>
 						</Filter>
+						<Filter
+							Name="Resampler Headers"
+							>
+							<File
+								RelativePath=".\Source\resampler\resample.hpp"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\resampler\sinc.hpp"
+								>
+							</File>
+						</Filter>
 					</Filter>
 					<Filter
 						Name="Instrument dialog"
@@ -1351,11 +1411,7 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\InstrumentEditorN106.h"
-							>
-						</File>
-						<File
-							RelativePath=".\Source\InstrumentEditorN106Wave.h"
+							RelativePath=".\Source\InstrumentEditorN163Wave.h"
 							>
 						</File>
 						<File
@@ -1378,12 +1434,8 @@
 				</Filter>
 			</Filter>
 			<Filter
-				Name="Windows Headers"
+				Name="Visualizer Headers"
 				>
-				<File
-					RelativePath=".\Source\FrameBoxWnd.h"
-					>
-				</File>
 				<File
 					RelativePath=".\Source\SampleWindow.h"
 					>
@@ -1409,23 +1461,15 @@
 				Name="Export Headers"
 				>
 				<File
+					RelativePath=".\Source\Chunk.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\ChunkRender.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\Compiler.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporter.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporter_C_Interface.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporterInterfaces.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CustomExporters.h"
 					>
 				</File>
 				<File
@@ -1436,16 +1480,36 @@
 					RelativePath=".\Source\PatternCompiler.h"
 					>
 				</File>
+				<Filter
+					Name="Custom Exporter Headers"
+					>
+					<File
+						RelativePath=".\Source\CustomExporter.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\CustomExporter_C_Interface.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\CustomExporterInterfaces.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\CustomExporters.h"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Other Headers"
 				>
 				<File
-					RelativePath=".\Fft\Complex.h"
+					RelativePath=".\Source\FFT\Complex.h"
 					>
 				</File>
 				<File
-					RelativePath=".\Fft\Fft.h"
+					RelativePath=".\Source\FFT\Fft.h"
 					>
 				</File>
 			</Filter>
@@ -1480,6 +1544,26 @@
 						>
 					</File>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="Pattern Editor Headers"
+				>
+				<File
+					RelativePath=".\Source\ColorScheme.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\PatternView.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Frame Editor Headers"
+				>
+				<File
+					RelativePath=".\Source\FrameEditor.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -1577,11 +1661,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Toolbar-d5.bmp"
+				RelativePath=".\res\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Toolbar-d5.bmp"
+				RelativePath=".\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
@@ -1642,6 +1726,11 @@
 				>
 			</File>
 			<File
+				RelativePath=".\hlp\faq.htm"
+				DeploymentContent="true"
+				>
+			</File>
+			<File
 				RelativePath=".\hlp\main_index.htm"
 				DeploymentContent="true"
 				>
@@ -1654,6 +1743,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\hlp\img\Icon.png"
+					>
+				</File>
+				<File
 					RelativePath=".\hlp\img\inst_2a03.png"
 					>
 				</File>
@@ -1663,6 +1756,10 @@
 				</File>
 				<File
 					RelativePath=".\hlp\img\inst_fds.PNG"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\img\inst_n163.png"
 					>
 				</File>
 				<File
@@ -1701,6 +1798,11 @@
 					>
 				</File>
 				<File
+					RelativePath=".\hlp\n163.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
 					RelativePath=".\hlp\sound_overview.htm"
 					DeploymentContent="true"
 					>
@@ -1728,7 +1830,7 @@
 				Name="Interface"
 				>
 				<File
-					RelativePath=".\hlp\configuration.htm"
+					RelativePath=".\hlp\control_panel.htm"
 					DeploymentContent="true"
 					>
 				</File>
@@ -1744,6 +1846,11 @@
 				</File>
 				<File
 					RelativePath=".\hlp\effect_list.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\interface.htm"
 					DeploymentContent="true"
 					>
 				</File>
@@ -1772,16 +1879,16 @@
 					DeploymentContent="true"
 					>
 				</File>
+				<File
+					RelativePath=".\hlp\toolbar.htm"
+					DeploymentContent="true"
+					>
+				</File>
 				<Filter
 					Name="Configuration"
 					>
 					<File
 						RelativePath=".\hlp\config_appearance.htm"
-						DeploymentContent="true"
-						>
-					</File>
-					<File
-						RelativePath=".\hlp\config_audio.htm"
 						DeploymentContent="true"
 						>
 					</File>
@@ -1797,6 +1904,16 @@
 					</File>
 					<File
 						RelativePath=".\hlp\config_shortcuts.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\config_sound.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\configuration.htm"
 						DeploymentContent="true"
 						>
 					</File>
@@ -1851,6 +1968,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\changelog.txt"
+			>
+		</File>
 		<File
 			RelativePath=".\res\FamiTracker.manifest"
 			>

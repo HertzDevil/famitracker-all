@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -29,8 +29,8 @@
 #include "InstrumentEditorVRC7.h"
 #include "InstrumentEditorFDS.h"
 #include "InstrumentEditorFDSEnvelope.h"
-#include "InstrumentEditorN106.h"
-#include "InstrumentEditorN106Wave.h"
+#include "InstrumentEditorN163.h"
+#include "InstrumentEditorN163Wave.h"
 #include "InstrumentEditorS5B.h"
 #include "MainFrm.h"
 
@@ -80,7 +80,7 @@ BOOL CInstrumentEditDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	m_iSelectedInstType = -1;
-	m_iLastNote = -1;
+	m_iLastKey = -1;
 	m_bOpened = true;
 	m_iPanels = 0;
 
@@ -114,6 +114,7 @@ void CInstrumentEditDlg::InsertPane(CInstrumentEditPanel *pPanel, bool Show)
 	if (Show) {
 		pTabControl->SetCurSel(m_iPanels);
 		pPanel->SetFocus();
+		m_pFocusPanel = pPanel;
 	}
 
 	m_pPanels[m_iPanels++] = pPanel;
@@ -126,8 +127,7 @@ void CInstrumentEditDlg::ClearPanels()
 	for (int i = 0; i < PANEL_COUNT; i++) {
 		if (m_pPanels[i] != NULL) {
 			m_pPanels[i]->DestroyWindow();
-			delete m_pPanels[i];
-			m_pPanels[i] = NULL;
+			SAFE_RELEASE(m_pPanels[i]);
 		}
 	}
 
@@ -144,10 +144,12 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 
 	// Dialog title
 	m_pDocument->GetInstrumentName(Index, Name);	
-	Title.Format(_T("Instrument editor - %02X. %s (%s)"), Index, Name, CHIP_NAMES[InstType]);
+	Title.Format(IDS_INST_EDITOR_TITLE, Index, Name, CHIP_NAMES[InstType]);
 	SetWindowText(Title);
 
 	if (InstType != m_iSelectedInstType) {
+
+		ShowWindow(SW_HIDE);
 
 		ClearPanels();
 
@@ -168,9 +170,9 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 				InsertPane(new CInstrumentEditorFDS(), true);
 				InsertPane(new CInstrumentEditorFDSEnvelope(), false);
 				break;
-			case INST_N106:
-				InsertPane(new CInstrumentEditorN106(), true);
-				InsertPane(new CInstrumentEditorN106Wave(), false);
+			case INST_N163:
+				InsertPane(new CInstrumentEditorN163(), true);
+				InsertPane(new CInstrumentEditorN163Wave(), false);
 				break;
 			case INST_S5B:
 				InsertPane(new CInstrumentEditorS5B(), true);
@@ -185,6 +187,9 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 			m_pPanels[i]->SelectInstrument(Index);
 		}
 	}
+
+	ShowWindow(SW_SHOW);
+	UpdateWindow();
 
 	m_iSelectedInstType = InstType;
 }
@@ -202,6 +207,8 @@ void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
 
 	m_pPanels[Selection]->ShowWindow(SW_SHOW);
 	m_pPanels[Selection]->SetFocus();
+
+	m_pFocusPanel = m_pPanels[Selection];
 
 	*pResult = 0;
 }
@@ -243,14 +250,14 @@ void CInstrumentEditDlg::OnPaint()
 	const int BLACK_1[] = {1, 3};
 	const int BLACK_2[] = {6, 8, 10};
 
-	int Note	= m_iLightNote % 12;
-	int Octave	= m_iLightNote / 12;
+	int Note	= m_iActiveKey % 12;
+	int Octave	= m_iActiveKey / 12;
 
 	for (int j = 0; j < 8; j++) {
 		Pos = /*KEYBOARD_LEFT +*/ ((WHITE_KEY_W * 7) * j);
 
 		for (int i = 0; i < 7; i++) {
-			if ((Note == WHITE[i]) && (Octave == j) && m_iLightNote != -1)
+			if ((Note == WHITE[i]) && (Octave == j) && m_iActiveKey != -1)
 				WhiteKey.SelectObject(WhiteKeyMarkBmp);
 			else
 				WhiteKey.SelectObject(WhiteKeyBmp);
@@ -259,7 +266,7 @@ void CInstrumentEditDlg::OnPaint()
 		}
 
 		for (int i = 0; i < 2; i++) {
-			if ((Note == BLACK_1[i]) && (Octave == j) && m_iLightNote != -1)
+			if ((Note == BLACK_1[i]) && (Octave == j) && m_iActiveKey != -1)
 				BlackKey.SelectObject(BlackKeyMarkBmp);
 			else
 				BlackKey.SelectObject(BlackKeyBmp);
@@ -268,7 +275,7 @@ void CInstrumentEditDlg::OnPaint()
 		}
 
 		for (int i = 0; i < 3; i++) {
-			if ((Note == BLACK_2[i]) && (Octave == j) && m_iLightNote != -1)
+			if ((Note == BLACK_2[i]) && (Octave == j) && m_iActiveKey != -1)
 				BlackKey.SelectObject(BlackKeyMarkBmp);
 			else
 				BlackKey.SelectObject(BlackKeyBmp);
@@ -287,7 +294,9 @@ void CInstrumentEditDlg::OnPaint()
 
 void CInstrumentEditDlg::ChangeNoteState(int Note)
 {
-	m_iLightNote = Note;
+	// A MIDI key number or -1 to disable
+
+	m_iActiveKey = Note;
 
 	if (m_hWnd)
 		RedrawWindow(CRect(KEYBOARD_LEFT, KEYBOARD_TOP, 580, KEYBOARD_TOP + 100), 0, RDW_INVALIDATE);
@@ -366,7 +375,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 				Note = 11;
 		}
 
-		if (Note + (Octave * 12) != m_iLastNote) {
+		if (Note + (Octave * 12) != m_iLastKey) {
 			NoteData.Note			= Note + 1;
 			NoteData.Octave			= Octave;
 			NoteData.Vol			= 0x0F;
@@ -377,7 +386,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 			pView->FeedNote(Channel, &NoteData);
 		}
 
-		m_iLastNote = Note + (Octave * 12);
+		m_iLastKey = Note + (Octave * 12);
 	}
 	else {
 		NoteData.Note			= pView->DoRelease() ? RELEASE : HALT;//HALT;
@@ -389,7 +398,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 
 		pView->FeedNote(Channel, &NoteData);
 
-		m_iLastNote = -1;
+		m_iLastKey = -1;
 	}
 }
 
@@ -410,7 +419,7 @@ void CInstrumentEditDlg::SwitchOffNote(bool ForceHalt)
 
 	pView->FeedNote(Channel, &NoteData);
 
-	m_iLastNote = -1;
+	m_iLastKey = -1;
 }
 
 void CInstrumentEditDlg::OnLButtonDown(UINT nFlags, CPoint point)
@@ -474,4 +483,10 @@ void CInstrumentEditDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
 bool CInstrumentEditDlg::IsOpened() const
 {
 	return m_bOpened;
+}
+
+void CInstrumentEditDlg::PostNcDestroy()
+{
+	// TODO Use this function to destroy the panels so it won't be visible when closing the editor
+	CDialog::PostNcDestroy();
 }

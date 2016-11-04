@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -61,4 +61,12 @@ private:
 	signed char	 m_cValues[MAX_SEQUENCE_ITEMS];
 	// Used by instrument editor
 	int			 m_iPlaying;
+};
+
+
+// Settings
+enum {
+	ARP_SETTING_ABSOLUTE = 0,
+	ARP_SETTING_FIXED = 1,
+	ARP_SETTING_RELATIVE = 2
 };

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ public:
 	CGraphEditor(CSequence *pSequence);
 	virtual ~CGraphEditor();
 	DECLARE_DYNAMIC(CGraphEditor)
+	bool HasFocus() const { return m_bHasFocus; }
 protected:
 	static const int GRAPH_LEFT = 28;			// Left side marigin
 	static const int GRAPH_BOTTOM = 5;			// Bottom marigin
@@ -45,24 +46,28 @@ protected:
 	CDC *m_pBackDC;
 	int m_iLastPlayPos;
 	int m_iCurrentPlayPos;
+	bool m_bHasFocus;
 protected:
 	int GetItemWidth();
 	virtual void Initialize();
 	virtual int GetItemHeight();
+	virtual void HighlightItem(CPoint point);
 	virtual void ModifyItem(CPoint point, bool Redraw);
 	virtual void ModifyLoopPoint(CPoint point, bool Redraw);
 	virtual void ModifyReleasePoint(CPoint point, bool Redraw);
 	virtual void DrawRange(CDC *pDC, int Max, int Min);
-	void DrawBackground(CDC *pDC, int Lines);
+	void DrawBackground(CDC *pDC, int Lines, bool DrawMarks, int MarkOffset);
 	void DrawLoopPoint(CDC *pDC, int StepWidth);
 	void DrawReleasePoint(CDC *pDC, int StepWidth);
 	void DrawLine(CDC *pDC);
-	void DrawRect(CDC *pDC, int x, int y, int w, int h, bool Highlight);
+	void DrawRect(CDC *pDC, int x, int y, int w, int h, bool Highlight, bool Highlight2);
 	void PaintBuffer(CDC *pBackDC, CDC *pFrontDC);
 	void CursorChanged(int x);
 private:
 	CPoint m_ptLineStart, m_ptLineEnd;
 	int m_iEditing;
+protected:
+	int m_iHighlightedItem;
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
@@ -76,6 +81,8 @@ public:
 	afx_msg void OnTimer(UINT nIDEvent);
 
 	BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, LPVOID lpParam = NULL);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
 };
 
 // Bar graph editor
@@ -86,6 +93,7 @@ private:
 public:
 	CBarGraphEditor(CSequence *pSequence, int Items) : CGraphEditor(pSequence), m_iItems(Items) { };
 	afx_msg void OnPaint();
+	void HighlightItem(CPoint point);
 	void ModifyItem(CPoint point, bool Redraw);
 	int GetItemHeight();
 };
@@ -98,15 +106,20 @@ public:
 	CArpeggioGraphEditor(CSequence *pSequence);
 	virtual ~CArpeggioGraphEditor();
 	CString GetNoteString(int Value);
+	void ChangeSetting();
+private:
+	int GetItemValue(int pos);
 private:
 	static const int ITEMS = 20;
 	int m_iScrollOffset;
+	int m_iScrollMax;
 	CScrollBar *m_pScrollBar;
 protected:
 	void Initialize();
 	void DrawRange(CDC *pDC, int Max, int Min);
 	afx_msg void OnPaint();
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
+	void HighlightItem(CPoint point);
 	void ModifyItem(CPoint point, bool Redraw);
 	int GetItemHeight();
 	

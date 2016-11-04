@@ -3,261 +3,89 @@
     <META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
     <TITLE></TITLE>
     <link href="style.css" rel="stylesheet" type="text/css" />
-    <style type="text/css">
-        .style1
-        {
-            width: 114px;
-        }
-        .style2
-        {
-            font-family: verdana;
-            font-size: 9pt;
-            font-weight: normal;
-            color: black;
-            font-style: italic;
-        }
-        .style3
-        {
-            font-style: normal;
-        }
-    </style>
-</HEAD>
+</HEAD>    
 <BODY>
     <span class="topic">Pattern editor</span><hr />
-    <h1>
-        <span class="heading" lang="sv">Pattern field</span></h1>
-    <p>
-        <span class="text">The pattern field consists of all channels and works like this:</span></p>
-    <img id="Img4" src="img/pattern.PNG" alt="" /><br />
+    
     <p class="text">
-        <span lang="sv">A</span>ll fields except note<span lang="sv">,</span> octave<span 
-            lang="sv"> and effect letter</span> are in hexadecimal<span lang="sv">.</span></p>
+        The pattern editor consists of all channels and works like this:</p>
+    
+    <img id="Img4" src="img/pattern.PNG" alt="" /><br />
+    
+    <p class="text">
+        All fields except note, octave and effect letter are in hexadecimal.</p>
+    
     <ul class="text">
-        <li><strong class="gray">Note and octave</strong><br />
-            <span lang="sv">Displays note and octave to play, or</span> the commands note cut<span 
-                lang="sv"> (---)</span> and note release<span lang="sv"> (===)</span>.<span 
-                lang="sv"> Note cut immediately silences the channel and note release 
-            activates the release sequence.</span><br />
+        <li><b>Note and octave</b><br />
+            Displays note and octave to play, or the commands note cut (---) and note release (===).
+            Note cut immediately silences the channel and note release 
+            activates the release sequence.<br />
             The editor must be in record mode to insert notes
             in the column (toggle record / normal mode with space).<br />
-            <span lang="sv">Notes are located on keyboard keys: Z = C, S = C#, X = D, D = D#, C = 
+            Notes are located on keyboard keys: Z = C, S = C#, X = D, D = D#, C = 
             E... (Q, 2, W is one octave higher)<br />
             Note cut and release keys are selected in the configuration window and general 
             settings. <br />
-            Octave can be</span> stepped up and down
+            Octave can be stepped up and down
             with numpad keys '/' and '*'.<br />
             <br />
         </li>
         <li>
-            <strong class="gray">Instrument column</strong><br />
-            <span lang="sv">I</span>nstrument to use. <span lang="sv">The s</span>elected 
+            <b>Instrument column</b><br />
+            Instrument to use. The selected 
             instrument is automatically inserted unless the instrument mask option is
-            <span lang="sv">enabled (Edit menu)</span>.<span 
-                lang="sv"> </span>If cleared then the last instrument <span lang="sv">will 
-            be</span> used.<br />
+            enabled (Edit menu). If cleared then the last instrument will be used.<br />
             <br />
         </li>
         <li>
-            <strong class="gray">Volume column</strong><br />
-            Sets the volume for <span lang="sv">the</span> channel, range 0 - F. Works only 
-            in square and noise-channels<span lang="sv">, triangle and DPCM have no volume 
-            control.</span><br />
+            <b>Volume column</b><br />
+            Sets the volume for the channel, range 0 - F. Works only 
+            in square and noise-channels, triangle and DPCM have no volume 
+            control.<br />
             <br />
         </li>
         <li>
-            <strong class="gray">Channel effects</strong><br />
+            <b>Channel effects</b><br />
             Used for channel effects. Format is 
-            <strong>Yxx</strong>, where <strong>Y</strong>
-            = effect letter and <strong>xx</strong> = effect parameter.
+            <b>Yxx</b>, where <b>Y</b>
+            = effect letter and <b>xx</b> = effect parameter.
             <br />Additional effect-columns can be used by clicking the arrows in the channel header.<br />
             <a href="effect_list.htm">See this page for available effects.</a>
             <br />
         </li>
     </ul>
+    
     <p class="text">
-    Use insert-key to insert rows and delete-key to delete rows. Backspace removes
-    a row. <span lang="sv">Every</span> field can be cleared by using the '-' (dash) key. 
-        </p>
+        Use insert-key to insert rows and delete-key to delete rows. Backspace removes
+        a row. Every field can be cleared by using the '-' (dash) key.</p>
+    
     <p class="text">
         Channels can be muted by clicking it's name in the channel header, double clicking
-        makes it play solo. <span lang="sv">Shortcuts</span> <span lang="sv">for these 
-        commands are</span> Alt+F9 &amp; Alt+F10<span lang="sv">.</span></p>
-    <p>
-        <span lang="sv" class="text">Selection and drag-n-drop is supported in this area.
-        <br />
+        makes it play solo. Shortcuts for these 
+        commands are Alt+F9 &amp; Alt+F10.</p>
+    
+    <p class="text">
+        Selection and drag-n-drop is supported in this area.<br />
         Ctrl+A (first time) = select whole channel, Ctrl+A (second time) = select all 
         channels<br />
         Ctrl+C = copy, Ctrl+X = cut, Ctrl+V = paste<br />
-        Selection+mouse wheel = transpose</span></p>
+        Selection+mouse wheel = transpose</p>
+    
     <p class="text">
-        Additional keys can be found
-    in <a href="shortcuts.htm">key command-section.</a></p>
-    <h1 class="heading">Toolbar</h1>
-    <img id="Img3" src="img/toolbar1.png" alt=""/>
-    <br />
-    <br />
-    <span class="text">The buttons are in order:</span>
-    <br />
-    <table id="Table1" border="1" cellpadding="2" cellspacing="2" border="1" class="table">
-        <tr>
-            <td class="style1">New</td>
-            <td>New module</td>
-        </tr>
-        <tr>
-            <td class="style1">Open</td>
-            <td>Open a file</td>
-        </tr>
-        <tr>
-            <td class="style1">Save</td>
-            <td>Save current file</td>
-        </tr>
-        <tr>
-            <td class="style1">Cut</td>
-            <td>Cut selected pattern</td>
-        </tr>
-        <tr>
-            <td class="style1">Copy</td>
-            <td>Copies selected pattern</td>
-        </tr>
-        <tr>
-            <td class="style1">Paste</td>
-            <td>Paste into pattern</td>
-        </tr>
-        <tr>
-            <td class="style1">About</td>
-            <td>Display about box</td>
-        </tr>
-        <tr>
-            <td class="style1">Help</td>
-            <td>Help button</td>
-        </tr>
-        <tr>
-            <td class="style1">Add frame</td>
-            <td>Add a new frame</td>
-        </tr>
-        <tr>
-            <td class="style1">Remove frame</td>
-            <td>Remove selected frame</td>
-        </tr>
-        <tr>
-            <td class="style1">Move frame down</td>
-            <td>Move selected frame down one step</td>
-        </tr>
-        <tr>
-            <td class="style1">Move frame up</td>
-            <td>Move selected frame up one step</td>
-        </tr>
-        <tr>
-            <td class="style1">Duplicate frame</td>
-            <td>Inserts a copy of selected frame</td>
-        </tr>
-        <tr>
-            <td class="style1"><span lang="sv">Module properties</span></td>
-            <td><span lang="sv">Open module properties dialog</span></td>
-        </tr>
-        <tr>
-            <td class="style1">Play</td>
-            <td>Play the module</td>
-        </tr>
-        <tr>
-            <td class="style1">Play pattern</td>
-            <td>Play and loop selected pattern</td>
-        </tr>
-        <tr>
-            <td class="style1">Stop</td>
-            <td>Stop player</td>
-        </tr>
-        <tr>
-            <td class="style1">Record</td>
-            <td>Record/normal mode</td>
-        </tr>
-        <tr>
-            <td class="style1">Previous song</td>
-            <td><span lang="sv">Switch</span> to previous song in list</td>
-        </tr>
-        <tr>
-            <td class="style1">Next song</td>
-            <td><span lang="sv">Switch</span> to next song in list</td>
-        </tr>
-        <tr>
-            <td class="style1">Setting</td>
-            <td>Bring up settings dialog</td>
-        </tr>
-        <tr>
-            <td class="style1">NSF export</td>
-            <td>Bring up export dialog</td>
-        </tr>
-        <tr>
-            <td class="style1">Octave</td>
-            <td>Selected octave</td>
-        </tr>
-        <tr>
-            <td class="style1">Follow mode</td>
-            <td>Enable/disable follow mode when playing the module (Can be 
-                toggled with Scroll-lock)</td>
-        </tr>
-        <tr>
-            <td class="style1">Row highligh<span lang="sv">t</span></td>
-            <td>Steps between highlighted rows</td>
-        </tr>
-        <tr>
-            <td class="style1">2nd highlight</td>
-            <td>Steps between second row highlight</td>
-        </tr>
-    </table>
-    <br />
-    <h1 class="heading">The control panel</h1>
-    <img id="IMG1" src="img/toolbar2.png" /><br />
-    <h2 class="bold">Frame editor</h2>
+        Additional keys can be found in <a href="shortcuts.htm">key command-section</a>.</p>
+    
     <p class="text">
-        The first part is the frame editor (also known as order editor).
-        A frame is a set of patterns for all channels, where each
-        channel is represented by a number that represents the selected pattern slot. There
-        are 128 available pattern slots for each channel, and the patterns aren't shared across
-        the channels. 128 frames can be used.<br />
-    </p>
-    <p class="text">
-        To change pattern, press <b>"+" </b>- or <b>"-"</b> buttons or <b>"+"</b> &amp; 
-        <b>"-"</b> keys in
-        the pattern editor. If <b>"change all"</b> is checked, all channels will change 
-        instead of just the selected one. To move
-        between frames in the pattern editor, use Ctrl+Right and Ctrl+Left. It&#39;s 
-        possible to double-click the window to enter edit mode, you can then enter 
-        values manually.<br />
-    </p>
-    <h2 class="bold">Song settings &amp; edit settings</h2>
-    <p class="text">
-        Song settings is default play speed &amp; tempo, number
-        of rows and frames in the song. Double-click any box to enter a value manually.</p>
-<p class="text">
-        Speed and tempo can also be changed by using pattern command <b>Fxx</b>. The real BPM
-        tempo is calculated by<span lang="sv"> using</span> the formula 
-    </p>
-<p class="style2">
-        <span lang="sv" class="style3">BPM = </span><span class="style3">(6 * Tempo) / Speed</span></p>
-<p class="text">
-        which means the
-        tempo box is correct at speed of 6.    </p>
-    <p class="text">
-        The time base for the song is 60 or
-        50 <span lang="sv">updates</span> per second (when using default NTSC/PAL settings), and this is used to 
-        calculate the average tempo of the song. This means that some rows may play 
-        slightly longer<span lang="sv"> or shorter</span> than others<span lang="sv">, 
-        and this might be noticable</span>. To avoid this, leave the 
-        tempo setting at 150 (125 for PAL<span lang="sv">!</span>) and use only the speed setting to change BPM 
-        to ensure <span lang="sv">that </span>all rows get the same duration.    </p>
-<p class="text">
-        The step setting changes the step behaviour when moving the cursor in the 
-        pattern editor. Key repetition enables key repeat behaviour.<h2 class="bold">Song information &amp; instrument list</h2>
-    <p class="text">
-        Song information text fields are for <b>name</b>, <b>artist</b> and <b>copyright</b>. These strings are stored
-        in NSFs (and also available in the NSF export dialog). The song
-        list selects a song in multi-song files. 
-        The big list to the right is the instrument box<span lang="sv">, and</span>
-        <span lang="sv">t</span>he small toolbar is used to create,
-        delete, open, save and edit settings for instrument and the text box is to name 
-        instruments.
-    </p>
+        Related sections:</p>
+    
+    <ul class="text">
+        <li>
+            <a href="toolbar.htm">Toolbar</a></li>
+        <li>
+            <a href="control_panel.htm">Control panel</a></li>
+    </ul>
+
+    <hr />
+    <span class="footer">Back to <a href="interface.htm">interface</a> &middot; <a href="main_index.htm">main index</a></span>
 
 </BODY>
 </HTML>

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,10 @@
 #include "FamiTrackerDoc.h"
 #include "SoundGen.h"
 #include "SampleEditorDlg.h"
+
+//
+// The DPCM sample editor
+//
 
 // CSampleEditorDlg dialog
 
@@ -186,14 +190,7 @@ void CSampleEditorDlg::MoveControls()
 void CSampleEditorDlg::OnBnClickedOk()
 {
 	m_pOriginalSample->Allocate(m_pSample->SampleSize, m_pSample->SampleData);
-/*
-	// Store new sample
-	delete [] m_pOriginalSample->SampleData;
 
-	m_pOriginalSample->SampleData = new char[m_pSample->SampleSize];
-	m_pOriginalSample->SampleSize = m_pSample->SampleSize;
-	memcpy(m_pOriginalSample->SampleData, m_pSample->SampleData, m_pSample->SampleSize);
-*/
 	EndDialog(0);
 }
 
@@ -309,6 +306,7 @@ void CSampleEditorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
 }
 
+
 // CSampleView control
 
 IMPLEMENT_DYNAMIC(CSampleView, CStatic)
@@ -334,6 +332,7 @@ CSampleView::CSampleView() :
 	m_pSolidPen = new CPen(PS_SOLID, 1, (COLORREF)0);
 	m_pDashedPen = new CPen(PS_DASH, 1, (COLORREF)0x00);
 	m_pGrayDashedPen = new CPen(PS_DASHDOT, 1, (COLORREF)0xF0F0F0);
+	m_pDarkGrayDashedPen = new CPen(PS_DASHDOT, 1, (COLORREF)0xE0E0E0);
 }
 
 CSampleView::~CSampleView()
@@ -343,6 +342,7 @@ CSampleView::~CSampleView()
 	SAFE_RELEASE(m_pSolidPen);
 	SAFE_RELEASE(m_pDashedPen);
 	SAFE_RELEASE(m_pGrayDashedPen);
+	SAFE_RELEASE(m_pDarkGrayDashedPen);
 }
 
 void CSampleView::OnPaint()
@@ -403,6 +403,10 @@ void CSampleView::OnPaint()
 	if (Blocks < (MaxX / 2)) {
 		for (int i = 1; i < Blocks; ++i) {
 			x = int((i * 128) / m_dSampleStep) - 1;
+			if (i % 4 == 0)
+				m_dcCopy.SelectObject(m_pDarkGrayDashedPen);
+			else
+				m_dcCopy.SelectObject(m_pGrayDashedPen);
 			m_dcCopy.MoveTo(x, 0);
 			m_dcCopy.LineTo(x, MaxY);
 		}

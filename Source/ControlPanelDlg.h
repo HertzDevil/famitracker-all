@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -31,11 +31,15 @@ public:
 	CControlPanelDlg(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CControlPanelDlg();
 
+	void SetFrameParent(CWnd *pMainFrm = NULL);
+
 // Dialog Data
 	enum { IDD = IDD_MAINFRAME };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+
+	CWnd *m_pMainFrame;
 
 	DECLARE_MESSAGE_MAP()
 public:

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -50,7 +50,8 @@ enum {MSG_UPDATE = WM_USER, MSG_MIDI_EVENT = WM_USER + 1};
 // External classes
 class CFamiTrackerDoc;
 class CPatternView;
-class CFrameBoxWnd;
+class CFrameEditor;
+class CAction;
 
 class CFamiTrackerView : public CView
 {
@@ -83,9 +84,13 @@ public:
 	void		 SelectLastFrame();
 	void		 SelectFrame(unsigned int Frame);
 	void		 SelectChannel(unsigned int Channel);
+	void		 SelectRow(unsigned int Row);
+	void		 SelectColumn(unsigned int Column);
 	 
 	unsigned int GetSelectedFrame() const;
 	unsigned int GetSelectedChannel() const;
+	unsigned int GetSelectedRow() const; 
+	unsigned int GetSelectedColumn() const; 
 	unsigned int GetPlayFrame() const;
 	bool		 GetFollowMode() const;
 	int			 GetSelectedChipType() const;
@@ -136,15 +141,14 @@ public:
 	bool		 IsClipboardAvailable() const;
 
 	void		 SetupColors();
-
 	void		 DrawFrameWindow();
 
-	bool		DoRelease() const;
+	bool		 DoRelease() const;
 
 	CPatternView *GetPatternView() const { return m_pPatternView; }
 
 	// testing
-	void HandleRawData(WPARAM wParam, LPARAM lParam);
+	//void HandleRawData(WPARAM wParam, LPARAM lParam);
 
 protected:
 	// General
@@ -154,10 +158,11 @@ protected:
 	void	HandleKeyboardInput(char Key);
 	void	TranslateMidiMessage();
 	void	RemoveWithoutDelete();
-	void	DeleteKey();
-	void	InsertKey();
-	void	BackKey();
+	void	OnKeyDelete();
+	void	OnKeyInsert();
+	void	OnKeyBack();
 	void	OnKeyHome();
+	void	OnKeyEnd();
 
 	// MIDI note functions
 	void	TriggerMIDINote(unsigned int Channel, unsigned int MidiNote, unsigned int Velocity, bool Insert);
@@ -172,19 +177,23 @@ private:
 	// Input handling
 	void	KeyIncreaseAction();
 	void	KeyDecreaseAction();
-	int		TranslateKey(unsigned char Key);
-	int		TranslateKey2(unsigned char Key);
-	int		TranslateKeyAzerty(unsigned char Key);
-	bool	CheckClearKey(unsigned char Key);
-	bool	CheckHaltKey(unsigned char Key);
-	bool	CheckReleaseKey(unsigned char Key);
-	bool	CheckRepeatKey(unsigned char Key);
+	
+	int		TranslateKey(unsigned char Key) const;
+	int		TranslateKey2(unsigned char Key) const;
+	int		TranslateKeyAzerty(unsigned char Key) const;
+	
+	bool	CheckClearKey(unsigned char Key) const;
+	bool	CheckHaltKey(unsigned char Key) const;
+	bool	CheckReleaseKey(unsigned char Key) const;
+	bool	CheckRepeatKey(unsigned char Key) const;
+
 	bool	PreventRepeat(unsigned char Key, bool Insert);
 	void	RepeatRelease(unsigned char Key);
-	bool	EditInstrumentColumn(stChanNote &Note, int Value);
-	bool	EditVolumeColumn(stChanNote &Note, int Value);
-	bool	EditEffNumberColumn(stChanNote &Note, unsigned char nChar, int EffectIndex);
-	bool	EditEffParamColumn(stChanNote &Note, int Value, int EffectIndex);
+
+	bool	EditInstrumentColumn(stChanNote &Note, int Value, bool &StepDown, bool &MoveRight, bool &MoveLeft);
+	bool	EditVolumeColumn(stChanNote &Note, int Value, bool &bStepDown);
+	bool	EditEffNumberColumn(stChanNote &Note, unsigned char nChar, int EffectIndex, bool &bStepDown);
+	bool	EditEffParamColumn(stChanNote &Note, int Value, int EffectIndex, bool &bStepDown, bool &bMoveRight, bool &bMoveLeft);
 	void	InsertEffect(char Effect);
 	void	InsertNote(int Note, int Octave, int Channel, int Velocity);
 
@@ -198,6 +207,9 @@ private:
 	
 	void	UpdateArpDisplay();
 	
+	// Other
+	bool	AddAction(CAction *pAction) const;
+
 //
 // Constants
 //
@@ -257,7 +269,6 @@ protected:
 
 	// Drawing
 	CPatternView		*m_pPatternView;
-	CFrameBoxWnd		*m_pFrameBoxWnd;
 
 	// Synchronization
 	CCriticalSection	m_csDrawLock;
@@ -302,7 +313,6 @@ public:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 
-	afx_msg void OnEditUndo();
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditCut();
 	afx_msg void OnEditPaste();
@@ -336,9 +346,6 @@ public:
 	afx_msg void OnDecreaseStepSize();
 
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnUpdateEditUndo(CCmdUI *pCmdUI);
-	afx_msg void OnEditRedo();
-	afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 	virtual void OnInitialUpdate();
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnEditSelectall();
@@ -346,20 +353,12 @@ public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnTimer(UINT nIDEvent);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnModuleFrameInsert();
-	afx_msg void OnModuleFrameRemove();
+
 	afx_msg void OnTrackerPlayrow();
-	afx_msg void OnUpdateFrameInsert(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateFrameRemove(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateDuplicateFrame(CCmdUI *pCmdUI);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnEditPastemix();
 	afx_msg void OnUpdateEditPastemix(CCmdUI *pCmdUI);
-	afx_msg void OnModuleMoveframedown();
-	afx_msg void OnModuleMoveframeup();
-	afx_msg void OnUpdateModuleMoveframedown(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateModuleMoveframeup(CCmdUI *pCmdUI);
 	afx_msg void OnTrackerToggleChannel();
 	afx_msg void OnTrackerSoloChannel();
 	afx_msg void OnTrackerUnmuteAllChannels();

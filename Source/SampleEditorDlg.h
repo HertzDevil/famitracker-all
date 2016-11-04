@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ private:
 	CPen *m_pSolidPen;
 	CPen *m_pDashedPen;
 	CPen *m_pGrayDashedPen;
+	CPen *m_pDarkGrayDashedPen;
 
 public:
 	afx_msg void OnPaint();

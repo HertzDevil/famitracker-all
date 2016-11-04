@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,13 +23,7 @@
 
 #pragma once
 
-//#define WIP
-
-const int VERSION_MAJ = 0;
-const int VERSION_MIN = 3;
-const int VERSION_REV = 7;
-
-const int VERSION_WIP = 0;
+#include "version.h"
 
 //#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 #define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));//  if (v > max) v = max; else if (v < min) v = min;
@@ -88,13 +82,14 @@ public:
 	int				GetCPUUsage() const;
 	bool			IsThemeActive() const;
 	void			CheckSynth();
+	void			RemoveSoundGenerator();
 
 	// Tracker player functions
 	void			RegisterKeyState(int Channel, int Note);
-	void			StopPlayer();
 	bool			IsPlaying() const;
 	void			ResetPlayer();
 	void			SilentEverything();
+	void			WaitUntilStopped() const;
 
 	// Get-functions
 	CAccelerator	*GetAccelerator() const { return m_pAccel; };
@@ -144,13 +139,15 @@ private:
 
 	bool			m_bThemeActive;
 
-// Overrides
+	// Overrides
 public:
 	virtual BOOL InitInstance();
-// Implementation
-	afx_msg void OnAppAbout();
+	virtual int ExitInstance();	
+
+	// Implementation
 	DECLARE_MESSAGE_MAP()
-	virtual int ExitInstance();
+public:
+	afx_msg void OnAppAbout();
 	afx_msg void OnTrackerTogglePlay();
 	afx_msg void OnTrackerPlay();
 	afx_msg void OnTrackerPlayStart();

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -29,7 +29,8 @@ class CModulePropertiesDlg : public CDialog
 
 private:
 	void SelectSong(int Song);
-
+	void UpdateSongButtons();
+	
 	unsigned int m_iSelectedSong;
 	CListCtrl *m_pSongList;
 
@@ -56,4 +57,7 @@ public:
 	afx_msg void OnEnChangeSongname();
 	afx_msg void OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedSongImport();
+	afx_msg void OnCbnSelchangeExpansion();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnLvnItemchangedSonglist(NMHDR *pNMHDR, LRESULT *pResult);
 };

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,25 +23,29 @@
 class CFamiTrackerDoc;
 class CFamiTrackerView;
 
-// CFrameBoxWnd
+// CFrameEditor
 
-class CFrameBoxWnd : public CWnd
+class CFrameEditor : public CWnd
 {
-	DECLARE_DYNAMIC(CFrameBoxWnd)
+	DECLARE_DYNAMIC(CFrameEditor)
 public:
-	CFrameBoxWnd(CMainFrame *pMainFrm);
-	virtual ~CFrameBoxWnd();
+	CFrameEditor(CMainFrame *pMainFrm);
+	virtual ~CFrameEditor();
 
 	void AssignDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
 	void EnableInput();
 	bool InputEnabled() const;
+
+	bool Translate(HWND hWnd, MSG *pMsg) const;
+
+private:
 	void CreateGdiObjects();
 
 public:
-	static const int FRAME_ITEM_WIDTH = 20;
-
-	static const int ROW_HEIGHT = 15;
-	static const int TOP_OFFSET = 3;
+	static const int FIXED_WIDTH = 51;			// The left-most column width
+	static const int FRAME_ITEM_WIDTH = 20;		// Channel width 
+	static const int ROW_HEIGHT = 15;			// Height of rows
+	static const int TOP_OFFSET = 3;			// Top offset
 
 	static const TCHAR DEFAULT_FONT[];
 	
@@ -51,18 +55,20 @@ private:
 	CBitmap m_bmpBack;
 	CDC		m_dcBack;
 
-	HACCEL m_hAccel;
-	CMainFrame *m_pMainFrame;
+	CMainFrame		 *m_pMainFrame;
+	CFamiTrackerDoc  *m_pDocument;
+	CFamiTrackerView *m_pView;
+
 	int m_iHiglightLine;
 	int m_iFirstChannel;
 	int m_iCursorPos;
 	int m_iNewPattern;
 	bool m_bInputEnable;
 	bool m_bCursor;
-	bool m_bControl;
 	int m_iCopiedValues[MAX_CHANNELS];
-	CFamiTrackerDoc *m_pDocument;
-	CFamiTrackerView *m_pView;
+	int m_iFramesVisible;
+
+	HACCEL m_hAccel;
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -73,17 +79,24 @@ public:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
-	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnEditCopy();
-	afx_msg void OnEditPaste();
+	afx_msg void OnFrameCopy();
+	afx_msg void OnFramePaste();
+	afx_msg void OnModuleInsertFrame();
+	afx_msg void OnModuleRemoveFrame();
+	afx_msg void OnModuleDuplicateFrame();
+	afx_msg void OnModuleDuplicateFramePatterns();
+	afx_msg void OnModuleMoveFrameDown();
+	afx_msg void OnModuleMoveFrameUp();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 };
 
 

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,9 +19,6 @@
 */
 
 #pragma once
-
-
-// CInstrumentSettings dialog
 
 class CInstrumentEditor2A03 : public CSequenceInstrumentEditPanel
 {
@@ -42,20 +39,18 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
 	virtual void OnKeyReturn();
 
 	void SelectSequence(int Sequence, int Type);
 	void TranslateMML(CString String, int Max, int Min);
 
 protected:
-	static LPCTSTR INST_SETTINGS[];
+	static LPCTSTR INST_SETTINGS[CInstrument2A03::SEQUENCE_COUNT];
 
 protected:
 	CWnd				*m_pParentWin;
 	CSequenceEditor		*m_pSequenceEditor;
 	CInstrument2A03		*m_pInstrument;
-	CSequence 			*m_pSequence;
 
 	unsigned int		m_iSelectedSetting;	 // In settings list
 
@@ -67,4 +62,8 @@ public:
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();
+//	afx_msg void OnRClickInstSettings(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnCloneSequence();
+//	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

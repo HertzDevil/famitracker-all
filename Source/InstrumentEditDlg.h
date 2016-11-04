@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -67,11 +67,12 @@ protected:
 
 protected:
 	// Variables for keyboard
-	int	m_iLastNote;
-	int m_iLightNote;
+	int	m_iLastKey;
+	int m_iActiveKey;
 
 	// Variables for windows
 	CInstrumentEditPanel *m_pPanels[PANEL_COUNT];
+	CInstrumentEditPanel *m_pFocusPanel;
 	bool m_bOpened;
 	int m_iSelectedInstType;
 	int m_iPanels;
@@ -97,4 +98,6 @@ protected:
 	virtual void OnCancel();
 public:
 	afx_msg void OnNcLButtonUp(UINT nHitTest, CPoint point);
+protected:
+	virtual void PostNcDestroy();
 };

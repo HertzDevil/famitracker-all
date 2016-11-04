@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -46,14 +46,14 @@ const int MAX_PATTERN = 128;
 // Maximum number of frames
 const int MAX_FRAMES = 128;
 
-// Maximum length of patterns (in rows)
+// Maximum length of patterns (in rows). 256 is max in NSF
 const int MAX_PATTERN_LENGTH = 256;
 
-// Maximum number of dmc samples (this would be more limited by NES memory)
+// Maximum number of DPCM samples, cannot be increased unless the NSF driver is modified.
 const int MAX_DSAMPLES = 64;
 
-// Sample space available (from $C000-$FFFF) Will be increased when bankswitching is supported
-const int MAX_SAMPLE_SPACE = 0x4000;
+// Sample space available (from $C000-$FFFF), may now switch banks
+const int MAX_SAMPLE_SPACE = 0x40000;	// 256kB
 
 // Number of effect columns allowed
 const int MAX_EFFECT_COLUMNS = 4;
@@ -65,10 +65,10 @@ const unsigned int MAX_TRACKS = 64;
 const int MAX_TEMPO	= 255;
 
 // Min tempo
-const int MIN_TEMPO	= 32;
+//const int MIN_TEMPO	= 21;
 
 // Max speed
-const int MAX_SPEED = 31;
+//const int MAX_SPEED = 20;
 
 // Min speed
 const int MIN_SPEED = 1;

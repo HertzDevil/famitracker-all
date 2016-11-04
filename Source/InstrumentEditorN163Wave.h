@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,17 +21,16 @@
 #pragma once
 
 #include "WaveEditor.h"
-//#include "ModSequenceEditor.h"
 
-// CInstrumentEditorN106Wave dialog
+// CInstrumentEditorN163Wave dialog
 
-class CInstrumentEditorN106Wave : public CInstrumentEditPanel
+class CInstrumentEditorN163Wave : public CInstrumentEditPanel
 {
-	DECLARE_DYNAMIC(CInstrumentEditorN106Wave)
+	DECLARE_DYNAMIC(CInstrumentEditorN163Wave)
 
 public:
-	CInstrumentEditorN106Wave(CWnd* pParent = NULL);   // standard constructor
-	virtual ~CInstrumentEditorN106Wave();
+	CInstrumentEditorN163Wave(CWnd* pParent = NULL);   // standard constructor
+	virtual ~CInstrumentEditorN163Wave();
 	virtual int GetIDD() const { return IDD; };
 	virtual TCHAR *GetTitle() const { return _T("Wave"); };
 
@@ -39,16 +38,19 @@ public:
 	virtual void SelectInstrument(int Instrument);
 
 // Dialog Data
-	enum { IDD = IDD_INSTRUMENT_N106_WAVE };
+	enum { IDD = IDD_INSTRUMENT_N163_WAVE };
 
 protected:
-	virtual	void PreviewNote(unsigned char Key);
+//	virtual	void PreviewNote(unsigned char Key);
+	virtual void OnKeyReturn();
 
-	void FillSizeBox(int size);
+	void ParseString(LPTSTR pString);
+	void FillPosBox(int size);
 
 protected:
-	CInstrumentN106		*m_pInstrument;
-	CWaveEditorN106		*m_pWaveEditor;
+	CInstrumentN163	*m_pInstrument;
+	CWaveEditorN163	*m_pWaveEditor;
+	int m_iWaveIndex;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -67,4 +69,7 @@ public:
 	afx_msg void OnWaveSizeChange();
 	afx_msg void OnWavePosChange();
 	afx_msg void OnWavePosSelChange();
+//	afx_msg void OnPositionClicked();
+	afx_msg void OnWavesChange();
+	afx_msg void OnIndexChange();
 };

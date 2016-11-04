@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ enum {WM_SIZE_CHANGE = WM_USER, WM_CURSOR_CHANGE, WM_SEQUENCE_CHANGED};
 class CSequence;
 class CGraphEditor;
 class CSizeEditor;
+class CSequenceSetting;
 
 // Sequence editor
 class CSequenceEditor : public CWnd
@@ -43,13 +44,14 @@ public:
 	static const int SEQUENCE_EDIT_WIDTH = 540;
 	static const int SEQUENCE_EDIT_HEIGHT = 237;
 private:
-	CFamiTrackerDoc *m_pDocument;
-	CWnd *m_pParent;
-	CFont *m_pFont;
-	CSizeEditor *m_pSizeEditor;
-	CGraphEditor *m_pGraphEditor;
-	CSequence *m_pSequence;
-	CMenu m_menuPopup;
+	CFamiTrackerDoc  *m_pDocument;
+	CWnd			 *m_pParent;
+	CFont			 *m_pFont;
+	CSizeEditor		 *m_pSizeEditor;
+	CGraphEditor	 *m_pGraphEditor;
+	CSequence		 *m_pSequence;
+	CSequenceSetting *m_pSetting;
+	
 	int m_iSelectedSetting;
 	int m_iInstrumentType;
 	int m_iMaxVol;
@@ -62,12 +64,6 @@ protected:
 public:
 	afx_msg void OnPaint();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	/*
-	afx_msg void OnMenuAbsolute();
-	afx_msg void OnMenuRelative();
-	afx_msg void OnMenuFixed();
-	*/
 	virtual BOOL DestroyWindow();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };

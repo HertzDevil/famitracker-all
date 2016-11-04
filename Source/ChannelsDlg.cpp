@@ -31,8 +31,8 @@ const int CHILD_ITEMS_ID[ROOT_ITEM_COUNT][9] = {
 	{CHANID_FDS},
 	// MMC5
 	{CHANID_MMC5_SQUARE1, CHANID_MMC5_SQUARE2},
-	// N106
-	{CHANID_N106_CHAN1, CHANID_N106_CHAN2, CHANID_N106_CHAN3, CHANID_N106_CHAN4, CHANID_N106_CHAN5, CHANID_N106_CHAN6, CHANID_N106_CHAN7, CHANID_N106_CHAN8}, 
+	// N163
+	{CHANID_N163_CHAN1, CHANID_N163_CHAN2, CHANID_N163_CHAN3, CHANID_N163_CHAN4, CHANID_N163_CHAN5, CHANID_N163_CHAN6, CHANID_N163_CHAN7, CHANID_N163_CHAN8}, 
 	 // S5B
 	{CHANID_S5B_CH1, CHANID_S5B_CH2, CHANID_S5B_CH3}
 };
@@ -48,7 +48,7 @@ const TCHAR *CHILD_ITEMS[ROOT_ITEM_COUNT][9] = {
 	{_T("FDS")},
 	// MMC5
 	{_T("Square 1"), _T("Square 2")},
-	// N106
+	// N163
 	{_T("Channel 1"), _T("Channel 2"), _T("Channel 3"), _T("Channel 4"), _T("Channel 5"), _T("Channel 6"), _T("Channel 7"), _T("Channel 8")},
 	 // S5B
 	{_T("Square 1"), _T("Square 2"), _T("Square 3")}
@@ -223,7 +223,7 @@ void CChannelsDlg::OnBnClickedMoveDown()
 {
 	int Index = m_pAddedChannels->GetSelectionMark();
 
-	if (Index >= m_pAddedChannels->GetItemCount() - 1)
+	if (Index >= m_pAddedChannels->GetItemCount() - 1 || Index == -1)
 		return;
 
 	CString text = m_pAddedChannels->GetItemText(Index, 0);
@@ -244,7 +244,7 @@ void CChannelsDlg::OnBnClickedMoveUp()
 {
 	int Index = m_pAddedChannels->GetSelectionMark();
 
-	if (Index == 0)
+	if (Index == 0 || Index == -1)
 		return;
 
 	CString text = m_pAddedChannels->GetItemText(Index, 0);

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@
 
 CSettings::CSettings() : m_iAddedSettings(0)
 {
+	m_bNamcoMixing = false;
+
 	memset(m_pSettings, 0, sizeof(CSettingBase*) * MAX_SETTINGS);
 	SetupSettings();
 	ATLTRACE2(atlTraceGeneral, 0, "Settings: Added %d settings\n", m_iAddedSettings);	// debug
@@ -118,17 +120,17 @@ void CSettings::SetupSettings()
 	SETTING_BOOL("MIDI", "Auto Arpeggio", false, &Midi.bMidiArpeggio);
 
 	// Appearance	
-	SETTING_INT("Appearance", "Background", COLOR_SCHEME.BACKGROUND, &Appearance.iColBackground);
-	SETTING_INT("Appearance", "Background highlighted", COLOR_SCHEME.BACKGROUND_HILITE, &Appearance.iColBackgroundHilite);
-	SETTING_INT("Appearance", "Background highlighted 2", COLOR_SCHEME.BACKGROUND_HILITE2, &Appearance.iColBackgroundHilite2);
-	SETTING_INT("Appearance", "Pattern text", COLOR_SCHEME.TEXT_NORMAL, &Appearance.iColPatternText);
-	SETTING_INT("Appearance", "Pattern text highlighted", COLOR_SCHEME.TEXT_HILITE, &Appearance.iColPatternTextHilite);
-	SETTING_INT("Appearance", "Pattern text highlighted 2", COLOR_SCHEME.TEXT_HILITE2, &Appearance.iColPatternTextHilite2);
-	SETTING_INT("Appearance", "Pattern instrument", COLOR_SCHEME.TEXT_INSTRUMENT, &Appearance.iColPatternInstrument);
-	SETTING_INT("Appearance", "Pattern volume", COLOR_SCHEME.TEXT_VOLUME, &Appearance.iColPatternVolume);
-	SETTING_INT("Appearance", "Pattern effect", COLOR_SCHEME.TEXT_EFFECT, &Appearance.iColPatternEffect);
-	SETTING_INT("Appearance", "Selection", COLOR_SCHEME.SELECTION, &Appearance.iColSelection);
-	SETTING_INT("Appearance", "Cursor", COLOR_SCHEME.CURSOR, &Appearance.iColCursor);
+	SETTING_INT("Appearance", "Background", DEFAULT_COLOR_SCHEME.BACKGROUND, &Appearance.iColBackground);
+	SETTING_INT("Appearance", "Background highlighted", DEFAULT_COLOR_SCHEME.BACKGROUND_HILITE, &Appearance.iColBackgroundHilite);
+	SETTING_INT("Appearance", "Background highlighted 2", DEFAULT_COLOR_SCHEME.BACKGROUND_HILITE2, &Appearance.iColBackgroundHilite2);
+	SETTING_INT("Appearance", "Pattern text", DEFAULT_COLOR_SCHEME.TEXT_NORMAL, &Appearance.iColPatternText);
+	SETTING_INT("Appearance", "Pattern text highlighted", DEFAULT_COLOR_SCHEME.TEXT_HILITE, &Appearance.iColPatternTextHilite);
+	SETTING_INT("Appearance", "Pattern text highlighted 2", DEFAULT_COLOR_SCHEME.TEXT_HILITE2, &Appearance.iColPatternTextHilite2);
+	SETTING_INT("Appearance", "Pattern instrument", DEFAULT_COLOR_SCHEME.TEXT_INSTRUMENT, &Appearance.iColPatternInstrument);
+	SETTING_INT("Appearance", "Pattern volume", DEFAULT_COLOR_SCHEME.TEXT_VOLUME, &Appearance.iColPatternVolume);
+	SETTING_INT("Appearance", "Pattern effect", DEFAULT_COLOR_SCHEME.TEXT_EFFECT, &Appearance.iColPatternEffect);
+	SETTING_INT("Appearance", "Selection", DEFAULT_COLOR_SCHEME.SELECTION, &Appearance.iColSelection);
+	SETTING_INT("Appearance", "Cursor", DEFAULT_COLOR_SCHEME.CURSOR, &Appearance.iColCursor);
 	
 	// Window position
 	SETTING_INT("Window position", "Left", 100, &WindowPos.iLeft);
@@ -139,6 +141,7 @@ void CSettings::SetupSettings()
 
 	// Other
 	SETTING_INT("Other", "Sample window state", 0, &SampleWinState);
+	SETTING_INT("Other", "Frame editor position", 0, &FrameEditPos);
 
 	// Paths
 	SETTING_STRING("Paths", "FTM path", "", &Paths[PATH_FTM]);
@@ -146,6 +149,14 @@ void CSettings::SetupSettings()
 	SETTING_STRING("Paths", "NSF path", "", &Paths[PATH_NSF]);
 	SETTING_STRING("Paths", "DMC path", "", &Paths[PATH_DMC]);
 	SETTING_STRING("Paths", "WAV path", "", &Paths[PATH_WAV]);
+
+	/*
+	SETTING_INT("Sound levels", "2A03", 0, &ChipLevels.iLevel2A03);
+	SETTING_INT("Sound levels", "VRC6", 0, &ChipLevels.iLevelVRC6);
+	SETTING_INT("Sound levels", "VRC7", 0, &ChipLevels.iLevelVRC7);
+	SETTING_INT("Sound levels", "MMC5", 0, &ChipLevels.iLevelMMC5);
+	SETTING_INT("Sound levels", "FDS", 0, &ChipLevels.iLevelFDS);
+	*/
 }
 
 void CSettings::AddSetting(CSettingBase *pSetting)
@@ -162,6 +173,8 @@ void CSettings::LoadSettings()
 	for (int i = 0; i < m_iAddedSettings; ++i) {
 		m_pSettings[i]->Load();
 	}
+
+	m_bNamcoMixing = LoadSetting(_T("Emulation"), _T("Linear Namco mixing"), 0) == 1;
 }
 
 void CSettings::SaveSettings()

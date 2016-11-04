@@ -1,9 +1,27 @@
-// Source\ModulePropertiesDlg.cpp : implementation file
-//
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2012  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
 
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "MainFrm.h"
 #include "ModulePropertiesDlg.h"
 #include "ChannelMap.h"
 
@@ -38,8 +56,10 @@ BEGIN_MESSAGE_MAP(CModulePropertiesDlg, CDialog)
 	ON_BN_CLICKED(IDC_SONG_UP, &CModulePropertiesDlg::OnBnClickedSongUp)
 	ON_BN_CLICKED(IDC_SONG_DOWN, &CModulePropertiesDlg::OnBnClickedSongDown)
 	ON_EN_CHANGE(IDC_SONGNAME, &CModulePropertiesDlg::OnEnChangeSongname)
-	ON_NOTIFY(NM_CLICK, IDC_SONGLIST, &CModulePropertiesDlg::OnClickSongList)
 	ON_BN_CLICKED(IDC_SONG_IMPORT, &CModulePropertiesDlg::OnBnClickedSongImport)
+	ON_CBN_SELCHANGE(IDC_EXPANSION, &CModulePropertiesDlg::OnCbnSelchangeExpansion)
+	ON_WM_HSCROLL()
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_SONGLIST, &CModulePropertiesDlg::OnLvnItemchangedSonglist)
 END_MESSAGE_MAP()
 
 
@@ -84,6 +104,23 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
 	pVibratoBox->SetCurSel((m_pDocument->GetVibratoStyle() == VIBRATO_NEW) ? 0 : 1);
 
+	// Namco channel count
+	CSliderCtrl *pChanSlider = (CSliderCtrl*)GetDlgItem(IDC_CHANNELS);
+	pChanSlider->SetRange(1, 8);
+	if (ExpChip == SNDCHIP_N163) {
+		int Channels = m_pDocument->GetNamcoChannels();
+		pChanSlider->SetPos(Channels);
+		pChanSlider->EnableWindow(TRUE);
+		CString text;
+		text.Format(_T("Channels: %i"), Channels);
+		SetDlgItemText(IDC_CHANNELS_NR, text);
+	}
+	else {
+		pChanSlider->SetPos(0);
+		pChanSlider->EnableWindow(FALSE);
+		SetDlgItemText(IDC_CHANNELS_NR, _T("Channels: N/A"));
+	}
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -91,18 +128,22 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 void CModulePropertiesDlg::OnBnClickedOk()
 {
 	CComboBox *pExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
-	
+	CMainFrame *pMainFrame = (CMainFrame*)GetParentFrame();
+
 	// Expansion chip
 	unsigned int iExpansionChip = theApp.GetChannelMap()->GetChipIdent(pExpansionChipBox->GetCurSel());
+	unsigned int iChannels = ((CSliderCtrl*)GetDlgItem(IDC_CHANNELS))->GetPos();
 
-	if (m_pDocument->GetExpansionChip() != iExpansionChip)
+	if (m_pDocument->GetExpansionChip() != iExpansionChip || m_pDocument->GetNamcoChannels() != iChannels) {
+		m_pDocument->SetNamcoChannels(iChannels);
 		m_pDocument->SelectExpansionChip(iExpansionChip);
+	}
 
 	// Vibrato 
 	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
 	m_pDocument->SetVibratoStyle((pVibratoBox->GetCurSel() == 0) ? VIBRATO_NEW : VIBRATO_OLD);
 
-	if (m_pDocument->GetSelectedTrack() != m_iSelectedSong)
+	if (pMainFrame->GetSelectedTrack() != m_iSelectedSong)
 		m_pDocument->SelectTrack(m_iSelectedSong);
 
 	OnOK();
@@ -160,39 +201,37 @@ void CModulePropertiesDlg::OnBnClickedSongRemove()
 void CModulePropertiesDlg::OnBnClickedSongUp()
 {
 	CString Text;
+	int Song = m_iSelectedSong;
 
-	if (m_iSelectedSong == 0)
+	if (Song == 0)
 		return;
 
-	Text.Format(TRACK_FORMAT, m_iSelectedSong + 1, m_pDocument->GetTrackTitle(m_iSelectedSong - 1));
-	m_pSongList->SetItemText(m_iSelectedSong, 0, Text);
-	Text.Format(TRACK_FORMAT, m_iSelectedSong, m_pDocument->GetTrackTitle(m_iSelectedSong));
-	m_pSongList->SetItemText(m_iSelectedSong - 1, 0, Text);
-	m_pSongList->SetItemState(m_iSelectedSong - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-	m_pSongList->EnsureVisible(m_iSelectedSong - 1, FALSE);
+	m_pDocument->MoveTrackUp(Song);
 
-	m_pDocument->MoveTrackUp(m_iSelectedSong);
+	Text.Format(TRACK_FORMAT, Song + 1, m_pDocument->GetTrackTitle(Song));
+	m_pSongList->SetItemText(Song, 0, Text);
+	Text.Format(TRACK_FORMAT, Song, m_pDocument->GetTrackTitle(Song - 1));
+	m_pSongList->SetItemText(Song - 1, 0, Text);
 
-	m_iSelectedSong--;
+	SelectSong(Song - 1);
 }
 
 void CModulePropertiesDlg::OnBnClickedSongDown()
 {
 	CString Text;
+	int Song = m_iSelectedSong;
 
-	if ((m_pDocument->GetTrackCount() - 1) == m_iSelectedSong)
+	if (Song == (m_pDocument->GetTrackCount() - 1))
 		return;
 
-	Text.Format(TRACK_FORMAT, m_iSelectedSong + 1, m_pDocument->GetTrackTitle(m_iSelectedSong + 1));
-	m_pSongList->SetItemText(m_iSelectedSong, 0, Text);
-	Text.Format(TRACK_FORMAT, m_iSelectedSong + 2, m_pDocument->GetTrackTitle(m_iSelectedSong));
-	m_pSongList->SetItemText(m_iSelectedSong + 1, 0, Text);
-	m_pSongList->SetItemState(m_iSelectedSong + 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-	m_pSongList->EnsureVisible(m_iSelectedSong + 1, FALSE);
-	
-	m_pDocument->MoveTrackDown(m_iSelectedSong);
+	m_pDocument->MoveTrackDown(Song);
 
-	m_iSelectedSong++;
+	Text.Format(TRACK_FORMAT, Song + 1, m_pDocument->GetTrackTitle(Song));
+	m_pSongList->SetItemText(Song, 0, Text);
+	Text.Format(TRACK_FORMAT, Song + 2, m_pDocument->GetTrackTitle(Song + 1));
+	m_pSongList->SetItemText(Song + 1, 0, Text);
+
+	SelectSong(Song + 1);
 }
 
 void CModulePropertiesDlg::OnEnChangeSongname()
@@ -211,30 +250,23 @@ void CModulePropertiesDlg::OnEnChangeSongname()
 	m_pDocument->SetTrackTitle(m_iSelectedSong, Text.GetBuffer());
 }
 
-void CModulePropertiesDlg::OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	int Song = m_pSongList->GetSelectionMark();
-	SelectSong(Song);
-	*pResult = 0;
-}
-
 void CModulePropertiesDlg::SelectSong(int Song)
 {
 	ASSERT(Song >= 0);
 
-	m_iSelectedSong = Song;
-
 	m_pSongList->SetItemState(Song, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	m_pSongList->EnsureVisible(Song, FALSE);
+}
 
-	CEdit *pName = (CEdit*)GetDlgItem(IDC_SONGNAME);
-	pName->SetWindowText(m_pDocument->GetTrackTitle(Song));
+void CModulePropertiesDlg::UpdateSongButtons()
+{
+	unsigned TrackCount = m_pDocument->GetTrackCount();
 
-	unsigned TrackCount = m_pDocument->GetTrackCount() == MAX_TRACKS;
-
-	GetDlgItem(IDC_SONG_REMOVE)->EnableWindow(TrackCount == 1 ? FALSE : TRUE);
-	GetDlgItem(IDC_SONG_ADD)->EnableWindow(TrackCount == MAX_TRACKS ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_REMOVE)->EnableWindow((TrackCount == 1) ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_ADD)->EnableWindow((TrackCount == MAX_TRACKS) ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_DOWN)->EnableWindow((m_iSelectedSong == (TrackCount - 1)) ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_UP)->EnableWindow((m_iSelectedSong == 0) ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_IMPORT)->EnableWindow((TrackCount == MAX_TRACKS) ? FALSE : TRUE);
 }
 
 void CModulePropertiesDlg::OnBnClickedSongImport()
@@ -244,18 +276,70 @@ void CModulePropertiesDlg::OnBnClickedSongImport()
 	if (OpenFileDlg.DoModal() == IDCANCEL)
 		return;
 
-	bool bIncludeInstrument = AfxMessageBox(_T("Do you want to include instruments?"), MB_YESNO | MB_ICONQUESTION) == IDYES;
+	bool bIncludeInstrument = AfxMessageBox(IDS_INCLUDE_INSTRUMENTS, MB_YESNO | MB_ICONQUESTION) == IDYES;
 
 	if (m_pDocument->ImportFile(OpenFileDlg.GetPathName(), bIncludeInstrument)) {
 		// Import succeeded, add to list
 		CString TrackTitle;
-		int Tracks = m_pDocument->GetTrackCount();
-		TrackTitle.Format(TRACK_FORMAT, Tracks, m_pDocument->GetTrackTitle(Tracks));
-		m_pSongList->InsertItem(Tracks, TrackTitle);
-		SelectSong(Tracks);
-		m_pDocument->SelectTrack(Tracks);
+		int NewTrack = m_pDocument->GetTrackCount() - 1;
+		TrackTitle.Format(TRACK_FORMAT, NewTrack + 1, m_pDocument->GetTrackTitle(NewTrack));
+		m_pSongList->InsertItem(NewTrack, TrackTitle);
+		SelectSong(NewTrack);
+		m_pDocument->SelectTrack(NewTrack);
 	}
 	else {
-		AfxMessageBox(_T("Import failed"), MB_ICONERROR);
+		AfxMessageBox(IDS_IMPORT_FAILED, MB_ICONERROR);
 	}
+}
+
+void CModulePropertiesDlg::OnCbnSelchangeExpansion()
+{
+	CComboBox *pExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
+	CMainFrame *pMainFrame = (CMainFrame*)GetParentFrame();
+	CSliderCtrl *pSlider = (CSliderCtrl*)GetDlgItem(IDC_CHANNELS);
+
+	// Expansion chip
+	unsigned int iExpansionChip = theApp.GetChannelMap()->GetChipIdent(pExpansionChipBox->GetCurSel());
+
+	if (iExpansionChip == SNDCHIP_N163) {
+		pSlider->EnableWindow(TRUE);
+		int Channels = m_pDocument->GetNamcoChannels();
+		pSlider->SetPos(Channels);
+		CString text;
+		text.Format(_T("Channels: %i"), Channels);
+		SetDlgItemText(IDC_CHANNELS_NR, text);
+	}
+	else {
+		pSlider->EnableWindow(FALSE);
+		SetDlgItemText(IDC_CHANNELS_NR, _T("Channels: N/A"));
+	}
+}
+
+void CModulePropertiesDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	CSliderCtrl *pSlider = (CSliderCtrl*)GetDlgItem(IDC_CHANNELS);
+
+	CString text;
+	text.Format(_T("Channels: %i"),  pSlider->GetPos());
+	SetDlgItemText(IDC_CHANNELS_NR, text);
+
+	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CModulePropertiesDlg::OnLvnItemchangedSonglist(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+    if ((pNMLV->uChanged & LVIF_STATE) && (pNMLV->uNewState & LVNI_SELECTED)) {
+		int Song = pNMLV->iItem;
+
+		m_iSelectedSong = Song;
+
+		CEdit *pName = (CEdit*)GetDlgItem(IDC_SONGNAME);
+		pName->SetWindowText(m_pDocument->GetTrackTitle(Song));
+
+		UpdateSongButtons();
+    }
+
+	*pResult = 0;
 }

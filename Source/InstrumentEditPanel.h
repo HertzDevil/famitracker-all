@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,11 @@
 
 #pragma once
 
+// List control states
+#define LCTRL_CHECKBOX_STATE		0x3000
+#define LCTRL_CHECKBOX_CHECKED		0x2000
+#define LCTRL_CHECKBOX_UNCHECKED	0x1000
+
 class CSequence;
 
 class CInstrumentEditPanel : public CDialog
@@ -34,6 +39,9 @@ public:
 
 	// These must be implemented
 	virtual void SelectInstrument(int Instrument) = 0;
+
+public:
+	bool m_bShow;
 
 protected:
 	CFamiTrackerDoc *GetDocument() const;
@@ -74,8 +82,13 @@ protected:
 	virtual void PreviewRelease(unsigned char Key);
 
 protected:
+	CSequence *m_pSequence;
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:
+	afx_msg void OnRClickInstSettings(NMHDR* pNMHDR, LRESULT* pResult);
+
 };

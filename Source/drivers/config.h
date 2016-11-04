@@ -1,0 +1,12 @@
+const unsigned int SPEED_PATCH_LOCATION_NONE = 0x513;
+const unsigned int VIBRATO_TABLE_LOCATION_NONE = 0x1442;
+const unsigned int SPEED_PATCH_LOCATION_VRC6 = 0x516;
+const unsigned int VIBRATO_TABLE_LOCATION_VRC6 = 0x15ff;
+const unsigned int SPEED_PATCH_LOCATION_VRC7 = 0x543;
+const unsigned int VIBRATO_TABLE_LOCATION_VRC7 = 0x179f;
+const unsigned int SPEED_PATCH_LOCATION_MMC5 = 0x521;
+const unsigned int VIBRATO_TABLE_LOCATION_MMC5 = 0x150d;
+const unsigned int SPEED_PATCH_LOCATION_FDS = 0x552;
+const unsigned int VIBRATO_TABLE_LOCATION_FDS = 0x1711;
+const unsigned int SPEED_PATCH_LOCATION_N163 = 0x540;
+const unsigned int VIBRATO_TABLE_LOCATION_N163 = 0x1772;

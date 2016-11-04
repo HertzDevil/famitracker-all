@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -147,7 +147,7 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 					}
 					else {
 						if (m_bBlur) {
-							if (y > 1 && y < (WIN_HEIGHT - 1) && x > 0 && x < (WIN_WIDTH - 1)) {
+							if (y > 1 && y < (WIN_HEIGHT - 1) && x > 0 && x < (WIN_WIDTH - 5)) {
 								const int BLUR_DECAY = 13;
 								int Col1 = m_pBlitBuffer[(y + 1) * WIN_WIDTH + x];
 								int Col2 = m_pBlitBuffer[(y - 1) * WIN_WIDTH + x];

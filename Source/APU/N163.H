@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,43 +18,77 @@
 ** must bear this legend.
 */
 
-#ifndef _N106_H_
-#define _N106_H_
+#ifndef _N163_H_
+#define _N163_H_
 
 #include "external.h"
 #include "Channel.h"
 
 class CMixer;
 
-class CN106Chan : public CExChannel {
+class CN163Chan : public CExChannel {
 public:
-	CN106Chan(CMixer *pMixer, int ID, uint8 *pWaveData);
-	virtual ~CN106Chan();
+	CN163Chan(CMixer *pMixer, int ID, uint8 *pWaveData);
+	virtual ~CN163Chan();
 	void Reset();
-	void Process(uint32 Time, uint8 ChannelsActive);
 	void Write(uint16 Address, uint8 Value);
+
+	virtual inline void EndFrame();
+
+	void ProcessClean(uint32 Time, uint8 ChannelsActive);
+	void ProcessDirty(uint32 Time, uint8 ChannelsActive, CN163 *pParent);
+
+	uint8 ReadMem(uint8 Reg);
+
 private:
-	uint8	m_iFreqs[3];
 	uint32	m_iCounter, m_iFrequency;
+	uint32	m_iPhase;
 	uint8	m_iVolume;
-	uint8	m_iWavePtr, m_iWaveLength, m_iWaveOffset;
+	uint32	m_iWaveLength;
+	uint8	m_iWaveOffset;
 	uint8	*m_pWaveData;
+
+	uint8 m_iLastSample;
 };
 
-class CN106 : public CExternal {
+class CN163 : public CExternal {
 public:
-	CN106(CMixer *pMixer);
-	virtual ~CN106();
+	CN163(CMixer *pMixer);
+	virtual ~CN163();
 	void Reset();
 	void Process(uint32 Time);
 	void EndFrame();
 	void Write(uint16 Address, uint8 Value);
 	uint8 Read(uint16 Address, bool &Mapped);
+
+	uint8 ReadMem(uint8 Reg);
+
+	void Mix(int32 Value, uint32 Time, uint8 ChanID);
+
+	void SetMixingMethod(bool bLinear);
+
+protected:
+	void ProcessNew(uint32 Time);
+	void ProcessOld(uint32 Time);
+
+
 private:
-	CN106Chan	*m_pChannels[8];
+	CN163Chan	*m_pChannels[8];
+
 	uint8		*m_pWaveData;
 	uint8		ExpandAddr;
 	uint8		m_iChansInUse;
+
+	int32		m_iLastValue;
+
+	uint32		m_iGlobalTime;
+
+	uint32		m_iChannelCntr;
+	uint32		m_iActiveChan;
+	uint32		m_iCycle;
+
+	bool		m_bMixingMethod;
+
 };
 
-#endif /* _N106_H_ */
+#endif /* _N163_H_ */

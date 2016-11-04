@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -17,6 +17,10 @@
 ** Any permitted reproduction of these routines, in whole or in part,
 ** must bear this legend.
 */
+
+/*
+ * The sequence length editor
+ */
 
 #include "stdafx.h"
 #include "FamiTracker.h"
@@ -96,13 +100,18 @@ void CSizeEditor::OnPaint()
 	else
 		dc.Draw3dRect(buttonRect, LIGHT_GRAY, DARK_GRAY);
 
+	CRect textRect;
+	textRect = rect;
+	textRect.DeflateRect(rect.bottom + 6, 1, rect.bottom + 6, 0);
+
 	// Text
 	dc.SetBkMode(TRANSPARENT);
 	dc.SetTextColor(0xFFFFFF);
-	dc.TextOut(20, 1, Value);
+	//dc.TextOut(20, 1, Value);
+	dc.DrawText(Value, &textRect, DT_RIGHT);
 	dc.SetTextColor(0);
-	dc.TextOut(6, 1, _T("-"));
-	dc.TextOut(rect.right - 14, 1, _T("+"));
+	dc.TextOut(6, 1 + ((m_iButtonPressed == 1) ? 1 : 0), _T("-"));
+	dc.TextOut(rect.right - 14, 1 + ((m_iButtonPressed == 2) ? 1 : 0), _T("+"));
 
 	dc.SelectObject(pOldFont);
 }

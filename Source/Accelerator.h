@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 ** Any permitted reproduction of these routines, in whole or in part,
 ** must bear this legend.
 */
+
 #pragma once
 
 #define MOD_NONE 0
@@ -47,9 +48,12 @@ public:
 	void			LoadShortcuts(CSettings *pSettings);			// Load from registry
 	void			LoadDefaults();									// Load defaults
 
-	unsigned short	GetAction(unsigned char nChar);					// Translate key -> ID
-	void			KeyReleased(unsigned char nChar);				// Keys are released
-	void			LostFocus();									// Window lost focus
+	void			Setup();
+	void			Shutdown();
+	BOOL			Translate(HWND hWnd, MSG *pMsg);
+	void			SetAccelerator(HACCEL hAccel);
+
+	bool			GetShortcutString(int id, CString &str) const;
 
 public:
 	// Class member constants
@@ -59,6 +63,6 @@ public:
 	static LPCTSTR			  SHORTCUTS_SECTION;					// Registry section
 
 private:
-	unsigned int	m_iModifier;									// Keep the modifier state
-
+	HACCEL	m_hAccel;
+	HACCEL	m_hAdditionalAccel;
 };

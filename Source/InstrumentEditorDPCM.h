@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ protected:
 	void BuildKeyList();
 	void BuildSampleList();
 	void UpdateKey(int Index);
-	bool LoadSample(char *FilePath, char *FileName);
+	bool LoadSample(CString &FilePath, CString &FileName);
 	bool InsertSample(CDSample *pNewSample);
 
 	CDSample *GetSelectedSample();

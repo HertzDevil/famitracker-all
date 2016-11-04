@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include "InstrumentEditor2A03.h"
 #include "MainFrm.h"
 
-LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[] = {
+LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[CInstrument2A03::SEQUENCE_COUNT] = {
 	_T("Volume"), 
 	_T("Arpeggio"), 
 	_T("Pitch"), 
@@ -43,7 +43,6 @@ CInstrumentEditor2A03::CInstrumentEditor2A03(CWnd* pParent)
 	: CSequenceInstrumentEditPanel(CInstrumentEditor2A03::IDD, pParent),
 	m_pParentWin(pParent),
 	m_pInstrument(NULL),
-	m_pSequence(NULL),
 	m_pSequenceEditor(NULL),
 	m_iSelectedSetting(0)
 {
@@ -60,10 +59,12 @@ void CInstrumentEditor2A03::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CInstrumentEditor2A03, CInstrumentEditPanel)
+BEGIN_MESSAGE_MAP(CInstrumentEditor2A03, CSequenceInstrumentEditPanel)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, OnLvnItemchangedInstsettings)	
 	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
 	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
+	ON_COMMAND(ID_CLONE_SEQUENCE, OnCloneSequence)
+//	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 
@@ -80,12 +81,12 @@ BOOL CInstrumentEditor2A03::OnInitDialog()
 	pList->InsertColumn(1, _T("#"), LVCFMT_LEFT, 30);
 	pList->InsertColumn(2, _T("Effect name"), LVCFMT_LEFT, 84);
 	pList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
-	
-	for (int i = SEQ_COUNT - 1; i > -1; i--) {
-		pList->InsertItem(0, _T(""), 0);
-		pList->SetCheck(0, 0);
-		pList->SetItemText(0, 1, _T("0"));
-		pList->SetItemText(0, 2, INST_SETTINGS[i]);
+
+	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i) {
+		pList->InsertItem(i, _T(""), 0);
+		pList->SetCheck(i, 0);
+		pList->SetItemText(i, 1, _T("0"));
+		pList->SetItemText(i, 2, INST_SETTINGS[i]);
 	}
 
 	pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
@@ -108,22 +109,28 @@ BOOL CInstrumentEditor2A03::OnInitDialog()
 void CInstrumentEditor2A03::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
 
-	if (pNMLV->uNewState & LVIS_SELECTED && pNMLV->uNewState & LVIS_FOCUSED) {
-		// If a new item is selected
-		m_iSelectedSetting = pNMLV->iItem;
-		if (m_pInstrument) {
+	if (pNMLV->uChanged & LVIF_STATE && m_pInstrument != NULL) {
+		// Selected new setting
+		if (pNMLV->uNewState & LVNI_SELECTED || pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			m_iSelectedSetting = pNMLV->iItem;
 			int Sequence = m_pInstrument->GetSeqIndex(m_iSelectedSetting);
 			SetDlgItemInt(IDC_SEQ_INDEX, Sequence);
 			SelectSequence(Sequence, m_iSelectedSetting);
+			pList->SetSelectionMark(m_iSelectedSetting);
+			pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED, LVIS_SELECTED);
 		}
-	}
-	else if ((pNMLV->uNewState == 8192 || pNMLV->uNewState == 4096) && (m_pInstrument != NULL)) {
-		// Changed state of checkbox
-		int Item = pNMLV->iItem;
-		CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
-		int Checked = pList->GetCheck(Item);
-		m_pInstrument->SetSeqEnable(Item, (Checked == 1));
+
+		// Changed checkbox
+		switch(pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			case LCTRL_CHECKBOX_CHECKED:
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 1);
+				break;
+			case LCTRL_CHECKBOX_UNCHECKED:
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 0);
+				break;
+		}
 	}
 
 	*pResult = 0;
@@ -146,17 +153,16 @@ void CInstrumentEditor2A03::OnEnChangeSeqIndex()
 	pList->SetItemText(m_iSelectedSetting, 1, Text);
 
 	if (m_pInstrument) {
-		m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+		if (m_pInstrument->GetSeqIndex(Index) != Index)
+			m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
 		SelectSequence(Index, m_iSelectedSetting);
 	}
 }
 
 void CInstrumentEditor2A03::OnBnClickedFreeSeq()
 {
-	CString Text;
 	int FreeIndex = GetDocument()->GetFreeSequence(m_iSelectedSetting);
-	Text.Format(_T("%i"), FreeIndex);
-	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 
 BOOL CInstrumentEditor2A03::DestroyWindow()
@@ -176,7 +182,7 @@ void CInstrumentEditor2A03::OnKeyReturn()
 			TranslateMML(Text, 15, 0);
 			break;
 		case SEQ_ARPEGGIO:
-			TranslateMML(Text, 96, -96);
+			TranslateMML(Text, 96, m_pSequence->GetSetting()== ARP_SETTING_FIXED ? 0 : -96);
 			break;
 		case SEQ_PITCH:
 			TranslateMML(Text, 126, -127);
@@ -198,14 +204,12 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 	m_pInstrument = pInst;
 
 	// Update instrument setting list
-	for (int i = 0; i < SEQ_COUNT; i++) {
+	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i) {
 		CString IndexStr;
 		IndexStr.Format(_T("%i"), pInst->GetSeqIndex(i));
 		pList->SetCheck(i, pInst->GetSeqEnable(i));
 		pList->SetItemText(i, 1, IndexStr);
 	} 
-
-//	pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
 	// Setting text box
 	SetDlgItemInt(IDC_SEQ_INDEX, pInst->GetSeqIndex(m_iSelectedSetting));
@@ -245,4 +249,41 @@ void CInstrumentEditor2A03::SetSequenceString(CString Sequence, bool Changed)
 	if (Changed) {
 		((CListCtrl*)GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);
 	}
+}
+
+void CInstrumentEditor2A03::OnCloneSequence()
+{
+	CFamiTrackerDoc *pDoc = GetDocument();
+	int FreeIndex = pDoc->GetFreeSequence(m_iSelectedSetting);
+	CSequence *pSeq = pDoc->GetSequence(SNDCHIP_NONE, FreeIndex, m_iSelectedSetting);
+	pSeq->Copy(m_pSequence);
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);
+}
+
+//void CInstrumentEditor2A03::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//
+//	CSequenceInstrumentEditPanel::OnKeyDown(nChar, nRepCnt, nFlags);
+//}
+
+BOOL CInstrumentEditor2A03::PreTranslateMessage(MSG* pMsg)
+{
+	/*
+	char ClassName[256];
+
+	switch (pMsg->message) {
+		case WM_KEYDOWN:
+			GetClassName(pMsg->hwnd, ClassName, 256);
+			if (strcmp(ClassName, "Edit")) {
+				PreviewNote((unsigned char)pMsg->wParam);
+				return TRUE;
+			}
+			break;
+		case WM_KEYUP:
+			PreviewRelease((unsigned char)pMsg->wParam);
+			return TRUE;
+	}
+*/
+	return CSequenceInstrumentEditPanel::PreTranslateMessage(pMsg);
 }

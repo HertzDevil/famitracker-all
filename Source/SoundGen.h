@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,16 +33,16 @@ const int TREMOLO_LENGTH = 256;
 const int NOTE_COUNT = 96;	// 96 available notes
 
 // Custom messages
-enum { M_SILENT_ALL = WM_USER + 1,
-	   M_LOAD_SETTINGS,
-	   M_PLAY,
-	   M_PLAY_LOOPING,
-	   M_STOP,
-	   M_RESET,
-	   M_START_RENDER,
-	   M_PREVIEW_SAMPLE,
-	   M_WRITE_APU,
-	   M_CLOSE_SOUND};
+enum { WM_USER_SILENT_ALL = WM_USER + 1,
+	   WM_USER_LOAD_SETTINGS,
+	   WM_USER_PLAY,
+	   WM_USER_STOP,
+	   WM_USER_RESET,
+	   WM_USER_START_RENDER,
+	   WM_USER_PREVIEW_SAMPLE,
+	   WM_USER_WRITE_APU,
+	   WM_USER_CLOSE_SOUND
+};
 
 // Player modes
 enum {MODE_PLAY,			// Play from top of pattern
@@ -94,7 +94,6 @@ public:
 
 	// Sound
 	bool		InitializeSound(HWND hWnd, HANDLE hAliveCheck, HANDLE hNotification);
-	void		CloseSound();
 	void		FlushBuffer(int16 *Buffer, uint32 Size);
 	CDSound		*GetSoundInterface() const { return m_pDSound; };
 
@@ -112,10 +111,15 @@ public:
 	void		 GenerateVibratoTable(int Type);
 	int			 ReadVibratoTable(int index) const;
 
+	int			 ReadNamcoPeriodTable(int index) const;
+
 	// Player interface
 	void		 StartPlayer(int Mode);	
 	void		 StopPlayer();
 	void		 ResetPlayer();
+	void		 LoadSettings();
+	void		 SilentAll();
+
 	void		 ResetTempo();
 	unsigned int GetTempo() const;
 	bool		 IsPlaying() const { return m_bPlaying; };
@@ -147,7 +151,12 @@ public:
 	void		AddCycles(int Count);
 
 	// Other
-	uint8		GetReg(int Reg) const { return m_pAPU->GetReg(Reg); };
+	uint8		GetReg(int Chip, int Reg) const { return m_pAPU->GetReg(Chip, Reg); };
+
+	// FDS & N163 wave preview
+	void		WaveChanged();
+	bool		HasWaveChanged();
+
 
 	// 
 	// Private functions
@@ -162,21 +171,19 @@ private:
 
 	// Audio
 	bool		ResetSound();
+	void		CloseSound();
 
 	// Player
 	void	 	PlayNote(int Channel, stChanNote *NoteData, int EffColumns);
 	void		RunFrame();
 	void		CheckControl();
 	void		ResetBuffer();
-	void		BeginPlayer();
+	void		BeginPlayer(int Mode);
 	void		HaltPlayer();
 	void		MakeSilent();
 
 	// Misc
 	void		PlaySample(CDSample *pSample, int Offset, int Pitch);
-
-	// Thread
-	void		HandleMessages();
 
 public:
 	static const double NEW_VIBRATO_DEPTH[];
@@ -206,6 +213,7 @@ private:
 	CCriticalSection	m_csFrameCounterLock;
 	CCriticalSection	m_csUnderrunLock;
 	CCriticalSection	m_csSampleWndLock;
+	CSemaphore			*m_pSoundSemaphore;
 
 private:
 	// Handles
@@ -236,6 +244,8 @@ private:
 
 	int					m_iConsumedCycles;					// Cycles consumed by the update registers functions
 
+	unsigned int		m_iSpeedSplitPoint;					// Speed/tempo split point fetched from the module
+
 	// Play control
 	int					m_iJumpToPattern;
 	int					m_iSkipToRow;
@@ -247,12 +257,11 @@ private:
 	unsigned int		m_iNoteLookupTablePAL[96];			// For 2A07
 	unsigned int		m_iNoteLookupTableSaw[96];			// For VRC6 sawtooth
 	unsigned int		m_iNoteLookupTableFDS[96];			// For FDS
-	unsigned int		m_iNoteLookupTableN106[96];			// For N106
+	unsigned int		m_iNoteLookupTableN163[96];			// For N163
 	unsigned int		m_iNoteLookupTableS5B[96];			// For sunsoft
 	int					m_iVibratoTable[VIBRATO_LENGTH];
 
 	unsigned int		m_iMachineType;						// NTSC/PAL
-	bool				m_bRunning;							// Main loop is running
 
 	// Rendering
 	RENDER_END			m_iRenderEndWhen;
@@ -271,9 +280,27 @@ private:
 
 	CWaveFile			m_wfWaveFile;
 
+	// FDS & N163 waves
+	bool				m_bWaveChanged;
+
 	// Overloaded functions
 public:
 	virtual BOOL InitInstance();
 	virtual int	 ExitInstance();
-	virtual int	 Run();
+	virtual BOOL OnIdle(LONG lCount);
+
+	// Implementation
+public:
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnSilentAll(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnLoadSettings(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnBeginPlayer(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnStopPlayer(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnResetPlayer(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnStartRender(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnPreviewSample(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnWriteAPU(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnCloseSound(WPARAM wParam, LPARAM lParam);
 };
+
+

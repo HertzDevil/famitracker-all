@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ CInstrumentS5B::CInstrumentS5B()
 	}
 }
 
-CInstrument *CInstrumentS5B::Clone()
+CInstrument *CInstrumentS5B::Clone() const
 {
 	return NULL;
 }
@@ -56,12 +56,7 @@ bool CInstrumentS5B::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 	return false;
 }
 
-int CInstrumentS5B::CompileSize(CCompiler *pCompiler)
-{
-	return 0;
-}
-
-int CInstrumentS5B::Compile(CCompiler *pCompiler, int Index)
+int CInstrumentS5B::Compile(CChunk *pChunk, int Index)
 {
 	return 0;
 }

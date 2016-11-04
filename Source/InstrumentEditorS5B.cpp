@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -157,22 +157,28 @@ BOOL CInstrumentEditorS5B::OnInitDialog()
 void CInstrumentEditorS5B::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
 
-	if (pNMLV->uNewState & LVIS_SELECTED && pNMLV->uNewState & LVIS_FOCUSED) {
-		// If a new item is selected
-		m_iSelectedSetting = pNMLV->iItem;
-		if (m_pInstrument) {
+	if (pNMLV->uChanged & LVIF_STATE && m_pInstrument != NULL) {
+		// Selected new setting
+		if (pNMLV->uNewState & LVNI_SELECTED || pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			m_iSelectedSetting = pNMLV->iItem;
 			int Sequence = m_pInstrument->GetSeqIndex(m_iSelectedSetting);
 			SetDlgItemInt(IDC_SEQ_INDEX, Sequence);
 			SelectSequence(Sequence, m_iSelectedSetting);
+			pList->SetSelectionMark(m_iSelectedSetting);
+			pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED, LVIS_SELECTED);
 		}
-	}
-	else if ((pNMLV->uNewState == 8192 || pNMLV->uNewState == 4096) && (m_pInstrument != NULL)) {
-		// Changed state of checkbox
-		int Item = pNMLV->iItem;
-		CListCtrl *pList = (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
-		int Checked = pList->GetCheck(Item);
-		m_pInstrument->SetSeqEnable(Item, (Checked == 1));
+
+		// Changed checkbox
+		switch(pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			case LCTRL_CHECKBOX_CHECKED:
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 1);
+				break;
+			case LCTRL_CHECKBOX_UNCHECKED:
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 0);
+				break;
+		}
 	}
 
 	*pResult = 0;
@@ -202,10 +208,8 @@ void CInstrumentEditorS5B::OnEnChangeSeqIndex()
 
 void CInstrumentEditorS5B::OnBnClickedFreeSeq()
 {
-	CString Text;
 	int FreeIndex = GetDocument()->GetFreeSequence(m_iSelectedSetting);
-	Text.Format(_T("%i"), FreeIndex);
-	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
 }
 
 BOOL CInstrumentEditorS5B::DestroyWindow()

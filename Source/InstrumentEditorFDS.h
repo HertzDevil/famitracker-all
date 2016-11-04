@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -73,10 +73,10 @@ public:
 	afx_msg void OnModRateChange();
 	afx_msg void OnModDepthChange();
 	afx_msg void OnModDelayChange();
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedCopyWave();
 	afx_msg void OnBnClickedPasteWave();
 	afx_msg void OnBnClickedCopyTable();
 	afx_msg void OnBnClickedPasteTable();
 	afx_msg void OnBnClickedEnableFm();
+	afx_msg LRESULT OnModChanged(WPARAM wParam, LPARAM lParam);
 };

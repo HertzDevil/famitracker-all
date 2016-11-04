@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ int CDSound::MatchDeviceID(char *Name) const
 	return 0;
 }
 
-int CDSound::CalculateBufferLenght(int BufferLen, int Samplerate, int Samplesize, int Channels) const
+int CDSound::CalculateBufferLength(int BufferLen, int Samplerate, int Samplesize, int Channels) const
 {
 	// Calculate size of the buffer, in bytes
 	return ((Samplerate * BufferLen) / 1000) * (Samplesize / 8) * Channels;
@@ -174,7 +174,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 
 	HANDLE hBufferEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	int SoundBufferSize = CalculateBufferLenght(BufferLength, SampleRate, SampleSize, Channels);
+	int SoundBufferSize = CalculateBufferLength(BufferLength, SampleRate, SampleSize, Channels);
 	int BlockSize = SoundBufferSize / Blocks;
 	
 	pChannel->m_iBufferLength		= BufferLength;			// in ms

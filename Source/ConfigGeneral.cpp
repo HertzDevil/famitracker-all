@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -191,6 +191,22 @@ BOOL CConfigGeneral::OnInitDialog()
 	GetKeyNameText(MapVirtualKey(m_iKeyRepeat, MAPVK_VK_TO_VSC) << 16, Text, 64);
 	SetDlgItemText(IDC_KEY_REPEAT, Text);
 
+	EnableToolTips(TRUE);
+
+	m_wndToolTip.Create(this, TTS_ALWAYSTIP);
+	m_wndToolTip.Activate(TRUE);
+
+	CWnd *pWndChild = GetWindow(GW_CHILD);
+	CString strToolTip;
+
+	while (pWndChild) {
+		int nID = pWndChild->GetDlgCtrlID();
+		if (strToolTip.LoadString(nID)) {
+			m_wndToolTip.AddTool(pWndChild, strToolTip);
+		}
+		pWndChild = pWndChild->GetWindow(GW_HWNDNEXT);
+	}
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -299,6 +315,8 @@ BOOL CConfigGeneral::PreTranslateMessage(MSG* pMsg)
 
 		return TRUE;
 	}
+
+	m_wndToolTip.RelayEvent(pMsg);
 
 	return CPropertyPage::PreTranslateMessage(pMsg);
 }

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,6 +24,16 @@
 #include "FamiTrackerView.h"
 #include "MainFrm.h"
 #include "CustomControls.h"
+
+/*
+
+ Contains some custom GUI controls.
+
+ CInstrumentList: The instrument list, extended to contain a context menu
+ CBannerEdit:	  An edit box that displays a banner when no text is present
+ CLockedEdit:	  An edit box that is locked for editing, unlocked with double-click
+
+*/
 
 ///
 /// CInstrumentList

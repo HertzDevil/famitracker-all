@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -101,11 +101,11 @@ BOOL CInstrumentEditorVRC7::OnInitDialog()
 	SetupSlider(IDC_FB, 7);
 	SetupSlider(IDC_M_AR, 15);
 	SetupSlider(IDC_M_DR, 15);
-	SetupSlider(IDC_M_SR, 15);
+	SetupSlider(IDC_M_SL, 15);
 	SetupSlider(IDC_M_RR, 15);
 	SetupSlider(IDC_C_AR, 15);
 	SetupSlider(IDC_C_DR, 15);
-	SetupSlider(IDC_C_SR, 15);
+	SetupSlider(IDC_C_SL, 15);
 	SetupSlider(IDC_C_RR, 15);
 
 	EnableControls(true);
@@ -140,13 +140,13 @@ void CInstrumentEditorVRC7::EnableControls(bool bEnable)
 		IDC_M_EG, IDC_M_KSL, 
 		IDC_M_KSR2, IDC_M_MUL, 
 		IDC_M_RR, IDC_M_SL, 
-		IDC_M_SR, IDC_M_VIB,
+		IDC_M_SL, IDC_M_VIB,
 		IDC_C_AM, IDC_C_AR, 
 		IDC_C_DM, IDC_C_DR, 
 		IDC_C_EG, IDC_C_KSL, 
 		IDC_C_KSR, IDC_C_MUL, 
 		IDC_C_RR, IDC_C_SL, 
-		IDC_C_SR, IDC_C_VIB,
+		IDC_C_SL, IDC_C_VIB,
 		IDC_TL, IDC_FB
 	};
 
@@ -231,7 +231,7 @@ void CInstrumentEditorVRC7::LoadInternalPatch(int Num)
 	Reg = default_inst[(Num * 16) + 3];
 	SetSliderVal(IDC_C_KSL, Reg >> 6);
 	SetSliderVal(IDC_FB, 7 - (Reg & 7));
-	CheckDlgButton(IDC_C_DC, Reg & 0x10 ? 1 : 0);
+	CheckDlgButton(IDC_C_DM, Reg & 0x10 ? 1 : 0);
 	CheckDlgButton(IDC_M_DM, Reg & 0x08 ? 1 : 0);
 
 	// Register 4
@@ -246,12 +246,12 @@ void CInstrumentEditorVRC7::LoadInternalPatch(int Num)
 
 	// Register 6
 	Reg = default_inst[(Num * 16) + 6];
-	SetSliderVal(IDC_M_SR, Reg >> 4);
+	SetSliderVal(IDC_M_SL, Reg >> 4);
 	SetSliderVal(IDC_M_RR, Reg & 0x0F);
 
 	// Register 7
 	Reg = default_inst[(Num * 16) + 7];
-	SetSliderVal(IDC_C_SR, Reg >> 4);
+	SetSliderVal(IDC_C_SL, Reg >> 4);
 	SetSliderVal(IDC_C_RR, Reg & 0x0F);
 }
 
@@ -286,7 +286,7 @@ void CInstrumentEditorVRC7::LoadCustomPatch()
 	Reg = m_pInstrument->GetCustomReg(3);
 	SetSliderVal(IDC_C_KSL, Reg >> 6);
 	SetSliderVal(IDC_FB, 7 - (Reg & 7));
-	CheckDlgButton(IDC_C_DC, Reg & 0x10 ? 1 : 0);
+	CheckDlgButton(IDC_C_DM, Reg & 0x10 ? 1 : 0);
 	CheckDlgButton(IDC_M_DM, Reg & 0x08 ? 1 : 0);
 
 	// Register 4
@@ -301,12 +301,12 @@ void CInstrumentEditorVRC7::LoadCustomPatch()
 
 	// Register 6
 	Reg = m_pInstrument->GetCustomReg(6);
-	SetSliderVal(IDC_M_SR, Reg >> 4);
+	SetSliderVal(IDC_M_SL, Reg >> 4);
 	SetSliderVal(IDC_M_RR, Reg & 0x0F);
 
 	// Register 7
 	Reg = m_pInstrument->GetCustomReg(7);
-	SetSliderVal(IDC_C_SR, Reg >> 4);
+	SetSliderVal(IDC_C_SL, Reg >> 4);
 	SetSliderVal(IDC_C_RR, Reg & 0x0F);
 }
 
@@ -337,7 +337,7 @@ void CInstrumentEditorVRC7::SaveCustomPatch()
 
 	// Register 3
 	Reg  = GetSliderVal(IDC_C_KSL) << 6;
-	Reg |= IsDlgButtonChecked(IDC_C_DC) ? 0x10 : 0;
+	Reg |= IsDlgButtonChecked(IDC_C_DM) ? 0x10 : 0;
 	Reg |= IsDlgButtonChecked(IDC_M_DM) ? 0x08 : 0;
 	Reg |= 7 - GetSliderVal(IDC_FB);
 	m_pInstrument->SetCustomReg(3, Reg);
@@ -353,12 +353,12 @@ void CInstrumentEditorVRC7::SaveCustomPatch()
 	m_pInstrument->SetCustomReg(5, Reg);
 
 	// Register 6
-	Reg = GetSliderVal(IDC_M_SR) << 4;
+	Reg = GetSliderVal(IDC_M_SL) << 4;
 	Reg |= GetSliderVal(IDC_M_RR);
 	m_pInstrument->SetCustomReg(6, Reg);
 
 	// Register 7
-	Reg = GetSliderVal(IDC_C_SR) << 4;
+	Reg = GetSliderVal(IDC_C_SL) << 4;
 	Reg |= GetSliderVal(IDC_C_RR);
 	m_pInstrument->SetCustomReg(7, Reg);	
 }

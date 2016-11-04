@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ public:
 	CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
 	void			CloseChannel(CDSoundChannel *pChannel);
 
-	int				CalculateBufferLenght(int BufferLen, int Samplerate, int Samplesize, int Channels) const;
+	int				CalculateBufferLength(int BufferLen, int Samplerate, int Samplesize, int Channels) const;
 
 	// Enumeration
 	void			EnumerateDevices();

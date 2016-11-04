@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@
 /*
  * This class is used to translate key shortcuts -> command messages
  *
- * TODO: move this to windows internal accelerator functions?
- *
+ * Translation is now done using win32 functions
  */
 
 // List of modifier strings
@@ -54,8 +53,8 @@ const stAccelEntry CAccelerator::DEFAULT_TABLE[] = {
 	{_T("Play row"),					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
 	{_T("Stop"),						MOD_NONE,		VK_F8,			ID_TRACKER_STOP},
 	{_T("Edit enable/disable"),			MOD_NONE,		VK_SPACE,		ID_TRACKER_EDIT},
-	{_T("Paste and overwrite"),			MOD_CONTROL,	'B',			ID_CMD_PASTEOVERWRITE},
-	{_T("Paste and mix"),				MOD_CONTROL,	'M',			ID_CMD_PASTEMIXED},
+	{_T("Paste and overwrite"),			MOD_CONTROL,	'B',			ID_CMD_PASTE_OVERWRITE},
+	{_T("Paste and mix"),				MOD_CONTROL,	'M',			ID_CMD_PASTE_MIXED},
 	{_T("Select all"),					MOD_CONTROL,	'A',			ID_EDIT_SELECTALL},
 	{_T("Toggle channel"),				MOD_ALT,		VK_F9,			ID_TRACKER_TOGGLECHANNEL},
 	{_T("Solo channel"),				MOD_ALT,		VK_F10,			ID_TRACKER_SOLOCHANNEL},
@@ -71,13 +70,13 @@ const stAccelEntry CAccelerator::DEFAULT_TABLE[] = {
 	{_T("Next instrument"),				MOD_CONTROL,	VK_DOWN,		ID_CMD_NEXT_INSTRUMENT},
 	{_T("Previous instrument"),			MOD_CONTROL,	VK_UP,			ID_CMD_PREV_INSTRUMENT},
 	{_T("Mask instruments"),			MOD_ALT,		'T',			ID_EDIT_INSTRUMENTMASK},
-	{_T("Edit instrument"),				MOD_CONTROL,	'I',			ID_MODULE_EDITINSTRUMENT},
+	{_T("Edit instrument"),				MOD_CONTROL,	'I',			ID_INSTRUMENT_EDIT},
 	{_T("Increase step size"),			MOD_CONTROL,	VK_ADD,			ID_CMD_INCREASESTEPSIZE},
 	{_T("Decrease step size"),			MOD_CONTROL,	VK_SUBTRACT,	ID_CMD_DECREASESTEPSIZE},
 	{_T("Follow mode"),					MOD_NONE,		VK_SCROLL,		IDC_FOLLOW_TOGGLE},
 	{_T("Duplicate frame"),				MOD_CONTROL,	'D',			ID_MODULE_DUPLICATEFRAME},
-	{_T("Insert frame"),				MOD_NONE,		0,				ID_FRAME_INSERT},
-	{_T("Remove frame"),				MOD_NONE,		0,				ID_FRAME_REMOVE},
+	{_T("Insert frame"),				MOD_NONE,		0,				ID_MODULE_INSERTFRAME},
+	{_T("Remove frame"),				MOD_NONE,		0,				ID_MODULE_REMOVEFRAME},
 	{_T("Reverse"),						MOD_CONTROL,	'R',			ID_EDIT_REVERSE},
 	{_T("Select frame editor"),			MOD_NONE,		VK_F3,			ID_FOCUS_FRAME_EDITOR},
 	{_T("Select pattern editor"),		MOD_NONE,		VK_F2,			ID_FOCUS_PATTERN_EDITOR},
@@ -91,32 +90,43 @@ const stAccelEntry CAccelerator::DEFAULT_TABLE[] = {
 	{_T("Pick up row settings"),		MOD_NONE,		0,				ID_POPUP_PICKUPROW},
 	{_T("Next song"),					MOD_NONE,		0,				ID_NEXT_SONG},
 	{_T("Previous song"),				MOD_NONE,		0,				ID_PREV_SONG},
-	
-
+	{_T("Expand patterns"),				MOD_NONE,		0,				ID_EDIT_EXPANDPATTERNS},
+	{_T("Shrink patterns"),				MOD_NONE,		0,				ID_EDIT_SHRINKPATTERNS},
 };
 
 const int CAccelerator::ACCEL_COUNT = sizeof(CAccelerator::DEFAULT_TABLE) / sizeof(stAccelEntry);
 
-// Shortcut table
-static stAccelEntry EntriesTable[CAccelerator::ACCEL_COUNT];
-
 // Registry key
 LPCTSTR CAccelerator::SHORTCUTS_SECTION = _T("Shortcuts");
 
-CAccelerator::CAccelerator() : m_iModifier(0)
+//
+// Static objects
+//
+
+// Shortcut table
+static stAccelEntry EntriesTable[CAccelerator::ACCEL_COUNT];
+
+// Accelerator table
+static ACCEL AccelTable[CAccelerator::ACCEL_COUNT];
+
+// Translate internal modifier -> windows modifier
+static BYTE GetMod(int Mod) 
+{
+	return ((Mod & MOD_CONTROL) ? FCONTROL : 0) | ((Mod & MOD_SHIFT) ? FSHIFT : 0) | ((Mod & MOD_ALT) ? FALT : 0);
+}
+
+// Class instance functions
+
+CAccelerator::CAccelerator() : m_hAccel(NULL), m_hAdditionalAccel(NULL)
 {
 	ATLTRACE2(atlTraceGeneral, 0, "Accelerator: Accelerator table contains %d items\n", ACCEL_COUNT);
 }
 
 CAccelerator::~CAccelerator()
 {
+	ASSERT(m_hAccel == NULL);
 }
-/*
-int CAccelerator::GetItemCount() const
-{
-	return ACCEL_COUNT;
-}
-*/
+
 LPCTSTR CAccelerator::GetItemName(int Item) const
 {
 	ASSERT(Item < ACCEL_COUNT);
@@ -183,15 +193,32 @@ LPCTSTR CAccelerator::GetVKeyName(int virtualKey) const
     if (GetKeyNameText(scanCode << 16, keyName, sizeof(keyName)) != 0)
         return keyName;
 
-	return "";
+	return _T("");
 }
-
 
 void CAccelerator::StoreShortcut(int Item, int Key, int Mod)
 {
 	ASSERT(Item < ACCEL_COUNT);
 	EntriesTable[Item].key = Key;
 	EntriesTable[Item].mod = Mod;
+}
+
+bool CAccelerator::GetShortcutString(int id, CString &str) const
+{
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		if (EntriesTable[i].id == id) {
+			CString KeyName = GetVKeyName(EntriesTable[i].key);
+			if (KeyName.GetLength() > 1)
+				KeyName = KeyName.Mid(0, 1).MakeUpper() + KeyName.Mid(1, KeyName.GetLength() - 1).MakeLower();
+			if (EntriesTable[i].mod > 0)
+				str.Format(_T("\t%s+%s"), MOD_NAMES[EntriesTable[i].mod], KeyName);
+			else
+				str.Format(_T("\t%s"), KeyName);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 // Registry storage/loading
@@ -223,64 +250,52 @@ void CAccelerator::LoadDefaults()
 	memcpy(EntriesTable, DEFAULT_TABLE, sizeof(stAccelEntry) * ACCEL_COUNT);
 }
 
-// Following handles key -> ID translation
-
-unsigned short CAccelerator::GetAction(unsigned char nChar)
+void CAccelerator::Setup()
 {
-	// Translates a key-stroke into an ID
+	// Translate key table -> windows accelerator table
 
-	switch (nChar) {
-		case VK_SHIFT:
-			m_iModifier |= MOD_SHIFT;
-			return 0;
-		case VK_CONTROL:
-			m_iModifier |= MOD_CONTROL;
-			return 0;
-		case VK_MENU:
-			m_iModifier |= MOD_ALT;
-			return 0;
+	if (m_hAccel) {
+		DestroyAcceleratorTable(m_hAccel);
+		m_hAccel = NULL;
 	}
 
-	// Find exact match
-	for (int i = 0; i < ACCEL_COUNT; ++i) {
-		unsigned char Mod = EntriesTable[i].mod;
-		unsigned char Key = EntriesTable[i].key;
+	memset(AccelTable, 0, sizeof(ACCEL) * ACCEL_COUNT);
 
-		if ((Mod == m_iModifier) && nChar == Key) {
-			return EntriesTable[i].id;
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		AccelTable[i].cmd = EntriesTable[i].id;
+		AccelTable[i].fVirt = FVIRTKEY | GetMod(EntriesTable[i].mod);
+		AccelTable[i].key = EntriesTable[i].key;
+	}
+
+	m_hAccel = CreateAcceleratorTable(AccelTable, ACCEL_COUNT);
+}
+
+BOOL CAccelerator::Translate(HWND hWnd, MSG *pMsg)
+{
+	if (m_hAdditionalAccel) {
+		if (TranslateAccelerator(hWnd, m_hAdditionalAccel, pMsg)) {
+			return TRUE;
 		}
 	}
 
-	// Find partial match
-	for (int i = 0; i < ACCEL_COUNT; ++i) {
-		unsigned char Mod = EntriesTable[i].mod;
-		unsigned char Key = EntriesTable[i].key;
-
-		if ((Mod & m_iModifier) == Mod && nChar == Key) {
-			return EntriesTable[i].id;
+	if (m_hAccel) {
+		if (TranslateAccelerator(hWnd, m_hAccel, pMsg)) {
+			return TRUE;
 		}
 	}
 
-	return 0;
+	return FALSE;
 }
 
-void CAccelerator::KeyReleased(unsigned char nChar)
+void CAccelerator::Shutdown()
 {
-	switch (nChar) {
-		case VK_SHIFT:
-			m_iModifier &= ~MOD_SHIFT;
-			break;
-		case VK_CONTROL:
-			m_iModifier &= ~MOD_CONTROL;
-			break;
-		case VK_MENU:
-			m_iModifier &= ~MOD_ALT;
-			break;
+	if (m_hAccel) {
+		DestroyAcceleratorTable(m_hAccel);
+		m_hAccel = NULL;
 	}
 }
 
-void CAccelerator::LostFocus()
+void CAccelerator::SetAccelerator(HACCEL hAccel)
 {
-	// Clear mod keys
-	m_iModifier = 0;
+	m_hAdditionalAccel = hAccel;
 }

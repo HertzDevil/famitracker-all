@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ void CChannelMap::SetupSoundChips()
 	AddChip(SNDCHIP_VRC7, new CInstrumentVRC7(), _T("Konami VRC7"));
 	AddChip(SNDCHIP_FDS,  new CInstrumentFDS(),  _T("Nintendo FDS sound"));
 	AddChip(SNDCHIP_MMC5, new CInstrument2A03(), _T("Nintendo MMC5"));
-	AddChip(SNDCHIP_N106, new CInstrumentN106(), _T("Namco 106"));
+	AddChip(SNDCHIP_N163, new CInstrumentN163(), _T("Namco 163"));
 	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
 #else /* _DEBUG */
 	// Ready for use
@@ -61,7 +61,7 @@ void CChannelMap::SetupSoundChips()
 	AddChip(SNDCHIP_VRC7, new CInstrumentVRC7(), _T("Konami VRC7"));
 	AddChip(SNDCHIP_FDS,  new CInstrumentFDS(),  _T("Nintendo FDS sound"));
 	AddChip(SNDCHIP_MMC5, new CInstrument2A03(), _T("Nintendo MMC5"));
-//	AddChip(SNDCHIP_N106, new CInstrumentN106(), _T("Namco 106/163"));
+	AddChip(SNDCHIP_N163, new CInstrumentN163(), _T("Namco 163"));
 //	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
 #endif /* _DEBUG */
 }

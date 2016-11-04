@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,19 +24,21 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "instrument.h"
+#include "Instrument.h"
 #include "WaveEditor.h"
 #include "Resource.h"
 #include "Graphics.h"
+#include "SoundGen.h"
 
 /*
- * This is the wave editor for FDS and N106
+ * This is the wave editor for FDS and N163
  *
  */
 
 using namespace std;
 
-bool CWaveEditor::m_bLineMode = true;
+bool CWaveEditorFDS::m_bLineMode = true;
+bool CWaveEditorN163::m_bLineMode = false;
 
 IMPLEMENT_DYNAMIC(CWaveEditor, CWnd)
 
@@ -79,22 +81,26 @@ BOOL CWaveEditor::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszW
 
 void CWaveEditor::OnPaint()
 {
+	const COLORREF GRAY1 = 0xA0A0A0;
+	const COLORREF GRAY2 = 0xB0B0B0;
+	const COLORREF LINE_COL = 0x404040;
+
 	// Draw the sample
 	CPaintDC dc(this);
 
 	// Background
-	for (int i = 0; i < m_iLX; ++i) {
-		dc.FillSolidRect(0, i * m_iSY, m_iLX * m_iSX, m_iSY, (i & 1) ? 0xA0A0A0 : 0xB0B0B0);
+	for (int i = 0; i < m_iLY; ++i) {
+		dc.FillSolidRect(0, i * m_iSY, m_iLX * m_iSX, m_iSY, (i & 1) ? GRAY1 : GRAY2);
 	}
 
-	if (m_bLineMode) {
+	if (GetLineMode()) {
 		// Lines
 		int Steps = m_iLY - 1;
 		int Sample = Steps - GetSample(0);
 
 		dc.MoveTo(m_iSX / 2, Sample * m_iSY + m_iSY / 2);
 
-		CPen gray(0, 2, 0x404040);
+		CPen gray(0, 2, LINE_COL);
 		CPen *pOldPen = dc.SelectObject(&gray);
 
 		int icX = m_iSX / 2;
@@ -114,6 +120,12 @@ void CWaveEditor::OnPaint()
 			int Sample = (m_iLY - 1) - GetSample(i);
 			DrawRect(&dc, i * m_iSX, Sample * m_iSY, m_iSX, m_iSY);
 		}
+	}
+
+	CRect rect;
+	GetClientRect(rect);
+	if ((m_iLX * m_iSX) < rect.Width()) {
+		dc.FillSolidRect(m_iLX * m_iSX, 0, rect.Width() - (m_iLX * m_iSX), m_iLY * m_iSY, GRAY1);
 	}
 
 	// Draw a line
@@ -146,7 +158,7 @@ void CWaveEditor::OnLButtonDown(UINT nFlags, CPoint point)
 	SetCapture();
 	EditWave(point);
 
-	if (m_bLineMode) {
+	if (GetLineMode()) {
 		Invalidate();
 		RedrawWindow();
 	}
@@ -201,7 +213,7 @@ void CWaveEditor::EditWave(CPoint pt1, CPoint pt2)
 		y += dy;
 	}
 
-	if (m_bLineMode) {
+	if (GetLineMode()) {
 		Invalidate();
 		RedrawWindow();
 	}
@@ -222,7 +234,7 @@ void CWaveEditor::EditWave(CPoint point)
 	if (index > GetMaxSamples() - 1)
 		index = GetMaxSamples() - 1;
 
-	if (!m_bLineMode) {
+	if (!GetLineMode()) {
 
 		CDC *pDC = GetDC();
 
@@ -242,7 +254,7 @@ void CWaveEditor::EditWave(CPoint point)
 		SetSample(index, sample);
 
 	// Indicates wave change
-	GetParent()->PostMessage(WM_USER);
+	GetParent()->PostMessage(WM_USER_WAVE_CHANGED);
 }
 
 void CWaveEditor::DrawLine(CDC *pDC)
@@ -261,7 +273,7 @@ void CWaveEditor::WaveChanged()
 {
 	Invalidate();
 	RedrawWindow();
-	GetParent()->PostMessage(WM_USER);
+	GetParent()->PostMessage(WM_USER_WAVE_CHANGED);
 }
 
 void CWaveEditor::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
@@ -269,20 +281,20 @@ void CWaveEditor::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	CMenu menu;
 	
 	menu.CreatePopupMenu();
-	menu.AppendMenu(MF_STRING, 1, _T("&Dots"));
+	menu.AppendMenu(MF_STRING, 1, _T("&Steps"));
 	menu.AppendMenu(MF_STRING, 2, _T("&Lines"));
 
-	if (m_bLineMode)
+	if (GetLineMode())
 		menu.CheckMenuItem(1, MF_BYPOSITION | MF_CHECKED);
 	else
 		menu.CheckMenuItem(0, MF_BYPOSITION | MF_CHECKED);
 
 	switch (menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this)) {
 		case 1: 
-			m_bLineMode = false;
+			SetLineMode(false);
 			break;
 		case 2: 
-			m_bLineMode = true;
+			SetLineMode(true);
 			break;
 	}
 
@@ -308,6 +320,7 @@ void CWaveEditorFDS::SetSample(int i, int s)
 {
 	ASSERT(m_pInstrument != NULL);
 	m_pInstrument->SetSample(i, s);
+	theApp.GetSoundGenerator()->WaveChanged();
 }
 
 int CWaveEditorFDS::GetMaxSamples() const
@@ -320,38 +333,50 @@ void CWaveEditorFDS::DrawRect(CDC *pDC, int x, int y, int sx, int sy) const
 	pDC->FillSolidRect(x, y, sx, sy, 0x000000);
 }
 
-// N106 wave
+// N163 wave
 
-void CWaveEditorN106::SetInstrument(CInstrumentN106 *pInst)
+void CWaveEditorN163::SetInstrument(CInstrumentN163 *pInst)
 {
 	m_pInstrument = pInst;
 	WaveChanged();
 }
 
-int CWaveEditorN106::GetSample(int i) const
+void CWaveEditorN163::SetWave(int i)
 {
-	ASSERT(m_pInstrument != NULL);
-	return m_pInstrument->GetSample(i);
+	m_iWaveIndex = i;
 }
 
-void CWaveEditorN106::SetSample(int i, int s)
+int CWaveEditorN163::GetSample(int i) const
 {
 	ASSERT(m_pInstrument != NULL);
-	m_pInstrument->SetSample(i, s);
+	return m_pInstrument->GetSample(m_iWaveIndex, i);
 }
 
-int CWaveEditorN106::GetMaxSamples() const
+void CWaveEditorN163::SetSample(int i, int s)
+{
+	ASSERT(m_pInstrument != NULL);
+	m_pInstrument->SetSample(m_iWaveIndex, i, s);
+	theApp.GetSoundGenerator()->WaveChanged();
+}
+
+int CWaveEditorN163::GetMaxSamples() const
 {
 	return m_pInstrument->GetWaveSize();
 }
 
-void CWaveEditorN106::DrawRect(CDC *pDC, int x, int y, int sx, int sy) const
+void CWaveEditorN163::DrawRect(CDC *pDC, int x, int y, int sx, int sy) const
 {
-	const int BOX_COLOR = 0xC01080;
-	const int BOX_COLOR_HI = DIM(BOX_COLOR, 120);
-	const int BOX_COLOR_LO = DIM(BOX_COLOR, 50);
+	const COLORREF BOX_COLOR = 0x808000;
+	const COLORREF BOX_COLOR_HI = 0xB0B030;
+	const COLORREF BOX_COLOR_LO = 0x404000;
 
-	pDC->FillSolidRect(x, y, sx, sy, BOX_COLOR - (y / 4));
+	pDC->FillSolidRect(x, y, sx, sy, BOX_COLOR);
 	pDC->Draw3dRect(x, y, sx, sy, BOX_COLOR_HI, BOX_COLOR_LO);
 }
 
+void CWaveEditorN163::SetLength(int Length)
+{
+	m_iLX = Length;
+	m_iSX = 320 / Length;
+	WaveChanged();
+}

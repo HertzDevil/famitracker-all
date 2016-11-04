@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -183,7 +183,19 @@ public:
 		int		iKeyRepeat;
 	} Keys;
 
+	// Other
 	int SampleWinState;
+	int FrameEditPos;
+
+	struct {
+		int		iLevel2A03;
+		int		iLevelVRC6;
+		int		iLevelVRC7;
+		int		iLevelMMC5;
+		int		iLevelFDS;
+	} ChipLevels;
+
+	bool m_bNamcoMixing;
 
 private:
 	void AddSetting(CSettingBase *pSetting);

@@ -23,7 +23,7 @@
 	font-family: verdana;
 	font-size: 16pt;
 	font-weight: bold;
-	color: gray;
+	color: #606060;
 }
 .text
 {
@@ -62,4 +62,21 @@
 	font-weight: bold;
 	font-style: normal;
 	color: #606060;
+}
+.footer
+{
+    font-family: Verdana;
+    font-size: 8pt;
+    font-style: italic;
+    font-weight: normal;
+}
+.effect
+{
+	font-family: Verdana;
+	font-size: 8pt;
+	font-weight: bold;
+}
+.settingsTableOption
+{
+    width: 200px;
 }

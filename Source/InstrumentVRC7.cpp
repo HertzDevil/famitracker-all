@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 ** must bear this legend.
 */
 
+#include <vector>
 #include "stdafx.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
@@ -42,7 +43,7 @@ CInstrumentVRC7::CInstrumentVRC7() :
 	m_iRegs[7] = 0;
 }
 
-CInstrument *CInstrumentVRC7::Clone()
+CInstrument *CInstrumentVRC7::Clone() const
 {
 	CInstrumentVRC7 *pNew = new CInstrumentVRC7();
 
@@ -100,25 +101,16 @@ bool CInstrumentVRC7::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc
 	return true;
 }
 
-int CInstrumentVRC7::CompileSize(CCompiler *pCompiler)
-{
-	return (GetPatch() == 0) ? 9 : 1;
-}
-
-int CInstrumentVRC7::Compile(CCompiler *pCompiler, int Index)
+int CInstrumentVRC7::Compile(CChunk *pChunk, int Index)
 {
 	int Patch = GetPatch();
 
-	pCompiler->WriteLog("VRC7 {");
-	pCompiler->StoreByte(Patch << 4);	// Shift up by 4 to make room for volume
-	pCompiler->WriteLog("Patch %i", GetPatch());
+	pChunk->StoreByte(Patch << 4);	// Shift up by 4 to make room for volume
 
 	if (Patch == 0) {
 		// Write custom patch settings
-		pCompiler->WriteLog(" regs: ");
 		for (int i = 0; i < 8; ++i) {
-			pCompiler->StoreByte(GetCustomReg(i));
-			pCompiler->WriteLog("%02X%s", GetCustomReg(i), i < 7 ? ", " : "");
+			pChunk->StoreByte(GetCustomReg(i));
 		}
 	}
 
@@ -127,12 +119,13 @@ int CInstrumentVRC7::Compile(CCompiler *pCompiler, int Index)
 
 bool CInstrumentVRC7::CanRelease() const
 {
-	return true;	// Can always release
+	return false;	// This can use release but disable it when previewing notes
 }
 
 void CInstrumentVRC7::SetPatch(unsigned int Patch)
 {
 	m_iPatch = Patch;
+	InstrumentChanged();
 }
 
 unsigned int CInstrumentVRC7::GetPatch() const
@@ -143,6 +136,7 @@ unsigned int CInstrumentVRC7::GetPatch() const
 void CInstrumentVRC7::SetCustomReg(int Reg, unsigned int Value)
 {
 	m_iRegs[Reg] = Value;
+	InstrumentChanged();
 }
 
 unsigned int CInstrumentVRC7::GetCustomReg(int Reg) const

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "MainFrm.h"
 #include "ConfigShortcuts.h"
 #include "Accelerator.h"
 #include "Settings.h"
@@ -111,26 +112,6 @@ void CConfigShortcuts::OnBnClickedDefault()
 	SetDlgItemText(IDC_KEY, KeyString);
 
 	SetModified();
-
-	/*
-	CAccelerator *pAccel = theApp.GetAccelerator();
-	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	
-	if (AfxMessageBox(_T("Do you want to restore default keys? There's no undo."), MB_ICONWARNING | MB_YESNO, 0) == IDNO)
-		return;
-
-	pAccel->LoadDefaults();
-
-	pListView->DeleteAllItems();
-
-	int Count = Accelerator.GetItemCount();
-
-	for (int i = 0; i < Count; ++i) {
-		pListView->InsertItem(i, Accelerator.GetItemName(i), 0);
-		pListView->SetItemText(i, 1, Accelerator.GetModName(i));
-		pListView->SetItemText(i, 2, Accelerator.GetKeyName(i));
-	}
-	*/
 }
 
 BOOL CConfigShortcuts::OnApply()
@@ -141,6 +122,11 @@ BOOL CConfigShortcuts::OnApply()
 	// Store keys
 	for (int i = 0; i < CAccelerator::ACCEL_COUNT; ++i)
 		pAccel->StoreShortcut(i, m_iKeys[i], m_iMods[i]);
+
+	pAccel->Setup();
+
+	CMainFrame* pMainFrame = (CMainFrame*)AfxGetMainWnd();
+	pMainFrame->UpdateMenus();
 
 	return CPropertyPage::OnApply();
 }

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@
 #include "../stdafx.h"
 #include <cstdio>
 #include <memory>
+#include <cmath>
 #include "apu.h"
 
 #include "square.h"
@@ -50,7 +51,7 @@
 #include "vrc6.h"
 #include "mmc5.h"
 #include "fds.h"
-#include "n106.h"
+#include "n163.h"
 #include "vrc7.h"
 #include "s5b.h"
 
@@ -89,8 +90,11 @@ CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem) :
 	m_pVRC6 = new CVRC6(m_pMixer);
 	m_pVRC7 = new CVRC7(m_pMixer);
 	m_pFDS = new CFDS(m_pMixer);
-	m_pN106 = new CN106(m_pMixer);
+	m_pN163 = new CN163(m_pMixer);
 	m_pS5B = new CS5B(m_pMixer);
+
+	m_fLevelVRC7 = 1.0f;
+	m_fLevelS5B = 1.0f;
 
 #ifdef LOGGING
 	m_pLog = new CFile("apu_log.txt", CFile::modeCreate | CFile::modeWrite);
@@ -109,7 +113,7 @@ CAPU::~CAPU()
 	SAFE_RELEASE(m_pVRC6);
 	SAFE_RELEASE(m_pVRC7);
 	SAFE_RELEASE(m_pFDS);
-	SAFE_RELEASE(m_pN106);
+	SAFE_RELEASE(m_pN163);
 	SAFE_RELEASE(m_pS5B);
 
 	SAFE_RELEASE(m_pMixer);
@@ -299,7 +303,7 @@ void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume) const
 {
 	// New settings
 	m_pMixer->UpdateSettings(LowCut, HighCut, HighDamp, Volume);
-	m_pVRC7->SetVolume(Volume);
+	m_pVRC7->SetVolume((float(Volume) / 100.0f) * m_fLevelVRC7);
 }
 
 void CAPU::SetExternalSound(uint8 Chip)
@@ -318,8 +322,8 @@ void CAPU::SetExternalSound(uint8 Chip)
 		ExChips.push_back(m_pFDS);
 	if (Chip & SNDCHIP_MMC5)
 		ExChips.push_back(m_pMMC5);
-	if (Chip & SNDCHIP_N106)
-		ExChips.push_back(m_pN106);
+	if (Chip & SNDCHIP_N163)
+		ExChips.push_back(m_pN163);
 	if (Chip & SNDCHIP_S5B)
 		ExChips.push_back(m_pS5B);
 
@@ -494,6 +498,8 @@ void CAPU::ExternalWrite(uint16 Address, uint8 Value)
 	for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
 		(*iter)->Write(Address, Value);
 	}
+
+	LogExternalWrite(Address, Value);
 }
 
 uint8 CAPU::ExternalRead(uint16 Address)
@@ -550,3 +556,49 @@ void CAPU::Log()
 	m_pLog->Write(str, str.GetLength());
 }
 #endif
+
+void CAPU::SetChipLevel(int Chip, int Level)
+{
+	float fLevel = expf(float(Level) / 20.0f);	// dB -> gain
+
+	switch (Chip) {
+		case SNDCHIP_VRC7:
+			m_fLevelVRC7 = fLevel;
+			break;
+		case SNDCHIP_S5B:
+			m_fLevelS5B = fLevel;
+			break;
+		default:
+			m_pMixer->SetChipLevel(Chip, fLevel);
+	}
+}
+
+void CAPU::SetNamcoMixing(bool bLinear)
+{
+	m_pMixer->SetNamcoMixing(bLinear);
+	m_pN163->SetMixingMethod(bLinear);
+}
+
+void CAPU::LogExternalWrite(uint16 Address, uint8 Value)
+{
+	if (Address >= 0x9000 && Address <= 0x9003)
+		m_iRegsVRC6[Address - 0x9000] = Value;
+	else if (Address >= 0xA000 && Address <= 0xA003)
+		m_iRegsVRC6[Address - 0xA000 + 3] = Value;
+	else if (Address >= 0xB000 && Address <= 0xB003)
+		m_iRegsVRC6[Address - 0xB000 + 6] = Value;
+}
+
+uint8 CAPU::GetReg(int Chip, int Reg) const 
+{
+	switch (Chip) {
+		case SNDCHIP_NONE:
+			return m_iRegs[Reg & 0x1F]; 
+		case SNDCHIP_VRC6:
+			return m_iRegsVRC6[Reg & 0x1F]; 
+		case SNDCHIP_N163:
+			return m_pN163->ReadMem(Reg);
+	}
+
+	return 0;
+}

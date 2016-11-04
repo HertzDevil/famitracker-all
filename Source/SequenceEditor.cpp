@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -30,8 +30,6 @@
 
 // This file contains the sequence editor and sequence size control
 
-enum {MENU_ARP_ABSOLUTE = WM_USER, MENU_ARP_RELATIVE, MENU_ARP_FIXED};
-
 // CSequenceEditor
 
 IMPLEMENT_DYNAMIC(CSequenceEditor, CWnd)
@@ -39,6 +37,7 @@ IMPLEMENT_DYNAMIC(CSequenceEditor, CWnd)
 CSequenceEditor::CSequenceEditor(CFamiTrackerDoc *pDoc) : CWnd(), 
 	m_pGraphEditor(NULL), 
 	m_pSizeEditor(NULL),
+	m_pSetting(NULL),
 	m_pFont(NULL),
 	m_iMaxVol(15), 
 	m_iMaxDuty(3),
@@ -51,20 +50,18 @@ CSequenceEditor::~CSequenceEditor()
 	SAFE_RELEASE(m_pFont);
 	SAFE_RELEASE(m_pSizeEditor);
 	SAFE_RELEASE(m_pGraphEditor);
+	SAFE_RELEASE(m_pSetting);
 }
 
 BEGIN_MESSAGE_MAP(CSequenceEditor, CWnd)
 	ON_WM_PAINT()
-	ON_WM_LBUTTONUP()
 	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
-CRect m_MenuRect;
-
-//CSequenceSetting *m_pSetting;
-
 BOOL CSequenceEditor::CreateEditor(CWnd *pParentWnd, const RECT &rect)
 {
+	CRect menuRect;
+
 	if (CWnd::CreateEx(WS_EX_CLIENTEDGE, NULL, _T(""), WS_CHILD | WS_VISIBLE, rect, pParentWnd, 0) == -1)
 		return -1;
 
@@ -82,15 +79,16 @@ BOOL CSequenceEditor::CreateEditor(CWnd *pParentWnd, const RECT &rect)
 	if (m_pSizeEditor->CreateEx(NULL, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(40, GraphRect.bottom + 5, 104, GraphRect.bottom + 22), this, 0) == -1)
 		return -1;
 
-	m_MenuRect = CRect(GraphRect.right - 80, GraphRect.bottom + 5, GraphRect.right - 10, GraphRect.bottom + 22);
-/*
+	menuRect = CRect(GraphRect.right - 80, GraphRect.bottom + 3, GraphRect.right - 10, GraphRect.bottom + 22);
+
+	// Sequence settings editor
 	m_pSetting = new CSequenceSetting(this);
 
-	if (m_pSetting->CreateEx(NULL, NULL, "", WS_CHILD | WS_VISIBLE, m_MenuRect, this, 0) == -1)
+	if (m_pSetting->CreateEx(NULL, NULL, "", WS_CHILD | WS_VISIBLE, menuRect, this, 0) == -1)
 		return -1;
 
 	m_pSetting->Setup(m_pFont);
-*/
+
 	return 0;
 }
 
@@ -112,23 +110,6 @@ void CSequenceEditor::OnPaint()
 	LengthStr.Format(_T("%i ms  "), (1000 * m_pSizeEditor->GetValue()) / m_pDocument->GetFrameRate());
 
 	dc.TextOut(120, rect.bottom - 19, LengthStr);
-
-	// TODO: For arpeggio, make this more general
-#if 0
-	if (m_iSelectedSetting == SEQ_ARPEGGIO) {		// Temporarily disabled
-		dc.FillSolidRect(m_MenuRect, 0);
-		dc.Draw3dRect(m_MenuRect, 0x808080, 0xFFFFFF);
-		dc.SetTextColor(0xFFFFFF);
-		dc.SetBkColor(0);
-//		dc.TextOut(m_MenuRect.top + 2, m_MenuRect.left + 2, "Relative");
-
-		static const char* MODES[] = {"Absolute", "Relative", "Fixed"};
-		dc.TextOut(280 + 2, rect.bottom - 19, MODES[m_pSequence->GetSetting()]);
-	}
-	else {
-		dc.FillSolidRect(m_MenuRect, 0xFFFFFF);
-	}
-#endif
 }
 
 BOOL CSequenceEditor::PreTranslateMessage(MSG* pMsg)
@@ -173,6 +154,15 @@ void CSequenceEditor::ChangedSetting()
 {
 	// Called when the setting selector has changed
 	SelectSequence(m_pSequence, m_iSelectedSetting, m_iInstrumentType);
+
+	switch (m_iSelectedSetting) {
+		case SEQ_ARPEGGIO:
+			dynamic_cast<CArpeggioGraphEditor*>(m_pGraphEditor)->ChangeSetting();
+			break;
+	}
+
+	m_pSetting->RedrawWindow();
+	RedrawWindow();
 }
 
 void CSequenceEditor::SetMaxValues(int MaxVol, int MaxDuty)
@@ -198,6 +188,10 @@ void CSequenceEditor::SequenceChangedMessage(bool Changed)
 
 	dynamic_cast<CSequenceInstrumentEditPanel*>(m_pParent)->SetSequenceString(Text, Changed);
 	//((CSequenceInstrumentEditPanel*)m_pParent)->SetSequenceString(Text, Changed);
+
+	// Set flag in document
+	if (Changed)
+		((CFrameWnd*)AfxGetMainWnd())->GetActiveDocument()->SetModifiedFlag();
 }
 
 void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int InstrumentType)
@@ -230,9 +224,9 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 			break;
 			*/
 	}
-/*
+
 	m_pSetting->SelectSequence(pSequence, Type, InstrumentType);
-*/
+
 	CRect GraphRect;
 	GetClientRect(GraphRect);
 	GraphRect.bottom -= 25;
@@ -250,20 +244,6 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 
 	// Update sequence string
 	SequenceChangedMessage(false);
-}
-
-void CSequenceEditor::OnLButtonUp(UINT nFlags, CPoint point)
-{
-#if 0
-	CRect rect;
-	GetWindowRect(rect);
-
-	if (m_iSelectedSetting == SEQ_ARPEGGIO) {
-		if (m_MenuRect.PtInRect(point)) {
-			m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x + rect.left, point.y + rect.top, this);
-		}
-	}
-#endif
 }
 
 BOOL CSequenceEditor::DestroyWindow()

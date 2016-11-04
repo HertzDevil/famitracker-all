@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@
  *
  */
 
+#include <map>
+#include <vector>
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ExportDialog.h"
@@ -38,7 +40,7 @@ const LPTSTR CExportDialog::DEFAULT_EXPORT_NAMES[] = {
 	_T("NES - iNES ROM image"),
 	_T("BIN - Raw music data"),
 	_T("PRG - Clean 32kB ROM image"),
-//	_T("ASM - Assembly source"),
+	_T("ASM - Assembly source"),
 };
 
 const exportFunc_t CExportDialog::DEFAULT_EXPORT_FUNCS[] = {
@@ -46,18 +48,11 @@ const exportFunc_t CExportDialog::DEFAULT_EXPORT_FUNCS[] = {
 	&CExportDialog::CreateNES,
 	&CExportDialog::CreateBIN,
 	&CExportDialog::CreatePRG,
-//	&CExportDialog::CreateASM,
+	&CExportDialog::CreateASM,
 };
 
-/*
-#ifdef _DEBUG
 const int CExportDialog::DEFAULT_EXPORTERS = 5;
-#else
-*/
-const int CExportDialog::DEFAULT_EXPORTERS = 4;
-/*
-#endif
-*/
+
 // Remember last option when dialog is closed
 int CExportDialog::m_iExportOption = 0;
 
@@ -108,10 +103,16 @@ BOOL CExportDialog::OnInitDialog()
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)(pFrameWnd)->GetActiveDocument();
 
 	// Check PAL button if it's a PAL song
-	if (pDoc->GetMachine() == PAL)
+	if (pDoc->GetMachine() == PAL) {
+		CheckDlgButton(IDC_NTSC, 0);
 		CheckDlgButton(IDC_PAL, 1);
-	else
+		CheckDlgButton(IDC_DUAL, 0);
+	}
+	else {
+		CheckDlgButton(IDC_NTSC, 1);
 		CheckDlgButton(IDC_PAL, 0);
+		CheckDlgButton(IDC_DUAL, 0);
+	}
 
 	SetDlgItemText(IDC_NAME, pDoc->GetSongName());
 	SetDlgItemText(IDC_ARTIST, pDoc->GetSongArtist());
@@ -166,14 +167,22 @@ void CExportDialog::CreateNSF()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
 	CString	DefFileName = pDoc->GetFileTitle();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 	CString Name, Artist, Copyright;
 	CString filter = LoadDefaultFilter(NSF_FILTER[0], NSF_FILTER[1]);
+	int MachineType = 0;
 
 	// Collect header info
 	GetDlgItemText(IDC_NAME, Name);
 	GetDlgItemText(IDC_ARTIST, Artist);
 	GetDlgItemText(IDC_COPYRIGHT, Copyright);
+
+	if (IsDlgButtonChecked(IDC_NTSC) != 0)
+		MachineType = 0;
+	else if (IsDlgButtonChecked(IDC_PAL) != 0)
+		MachineType = 1;
+	else if (IsDlgButtonChecked(IDC_DUAL) != 0)
+		MachineType = 2;
 
 	pDoc->SetSongInfo(T2A(Name.GetBuffer()), T2A(Artist.GetBuffer()), T2A(Copyright.GetBuffer()));
 
@@ -187,7 +196,7 @@ void CExportDialog::CreateNSF()
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	Compiler.ExportNSF(FileDialog.GetPathName(), (CEdit*)GetDlgItem(IDC_OUTPUT), (IsDlgButtonChecked(IDC_PAL) != 0));
+	Compiler.ExportNSF(FileDialog.GetPathName(), MachineType);
 
 	theApp.GetSettings()->SetPath(FileDialog.GetPathName(), PATH_NSF);
 }
@@ -196,7 +205,7 @@ void CExportDialog::CreateNES()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
 	CString	DefFileName = pDoc->GetFileTitle();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 	CString filter = LoadDefaultFilter(NES_FILTER[0], NES_FILTER[1]);
 
 	CFileDialog FileDialog(FALSE, NES_FILTER[1], DefFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, filter);
@@ -209,7 +218,7 @@ void CExportDialog::CreateNES()
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	Compiler.ExportNES(FileDialog.GetPathName(), (CEdit*)GetDlgItem(IDC_OUTPUT), (IsDlgButtonChecked(IDC_PAL) != 0));
+	Compiler.ExportNES(FileDialog.GetPathName(), (IsDlgButtonChecked(IDC_PAL) != 0));
 
 	theApp.GetSettings()->SetPath(FileDialog.GetPathName(), PATH_NSF);
 }
@@ -217,7 +226,7 @@ void CExportDialog::CreateNES()
 void CExportDialog::CreateBIN()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 	CString MusicFilter = LoadDefaultFilter(RAW_FILTER[0], RAW_FILTER[1]);
 	CString DPCMFilter = LoadDefaultFilter(DPCMS_FILTER[0], DPCMS_FILTER[1]);
 
@@ -237,7 +246,7 @@ void CExportDialog::CreateBIN()
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	Compiler.ExportBIN(FileDialogMusic.GetPathName(), FileDialogSamples.GetPathName(), (CEdit*)GetDlgItem(IDC_OUTPUT));
+	Compiler.ExportBIN(FileDialogMusic.GetPathName(), FileDialogSamples.GetPathName());
 
 	theApp.GetSettings()->SetPath(FileDialogMusic.GetPathName(), PATH_NSF);
 }
@@ -245,7 +254,7 @@ void CExportDialog::CreateBIN()
 void CExportDialog::CreatePRG()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 	CString Filter = LoadDefaultFilter(PRG_FILTER[0], PRG_FILTER[1]);
 
 	CFileDialog FileDialog(FALSE, PRG_FILTER[1], _T("music.prg"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, Filter);
@@ -258,7 +267,7 @@ void CExportDialog::CreatePRG()
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	Compiler.ExportPRG(FileDialog.GetPathName(), (CEdit*)GetDlgItem(IDC_OUTPUT), (IsDlgButtonChecked(IDC_PAL) != 0));
+	Compiler.ExportPRG(FileDialog.GetPathName(), (IsDlgButtonChecked(IDC_PAL) != 0));
 
 	theApp.GetSettings()->SetPath(FileDialog.GetPathName(), PATH_NSF);
 }
@@ -267,7 +276,7 @@ void CExportDialog::CreateASM()
 {
 	// Currently not included
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 
 	CFileDialog FileDialogMusic(FALSE, _T("asm"), _T("music.asm"), OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Song data in text format (*.asm)|*.asm|All files|*.*||"));
 
@@ -279,7 +288,7 @@ void CExportDialog::CreateASM()
 	// Display wait cursor
 	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	Compiler.ExportASM(FileDialogMusic.GetPathName(), (CEdit*)GetDlgItem(IDC_OUTPUT));
+	Compiler.ExportASM(FileDialogMusic.GetPathName());
 
 	theApp.GetSettings()->SetPath(FileDialogMusic.GetPathName(), PATH_NSF);
 }
@@ -316,9 +325,9 @@ void CExportDialog::OnBnClickedPlay()
 	char *file = "d:\\test.nsf";
 
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)((CFrameWnd*) GetParent())->GetActiveDocument();
-	CCompiler Compiler(pDoc);
+	CCompiler Compiler(pDoc, (CEdit*)GetDlgItem(IDC_OUTPUT));
 
-	Compiler.ExportNSF(file, (CEdit*)GetDlgItem(IDC_OUTPUT), (IsDlgButtonChecked(IDC_PAL) != 0));
+	Compiler.ExportNSF(file, (IsDlgButtonChecked(IDC_PAL) != 0));
 
 	// Play exported file (available in debug)
 	ShellExecute(NULL, _T("open"), file, NULL, NULL, SW_SHOWNORMAL);

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -108,6 +108,7 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 					case EF_SLIDE_DOWN:
 						PostEffect = EffCmd;
 						PostEffectParam = EffParam;
+						//SetupSlide(EffCmd, EffParam);
 						break;
 					case EF_DUTY_CYCLE:
 						Patch = EffParam;
@@ -189,10 +190,8 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 	if (Patch != -1)
 		m_iPatch = Patch;
 */
-	if (pNoteData->Note != NONE && (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP))
-		m_iEffect = EF_NONE;
 
-	if (PostEffect) {
+	if (PostEffect && (PostEffect == EF_SLIDE_UP || PostEffect == EF_SLIDE_DOWN)) {
 
 		#define GET_SLIDE_SPEED(x) (((x & 0xF0) >> 3) + 1)
 
@@ -215,6 +214,8 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 			m_iOctave = OldOctave;
 		}
 	}
+	else if (pNoteData->Note != NONE && (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP))
+		m_iEffect = EF_NONE;
 }
 
 void CChannelHandlerVRC7::ProcessChannel()
@@ -275,7 +276,7 @@ void CVRC7Channel::RefreshChannel()
 		case CMD_NOTE_TRIGGER:
 			RegWrite(0x20 + m_iChannel, 0);
 			m_iCommand = CMD_NOTE_ON;
-			Cmd = OPL_NOTE_ON;
+			Cmd = OPL_NOTE_ON | OPL_SUSTAIN_ON;
 			break;
 		case CMD_NOTE_ON:
 			Cmd = m_bHold ? OPL_NOTE_ON : OPL_SUSTAIN_ON;
@@ -290,12 +291,13 @@ void CVRC7Channel::RefreshChannel()
 	
 	// Write frequency
 	RegWrite(0x10 + m_iChannel, Fnum & 0xFF);
-	RegWrite(0x20 + m_iChannel, ((Fnum >> 8) & 1) | (Bnum << 1) | Cmd);
 	
 	if (m_iCommand != CMD_NOTE_HALT) {
 		// Select volume & patch
 		RegWrite(0x30 + m_iChannel, (Patch << 4) | Volume);
 	}
+
+	RegWrite(0x20 + m_iChannel, ((Fnum >> 8) & 1) | (Bnum << 1) | Cmd);
 }
 
 void CVRC7Channel::ClearRegisters()

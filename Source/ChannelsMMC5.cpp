@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -50,9 +50,8 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 
 	LastInstrument = m_iInstrument;
 
-	if (Note == HALT) {
+	if (Note == HALT || Note == RELEASE) {
 		Instrument	= MAX_INSTRUMENTS;
-		Volume		= 0x10;
 	}
 
 	if (Note == RELEASE)
@@ -155,11 +154,10 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 		ReleaseNote();
 	}
 
-	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
-		m_iEffect = EF_NONE;
-
-	if (PostEffect)
+	if (PostEffect && (m_iEffect == EF_SLIDE_UP || m_iEffect == EF_SLIDE_DOWN))
 		SetupSlide(PostEffect, PostEffectParam);
+	else if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
+		m_iEffect = EF_NONE;
 }
 
 void CChannelHandlerMMC5::ProcessChannel()
@@ -189,7 +187,7 @@ void CMMC5Square1Chan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	int Volume = CalculateVolume(15);
 	char DutyCycle = (m_iDutyPeriod & 0x03);
 
@@ -224,7 +222,7 @@ void CMMC5Square2Chan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	int Period = CalculatePeriod();
+	int Period = CalculatePeriod(false);
 	int Volume = CalculateVolume(15);
 	char DutyCycle = (m_iDutyPeriod & 0x03);
 

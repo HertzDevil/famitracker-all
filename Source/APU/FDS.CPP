@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2010  Jonathan Liss
+** Copyright (C) 2005-2012  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 ** must bear this legend.
 */
 
-// This code comes from nintendulator
-
 #include "../stdafx.h"
 #include <cmath>
 #include <memory>
@@ -27,7 +25,7 @@
 #include "fds.h"
 #include "FDSSound.h"
 
-// FDS interface 
+// FDS interface, actual FDS emulation is in FDSSound.cpp
 
 CFDS::CFDS(CMixer *pMixer) : CExChannel(pMixer, SNDCHIP_FDS, CHANID_FDS)
 {
