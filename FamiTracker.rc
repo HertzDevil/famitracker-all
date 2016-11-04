@@ -317,7 +317,7 @@ BEGIN
             VALUE "InternalName", "FamiTracker.exe"
             VALUE "LegalCopyright", " (c) jsr 2005-2012 All rights reserved."
             VALUE "OriginalFilename", "FamiTracker.exe"
-            VALUE "ProductName", "FamiTracker"
+            VALUE "ProductName", "FamiTracker Sweep Macro Hack Edition"
             VALUE "ProductVersion", "0.4.2"
         END
     END
@@ -363,7 +363,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDR_MAINFRAME           "FamiTracker\n\nFamiTracker\nFamiTracker files (*.ftm)\n.ftm\nFamiTracker.Module\nFamiTracker.Module"
+    IDR_MAINFRAME           "FamiTracker Sweep Macro Hack Edition\n\nFamiTracker\nFamiTracker files (*.ftm)\n.ftm\nFamiTracker.Module\nFamiTracker.Module"
     IDS_FRAME_DROP_MOVE     "Drop selection to move frames"
     IDS_CLIPBOARD_ERROR     "Could not register clipboard format"
     IDS_FILE_OPEN_ERROR     "Could not open the file!"
@@ -382,7 +382,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    AFX_IDS_APP_TITLE       "FamiTracker"
+    AFX_IDS_APP_TITLE       "FamiTracker Sweep Macro Hack Edition"
     AFX_IDS_IDLEMESSAGE     "For Help, press F1"
     AFX_IDS_HELPMODEMESSAGE "Select an object on which to get Help"
 END

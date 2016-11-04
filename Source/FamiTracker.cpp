@@ -203,6 +203,7 @@ BOOL CFamiTrackerApp::InitInstance()
 
 	// Skip this if in wip/beta mode
 #if /*!defined(WIP) &&*/ !defined(_DEBUG)
+#if 0
 	// Add shell options
 	RegisterShellFileTypes(TRUE);
 	// Add an option to play files
@@ -214,6 +215,7 @@ BOOL CFamiTrackerApp::InitInstance()
 		strTemp.Format(_T("%s\\shell\\play\\%s"), (LPCTSTR)strFileTypeId, _T("command"));
 		AfxRegSetValue(HKEY_CLASSES_ROOT, strTemp, REG_SZ, strOpenCommandLine, lstrlen(strOpenCommandLine) * sizeof(TCHAR));
 	}
+#endif
 #endif
 
 	// Handle command line export

@@ -155,6 +155,8 @@ protected:
 	int					m_iPeriod, m_iLastPeriod;			// Channel period
 	char				m_iVolume;							// Volume
 	char				m_iDutyPeriod;
+	bool				m_bSweepSend; // SWEEP HACK
+	unsigned int		m_iSweepSend;
 
 	int					m_iPeriodPart;
 

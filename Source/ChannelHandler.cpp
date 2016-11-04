@@ -50,6 +50,8 @@ CChannelHandler::CChannelHandler() :
 	m_bGate(false)
 { 
 	m_iSeqVolume = 0;
+	m_bSweepSend = false; // SWEEP HACK
+	m_iSweepSend = 0; // SWEEP HACK
 }
 
 CChannelHandler::~CChannelHandler()
@@ -717,8 +719,11 @@ void CChannelHandler::RunSequence(int Index, CSequence *pSequence)
 				break;
 			// Hi-pitch
 			case SEQ_HIPITCH:
-				m_iPeriod += Value << 4;
-				m_iPeriod = LimitPeriod(m_iPeriod);
+				// SWEEP HACK
+				//m_iPeriod += Value << 4;
+				//m_iPeriod = LimitPeriod(m_iPeriod);
+				m_bSweepSend = true;
+				m_iSweepSend = Value;
 				break;
 			// Duty cycling
 			case SEQ_DUTYCYCLE:

@@ -32,7 +32,7 @@ LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[CInstrument2A03::SEQUENCE_COUNT] = 
 	_T("Volume"), 
 	_T("Arpeggio"), 
 	_T("Pitch"), 
-	_T("Hi-pitch"), 
+	_T("Sweep"), 
 	_T("Duty / Noise")
 };
 

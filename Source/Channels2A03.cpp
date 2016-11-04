@@ -156,7 +156,7 @@ void CChannelHandler2A03::HandleNote(int Note, int Octave)
 	}
 	else if (m_bSweeping) {
 		m_cSweep = m_iSweep;
-		m_iLastPeriod = 0xFFFF;
+		//m_iLastPeriod = 0xFFFF; // HACK removed for sweep macros
 	}
 }
 
@@ -175,6 +175,26 @@ void CChannelHandler2A03::ProcessChannel()
 	// Sequences
 	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i)
 		CChannelHandler::RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], CInstrument2A03::SEQUENCE_TYPES[i]));
+
+	// sweep HACK
+	if (m_bSweepSend)
+	{
+		if (m_iSweepSend == 0) // reset phase like H00
+		{
+			m_iLastPeriod = 0xFFFF;
+		}
+		else if ((m_iSweepSend & 0x07) == 0) // sweep off if no slide param
+		{
+			m_bSweeping = false;
+		}
+		else
+		{
+			m_iSweep = 0x80 | m_iSweepSend;
+			m_cSweep = m_iSweep;
+			m_bSweeping = true;
+		}
+		m_bSweepSend = false;
+	}
 
 	if (m_bGate && m_iSeqEnabled[SEQ_VOLUME] != 0)
 		m_bGate = !(m_iSeqEnabled[SEQ_VOLUME] == 0);
@@ -209,9 +229,12 @@ void CSquare1Chan::RefreshChannel()
 			m_cSweep &= 0x7F;
 			WriteRegister(0x4017, 0x80);	// Clear sweep unit
 			WriteRegister(0x4017, 0x00);
-			WriteRegister(0x4002, HiFreq);
-			WriteRegister(0x4003, LoFreq);
-			m_iLastPeriod = 0xFFFF;
+			if (m_iLastPeriod != Period)
+			{
+				WriteRegister(0x4002, HiFreq);
+				WriteRegister(0x4003, LoFreq);
+			}
+			//m_iLastPeriod = 0xFFFF; // HACK removing for sweep macro
 		}
 	}
 	else {
@@ -256,8 +279,6 @@ void CSquare2Chan::RefreshChannel()
 	unsigned char LoFreq		= (Period >> 8);
 	unsigned char LastLoFreq	= (m_iLastPeriod >> 8);
 
-	m_iLastPeriod = Period;
-
 	WriteRegister(0x4004, (DutyCycle << 6) | 0x30 | Volume);
 
 	if (m_cSweep) {
@@ -266,9 +287,12 @@ void CSquare2Chan::RefreshChannel()
 			m_cSweep &= 0x7F;
 			WriteRegister(0x4017, 0x80);		// Clear sweep unit
 			WriteRegister(0x4017, 0x00);
-			WriteRegister(0x4006, HiFreq);
-			WriteRegister(0x4007, LoFreq);
-			m_iLastPeriod = 0xFFFF;
+			if (m_iLastPeriod != Period)
+			{
+				WriteRegister(0x4006, HiFreq);
+				WriteRegister(0x4007, LoFreq);
+			}
+			//m_iLastPeriod = 0xFFFF; // HACK removing for sweep macros
 		}
 	}
 	else {
@@ -280,6 +304,8 @@ void CSquare2Chan::RefreshChannel()
 		if (LoFreq != LastLoFreq)
 			WriteRegister(0x4007, LoFreq);
 	}
+
+	m_iLastPeriod = Period;
 }
 
 void CSquare2Chan::ClearRegisters()
