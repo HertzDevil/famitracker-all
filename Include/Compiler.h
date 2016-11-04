@@ -46,6 +46,7 @@ private:
 struct stTuneHeader {
 	unsigned short	SongListOffset;
 	unsigned short	InstrumentListOffset;
+	unsigned char	Flags;
 	unsigned short	DPCMInstListOffset;
 	unsigned short	DPCMSamplesOffset;
 	unsigned short	DividerNTSC;
@@ -86,7 +87,6 @@ private:
 
 	// Data bank functions
 	void AllocateNewBank(unsigned int iAddress);
-	void SetMemoryPosition(unsigned int iAddress);
 	void SetMemoryOffset(unsigned int iOffset);
 	void SetInitialPosition(unsigned int iAddress);
 	void SkipBytes(unsigned int iBytes);

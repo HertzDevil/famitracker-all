@@ -50,17 +50,20 @@ enum CHAN_IDS {
 
 	CHANID_FDS,
 
-	CHANID_VRC7,
+	CHANID_VRC7_CH1,
+	CHANID_VRC7_CH2,
+	CHANID_VRC7_CH3,
+	CHANID_VRC7_CH4,
+	CHANID_VRC7_CH5,
+	CHANID_VRC7_CH6,
+
+	CHANID_5B_CH1,
+	CHANID_5B_CH2,
+	CHANID_5B_CH3,
 
 	CHANNELS
 };
-
-struct stChanVal {
-	int32 Left, Right;
-	double VolLeft, VolRight;
-	double Stereo;
-};
-
+/*
 struct stMixerSettings {
 	int m_iMaster;
 	int m_iInternal;
@@ -73,7 +76,7 @@ struct stMixerSettings {
 	int m_iChannels[CHANNELS];
 	int m_iChannelPan[CHANNELS];
 };
-
+*/
 class CMixer
 {
 	public:
@@ -83,7 +86,6 @@ class CMixer
 		bool	Init();
 		void	Shutdown();
 		void	ExternalSound(int Chip);
-//		void	SetChannelVolume(int ChanID, double VolLeft, double VolRight);
 		void	AddValue(int ChanID, int Chip, int Value, int FrameCycles);
 		void	UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVol);
 
@@ -97,8 +99,6 @@ class CMixer
 		uint32	GetMixSampleCount(int t);
 
 		void	AddSample(int ChanID, int Value);
-
-//		void	FlushBuffer(ISoundInterface *pSoundInterface, uint32 Size, bool Stereo);
 
 		int		ReadBuffer(int Size, void *Buffer, bool Stereo);
 
@@ -114,20 +114,19 @@ class CMixer
 		void MixVRC6(int Value, int Time);
 		void MixMMC5(int Value, int Time);
 
-//		void SetVolumeLevels();
-
 		// Blip buffer synths
 		Blip_Synth<blip_good_quality, -500>		Synth2A03;
+		Blip_Synth<blip_good_quality, /*-170*/ -500>		SynthVRC6;
+		Blip_Synth<blip_good_quality, -130>		SynthMMC5;	
+
 		Blip_Synth<blip_good_quality, -1600>	SynthN106;
 		Blip_Synth<blip_good_quality, -3500>	SynthFDS;
-		Blip_Synth<blip_good_quality, -30>		SynthMMC5;
-		Blip_Synth<blip_good_quality, -200>		SynthVRC6;
 
 		Blip_Buffer		BlipBuffer;
 
 		int32			*m_pSampleBuffer;
 
-		/*stChanVal*/int32		Channels[CHANNELS];
+		int32			Channels[CHANNELS];
 		uint8			ExternalChip;
 		bool			StereoEnabled;
 
@@ -136,8 +135,5 @@ class CMixer
 		int32			ChannelLevels[CHANNELS];
 		uint32			ChanLevelFallOff[CHANNELS];
 };
-
-//void GetMixerSettings(stMixerSettings *pSettings);
-//void UpdateMixerSettings(stMixerSettings *pSettings);
 
 #endif /* _MIXER_H_ */

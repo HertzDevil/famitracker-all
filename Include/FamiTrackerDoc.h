@@ -55,7 +55,8 @@ const int MAX_EFFECT_COLUMNS		= 4;		// Number of effect columns allowed
 const int MAX_TEMPO					= 255;		// Max tempo
 const int MIN_TEMPO					= 1;		// Min tempo
 
-const int MAX_CHANNELS				= 5 + 8;	// Number of avaliable channels (max)
+//const int MAX_CHANNELS				= 5 + 8;	// Number of avaliable channels (max)
+const int MAX_CHANNELS				= 5 + 3 + 2 + 6 + 1 + 8 + 3;	// Number of avaliable channels (max)
 
 const int CHANNELS_DEFAULT			= 5;
 const int CHANNELS_VRC6				= 3;
@@ -79,15 +80,34 @@ enum {				// Supported expansion chips
 	CHIP_NONE = SNDCHIP_NONE,
 	CHIP_VRC6 = SNDCHIP_VRC6,
 	CHIP_VRC7 = SNDCHIP_VRC7,
+	CHIP_MMC5 = SNDCHIP_MMC5,
+	CHIP_5B = SNDCHIP_5B
 };
 
+enum {
+	CHANGED_TRACK = 1,		// Changed track
+	CHANGED_TRACKCOUNT,		// Update track count
+	CHANGED_FRAMES,			// Redraw frame window
+	CHANGED_CURSOR_V,		// Vertical cursor change
+	CHANGED_CURSOR_H,		// Horizontal cursor change
+	CHANGED_SELECTION,		// Selection change
+	CHANGED_HEADER,			// Redraw header
+	//CHANGED_ENTIRE,			// Redraw entire pattern area
+	CHANGED_ERASE,			// Also make sure background is erased
+	CHANGED_CLEAR_SEL,		// Clear selection
+	UPDATE_ENTIRE,
+	UPDATE_FAST,
+	RELOAD_COLORS,			// Color scheme changed
+};
+
+/*
 enum { 
 	UPDATE_SONG_TRACKS = 1,
 	UPDATE_SONG_TRACK,
 	UPDATE_NEW_DOC,
 	UPDATE_CLEAR
 };
-
+*/
 // Shared with VRC6
 enum eModifiers {
 	MOD_VOLUME,
@@ -175,7 +195,9 @@ public:
 private:
 	unsigned int	m_iItemCount;
 	unsigned int	m_iLoopPoint;
+	unsigned int	m_iItemCountRelease;
 	signed	 char	m_cValues[MAX_SEQUENCE_ITEMS];
+	signed	 char	m_cReleaseValues[MAX_SEQUENCE_ITEMS];
 };
 
 struct stSequence {
@@ -277,6 +299,7 @@ public:
 	// Track functions
 //	void			SetTracks(unsigned int Tracks);
 	void			SelectTrack(unsigned int Track);
+	void			SelectTrackFast(unsigned int Track);
 	void			AllocateSong(unsigned int Song);
 	unsigned int	GetTrackCount();
 	unsigned int	GetSelectedTrack();
@@ -308,6 +331,8 @@ public:
 	void			SetPatternAtFrame(unsigned int Frame, unsigned int Channel, unsigned int Pattern);
 
 	int				GetFirstFreePattern(int Channel);
+
+	int				GetChannelType(int Channel);
 
 	// General
 	bool			IsFileLoaded() const { return m_bFileLoaded; };
@@ -412,6 +437,8 @@ private:
 
 	unsigned char	m_cExpansionChip;
 	unsigned int	m_iChannelsAvailable;						// Number of channels used
+
+	int				m_iChannelTypes[MAX_CHANNELS];
 
 	// NSF info
 	char			m_strName[32];								// Song name

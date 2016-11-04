@@ -7,13 +7,14 @@
 
 const char *CHIP_NAMES[] = {"Internal only (2A03/2A07)",
 							"Konami VRC6",
-							/*"Konami VRC7",*/
-							/*"Nintendo MMC5",*/
-							/*"Sunsoft FME-07",*/
-							/*"Namco N106",*/
-							/*"Nintendo FDS sound",*/};
+//							"Konami VRC7",
+//							"Nintendo FDS sound",
+							"Nintendo MMC5",
+//							"Namco N106",
+//							"Sunsoft 5B",
+};
 
-const int CHIP_COUNT = 2;
+const int CHIP_COUNT = sizeof(*CHIP_NAMES) - 1;// 7;
 
 const char TRACK_FORMAT[] = "#%02i %s";
 
@@ -43,6 +44,7 @@ BEGIN_MESSAGE_MAP(CModulePropertiesDlg, CDialog)
 	ON_BN_CLICKED(IDC_SONG_DOWN, &CModulePropertiesDlg::OnBnClickedSongDown)
 	ON_EN_CHANGE(IDC_SONGNAME, &CModulePropertiesDlg::OnEnChangeSongname)
 	ON_NOTIFY(NM_CLICK, IDC_SONGLIST, &CModulePropertiesDlg::OnClickSongList)
+	ON_BN_CLICKED(IDC_SONG_IMPORT, &CModulePropertiesDlg::OnBnClickedSongImport)
 END_MESSAGE_MAP()
 
 
@@ -80,8 +82,16 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	for (int i = 0; i < CHIP_COUNT; i++)
 		ChipBox->AddString(CHIP_NAMES[i]);
 
-	ChipBox->SetCurSel(ExpChip);
-
+	switch (ExpChip) {
+		case SNDCHIP_NONE: ChipBox->SetCurSel(0); break;
+		case SNDCHIP_VRC6: ChipBox->SetCurSel(1); break;
+//		case SNDCHIP_VRC7: ChipBox->SetCurSel(2); break;
+//		case SNDCHIP_FDS: ChipBox->SetCurSel(3); break;
+		case SNDCHIP_MMC5: ChipBox->SetCurSel(2); break;
+//		case SNDCHIP_N106: ChipBox->SetCurSel(5); break;
+//		case SNDCHIP_5B: ChipBox->SetCurSel(6); break;
+	}
+	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -92,10 +102,27 @@ void CModulePropertiesDlg::OnBnClickedOk()
 //	CSliderCtrl *SubTuneSlider = (CSliderCtrl*)GetDlgItem(IDC_SUBTUNE);
 	CComboBox	*ExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
 
+	unsigned int iExpansionChip;// = ExpansionChipBox->GetCurSel();
+
+//	unsigned int iExpansionChip = ExpansionChipBox->GetCurSel();
+//	if (iExpansionChip > 0)
+//		iExpansionChip = 1 << (iExpansionChip - 1);
+
 //	unsigned int iNewCount = SubTuneSlider->GetPos();
-	unsigned int iExpansionChip = ExpansionChipBox->GetCurSel();
+	switch (ExpansionChipBox->GetCurSel()) {
+		case 0:
+			iExpansionChip = SNDCHIP_NONE;
+			break;
+		case 1:
+			iExpansionChip = SNDCHIP_VRC6;
+			break;
+		case 2:
+			iExpansionChip = SNDCHIP_MMC5;
+			break;
+	}
 
 //	pDoc->SetTracks(iNewCount);
+
 	pDoc->SelectExpansionChip(iExpansionChip);
 
 	OnOK();
@@ -238,4 +265,10 @@ void CModulePropertiesDlg::SelectSong(int Song)
 	else {
 		GetDlgItem(IDC_SONG_ADD)->EnableWindow(TRUE);
 	}
+}
+
+void CModulePropertiesDlg::OnBnClickedSongImport()
+{
+//	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+//	pDoc->ImportFile();
 }

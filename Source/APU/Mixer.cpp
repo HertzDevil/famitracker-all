@@ -103,8 +103,8 @@ void CMixer::UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVo
 	SynthN106.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
 	Synth2A03.volume(1.0f * fVol);
-	SynthVRC6.volume(1.3f * fVol);
-	SynthMMC5.volume(1.0f);
+	SynthVRC6.volume(3.98333f * fVol);
+	SynthMMC5.volume(1.0f * fVol);
 	SynthFDS.volume(1.0f);
 	SynthN106.volume(1.0f);
 }
@@ -123,7 +123,7 @@ bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32
 {
 	m_iSampleRate = SampleRate;
 
-	BlipBuffer.sample_rate(SampleRate, BufferLength);
+	BlipBuffer.sample_rate(SampleRate, (BufferLength * 1000) / SampleRate);
 	BlipBuffer.clock_rate(ClockRate);
 
 //	SetVolumeLevels();
@@ -192,7 +192,6 @@ void CMixer::MixInternal(int Value, int Time)
 	SumL = ((Channels[CHANID_SQUARE1].Left + Channels[CHANID_SQUARE2].Left) * 0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Left + 0.00494 * Channels[CHANID_NOISE].Left + 0.00335 * Channels[CHANID_DPCM].Left)) * InternalVol;
 	SumR = ((Channels[CHANID_SQUARE1].Right + Channels[CHANID_SQUARE2].Right) *  0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Right + 0.00494 * Channels[CHANID_NOISE].Right + 0.00335 * Channels[CHANID_DPCM].Right)) * InternalVol;
 #else
-	// I only got accurate data for mixing the NES internal channels
 	Sum = CalcPin1(Channels[CHANID_SQUARE1], Channels[CHANID_SQUARE2]) + 
 		  CalcPin2(Channels[CHANID_TRIANGLE], Channels[CHANID_NOISE], Channels[CHANID_DPCM]);
 #endif
@@ -221,26 +220,8 @@ void CMixer::MixVRC6(int Value, int Time)
 
 void CMixer::MixMMC5(int Value, int Time)
 {
-//	static double LastSumL, LastSumR;
-//	double DeltaL, DeltaR;
-//	double SumL, SumR;
-
-//	SumL = Channels[CHANID_MMC5_SQUARE1].Left + Channels[CHANID_MMC5_SQUARE2].Left;
-//	SumR = Channels[CHANID_MMC5_SQUARE1].Right + Channels[CHANID_MMC5_SQUARE2].Right;
-/*
-	SynthMMC5.offset(Time, Value, &Buffers[0]);
-	SynthMMC5.offset(Time, Value, &Buffers[1]);
-*/
-//	DeltaL = SumL - LastSumL;
-//	DeltaR = SumR - LastSumR;
-
-//	if (DeltaL + DeltaR) {
-//		SynthMMC5.offset(Time, (int)DeltaL, &BlipBuffer);
-		//SynthMMC5.offset(Time, (int)DeltaR, &Buffers[1]);
-//	}
-
-//	LastSumL = SumL;
-//	LastSumR = SumR;
+	if (Value)
+		SynthMMC5.offset(Time, Value, &BlipBuffer);
 }
 
 void CMixer::AddValue(int ChanID, int Chip, int Value, int FrameCycles)
@@ -281,7 +262,7 @@ void CMixer::AddValue(int ChanID, int Chip, int Value, int FrameCycles)
 		case SNDCHIP_VRC6:
 			MixVRC6(Value, FrameCycles);
 			break;
-		case SNDCHIP_FME07:
+		case SNDCHIP_5B:
 			break;
 	}
 }

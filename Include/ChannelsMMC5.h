@@ -20,16 +20,40 @@
 
 #pragma once
 
-class CFontDrawer
-{
+//
+// Derived channels, MMC5
+//
+
+class CChannelHandlerMMC5 : public CChannelHandler {
 public:
-	CFontDrawer();
-	void SetupFontPlane(CDC *pDC, CFont *pFont);
-	void DrawText(CDC *pDC, int x, int y, char *pStr);
-	void DrawChar(CDC *pDC, int x, int y, int c);
+	void PlayNote(stChanNote *NoteData, int EffColumns);
+	void ProcessChannel();
+protected:
+	void RunSequence(int Index, CSequence *pSequence);
 
-private:
-	CDC		m_hFontDC;
-	CBitmap m_hFontBmp;
+	unsigned char m_cSweep;
+	unsigned char m_cDutyCycle, m_iDefaultDuty;
 
+	int ModEnable[MOD_COUNT];
+	int	ModIndex[MOD_COUNT];
+	int	ModDelay[MOD_COUNT];
+	int	ModPointer[MOD_COUNT];
+};
+
+// Square 1
+class CMMC5Square1Chan : public CChannelHandlerMMC5 {
+public:
+	CMMC5Square1Chan() { m_iDefaultDuty = 0; m_iChannelID = 5; m_bEnabled = false; };
+	void RefreshChannel();
+protected:
+	void ClearRegisters();
+};
+
+// Square 2
+class CMMC5Square2Chan : public CChannelHandlerMMC5 {
+public:
+	CMMC5Square2Chan() { m_iDefaultDuty = 0; m_iChannelID = 6; m_bEnabled = false; };
+	void RefreshChannel();
+protected:
+	void ClearRegisters();
 };

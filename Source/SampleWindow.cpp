@@ -84,6 +84,8 @@ void CSampleWindow::NextState()
 {
 	m_iCurrentState = (m_iCurrentState + 1) % STATE_COUNT;
 	Invalidate();
+
+	theApp.m_pSettings->SampleWinState = m_iCurrentState;
 }
 
 // CSampleWindow message handlers
@@ -106,7 +108,8 @@ BOOL CSampleWindow::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lps
 	m_pStates[2] = new CSWSpectrum();
 	m_pStates[3] = new CSWLogo();
 	
-	m_iCurrentState = 0;
+//	m_iCurrentState = 0;
+	m_iCurrentState = theApp.m_pSettings->SampleWinState;
 
 	for (int i = 0; i < STATE_COUNT; i++) {
 		m_pStates[i]->Activate();

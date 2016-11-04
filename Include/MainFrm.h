@@ -89,6 +89,8 @@ public:
 	void			UpdateTrackBox();
 	void			ResizeFrameWindow();
 
+	void			UpdateControls();
+
 protected:
 	bool			CreateDialogPanels();
 	bool			CreateToolbars();
@@ -140,12 +142,13 @@ public:
 	void AddInstrument(int Index, const char *Name, int Type);
 	void RemoveInstrument(int Index);
 	void SetIndicatorTime(int Min, int Sec, int MSec);
-	void RefreshPattern();
+	void DrawFrameWindow();
 	void SetSongInfo(char *Name, char *Artist, char *Copyright);
 	void SetupColors(void);
 	void DisplayOctave();
 	void UpdateInstrumentIndex();
 	int GetHighlightRow();
+	int GetSecondHighlightRow();
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle = WS_OVERLAPPEDWINDOW, const RECT& rect = rectDefault, CWnd* pParentWnd = NULL, LPCTSTR lpszMenuName = NULL, DWORD dwExStyle = 0, CCreateContext* pContext = NULL);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result);
@@ -212,9 +215,13 @@ public:
 	afx_msg void OnUpdateTrackerSwitchToInstrument(CCmdUI *pCmdUI);
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 	afx_msg void OnClickedFollow();
+	afx_msg void OnToggleFollow();
 	afx_msg void OnViewControlpanel();
 	afx_msg void OnUpdateViewControlpanel(CCmdUI *pCmdUI);
 	afx_msg void OnClearPatterns();
+	afx_msg void OnDuplicateFrame();
+	afx_msg void OnTrackerDPCM();
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 };
 
 

@@ -75,7 +75,11 @@ const char *FILE_BLOCK_DSAMPLES		= "DPCM SAMPLES";
 const char *FILE_BLOCK_HEADER		= "HEADER";
 
 // VRC6
-const char *FILE_BLOCK_SEQUENCES_VRC6	= "SEQUENCES_VRC6";
+const char *FILE_BLOCK_SEQUENCES_VRC6 = "SEQUENCES_VRC6";
+
+// Instruments
+const char INST_HEADER[] = "FTI";
+const char INST_VERSION[] = "2.0";
 
 struct stInstrumentImport {
 	char	Name[256];
@@ -184,6 +188,9 @@ void CFamiTrackerDoc::DeleteContents()
 	// Make sure player is stopped
 	theApp.StopPlayer();
 
+	// File unloaded
+	m_bFileLoaded = false;
+
 	// Remove/reset allocated memory
 
 	// DPCM sample
@@ -246,9 +253,7 @@ void CFamiTrackerDoc::DeleteContents()
 	m_iEngineSpeed	= 0;
 
 	// Update view
-	UpdateAllViews(NULL, UPDATE_CLEAR);
-
-	m_bFileLoaded = false;
+//	UpdateAllViews(NULL, CHANGED_CLEAR);
 
 	CDocument::DeleteContents();
 }
@@ -410,7 +415,7 @@ void CFamiTrackerDoc::WriteBlock_Header(CDocumentFile *pDocFile)
 	// Write number of tracks
 	pDocFile->WriteBlockChar(m_iTracks);
 
-	// Ver 3
+	// Ver 3, store track names
 	for (i = 0; i <= m_iTracks; i++) {
 		pDocFile->WriteString(m_sTrackNames[i]);
 	}
@@ -1027,10 +1032,12 @@ BOOL CFamiTrackerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		OpenFile.Close();
 
 		// Create a backup of this file, since it's an old version
-		char BackupFile[MAX_PATH];
-		strcpy(BackupFile, lpszPathName);
-		strcat(BackupFile, ".bak");
-		CopyFile(lpszPathName, BackupFile, FALSE);
+		if (theApp.m_pSettings->General.bBackups) {
+			char BackupFile[MAX_PATH];
+			strcpy(BackupFile, lpszPathName);
+			strcat(BackupFile, ".bak");
+			CopyFile(lpszPathName, BackupFile, FALSE);
+		}
 
 		theApp.SetDocumentLoaded(true);
 		UpdateAllViews(NULL);
@@ -1050,6 +1057,7 @@ BOOL CFamiTrackerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 	theApp.SetDocumentLoaded(false);
 	UpdateAllViews(NULL);
+	UpdateAllViews(NULL, CHANGED_CLEAR_SEL);
 
 	return FALSE;
 }
@@ -1181,7 +1189,7 @@ BOOL CFamiTrackerDoc::OpenDocument(LPCTSTR lpszPathName)
 	}
 
 	// Make sure a backup is taken if it's an old version
-	if (m_iFileVersion < FILE_VER) {
+	if (m_iFileVersion < FILE_VER && theApp.m_pSettings->General.bBackups) {
 		CString BakName;
 		BakName.Format("%s.bak", lpszPathName);
 		CopyFile(lpszPathName, BakName.GetBuffer(), FALSE);
@@ -1807,7 +1815,6 @@ void CFamiTrackerDoc::RemoveDSample(unsigned int Index)
 
 void CFamiTrackerDoc::OnCloseDocument()
 {	
-	//theApp.ShutDownSynth();
 	theApp.SetDocumentLoaded(false);
 	CDocument::OnCloseDocument();
 }
@@ -1815,8 +1822,6 @@ void CFamiTrackerDoc::OnCloseDocument()
 // ---------------------------------------------------------------------------------------------------------
 // Document access functions
 // ---------------------------------------------------------------------------------------------------------
-
-// ASSERT is <3
 
 void CFamiTrackerDoc::SetSongInfo(char *Name, char *Artist, char *Copyright)
 {
@@ -1899,6 +1904,7 @@ unsigned int CFamiTrackerDoc::AddInstrument(const char *Name, int Type)
 
 	switch (Type) {
 		case CHIP_NONE:
+		case CHIP_MMC5:
 			m_pInstruments[i] = new CInstrument2A03();
 			break;
 		case CHIP_VRC6:
@@ -1913,11 +1919,9 @@ unsigned int CFamiTrackerDoc::AddInstrument(const char *Name, int Type)
 #endif
 	}
 
-	//strcpy(m_pInstruments[i].SetName() .Name, Name);
-	//m_Instruments[i].SetFree(false);
-
 	switch (Type) {
-		case CHIP_NONE: 
+		case CHIP_NONE:
+		case CHIP_MMC5:
 			for (unsigned int c = 0; c < MOD_COUNT; c++) {
 				((CInstrument2A03*)m_pInstruments[i])->SetModEnable(c, 0);
 				((CInstrument2A03*)m_pInstruments[i])->SetModIndex(c, 0);
@@ -1928,6 +1932,7 @@ unsigned int CFamiTrackerDoc::AddInstrument(const char *Name, int Type)
 	m_pInstruments[i]->SetName((char*)Name);
 
 	SetModifiedFlag();
+	UpdateAllViews(NULL, UPDATE_ENTIRE);
 
 	return i;
 }
@@ -1942,18 +1947,14 @@ void CFamiTrackerDoc::RemoveInstrument(unsigned int Index)
 	delete m_pInstruments[Index];
 	m_pInstruments[Index] = NULL;
 
-	//memset(m_Instruments + Index, 0, sizeof(stInstrument));
-
-	//m_Instruments[Index].SetFree(true);
-
 	SetModifiedFlag();
+	UpdateAllViews(NULL, UPDATE_ENTIRE);
 }
 
 void CFamiTrackerDoc::GetInstrumentName(unsigned int Index, char *Name)
 {
 	ASSERT(Index < MAX_INSTRUMENTS);
 	m_pInstruments[Index]->GetName(Name);
-	//strcpy(Name, m_pInstruments[Index].GetName());
 }
 
 void CFamiTrackerDoc::SetInstrumentName(unsigned int Index, char *Name)
@@ -1964,7 +1965,6 @@ void CFamiTrackerDoc::SetInstrumentName(unsigned int Index, char *Name)
 		return;
 
 	m_pInstruments[Index]->SetName(Name);
-	//strcpy(m_Instruments[Index].Name, Name);
 
 	SetModifiedFlag();
 }
@@ -1998,44 +1998,42 @@ void CFamiTrackerDoc::SetFrameCount(unsigned int Count)
 {
 	ASSERT(Count <= MAX_FRAMES);
 
-	if (m_pSelectedTune->m_iFrameCount != Count)
+	if (m_pSelectedTune->m_iFrameCount != Count) {
+		m_pSelectedTune->m_iFrameCount = Count;
 		SetModifiedFlag();
-
-	m_pSelectedTune->m_iFrameCount = Count;
-
-	UpdateAllViews(NULL);
+		UpdateAllViews(NULL);
+	}
 }
 
 void CFamiTrackerDoc::SetPatternLength(unsigned int Length)
 { 
 	ASSERT(Length <= MAX_PATTERN_LENGTH);
 
-	if (m_pSelectedTune->m_iPatternLength != Length)
+	if (m_pSelectedTune->m_iPatternLength != Length) {
+		m_pSelectedTune->m_iPatternLength = Length;
 		SetModifiedFlag();
-
-	m_pSelectedTune->m_iPatternLength = Length;
-
-	UpdateAllViews(NULL);
+		UpdateAllViews(NULL);
+	}
 }
 
 void CFamiTrackerDoc::SetSongSpeed(unsigned int Speed)
 {
 	ASSERT(Speed <= MAX_TEMPO);
 	
-	if (m_pSelectedTune->m_iSongSpeed != Speed)
+	if (m_pSelectedTune->m_iSongSpeed != Speed) {
+		m_pSelectedTune->m_iSongSpeed = Speed;
 		SetModifiedFlag();
-
-	m_pSelectedTune->m_iSongSpeed = Speed;
+	}
 }
 
 void CFamiTrackerDoc::SetSongTempo(unsigned int Tempo)
 {
 	ASSERT(Tempo <= MAX_TEMPO);
 
-	if (m_pSelectedTune->m_iSongTempo != Tempo)
+	if (m_pSelectedTune->m_iSongTempo != Tempo) {
+		m_pSelectedTune->m_iSongTempo = Tempo;
 		SetModifiedFlag();
-
-	m_pSelectedTune->m_iSongTempo = Tempo;
+	}
 }
 
 unsigned int CFamiTrackerDoc::GetEffColumns(unsigned int Channel) const
@@ -2052,7 +2050,7 @@ void CFamiTrackerDoc::SetEffColumns(unsigned int Channel, unsigned int Columns)
 	m_pSelectedTune->m_iEffectColumns[Channel] = Columns;
 
 	SetModifiedFlag();
-	UpdateAllViews(NULL);
+	UpdateAllViews(NULL, CHANGED_ERASE);	// Erase background to calculate new pattern editor width
 }
 
 void CFamiTrackerDoc::SetEngineSpeed(unsigned int Speed)
@@ -2082,11 +2080,8 @@ void CFamiTrackerDoc::SetPatternAtFrame(unsigned int Frame, unsigned int Channel
 	ASSERT(Frame < MAX_FRAMES);
 	ASSERT(Channel < MAX_CHANNELS);
 	ASSERT(Pattern < MAX_PATTERN);
-
 	m_pSelectedTune->m_iFrameList[Frame][Channel] = Pattern;
-
 	SetModifiedFlag();
-	UpdateAllViews(NULL);
 }
 
 unsigned int CFamiTrackerDoc::GetFrameRate(void) const
@@ -2148,11 +2143,9 @@ void CFamiTrackerDoc::IncreaseInstrument(unsigned int Frame, unsigned int Channe
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
 	unsigned int Inst = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Instrument;
-	//unsigned int Inst = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Instrument;
 
 	if (Inst < MAX_INSTRUMENTS) {
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Instrument = Inst + 1;
-		//m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Instrument = Inst + 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
 	}
@@ -2165,11 +2158,9 @@ void CFamiTrackerDoc::DecreaseInstrument(unsigned int Frame, unsigned int Channe
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
 	unsigned int Inst = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Instrument;
-//	unsigned int Inst = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Instrument;
 
 	if (Inst > 0) {
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Instrument = Inst - 1;
-//		m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Instrument = Inst - 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
 	}
@@ -2181,11 +2172,9 @@ void CFamiTrackerDoc::IncreaseVolume(unsigned int Frame, unsigned int Channel, u
 	ASSERT(Channel < MAX_CHANNELS);
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
-//	unsigned int Vol = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Vol;
 	unsigned int Vol = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Vol;
 
 	if (Vol < 0x10) {
-//		m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Vol = Vol + 1;
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Vol = Vol + 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
@@ -2198,11 +2187,9 @@ void CFamiTrackerDoc::DecreaseVolume(unsigned int Frame, unsigned int Channel, u
 	ASSERT(Channel < MAX_CHANNELS);
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
-//	unsigned int Vol = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Vol;
 	unsigned int Vol = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Vol;
 
 	if (Vol > 1) {
-//		m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].Vol = Vol - 1;
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->Vol = Vol - 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
@@ -2216,11 +2203,9 @@ void CFamiTrackerDoc::IncreaseEffect(unsigned int Frame, unsigned int Channel, u
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 	ASSERT(Index < MAX_EFFECT_COLUMNS);
 
-//	unsigned int Effect = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].EffParam[Index];
 	unsigned int Effect = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->EffParam[Index];
 	
 	if (Effect < 256) {
-//		m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].EffParam[Index] = Effect + 1;
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->EffParam[Index] = Effect + 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
@@ -2234,11 +2219,9 @@ void CFamiTrackerDoc::DecreaseEffect(unsigned int Frame, unsigned int Channel, u
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 	ASSERT(Index < MAX_EFFECT_COLUMNS);
 
-//	unsigned int Effect = m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].EffParam[Index];
 	unsigned int Effect = m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->EffParam[Index];
 
 	if (Effect > 0) {
-//		m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row].EffParam[Index] = Effect - 1;
 		m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row)->EffParam[Index] = Effect - 1;
 		SetModifiedFlag();
 		UpdateAllViews(NULL);
@@ -2252,11 +2235,8 @@ void CFamiTrackerDoc::SetNoteData(unsigned int Frame, unsigned int Channel, unsi
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
 	// Get notes from the pattern
-//	memcpy(&m_pSelectedTune->m_stPatternData[Channel][GET_PATTERN(Frame, Channel)][Row], Data, sizeof(stChanNote));
 	memcpy(m_pSelectedTune->GetPatternData(Channel, GET_PATTERN(Frame, Channel), Row), Data, sizeof(stChanNote));
-
 	SetModifiedFlag();
-//	UpdateAllViews(NULL);
 }
 
 void CFamiTrackerDoc::GetNoteData(unsigned int Frame, unsigned int Channel, unsigned int Row, stChanNote *Data) const
@@ -2280,11 +2260,8 @@ void CFamiTrackerDoc::SetDataAtPattern(unsigned int Track, unsigned int Pattern,
 	ASSERT(Row < MAX_PATTERN_LENGTH);
 
 	// Set a note to a direct pattern
-	//memcpy(&m_pTunes[Track]->m_stPatternData[Channel][Pattern][Row], Data, sizeof(stChanNote));
 	memcpy(m_pTunes[Track]->GetPatternData(Channel, Pattern, Row), Data, sizeof(stChanNote));
-
 	SetModifiedFlag();
-//	UpdateAllViews(NULL);
 }
 
 void CFamiTrackerDoc::GetDataAtPattern(unsigned int Track, unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data) const
@@ -2340,15 +2317,12 @@ bool CFamiTrackerDoc::InsertNote(unsigned int Frame, unsigned int Channel, unsig
 	Note.Vol			= 0x10;
 
 	for (unsigned int i = m_pSelectedTune->m_iPatternLength - 1; i > Row; i--) {
-		//m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][i] = m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][i - 1];
 		memcpy(m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], i), m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], i - 1), sizeof(stChanNote));
 	}
 
-	//m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][Row] = Note;
 	*m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], Row) = Note;
 
 	SetModifiedFlag();
-//	UpdateAllViews(NULL);
 
 	return true;
 }
@@ -2393,10 +2367,7 @@ bool CFamiTrackerDoc::DeleteNote(unsigned int Frame, unsigned int Channel, unsig
 		Note->EffParam[3]	= 0;
 	}
 	
-	//m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][Row] = Note;
-
 	SetModifiedFlag();
-//	UpdateAllViews(NULL);
 
 	return true;
 }
@@ -2421,17 +2392,14 @@ bool CFamiTrackerDoc::RemoveNote(unsigned int Frame, unsigned int Channel, unsig
 	Note.Vol			= 0x10;
 
 	for (i = Row - 1; i < (m_pSelectedTune->m_iPatternLength - 1); i++) {
-//		m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][i] = m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][i + 1];
 		memcpy(m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], i), 
 			m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], i + 1),
 			sizeof(stChanNote));
 	}
 
-	//m_pSelectedTune->m_stPatternData[Channel][m_pSelectedTune->m_iFrameList[Frame][Channel]][m_pSelectedTune->m_iPatternLength - 1] = Note;
 	*m_pSelectedTune->GetPatternData(Channel, m_pSelectedTune->m_iFrameList[Frame][Channel], m_pSelectedTune->m_iPatternLength - 1) = Note;
 
 	SetModifiedFlag();
-//	UpdateAllViews(NULL);
 
 	return true;
 }
@@ -2440,7 +2408,14 @@ void CFamiTrackerDoc::SelectTrack(unsigned int Track)
 {
 	ASSERT(Track < MAX_TRACKS);
 	SwitchToTrack(Track);
-	UpdateAllViews(0, UPDATE_SONG_TRACK);
+	UpdateAllViews(0, CHANGED_TRACK);
+}
+
+void CFamiTrackerDoc::SelectTrackFast(unsigned int Track)
+{
+	// Called by the compiler only
+	m_iTrack = Track;
+	m_pSelectedTune = m_pTunes[Track];
 }
 
 void CFamiTrackerDoc::SwitchToTrack(unsigned int Track)
@@ -2474,23 +2449,51 @@ unsigned int CFamiTrackerDoc::GetSelectedTrack()
 
 void CFamiTrackerDoc::SelectExpansionChip(unsigned char Chip)
 {
+	int i = 0;
+
 	m_cExpansionChip = Chip;
 	m_iChannelsAvailable = CHANNELS_DEFAULT;
 
+	m_iChannelTypes[i++] = CHANID_SQUARE1;
+	m_iChannelTypes[i++] = CHANID_SQUARE2;
+	m_iChannelTypes[i++] = CHANID_TRIANGLE;
+	m_iChannelTypes[i++] = CHANID_NOISE;
+	m_iChannelTypes[i++] = CHANID_DPCM;
+/*
+	m_iChannelTypes[i++] = CHANID_VRC6_PULSE1;
+	m_iChannelTypes[i++] = CHANID_VRC6_PULSE2;
+	m_iChannelTypes[i++] = CHANID_VRC6_SAWTOOTH;
+
+	m_iChannelTypes[i++] = CHANID_MMC5_SQUARE1;
+	m_iChannelTypes[i++] = CHANID_MMC5_SQUARE2;
+*/
 	switch (Chip) {
 		//case SNDCHIP_FDS:	m_iChannelsAvailable += 1; break;
 		//case SNDCHIP_FME07: m_iChannelsAvailable += 1; break;
-		//case SNDCHIP_MMC5:	m_iChannelsAvailable += 2; break;
 		//case SNDCHIP_N106:	m_iChannelsAvailable += 8; break;
-		case CHIP_VRC6:		m_iChannelsAvailable += 3; break;
-		case CHIP_VRC7:		m_iChannelsAvailable += 6; break;
+
+		case CHIP_VRC6:
+			m_iChannelsAvailable += 3; 
+			m_iChannelTypes[i++] = CHANID_VRC6_PULSE1;
+			m_iChannelTypes[i++] = CHANID_VRC6_PULSE2;
+			m_iChannelTypes[i++] = CHANID_VRC6_SAWTOOTH;
+			break;
+
+		case CHIP_VRC7:
+			m_iChannelsAvailable += 6; 
+			break;
+
+		case CHIP_MMC5:	
+			m_iChannelsAvailable += 2; 
+			m_iChannelTypes[i++] = CHANID_MMC5_SQUARE1;
+			m_iChannelTypes[i++] = CHANID_MMC5_SQUARE2;
+			break;
+
 	}
+
 
 	theApp.SetSoundChip(Chip);
 }
-
-const char INST_HEADER[] = "FTI";
-const char INST_VERSION[] = "2.0";
 
 void CFamiTrackerDoc::StoreInstrument_VRC6(CFile *pFile, CInstrument *pInst)
 {
@@ -3044,6 +3047,11 @@ void CFamiTrackerDoc::ClearPatterns()
 {
 	m_pSelectedTune->ClearEverything();
 	m_pSelectedTune->m_iFrameCount = 1;
+}
+
+int CFamiTrackerDoc::GetChannelType(int Channel)
+{
+	return m_iChannelTypes[Channel];
 }
 
 /////////////////////////////////

@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Include;.\;.\Include\;"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -73,7 +73,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Lib\x86"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -130,14 +130,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Include;.\;.\Include\;"
+				Optimization="1"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="3"
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -155,7 +156,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Lib\x86"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -214,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Include;.\;.\Include\;"
+				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;.\Include\"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="0"
@@ -239,7 +240,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\Program Files\Microsoft DirectX SDK (June 2008)\Lib\x86"
+				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -452,14 +453,6 @@
 				Name="Dialog Boxes"
 				>
 				<File
-					RelativePath=".\Source\AboutBox.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\CreateWaveDlg.cpp"
-					>
-				</File>
-				<File
 					RelativePath=".\Source\DialogReBar.cpp"
 					>
 				</File>
@@ -554,10 +547,6 @@
 							ObjectFile="$(IntDir)/$(InputName)1.obj"
 						/>
 					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\Source\WavProgressDlg.cpp"
-					>
 				</File>
 				<Filter
 					Name="Config"
@@ -819,6 +808,18 @@
 						</File>
 					</Filter>
 				</Filter>
+				<Filter
+					Name="Wave export"
+					>
+					<File
+						RelativePath=".\Source\CreateWaveDlg.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\WavProgressDlg.cpp"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="Export"
@@ -829,14 +830,6 @@
 				</File>
 				<File
 					RelativePath=".\Source\PatternCompiler.cpp"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="Other"
-				>
-				<File
-					RelativePath=".\Fft\Fft.cpp"
 					>
 				</File>
 			</Filter>
@@ -991,6 +984,14 @@
 						>
 					</File>
 					<File
+						RelativePath=".\Source\Channels5B.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsMMC5.cpp"
+						>
+					</File>
+					<File
 						RelativePath=".\Source\ChannelsVRC6.cpp"
 						>
 					</File>
@@ -1060,6 +1061,14 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
+			<Filter
+				Name="Other"
+				>
+				<File
+					RelativePath=".\Fft\Fft.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1121,10 +1130,6 @@
 			<Filter
 				Name="Sound Driver Headers"
 				>
-				<File
-					RelativePath=".\Include\ChannelHandler.h"
-					>
-				</File>
 				<File
 					RelativePath=".\Include\Common.h"
 					>
@@ -1214,6 +1219,30 @@
 					>
 					<File
 						RelativePath=".\Include\Blip_Buffer.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Channels Headers"
+					>
+					<File
+						RelativePath=".\Include\ChannelHandler.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Include\Channels2A03.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Include\ChannelsMMC5.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Include\ChannelsVRC6.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Include\ChannelsVRC7.h"
 						>
 					</File>
 				</Filter>
@@ -1417,12 +1446,11 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\Html\AboutBox.htm"
-				DeploymentContent="true"
+				RelativePath=".\res\Application.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Application.ico"
+				RelativePath=".\res\bmp00001.bmp"
 				>
 			</File>
 			<File
@@ -1448,6 +1476,10 @@
 			</File>
 			<File
 				RelativePath=".\res\ico00003.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ico00004.ico"
 				>
 			</File>
 			<File

@@ -26,8 +26,8 @@
 //#define WIP
 
 const int VERSION_MAJ = 0;
-const int VERSION_MIN = 2;
-const int VERSION_REV = 9;
+const int VERSION_MIN = 3;
+const int VERSION_REV = 0;
 
 const int VERSION_WIP = 1;
 

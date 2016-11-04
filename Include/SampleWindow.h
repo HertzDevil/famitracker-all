@@ -30,7 +30,7 @@ public:
 
 protected:
 	static const int WIN_WIDTH = 145;
-	static const int WIN_HEIGHT = 40;
+	static const int WIN_HEIGHT = 36;
 };
 
 // CSampleWindow

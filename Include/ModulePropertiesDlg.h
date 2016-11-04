@@ -36,4 +36,5 @@ public:
 	afx_msg void OnBnClickedSongDown();
 	afx_msg void OnEnChangeSongname();
 	afx_msg void OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedSongImport();
 };

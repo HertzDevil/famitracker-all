@@ -24,8 +24,8 @@
 #include "WavProgressDlg.h"
 #include "SoundGen.h"
 
-const int MAX_LOOP_TIMES	= 99;
-const int MAX_PLAY_TIME		= (99 * 60) + 0;
+const int MAX_LOOP_TIMES = 99;
+const int MAX_PLAY_TIME	 = (99 * 60) + 0;
 
 // CCreateWaveDlg dialog
 

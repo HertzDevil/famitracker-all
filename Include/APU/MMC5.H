@@ -1,41 +1,55 @@
-/*
-** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
-**
-** This program is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
-**
-** This program is distributed in the hope that it will be useful, 
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
-** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-**
-** Any permitted reproduction of these routines, in whole or in part,
-** must bear this legend.
-*/
-
 #ifndef _MMC5_H_
 #define _MMC5_H_
 
-#include "external.h"
-#include "square.h"
+#include "apu/external.h"
+//#include "square.h"
+
+class CMMCSquare : public CExChannel {
+public:
+	CMMCSquare(CMixer *pMixer, int ID) {
+		CExChannel::Init(pMixer, SNDCHIP_MMC5, ID);
+	};
+	~CMMCSquare();
+
+	void	Reset();
+	void	Write(uint16 Address, uint8 Value);
+	void	WriteControl(uint8 Value);
+	uint8	ReadControl();
+	void	Process(uint32 Time);
+
+	void	LengthCounterUpdate();
+	void	EnvelopeUpdate();
+
+private:
+	uint8	m_iDutyLength, m_iDutyCycle;
+
+	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;
+	uint8	m_iEnvelopeVolume, m_iFixedVolume;
+	int8	m_iEnvelopeCounter;
+	bool	m_bInvert;
+
+	uint8	m_iControlReg, m_iEnabled;
+	uint16	m_iFrequency, m_iLengthCounter;
+	uint32	m_iCounter;
+};
 
 class CMMC5 : public CExternal {
 public:
-	void Init(CMixer *pMixer);
+	CMMC5(CMixer *pMixer);
+	~CMMC5();
 	void Reset();
 	void Write(uint16 Address, uint8 Value);
+	uint16 Read(uint16 Address);
 	void EndFrame();
 	void Process(uint32 Time);
 	void LengthCounterUpdate();
 	void EnvelopeUpdate();
 private:	
-	CSquare	*m_pSquare1;
-	CSquare *m_pSquare2;
+	CMMCSquare *m_pSquare1;
+	CMMCSquare *m_pSquare2;
+	uint8 *m_pEXRAM;
+	uint8 m_iMulLow;
+	uint8 m_iMulHigh;
 };
 
 #endif /* _MMC5_H_ */

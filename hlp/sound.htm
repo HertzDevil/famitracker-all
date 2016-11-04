@@ -66,13 +66,15 @@
     <br />
     <span class="style3">Expansion sound</span><br />
     <br />
-    The Famicom has the ability to mix sound from expansion chips found in some carts. Currently, Famitracker supports 
-    only one chip. Expansion sound is enabled from the module properties window.<br />
+    The Famicom has the ability to mix sound from expansion chips found in some 
+    carts, famitracker now supports a few of those chips. Expansion sound is enabled from the module properties window.<br />
+    <br />
     <br />
     <strong style="font-size: 9pt">Konami VRC6<br />
         <br />
-    </strong>The VRC6 chip has two square waves and a sawtooth wave.
-    <br />
+    </strong>The VRC6 chip has two square wave channels and one sawtooth wave 
+    channel. This chip was used in games like Akumajou Densetsu and Madara by 
+    Konami.<br />
     <br />
     <strong>Square 1 &amp; 2<br />
     </strong>
@@ -82,10 +84,16 @@
     <br />
     <strong>Sawtooth<br />
         <br />
-    </strong>Sawtooth wave generator. This channel has no real duty function, but 
-    still takes advantage of that instrument setting and adds it to the volume 
-    register ().
-    This results in a distorted saw wave.
+    </strong>Sawtooth wave generator. This channel has no duty function but 
+    still uses that instrument setting to calculate the volume. A volume level too 
+    high will cause the wave to wrap around and sounds distorted (happens when duty 
+    = 1 and volume = 6).<br />
+    <p>
+        <b>Nintendo MMC5/b></p>
+    <p>
+        TThe MMC5 chip has two square wave channels that are identical to the internal 
+        2A03 channels except for no hardware sweep function. It was used in the game 
+        Just Breed by Enix.</p>
 
 
 </BODY>

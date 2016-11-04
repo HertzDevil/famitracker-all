@@ -69,10 +69,12 @@ CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem)
 	DPCMCh		= new CDPCM(m_pMixer, pSampleMem, CHANID_DPCM);
 
 	VRC6.Init(m_pMixer);
-	MMC5.Init(m_pMixer);
+	//MMC5.Init(m_pMixer);
 	FDS.Init(m_pMixer);
 	N106.Init(m_pMixer);
 	VRC7.Init(m_pMixer);
+
+	MMC5 = new CMMC5(m_pMixer);
 
 	DPCMCh->SetSpeed(SPEED_NTSC);
 
@@ -182,7 +184,7 @@ void CAPU::Process()
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
 		VRC6.Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5.Process(ClockCycles);
+		MMC5->Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
 		FDS.Process(ClockCycles);
 	if (m_iExternalSoundChip & SNDCHIP_N106)
@@ -231,7 +233,7 @@ void CAPU::EndFrame()
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
 		VRC6.EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5.EndFrame();
+		MMC5->EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
 		FDS.EndFrame();
 	if (m_iExternalSoundChip & SNDCHIP_N106)
@@ -274,7 +276,7 @@ void CAPU::Reset()
 	m_pMixer->ClearBuffer();
 
 	VRC6.Reset();
-	MMC5.Reset();
+	MMC5->Reset();
 	FDS.Reset();
 	N106.Reset();
 	VRC7.Reset();
@@ -450,7 +452,7 @@ void CAPU::ExternalWrite(uint16 Address, uint8 Value)
 	if (m_iExternalSoundChip & SNDCHIP_VRC6)
 		VRC6.Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		MMC5.Write(Address, Value);
+		MMC5->Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_FDS)
 		FDS.Write(Address, Value);
 	if (m_iExternalSoundChip & SNDCHIP_N106)
@@ -484,4 +486,14 @@ uint8 CAPU::ExternalRead(uint16 Address)
 int32 CAPU::GetVol(uint8 Chan)
 {
 	return m_pMixer->GetChanOutput(Chan);
+}
+
+uint8 CAPU::GetSamplePos()
+{
+	return DPCMCh->GetSamplePos();
+}
+
+uint8 CAPU::GetDeltaCounter()
+{
+	return DPCMCh->GetDeltaCounter();
 }

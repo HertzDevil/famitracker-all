@@ -78,6 +78,13 @@ void CSettings::LoadSettings()
 	General.iPageStepSize				= GetAppProfileInt("General", "Page step size", 4);
 	General.bPatternColor				= GetAppProfileInt("General", "Pattern colors", 1) == 1;
 	General.bPullUpDelete				= GetAppProfileInt("General", "Delete pull up", 0) == 1;
+	General.bBackups					= GetAppProfileInt("General", "Backups", 0) == 1;
+
+	// Keys
+	Keys.iKeyNoteCut					= GetAppProfileInt("Keys", "Note cut", 0xE2);
+	Keys.iKeyNoteRelease				= GetAppProfileInt("Keys", "Note release", 0xDC);
+	Keys.iKeyClear						= GetAppProfileInt("Keys", "Clear field", 0xBD);
+	Keys.iKeyRepeat						= GetAppProfileInt("Keys", "Repeat", 0x00);
 
 	// Sound
 	strDevice							= GetAppProfileString("Sound", "Device", "");
@@ -101,8 +108,10 @@ void CSettings::LoadSettings()
 	// Appearance
 	Appearance.iColBackground			= GetAppProfileInt("Appearance", "Background", COLOR_SCHEME.BACKGROUND);
 	Appearance.iColBackgroundHilite		= GetAppProfileInt("Appearance", "Background highlighted", COLOR_SCHEME.BACKGROUND_HILITE);
+	Appearance.iColBackgroundHilite2	= GetAppProfileInt("Appearance", "Background highlighted 2", COLOR_SCHEME.BACKGROUND_HILITE2);
 	Appearance.iColPatternText			= GetAppProfileInt("Appearance", "Pattern text", COLOR_SCHEME.TEXT_NORMAL);
 	Appearance.iColPatternTextHilite	= GetAppProfileInt("Appearance", "Pattern text highlighted", COLOR_SCHEME.TEXT_HILITE);
+	Appearance.iColPatternTextHilite2	= GetAppProfileInt("Appearance", "Pattern text highlighted 2", COLOR_SCHEME.TEXT_HILITE2);
 	Appearance.iColPatternInstrument	= GetAppProfileInt("Appearance", "Pattern instrument", COLOR_SCHEME.TEXT_INSTRUMENT);
 	Appearance.iColPatternVolume		= GetAppProfileInt("Appearance", "Pattern volume", COLOR_SCHEME.TEXT_VOLUME);
 	Appearance.iColPatternEffect		= GetAppProfileInt("Appearance", "Pattern effect", COLOR_SCHEME.TEXT_EFFECT);
@@ -115,6 +124,9 @@ void CSettings::LoadSettings()
 	WindowPos.iRight					= GetAppProfileInt("Window position", "Right", 950);
 	WindowPos.iBottom					= GetAppProfileInt("Window position", "Bottom", 920);
 	WindowPos.iState					= GetAppProfileInt("Window position", "State", STATE_NORMAL);
+
+	// Other
+	SampleWinState						= GetAppProfileInt("Other", "Sample window state", 0);
 
 	// Paths
 	Paths[PATH_FTM]						= GetAppProfileString("Paths", "FTM path", "");
@@ -141,6 +153,13 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("General", "Page step size",	  General.iPageStepSize);
 	WriteAppProfileInt("General", "Pattern colors",	  General.bPatternColor);
 	WriteAppProfileInt("General", "Delete pull up",	  General.bPullUpDelete);
+	WriteAppProfileInt("General", "Backups",		  General.bBackups);
+
+	// Keys
+	WriteAppProfileInt("Keys", "Note cut", Keys.iKeyNoteCut);
+	WriteAppProfileInt("Keys", "Note release", Keys.iKeyNoteRelease);
+	WriteAppProfileInt("Keys", "Clear field", Keys.iKeyClear);
+	WriteAppProfileInt("Keys", "Repeat", Keys.iKeyRepeat);
 
 	// Sound
 	WriteAppProfileInt("Sound", "Sample rate",			 Sound.iSampleRate);
@@ -162,15 +181,17 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("MIDI", "Auto Arpeggio",	   Midi.bMidiArpeggio);
 
 	// Appearance
-	WriteAppProfileInt("Appearance", "Background",				 Appearance.iColBackground);
-	WriteAppProfileInt("Appearance", "Background highlighted",	 Appearance.iColBackgroundHilite);
-	WriteAppProfileInt("Appearance", "Pattern text",			 Appearance.iColPatternText);
-	WriteAppProfileInt("Appearance", "Pattern text highlighted", Appearance.iColPatternTextHilite);
-	WriteAppProfileInt("Appearance", "Pattern instrument",		 Appearance.iColPatternInstrument);
-	WriteAppProfileInt("Appearance", "Pattern volume",			 Appearance.iColPatternVolume);
-	WriteAppProfileInt("Appearance", "Pattern effect",			 Appearance.iColPatternEffect);
-	WriteAppProfileInt("Appearance", "Selection",				 Appearance.iColSelection);
-	WriteAppProfileInt("Appearance", "Cursor",					 Appearance.iColCursor);
+	WriteAppProfileInt("Appearance", "Background",					Appearance.iColBackground);
+	WriteAppProfileInt("Appearance", "Background highlighted",		Appearance.iColBackgroundHilite);
+	WriteAppProfileInt("Appearance", "Background highlighted 2",	Appearance.iColBackgroundHilite2);
+	WriteAppProfileInt("Appearance", "Pattern text",				Appearance.iColPatternText);
+	WriteAppProfileInt("Appearance", "Pattern text highlighted",	Appearance.iColPatternTextHilite);
+	WriteAppProfileInt("Appearance", "Pattern text highlighted 2",	Appearance.iColPatternTextHilite2);
+	WriteAppProfileInt("Appearance", "Pattern instrument",			Appearance.iColPatternInstrument);
+	WriteAppProfileInt("Appearance", "Pattern volume",				Appearance.iColPatternVolume);
+	WriteAppProfileInt("Appearance", "Pattern effect",				Appearance.iColPatternEffect);
+	WriteAppProfileInt("Appearance", "Selection",					Appearance.iColSelection);
+	WriteAppProfileInt("Appearance", "Cursor",						Appearance.iColCursor);
 
 	// Window position
 	WriteAppProfileInt("Window position", "Left",	WindowPos.iLeft);
@@ -178,6 +199,9 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("Window position", "Right",	WindowPos.iRight);
 	WriteAppProfileInt("Window position", "Bottom",	WindowPos.iBottom);
 	WriteAppProfileInt("Window position", "State",	WindowPos.iState);
+
+	// Other
+	WriteAppProfileInt("Other", "Sample window state", SampleWinState);
 
 	// Paths
 	WriteAppProfileString("Paths", "FTM path", Paths[PATH_FTM]);
@@ -204,6 +228,13 @@ void CSettings::DefaultSettings()
 	General.iPageStepSize		= 4;
 	General.bPatternColor		= true;
 	General.bPullUpDelete		= false;
+	General.bBackups			= true;
+
+	// Keys
+	Keys.iKeyNoteCut		= 0xE2;	// '<'
+	Keys.iKeyNoteRelease	= 0xDC;	// ''
+	Keys.iKeyClear			= 0xBD;	// '-'
+	Keys.iKeyRepeat			= 0x00;	// ?
 
 	// Sound
 	strDevice				= "";
@@ -226,8 +257,10 @@ void CSettings::DefaultSettings()
 	// Appearance
 	Appearance.iColBackground		 = COLOR_SCHEME.BACKGROUND;
 	Appearance.iColBackgroundHilite	 = COLOR_SCHEME.BACKGROUND_HILITE;
+	Appearance.iColBackgroundHilite	 = COLOR_SCHEME.BACKGROUND_HILITE2;
 	Appearance.iColPatternText		 = COLOR_SCHEME.TEXT_NORMAL;
 	Appearance.iColPatternTextHilite = COLOR_SCHEME.TEXT_HILITE;
+	Appearance.iColPatternTextHilite = COLOR_SCHEME.TEXT_HILITE2;
 	Appearance.iColPatternInstrument = COLOR_SCHEME.TEXT_INSTRUMENT;
 	Appearance.iColPatternVolume	 = COLOR_SCHEME.TEXT_VOLUME;
 	Appearance.iColPatternEffect	 = COLOR_SCHEME.TEXT_EFFECT;
@@ -240,6 +273,9 @@ void CSettings::DefaultSettings()
 	WindowPos.iRight	= 950;
 	WindowPos.iBottom	= 920;
 	WindowPos.iState	= STATE_NORMAL;
+
+	// Other
+	SampleWinState = 0;
 
 	for (int i = 0; i < PATH_COUNT; i++)
 		Paths[i] = "";

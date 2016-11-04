@@ -43,8 +43,9 @@ public:
 	void	SweepUpdate(bool First);
 	void	EnvelopeUpdate();
 
-private:
 	static const uint8 DUTY_PULSE[];
+
+private:
 
 	uint8	m_iDutyLength, m_iDutyCycle;
 

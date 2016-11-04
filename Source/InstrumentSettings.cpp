@@ -250,6 +250,7 @@ void CInstrumentSettings::TranslateMML()
 		else if (c == '|') {
 			m_SelectedSeq->SetLoopPoint(AddedItems);
 		}
+
 		else {
 			if (Accum.GetLength() > 0) {
 				sscanf(Accum, "%i", &Value);
@@ -399,23 +400,7 @@ void CMML::TranslateMML(CString MML, CSequence *pSequence, int Min, int Max)
 		else {
 			if (Accum.GetLength() > 0) {
 				sscanf(Accum, "%i", &Value);
-
 				LIMIT(Value, Max, Min);
-/*
-				switch (m_iCurrentEffect) {
-					case MOD_VOLUME:
-						LIMIT(Value, 15, 0);
-						break;
-					case MOD_ARPEGGIO:
-					case MOD_PITCH:
-					case MOD_HIPITCH:
-						LIMIT(Value, 126, -127);
-						break;
-					case MOD_DUTYCYCLE:
-						LIMIT(Value, 3, 0);
-						break;
-				}
-*/
 				pSequence->SetItem(AddedItems++, Value);
 			}
 			Accum = "";

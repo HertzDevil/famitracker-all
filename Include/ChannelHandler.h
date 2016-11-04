@@ -30,7 +30,7 @@ const int VOL_SHIFT = 3;
 //
 class CChannelHandler {
 public:
-	CChannelHandler() { m_bEnabled = false; };
+	CChannelHandler() { m_bEnabled = false; m_iInstrument = m_iLastInstrument = 0; };
 
 	// Virtual functions
 	virtual void PlayNote(stChanNote *NoteData, int EffColumns) = 0; // Plays a note
@@ -57,6 +57,9 @@ protected:
 	bool HandleDelay(stChanNote *NoteData, int EffColumns);
 
 	void LimitFreq();
+
+	int GetVibrato();
+	int GetTremolo();
 
 	int	m_iChannelID;		// Channel ID
 
@@ -93,13 +96,17 @@ protected:
 	unsigned int		Length;
 
 	unsigned int		m_iLastInstrument, m_iInstrument;
+
+	unsigned char		m_iDefaultDuty;
 };
 
-//
-// Derived channels, 2A03
-//
 
-class CChannelHandler2A03 : public CChannelHandler {
+
+//
+// Derived channels, 5B
+//
+#if 0
+class CChannelHandler5B : public CChannelHandler {
 public:
 	void PlayNote(stChanNote *NoteData, int EffColumns);
 	void ProcessChannel();
@@ -115,125 +122,31 @@ protected:
 	int	ModPointer[MOD_COUNT];
 };
 
-// Square 1
-class CSquare1Chan : public CChannelHandler2A03 {
+// Channel 1
+class C5BChannel1 : public CChannelHandler5B {
 public:
-	CSquare1Chan() { m_iDefaultDuty = 0; m_iChannelID = 0; m_bEnabled = false; };
+	CMMC5Square1Chan() { m_iDefaultDuty = 0; m_iChannelID = 5; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 };
 
-// Square 2
-class CSquare2Chan : public CChannelHandler2A03 {
+// Channel 2
+class C5BChannel2 : public CChannelHandler5B {
 public:
-	CSquare2Chan() { m_iDefaultDuty = 0; m_iChannelID = 1; m_bEnabled = false; };
+	CMMC5Square2Chan() { m_iDefaultDuty = 0; m_iChannelID = 6; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 };
 
-// Triangle
-class CTriangleChan : public CChannelHandler2A03 {
+// Channel 3
+class C5BChannel3 : public CChannelHandler5B {
 public:
-	CTriangleChan() { m_iChannelID = 2; m_bEnabled = false; };
+	CMMC5Square3Chan() { m_iDefaultDuty = 0; m_iChannelID = 7; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 };
 
-// Noise
-class CNoiseChan : public CChannelHandler2A03 {
-public:
-	CNoiseChan() { m_iDefaultDuty = 0; m_iChannelID = 3; m_bEnabled = false; };
-	void RefreshChannel();
-protected:
-	void ClearRegisters();
-	unsigned int TriggerNote(int Note);
-};
-
-// DPCM
-class CDPCMChan : public CChannelHandler2A03 {
-public:
-	CDPCMChan() { m_iChannelID = 4; m_bEnabled = false; };
-	void RefreshChannel();
-	void PlayNote(stChanNote *NoteData, int EffColumns);
-	void SetSampleMem(CSampleMem *pSampleMem);
-protected:
-	void ClearRegisters();
-private:
-	CSampleMem *m_pSampleMem;
-	unsigned char m_cDAC;
-	unsigned char m_iLoop;
-	bool m_bKeyRelease;
-};
-
-//
-// Derived channels, VRC6
-//
-
-class CChannelHandlerVRC6 : public CChannelHandler {
-public:
-	void ProcessChannel();
-	void PlayNote(stChanNote *NoteData, int EffColumns);
-protected:
-	void RunSequence(int Index, CSequence *pSequence);
-
-	unsigned char m_cDutyCycle, m_iDefaultDuty;
-
-	int ModEnable[MOD_COUNT];
-	int	ModIndex[MOD_COUNT];
-	int	ModDelay[MOD_COUNT];
-	int	ModPointer[MOD_COUNT];
-};
-
-class CVRC6Square1 : public CChannelHandlerVRC6 {
-public:
-	CVRC6Square1() { m_iDefaultDuty = 0; m_iChannelID = 5; m_bEnabled = false; };
-	void RefreshChannel();
-protected:
-	void ClearRegisters();
-private:
-};
-
-class CVRC6Square2 : public CChannelHandlerVRC6 {
-public:
-	CVRC6Square2() { m_iDefaultDuty = 0;  m_iChannelID = 6; m_bEnabled = false; };
-	void RefreshChannel();
-protected:
-	void ClearRegisters();
-private:
-};
-
-class CVRC6Sawtooth : public CChannelHandlerVRC6 {
-public:
-	CVRC6Sawtooth() { m_iDefaultDuty = 0;  m_iChannelID = 7; m_bEnabled = false; };
-	void RefreshChannel();
-protected:
-	void ClearRegisters();
-private:
-};
-
-//
-// Derived channels, VRC7
-//
-
-class CChannelHandlerVRC7 : public CChannelHandler {
-public:
-	void ProcessChannel();
-	void PlayNote(stChanNote *NoteData, int EffColumns);
-protected:
-	unsigned char m_iChannel;
-	unsigned char m_iPatch;
-};
-
-class CVRC7Channel : public CChannelHandlerVRC7 {
-public:
-	CVRC7Channel() { m_iChannelID = 5; m_bEnabled = false; };
-	void RefreshChannel();
-	void ChannelIndex(int Channel) {m_iChannel = Channel; m_iChannelID = 5 + Channel; };
-protected:
-	void ClearRegisters();
-private:
-	void RegWrite(unsigned char Reg, unsigned char Value);
-};
+#endif

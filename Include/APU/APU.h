@@ -29,7 +29,7 @@ const uint8 SNDCHIP_VRC7  = 2;			// Konami VRCVII
 const uint8 SNDCHIP_FDS	  = 4;			// Famicom Disk Sound
 const uint8 SNDCHIP_MMC5  = 8;			// Nintendo MMC5
 const uint8 SNDCHIP_N106  = 16;			// Namco N-106
-const uint8 SNDCHIP_FME07 = 32;			// Sunsoft FME-07
+const uint8 SNDCHIP_5B	  = 32;			// Sunsoft 5B
 
 enum {MACHINE_NTSC, MACHINE_PAL};
 
@@ -76,6 +76,8 @@ public:
 	void	SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume) const;
 
 	int32	GetVol(uint8 Chan);
+	uint8	GetSamplePos();
+	uint8	GetDeltaCounter();
 
 public:
 	static const uint8	LENGTH_TABLE[];
@@ -97,7 +99,6 @@ private:
 	CMixer			*m_pMixer;
 	ICallback		*m_pParent;
 
-
 //	CSquare			*m_pSquare1;
 //	CSquare			*m_pSquare2;
 
@@ -108,7 +109,7 @@ private:
 	CDPCM			*DPCMCh;
 
 	CVRC6			VRC6;
-	CMMC5			MMC5;
+	CMMC5			*MMC5;
 	CFDS			FDS;
 	CN106			N106;
 	CVRC7			VRC7;

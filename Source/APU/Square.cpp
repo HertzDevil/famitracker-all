@@ -26,6 +26,11 @@
 
 const uint8	CSquare::DUTY_PULSE[] = {0x0E, 0x0C, 0x08, 0x04};
 
+static const uint8 /*CSquare::*/DUTY_TABLE[4][16] = {{0, 1, 1, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
+									 {0, 1, 1, 1,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
+									 {0, 1, 1, 1,  1, 1, 1, 1,  1, 0, 0, 0,  0, 0, 0, 0},
+									 {1, 0, 0, 0,  0, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1}};
+
 CSquare::CSquare(CMixer *pMixer, int ID)
 {
 //	memset(this, 0, sizeof(CSquare));
@@ -61,17 +66,20 @@ void CSquare::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 	case 0x00:
-		m_iDutyLength = DUTY_PULSE[(Value & 0xC0) >> 6];
+//		m_iDutyLength = DUTY_PULSE[(Value & 0xC0) >> 6];
+		m_iDutyLength = Value >> 6;
 		m_iFixedVolume = (Value & 0x0F);
 		m_iLooping = (Value & 0x20);
 		m_iEnvelopeFix = (Value & 0x10);
 		m_iEnvelopeSpeed = (Value & 0x0F) + 1;
+		/*
 		if (m_iDutyLength == 4) {
 			m_iDutyLength = 0x0C;
 			m_bInvert = true;
 		}
 		else
 			m_bInvert = false;
+			*/
 		break;
 	case 0x01:
 		SweepEnabled = (Value & 0x80);
@@ -121,10 +129,7 @@ void CSquare::Process(uint32 Time)
 		m_iFrameCycles	+= m_iCounter;
 		m_iCounter		= m_iFrequency + 1;
 		m_iDutyCycle	= (m_iDutyCycle + 1) & 0x0F;
-		if (m_bInvert)
-			Mix((((m_iDutyCycle >= m_iDutyLength) && Valid) ? 0 : (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume)));
-		else
-			Mix((((m_iDutyCycle >= m_iDutyLength) && Valid) ? (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume) : 0));
+		Mix((Valid ? (DUTY_TABLE[m_iDutyLength][m_iDutyCycle] * (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume)) : 0));
 	}
 
 	m_iCounter -= Time;
@@ -156,34 +161,7 @@ void CSquare::SweepUpdate(bool First)
 		SweepCounter = SweepPeriod;
 	}
 }
-/*
-void CSquare::SweepUpdate2()
-{
-	SweepResult = (m_iFrequency >> SweepShift);
 
-	if (SweepMode)
-		SweepResult = m_iFrequency - SweepResult + 1;
-	else
-		SweepResult = m_iFrequency + SweepResult;
-
-	if (SweepEnabled && m_iFrequency > 0x07 && SweepResult < 0x800 && SweepShift > 0) {
-		if (SweepCounter <= 1) {
-			SweepCounter	= SweepRefresh + 1;
-			m_iFrequency	= SweepResult;
-		}
-		SweepCounter--;
-	}
-
-	if (SweepWritten) {
-		SweepWritten	= false;
-		SweepEnabled	= (SweepRegister & 0x80);	
-		SweepRefresh	= (SweepRegister & 0x70) >> 4;
-		SweepMode		= (SweepRegister & 0x08);		
-		SweepShift		= (SweepRegister & 0x07);	
-		SweepCounter	= SweepRefresh + 1;
-	}
-}
-*/
 void CSquare::EnvelopeUpdate()
 {
 	if (--m_iEnvelopeCounter < 1) {

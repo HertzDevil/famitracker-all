@@ -24,6 +24,7 @@
 #include "FamiTracker.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
+#include "ChannelsVRC7.h"
 
 void CChannelHandlerVRC7::PlayNote(stChanNote *pNoteData, int EffColumns)
 {

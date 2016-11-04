@@ -26,6 +26,7 @@
 
 #include "apu/APU.h"
 #include "DirectSound.h"
+#include "WaveFile.h"
 
 const int VIBRATO_LENGTH = 64;
 const int TREMOLO_LENGTH = 64;
@@ -33,7 +34,6 @@ const int TREMOLO_LENGTH = 64;
 const unsigned int TOTAL_CHANNELS = MAX_CHANNELS;
 
 // Custom messages
-
 enum { M_SILENT_ALL = WM_USER + 1,
 	   M_LOAD_SETTINGS,
 	   M_PLAY,
@@ -41,19 +41,16 @@ enum { M_SILENT_ALL = WM_USER + 1,
 	   M_STOP,
 	   M_RESET,
 	   M_START_RENDER};
-/*
-#define M_SILENT_ALL	WM_USER + 1
-#define M_LOAD_SETTINGS WM_USER + 2
-*/
 
 typedef enum { SONG_TIME_LIMIT, SONG_LOOP_LIMIT } RENDER_END;
 
-struct stVolLevels {
-	int Chan1, Chan2, Chan3, Chan4, Chan5;		// kill this
+// Used to get the DPCM state
+struct stDPCMState {
+	int SamplePos;
+	int DeltaCntr;
 };
 
 class CChannelHandler;
-
 class CFamiTrackerView;
 
 class CSoundGen : public CWinThread, ICallback
@@ -90,7 +87,7 @@ private:
 	CAPU				*m_pAPU;
 	CSampleMem			m_SampleMem;
 
-	stVolLevels			Levels;
+//	stVolLevels			Levels;
 
 	unsigned int		m_iCycles;							// Cycles between each APU update
 	
@@ -98,7 +95,6 @@ private:
 	int					m_iTempoAccum;			// Used for speed calculation
 	unsigned int		m_iTickPeriod;
 	unsigned int		m_iPlayTime;
-//	bool				m_bNewRow;
 	bool				m_bPlaying, m_bPlayLooping;
 
 	int					m_iJumpToPattern;
@@ -114,8 +110,8 @@ private:
 	int					m_cVibTable[VIBRATO_LENGTH];
 	unsigned char		m_cTremTable[TREMOLO_LENGTH];
 
-	CChannelHandler		*ChannelCollection[TOTAL_CHANNELS];
-	unsigned int		m_iChannelsActive;
+//	CChannelHandler		*ChannelCollection[TOTAL_CHANNELS];
+//	unsigned int		m_iChannelsActive;
 
 	// General variables
 	HANDLE				m_hNotificationEvent;
@@ -127,6 +123,16 @@ private:
 	int					m_iRenderEndParam;
 	int					m_iRenderedFrames;
 	int					m_iRenderedSong;
+	int					m_iDelayedStart;
+
+	int					m_iTempoDecrement;
+	bool				m_bUpdateRow;
+
+	bool				m_bRendering;
+	bool				m_bRequestRenderStop;
+	bool				m_bPlayerHalted;
+
+	CWaveFile			m_WaveFile;
 
 // Functions
 private:
@@ -136,6 +142,8 @@ private:
 	void				CheckControl();
 	void				ResetBuffer();
 	void				BeginPlayer(bool bLooping);
+// Initialization
+	void				CreateChannels();
 
 public:
 	// Interface from outside the thread
@@ -168,6 +176,7 @@ public:
 	// Tracker playing
 	bool				IsRunning()				{ return m_bRunning; }
 	unsigned int		GetOutput(int Chan);
+	stDPCMState			GetDPCMState();
 
 	// Rendering
 	bool				RenderToFile(char *File, int SongEndType, int SongEndParam);
@@ -178,6 +187,10 @@ public:
 
 	void				SongIsDone();
 	void				FrameIsDone(int SkipFrames);
+
+private:
+	// Channels
+	CChannelHandler		*m_pChannels[CHANNELS];
 };
 
 extern CSoundGen SoundGenerator;

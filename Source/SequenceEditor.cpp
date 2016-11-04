@@ -149,6 +149,8 @@ void CSequenceEditor::SetCurrentSequence(int Type, CSequence *List)
 	m_iSequenceItemCount	= m_List->GetItemCount();
 	m_iLoopPoint			= m_List->GetLoopPoint();
 
+	m_iReleaseSequenceItemCount = 0;
+
 	m_iSeqOrigin	= 0;
 	m_iMin			= NUM_MIN[Type];
 	m_iMax			= NUM_MAX[Type];
@@ -822,6 +824,14 @@ void CSequenceEditor::DrawVolumeEditor()
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
 
+			/*
+			if (i == m_iReleasePoint) {
+				Text.Format("^");
+				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
+				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, 0xFF00FF);
+			}
+			*/
+
 			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 15 + 3;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT - 2;
 
@@ -880,7 +890,13 @@ void CSequenceEditor::DrawArpeggioEditor()
 				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
-
+/*
+			if (i == m_iReleasePoint) {
+				Text.Format("^");
+				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
+				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, 0xFF00FF);
+			}
+*/
 			//ItemCenter = EDITOR_TOP + (EDITOR_HEIGHT / 2) - ((m_iSequenceItems[i] + m_iSeqOrigin) * EDITOR_HEIGHT) / /*m_iLevels*/ 20 - 4;
 			ItemHeight = (EDITOR_HEIGHT - 2) / 20;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT / 2 - 4 - (/*m_iSequenceItems[i]*/ m_List->GetItem(i) + m_iSeqOrigin) * ItemHeight;
@@ -933,7 +949,13 @@ void CSequenceEditor::DrawPitchEditor()
 				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
-
+/*
+			if (i == m_iReleasePoint) {
+				Text.Format("^");
+				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
+				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, 0xFF00FF);
+			}
+*/
 			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 255;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT / 2;
 
@@ -993,7 +1015,13 @@ void CSequenceEditor::DrawDutyEditor()
 				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
-
+/*
+			if (i == m_iReleasePoint) {
+				Text.Format("^");
+				m_pBackDC->TextOut(ItemLeft - 4, EDITOR_TOP + EDITOR_HEIGHT - 1, Text);
+				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, 0xFF00FF);
+			}
+*/
 			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 3 + 3;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT - 2;
 

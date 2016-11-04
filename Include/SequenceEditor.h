@@ -55,9 +55,10 @@ private:
 	int		m_iMax, m_iMin;
 	int		m_iSequenceType;
 	int		m_iSequenceItemCount;
+	int		m_iReleaseSequenceItemCount;
 //	int		m_iSequenceItems[MAX_ITEMS];
 	int		m_iLastValueX, m_iLastValueY;
-	int		m_iLoopPoint;
+	int		m_iLoopPoint, m_iReleasePoint;
 	int		m_iEditing;
 	int		m_iSeqOrigin;
 	int		m_iLevels;

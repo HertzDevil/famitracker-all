@@ -63,7 +63,7 @@ void CVRC6_Pulse::Process(int Time)
 	while (Time >= Counter) {
 		Time			-= Counter;
 		m_iFrameCycles	+= Counter;
-		Counter			= Frequency+1;
+		Counter			= Frequency + 1;
 	
 		DutyCycleCounter = (DutyCycleCounter + 1) & 0x0F;
 		Mix((DutyCycleCounter >= DutyCycle || Gate) ? Volume : 0);
@@ -121,6 +121,7 @@ void CVRC6_Sawtooth::Process(int Time)
 			ResetReg = 0;
 		}
 
+		// The 5 high bits of accumulator are sent to the mixer
 		Mix(PhaseAccumulator >> 3);
 	}
 

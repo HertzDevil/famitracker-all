@@ -50,6 +50,11 @@ protected:
 	int		m_iPageStepSize;
 	bool	m_bPatternColors;
 	bool	m_bPullUpDelete;
+	bool	m_bBackups;
+	int		m_iKeyNoteCut;
+	int		m_iKeyNoteRelease;
+	int		m_iKeyClear;
+	int		m_iKeyRepeat;
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -64,14 +69,16 @@ public:
 	afx_msg void OnBnClickedOptKeyrepeat();
 	afx_msg void OnBnClickedStyle1();
 	afx_msg void OnBnClickedStyle2();
+	afx_msg void OnBnClickedStyle3();
 	afx_msg void OnBnClickedOptHexadecimal();
 	afx_msg void OnBnClickedSquarehack();
 	afx_msg void OnBnClickedOptFramepreview();
 	afx_msg void OnBnClickedOptNodpcmreset();
-	afx_msg void OnBnClickedStyle3();
 	afx_msg void OnCbnEditupdatePagelength();
 	afx_msg void OnCbnSelendokPagelength();
 	afx_msg void OnBnClickedOptNostepmove();
 	afx_msg void OnBnClickedOptPullupdelete();
 	afx_msg void OnBnClickedOptPattenrcolors();
+	afx_msg void OnBnClickedOptBackups();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

@@ -66,10 +66,9 @@ struct stAccelEntry {
 	int	 id;
 };
 
-// Don't forget to update ACCEL_COUNT
 const stAccelEntry DEFAULT_TABLE[] = {
-	{"Previous octave",				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
-	{"Next octave",					MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
+	{"Increase octave",				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
+	{"Decrease octave",				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
 	{"Play / Stop",					MOD_NONE,		VK_RETURN,		ID_TRACKER_TOGGLE_PLAY},
 	{"Play Pattern",				MOD_SHIFT,		VK_RETURN,		ID_TRACKER_PLAYPATTERN},
 	{"Play Row",					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
@@ -79,7 +78,7 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{"Select all",					MOD_CONTROL,	'A',			ID_EDIT_SELECTALL},
 	{"Toggle channel",				MOD_ALT,		VK_F9,			ID_TRACKER_TOGGLECHANNEL},
 	{"Solo channel",				MOD_ALT,		VK_F10,			ID_TRACKER_SOLOCHANNEL},
-	{"Gradient",					MOD_CONTROL,	'G',			ID_EDIT_GRADIENT},
+	{"Interpolate",					MOD_CONTROL,	'G',			ID_EDIT_INTERPOLATE},
 	{"Go to next frame",			MOD_CONTROL,	VK_RIGHT,		ID_NEXT_FRAME},
 	{"Go to previous frame",		MOD_CONTROL,	VK_LEFT,		ID_PREV_FRAME},
 	{"Transpose, decrease notes",	MOD_CONTROL,	VK_F1,			ID_TRANSPOSE_DECREASENOTE},
@@ -94,11 +93,18 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{"Edit instrument",				MOD_CONTROL,	'I',			ID_MODULE_EDITINSTRUMENT},
 	{"Increase step size",			MOD_CONTROL,	VK_ADD,			ID_CMD_INCREASESTEPSIZE},
 	{"Decrease step size",			MOD_CONTROL,	VK_SUBTRACT,	ID_CMD_DECREASESTEPSIZE},
+	{"Follow mode",					MOD_NONE,		VK_SCROLL,		IDC_FOLLOW_TOGGLE},
+	{"Duplicate frame",				MOD_CONTROL,	'D',			ID_MODULE_DUPLICATEFRAME},
+	{"Insert frame",				MOD_NONE,		0,				ID_FRAME_INSERT},
+	{"Remove frame",				MOD_NONE,		0,				ID_FRAME_REMOVE},
+	{"Reverse",						MOD_CONTROL,	'R',			ID_EDIT_REVERSE},
 };
 
-const int ACCEL_COUNT = 26;		// Don't forget to update this
+const int ACCEL_COUNT = sizeof(DEFAULT_TABLE) / sizeof(stAccelEntry);
 
 stAccelEntry EntriesTable[ACCEL_COUNT];
+
+//char *GetKeyName(int Key)
 
 CAccelerator::CAccelerator()
 {
@@ -186,20 +192,6 @@ char *CAccelerator::GetKeyName(int Item)
 
 char *CAccelerator::EnumKeyNames(int Index)
 {
-	/*
-	static char KeyName[255];
-	int ScanCode = MapVirtualKey(Index, 0);
-
-	if (ScanCode > 64)
-		return "";
-
-	GetKeyNameText(ScanCode << 16, KeyName, 255);
-
-	if (strlen(KEY_NAMES[Index]) > 0)
-		return KeyName;
-	
-	return "";
-	*/
 	return (char*)KEY_NAMES[Index];
 }
 

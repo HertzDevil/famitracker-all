@@ -24,7 +24,6 @@
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "MIDI.h"
-#include "AboutBox.h"
 #include "SoundGen.h"
 #include "Accelerator.h"
 
@@ -168,8 +167,6 @@ BOOL CFamiTrackerApp::InitInstance()
 	pTrackerView	= (CFamiTrackerView*)pDoc->GetNextView(Pos);
 	pMainFrame		= (CMainFrame*)((pTrackerView)->GetParentFrame());
 
-	pTrackerView->SetSoundGen(m_pSoundGenerator);
-
 	pDocument	= pTrackerView->GetDocument();
 	pView		= pTrackerView;
 
@@ -283,9 +280,8 @@ void CFamiTrackerApp::ShutDownSynth()
 
 void CFamiTrackerApp::BufferUnderrun()
 {
-	pMainFrame->SetMessageText(
-		"Audio buffer underrun, sound settings could be too high for this system or CPU utilization is too high."
-		);
+	// Todo: move to string table
+	pMainFrame->SetMessageText("Audio buffer underrun, sound settings may be too high for this system or CPU utilization is too high.");
 }
 
 void CFamiTrackerApp::CheckSynth()
@@ -458,7 +454,11 @@ END_MESSAGE_MAP()
 // App command to run the dialog
 void CFamiTrackerApp::OnAppAbout()
 {
+	/*
 	CAboutBox aboutDlg;
+	aboutDlg.DoModal();
+	*/
+	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
 }
 
@@ -494,7 +494,7 @@ int CFamiTrackerApp::GetCPUUsage()
 
 void CFamiTrackerApp::MidiEvent(void)
 {
-	pTrackerView->PostMessage(WM_USER + 1);
+	pTrackerView->PostMessage(MSG_MIDI_EVENT);
 }
 
 BOOL CAboutDlg::OnInitDialog()
@@ -505,8 +505,9 @@ BOOL CAboutDlg::OnInitDialog()
 
 void CFamiTrackerApp::ReloadColorScheme(void)
 {
+	// Todo: Move CreateFont() to cview::update and reload_colors
 	((CFamiTrackerView*)pView)->CreateFont();
-	((CFamiTrackerView*)pView)->ForceRedraw();
+	((CFamiTrackerDoc*)pDocument)->UpdateAllViews(NULL, RELOAD_COLORS);
 	((CMainFrame*)(pView->GetParentFrame()))->SetupColors();
 }
 
@@ -581,16 +582,7 @@ CDocument *CFamiTrackerApp::GetFirstDocument()
 void CFamiTrackerApp::SetSoundChip(int Chip) 
 { 	
 	m_pSoundGenerator->SetupChannels(Chip); 
-
-	/*
-	POSITION Pos = pDocTemplate->GetFirstDocPosition();
-	CDocument *pDoc = pDocTemplate->GetNextDoc(Pos);
-	Pos	= pDoc->GetFirstViewPosition();
-	CView *pView = pDoc->GetNextView(Pos);
-	CMainFrame *pFrame = (CMainFrame*)pView->GetParentFrame();
-	pFrame->ResizeFrameWindow();
-	*/
-
+	
 	if (pMainFrame)
 		pMainFrame->ResizeFrameWindow();
 }

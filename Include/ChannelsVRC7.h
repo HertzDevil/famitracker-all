@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2007  Jonathan Liss
+** Copyright (C) 2005-2009  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,40 +18,28 @@
 ** must bear this legend.
 */
 
-#ifndef _CHANNEL_H_
-#define _CHANNEL_H_
-
-#include "mixer.h"
+#pragma once
 
 //
-// This class is used to derive the audio channels
+// Derived channels, VRC7
 //
 
-class CChannel
-{
+class CChannelHandlerVRC7 : public CChannelHandler {
 public:
-	CChannel() {
-		FrameCycles = 0;
-		LastValue	= 0;
-	};
-
-	// Begin a new audio frame
-	inline void EndFrame() {
-		FrameCycles = 0;
-	}
-
+	void ProcessChannel();
+	void PlayNote(stChanNote *NoteData, int EffColumns);
 protected:
-	inline void AddMixer(int32 Value) {
-		if (LastValue == Value)
-			return;
-		Mixer->AddValue(ChanId, Value, FrameCycles);
-		LastValue = Value;
-	};
-
-	CMixer		*Mixer;			// The mixer
-	uint32		FrameCycles;	// Cycle counter, resets every new frame
-	int32		LastValue;		// Last value sent to mixer
-	uint16		ChanId;			// This channels unique ID
+	unsigned char m_iChannel;
+	unsigned char m_iPatch;
 };
 
-#endif /* _CHANNEL_H_ */
+class CVRC7Channel : public CChannelHandlerVRC7 {
+public:
+	CVRC7Channel() { m_iChannelID = 5; m_bEnabled = false; };
+	void RefreshChannel();
+	void ChannelIndex(int Channel) {m_iChannel = Channel; m_iChannelID = 5 + Channel; };
+protected:
+	void ClearRegisters();
+private:
+	void RegWrite(unsigned char Reg, unsigned char Value);
+};

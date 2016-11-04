@@ -21,7 +21,6 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ConfigGeneral.h"
-#include "..\include\configgeneral.h"
 
 // CConfigGeneral dialog
 
@@ -49,15 +48,16 @@ BEGIN_MESSAGE_MAP(CConfigGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_OPT_KEYREPEAT, OnBnClickedOptKeyrepeat)
 	ON_BN_CLICKED(IDC_STYLE1, OnBnClickedStyle1)
 	ON_BN_CLICKED(IDC_STYLE2, OnBnClickedStyle2)
+	ON_BN_CLICKED(IDC_STYLE3, OnBnClickedStyle3)
 	ON_BN_CLICKED(IDC_OPT_HEXROW, OnBnClickedOptHexadecimal)
 	ON_BN_CLICKED(IDC_OPT_FRAMEPREVIEW, OnBnClickedOptFramepreview)
 	ON_BN_CLICKED(IDC_OPT_NODPCMRESET, OnBnClickedOptNodpcmreset)
-	ON_BN_CLICKED(IDC_STYLE3, OnBnClickedStyle3)
 	ON_CBN_EDITUPDATE(IDC_PAGELENGTH, OnCbnEditupdatePagelength)
 	ON_CBN_SELENDOK(IDC_PAGELENGTH, OnCbnSelendokPagelength)
 	ON_BN_CLICKED(IDC_OPT_NOSTEPMOVE, OnBnClickedOptNostepmove)
 	ON_BN_CLICKED(IDC_OPT_PATTENRCOLORS, OnBnClickedOptPattenrcolors)
 	ON_BN_CLICKED(IDC_OPT_PULLUPDELETE, OnBnClickedOptPullupdelete)
+	ON_BN_CLICKED(IDC_OPT_BACKUPS, OnBnClickedOptBackups)
 END_MESSAGE_MAP()
 
 
@@ -79,6 +79,7 @@ BOOL CConfigGeneral::OnSetActive()
 	CheckDlgButton(IDC_STYLE3, m_iEditStyle == EDIT_STYLE3);
 	CheckDlgButton(IDC_OPT_PATTENRCOLORS, m_bPatternColors);
 	CheckDlgButton(IDC_OPT_PULLUPDELETE, m_bPullUpDelete);
+	CheckDlgButton(IDC_OPT_BACKUPS, m_bBackups);
 	SetDlgItemInt(IDC_PAGELENGTH, m_iPageStepSize, FALSE);
 	return CPropertyPage::OnSetActive();
 }
@@ -143,12 +144,20 @@ BOOL CConfigGeneral::OnApply()
 	theApp.m_pSettings->General.iPageStepSize	= m_iPageStepSize;
 	theApp.m_pSettings->General.bPatternColor	= m_bPatternColors;
 	theApp.m_pSettings->General.bPullUpDelete	= m_bPullUpDelete;
+	theApp.m_pSettings->General.bBackups		= m_bBackups;
+
+	theApp.m_pSettings->Keys.iKeyNoteCut		= m_iKeyNoteCut;
+	theApp.m_pSettings->Keys.iKeyNoteRelease	= m_iKeyNoteRelease;
+	theApp.m_pSettings->Keys.iKeyClear			= m_iKeyClear;
+	theApp.m_pSettings->Keys.iKeyRepeat			= m_iKeyRepeat;
 
 	return CPropertyPage::OnApply();
 }
 
 BOOL CConfigGeneral::OnInitDialog()
 {
+	char Text[64];
+
 	CPropertyPage::OnInitDialog();
 
 	m_bWrapCursor		= theApp.m_pSettings->General.bWrapCursor;
@@ -164,6 +173,21 @@ BOOL CConfigGeneral::OnInitDialog()
 	m_iPageStepSize		= theApp.m_pSettings->General.iPageStepSize;
 	m_bPatternColors	= theApp.m_pSettings->General.bPatternColor;
 	m_bPullUpDelete		= theApp.m_pSettings->General.bPullUpDelete;
+	m_bBackups			= theApp.m_pSettings->General.bBackups;
+
+	m_iKeyNoteCut = theApp.m_pSettings->Keys.iKeyNoteCut; 
+	m_iKeyNoteRelease = theApp.m_pSettings->Keys.iKeyNoteRelease; 
+	m_iKeyClear = theApp.m_pSettings->Keys.iKeyClear; 
+	m_iKeyRepeat = theApp.m_pSettings->Keys.iKeyRepeat;
+
+	GetKeyNameText(MapVirtualKey(m_iKeyNoteCut, MAPVK_VK_TO_VSC) << 16, Text, 64);
+	SetDlgItemText(IDC_KEY_NOTE_CUT, Text);
+	GetKeyNameText(MapVirtualKey(m_iKeyNoteRelease, MAPVK_VK_TO_VSC) << 16, Text, 64);
+	SetDlgItemText(IDC_KEY_NOTE_RELEASE, Text);
+	GetKeyNameText(MapVirtualKey(m_iKeyClear, MAPVK_VK_TO_VSC) << 16, Text, 64);
+	SetDlgItemText(IDC_KEY_CLEAR, Text);
+	GetKeyNameText(MapVirtualKey(m_iKeyRepeat, MAPVK_VK_TO_VSC) << 16, Text, 64);
+	SetDlgItemText(IDC_KEY_REPEAT, Text);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -223,6 +247,12 @@ void CConfigGeneral::OnBnClickedOptPullupdelete()
 	SetModified();
 }
 
+void CConfigGeneral::OnBnClickedOptBackups()
+{
+	m_bBackups = IsDlgButtonChecked(IDC_OPT_BACKUPS) != 0;
+	SetModified();
+}
+
 void CConfigGeneral::OnCbnEditupdatePagelength()
 {
 	SetModified();
@@ -231,4 +261,44 @@ void CConfigGeneral::OnCbnEditupdatePagelength()
 void CConfigGeneral::OnCbnSelendokPagelength()
 {
 	SetModified();
+}
+
+BOOL CConfigGeneral::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN) {
+		char Text[64];
+		int id = GetFocus()->GetDlgCtrlID();
+
+		if (pMsg->wParam == 27) {	// ESC
+			pMsg->wParam = 0;
+			pMsg->lParam = 0;
+		}
+
+		GetKeyNameText(pMsg->lParam, Text, 64);
+
+		switch (id) {
+			case IDC_KEY_NOTE_CUT:
+				m_iKeyNoteCut = pMsg->wParam;
+				SetDlgItemText(id, Text);
+				break;
+			case IDC_KEY_NOTE_RELEASE:
+				m_iKeyNoteRelease = pMsg->wParam;
+				SetDlgItemText(id, Text);
+				break;
+			case IDC_KEY_CLEAR:
+				m_iKeyClear = pMsg->wParam;
+				SetDlgItemText(id, Text);
+				break;
+			case IDC_KEY_REPEAT:
+				m_iKeyRepeat = pMsg->wParam;
+				SetDlgItemText(id, Text);
+				break;
+		}
+
+		SetModified();
+
+		return TRUE;
+	}
+
+	return CPropertyPage::PreTranslateMessage(pMsg);
 }

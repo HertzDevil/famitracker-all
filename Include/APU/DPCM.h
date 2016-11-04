@@ -45,6 +45,9 @@ public:
 	void	Process(uint32 Time);
 	void	Reload();
 
+	uint8	GetSamplePos() { return  (m_iDMA_Address - (m_iDMA_LoadReg << 6 | 0x4000)) >> 6; };
+	uint8	GetDeltaCounter() { return m_iDeltaCounter; };
+
 private:
 	static const uint16	DMC_FREQ_NTSC[];
 	static const uint16	DMC_FREQ_PAL[];

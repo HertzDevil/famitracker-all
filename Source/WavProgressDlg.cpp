@@ -143,7 +143,7 @@ void CWavProgressDlg::OnTimer(UINT_PTR nIDEvent)
 
 	SetDlgItemText(IDC_PROGRESS_LBL, Text);
 
-	Text.Format("%02i:%02i", (Time / 60), (Time % 60));
+	Text.Format("Elapsed time: %02i:%02i", (Time / 60), (Time % 60));
 	SetDlgItemText(IDC_TIME, Text);
 
 	pProgressBar->SetPos(PercentDone);

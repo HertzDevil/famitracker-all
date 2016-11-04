@@ -226,7 +226,9 @@ void blip_eq_t::generate( float* out, int count ) const
 	// apply (half of) hamming window
 	double to_fraction = pi / (count - 1);
 	for ( int i = count; i--; )
-		out [i] *= 0.54f - 0.46f * cosf( float(i * to_fraction) );
+		out [i] *= 0.53836f - 0.46164f * cosf( float(i * to_fraction) );
+		//out [i] *= 1.0f;
+		//out [i] *= 0.5f * (1.0f - cosf( float(i * to_fraction) ));
 }
 
 void Blip_Synth_::adjust_impulse()

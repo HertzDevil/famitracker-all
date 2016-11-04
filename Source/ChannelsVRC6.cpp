@@ -24,6 +24,7 @@
 #include "FamiTracker.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
+#include "ChannelsVRC6.h"
 
 void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 {
@@ -48,6 +49,21 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 		return;
 	}
 */
+
+	unsigned int Note, Octave;
+	unsigned int Volume;
+
+	Note		= pNoteData->Note;
+	Octave		= pNoteData->Octave;
+	Volume		= pNoteData->Vol;
+
+	if (Note == HALT || Note == RELEASE) {
+//		m_iInstrument	= MAX_INSTRUMENTS;
+		m_iInstrument	= LastInstrument;
+		Volume			= 0x10;
+		Octave			= 0;
+	}
+
 	// Evaluate effects
 	for (int n = 0; n < EffColumns; n++) {
 		int EffCmd	 = pNoteData->EffNumber[n];
@@ -68,7 +84,7 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 		}
 	}
 
-	if (LastInstrument != m_iInstrument || pNoteData->Note > 0) {
+	if (LastInstrument != m_iInstrument || Note > 0 && Note != HALT) {
 		// Setup instrument
 		for (int i = 0; i < MOD_COUNT; i++) {
 			ModEnable[i]	= pInst->GetModEnable(i);
@@ -79,23 +95,23 @@ void CChannelHandlerVRC6::PlayNote(stChanNote *pNoteData, int EffColumns)
 	}
 
 	// Get volume
-	if (pNoteData->Vol < 0x10)
-		m_iVolume = pNoteData->Vol << VOL_SHIFT;
+	if (Volume < 0x10)
+		m_iVolume = Volume << VOL_SHIFT;
 
-	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
-		m_iVolume = 0x0F << VOL_SHIFT;
+	if (Note == HALT || Note == RELEASE) {
+		//m_iVolume = 0x0F << VOL_SHIFT;
 		KillChannel();
 		return;
 	}
 
 	// No note
-	if (!pNoteData->Note)
+	if (!Note)
 		return;
 
 	// Get the note
-	RunNote(pNoteData->Octave, pNoteData->Note);
+	RunNote(Octave, Note);
 
-	m_iNote		 = MIDI_NOTE(pNoteData->Octave, pNoteData->Note);
+	m_iNote		 = MIDI_NOTE(Octave, Note);
 	m_iOutVol	 = 0xF;
 	m_cDutyCycle = m_iDefaultDuty;
 	m_bEnabled	 = true;
@@ -180,21 +196,14 @@ void CVRC6Square1::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+
 	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -230,21 +239,14 @@ void CVRC6Square2::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
+
 	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -279,31 +281,22 @@ void CVRC6Sawtooth::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
 	HiFreq = (Freq & 0xFF);
 	LoFreq = (Freq >> 8);
-//	Volume = (m_iOutVol - (0x0F - m_iVolume)) - TremVol | (m_cDutyCycle << 4);
+
 	Volume = (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
-	Volume = (Volume << 1) | (m_cDutyCycle << 4);
+	Volume = (Volume << 1) | ((m_cDutyCycle & 1) << 5);
 
 	if (Volume < 0)
 		Volume = 0;
 	if (Volume > 63)
 		Volume = 63;
-
-	//Volume = 63;
 
 	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;

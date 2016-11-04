@@ -22,7 +22,6 @@ BEGIN_MESSAGE_MAP(CDialogReBar, CDialogBar)
 	ON_WM_ERASEBKGND()
 	ON_WM_MOVE()
 	ON_WM_CTLCOLOR()
-	ON_NOTIFY(UDN_DELTAPOS, IDC_HIGHLIGHTSPIN, OnDeltaposHighlight)
 END_MESSAGE_MAP()
 
 
@@ -62,18 +61,18 @@ HBRUSH CDialogReBar::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-void CDialogReBar::OnDeltaposHighlight(NMHDR *pNMHDR, LRESULT *pResult)
+BOOL CDialogReBar::Create(CWnd* pParentWnd, UINT nIDTemplate, UINT nStyle, UINT nID)
 {
-	int Value = GetDlgItemInt(IDC_HIGHLIGHT, 0, 0) - ((NMUPDOWN*)pNMHDR)->iDelta;
-	
-	if (Value < 1)
-		Value = 1;
-	if (Value > 32)	// hard coded
-		Value = 32;
+	CSpinButtonCtrl *Spin;
 
-	SetDlgItemInt(IDC_HIGHLIGHT, Value, 0);
-	
-	CDocument *pDoc = theApp.GetFirstDocument();
-	POSITION Pos = pDoc->GetFirstViewPosition();
-	pDoc->GetNextView(Pos)->RedrawWindow();
+	if (!CDialogBar::Create(pParentWnd, nIDTemplate, nStyle, nID))
+		return FALSE;
+
+	Spin = (CSpinButtonCtrl*)GetDlgItem(IDC_HIGHLIGHTSPIN1);
+	Spin->SetRange(0, 32);
+
+	Spin = (CSpinButtonCtrl*)GetDlgItem(IDC_HIGHLIGHTSPIN2);
+	Spin->SetRange(0, 32);
+
+	return TRUE;
 }

@@ -69,7 +69,7 @@ const unsigned char CMD_EFF_VOL_SLIDE	= DEF_CMD(20);
 const unsigned char CMD_SET_DURATION	= DEF_CMD(21);	// AAh
 const unsigned char CMD_RESET_DURATION	= DEF_CMD(22);	// ACh
 
-//const unsigned char CMD_LOOP_POINT		= DEF_CMD(17);
+const unsigned char CMD_LOOP_POINT		= DEF_CMD(23);
 
 #define OPTIMIZE_DURATIONS		// Remove note durations when possible
 #define QUICK_INST				// Remove instrument switch command for instrument 0 - 15
@@ -506,17 +506,41 @@ void CPattCompiler::DispatchZeroes()
 	m_iZeroes = 0;
 }
 
-int CPattCompiler::GetBlockSize(int Position)		// omg hax!
+// Returns the size of the block at 'position' in the data array. A block is ended by a note
+int CPattCompiler::GetBlockSize(int Position)
 {
 	unsigned char data;
-	unsigned int Pos = Position;
+	unsigned int Pos = Position, i;
+
+	int iDuration = 1;
+
+	// Find if note duration optimization is on
+	for (i = 0; i < unsigned(Position); i++) {
+		if (m_pData[i] == CMD_SET_DURATION)
+			iDuration = 0;
+		else if (m_pData[i] == CMD_RESET_DURATION)
+			iDuration = 1;
+	}
+
 	for (; Pos < m_iDataPointer; Pos++) {
 		data = m_pData[Pos];
-		if (data < 0x80)		// Note
-			return (Pos + 1) - Position;
-		else
-			Pos++;				// Command, skip param
-		Pos++;
+		if (data < 0x80) {		// Note
+			//int size = (Pos + 1 + iDuration) - Position;
+			int size = (Pos - Position);
+//			if (size > 1)
+//				return size - 1;
+
+			return size + 1 + iDuration;// (Pos + 1 + iDuration) - Position;
+		}
+		else if (data == CMD_SET_DURATION)
+			iDuration = 0;
+		else if (data == CMD_RESET_DURATION)
+			iDuration = 1;
+		else {
+			if (data < 0xE0 || data > 0xEF)
+				Pos++;				// Command, skip parameter
+		}
+	//	Pos++;
 	}
 
 	// Error
@@ -545,20 +569,24 @@ void CPattCompiler::OptimizeString()
 	*/
 
 	// Always copy first 2 bytes
-	memcpy(m_pCompressedData, m_pData, 2);
-	m_iCompressedDataPointer += 2;
+//	memcpy(m_pCompressedData, m_pData, 2);
+//	m_iCompressedDataPointer += 2;
+
 	if (m_pData[0] == 0x80)
 		last_inst = m_pData[1];
 	else
 		last_inst = 0;
 
 	// Loop from start
-	for (i = 2; i < m_iDataPointer; /*i += 2*/) {
+	for (i = 0; i < m_iDataPointer; /*i += 2*/) {
 
 		best_matches = 0;
 
+		// Instrument
 		if (m_pData[i] == 0x80)
 			last_inst = m_pData[i + 1];
+		else if (m_pData[i] >= 0xE0 && m_pData[i] <= 0xEF)
+			last_inst = m_pData[i & 0xF];
 
 		// Start checking from the first tuple
 		for (l = GetBlockSize(i); l < (m_iDataPointer - i); /*l += 2*/) {
@@ -592,19 +620,19 @@ void CPattCompiler::OptimizeString()
 			l += GetBlockSize(i + l);
 		}
 		// Compress
-		if (best_matches > 0 /*&& (best_length > 2 && best_matches > 1)*/) {
+		if ((best_matches > 1 && best_length > 4) || best_matches > 2 /*&& (best_length > 2 && best_matches > 1)*/) {
 			// Include the first one
 			best_matches++;
 			int size = best_length * best_matches;
 			//
-			// Last known instrument must also be added!!!
+			// Last known instrument must also be added
 			//
 			memcpy(m_pCompressedData + m_iCompressedDataPointer, m_pData + i, best_length);
 			m_iCompressedDataPointer += best_length;
-			// Define a loop point: 0xFF (number of bytes) (number of loops)
-			m_pCompressedData[m_iCompressedDataPointer++] = 0xff;//CMD_LOOP_POINT;
+			// Define a loop point: 0xFF (number of loops) (number of bytes)
+			m_pCompressedData[m_iCompressedDataPointer++] = CMD_LOOP_POINT;
+			m_pCompressedData[m_iCompressedDataPointer++] = best_matches - 1;	// the nsf code sees one less
 			m_pCompressedData[m_iCompressedDataPointer++] = best_length;
-			m_pCompressedData[m_iCompressedDataPointer++] = best_matches;
 			i += size;
 		}
 		else {

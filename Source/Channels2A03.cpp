@@ -20,10 +20,12 @@
 
 // This file handles playing of 2A03 channels
 
+#include <cmath>
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "SoundGen.h"
 #include "ChannelHandler.h"
+#include "Channels2A03.h"
 
 void CChannelHandler2A03::PlayNote(stChanNote *NoteData, int EffColumns)
 {
@@ -251,21 +253,15 @@ void CSquare1Chan::RefreshChannel()
 	unsigned char LastLoFreq/*, LastHiFreq*/;
 
 	char DutyCycle;
-	unsigned int Volume, Freq, VibFreq, TremVol;
+	int Volume, Freq, TremVol;
+
+	int VibFreq;
 
 //	if (!m_bEnabled)
 //		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-	//VibFreq = sinf(m_iVibratoPhase / 2) * 10;
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
@@ -274,16 +270,10 @@ void CSquare1Chan::RefreshChannel()
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
-//	LastHiFreq	= (m_iLastFrequency & 0xFF);
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
 	DutyCycle	= (m_cDutyCycle & 0x03);
-//	Volume		= (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
-
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-//	if (m_iVolume > 0 && m_iOutVol > 0 && Volume == 0)
-//		Volume = 1;
 
 	if (Volume < 0)
 		Volume = 0;
@@ -335,7 +325,7 @@ void CSquare1Chan::ClearRegisters()
 void CSquare2Chan::RefreshChannel()
 {
 	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq/*, LastHiFreq*/;
+	unsigned char LastLoFreq;
 
 	char DutyCycle;
 	int Volume, Freq, VibFreq, TremVol;
@@ -343,15 +333,8 @@ void CSquare2Chan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
@@ -361,7 +344,6 @@ void CSquare2Chan::RefreshChannel()
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
 	DutyCycle	= (m_cDutyCycle & 0x03);
-//	Volume		= (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -372,8 +354,6 @@ void CSquare2Chan::RefreshChannel()
 	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;
 
-//	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-//		Volume = 1;
 
 	m_iLastFrequency = Freq;
 
@@ -423,10 +403,7 @@ void CTriangleChan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
+	VibFreq = GetVibrato();
 
 	Freq	= m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 	HiFreq	= (Freq & 0xFF);
@@ -464,15 +441,8 @@ void CNoiseChan::RefreshChannel()
 	if (!m_bEnabled)
 		return;
 
-	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-
-	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
-
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
+	VibFreq = GetVibrato();
+	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + (0x80 - m_iFinePitch);
 
@@ -482,7 +452,6 @@ void CNoiseChan::RefreshChannel()
 	LastLoFreq	= (m_iLastFrequency >> 8);
 
 	NoiseMode	= (m_cDutyCycle & 0x01) << 7;
-//	Volume		= (m_iOutVol - (0x0F - m_iVolume)) - TremVol;
 	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	if (Volume < 0)
@@ -515,8 +484,6 @@ unsigned int CNoiseChan::TriggerNote(int Note)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DPCM
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-int m_iOffset;
 
 void CDPCMChan::RefreshChannel()
 {
@@ -552,6 +519,7 @@ void CDPCMChan::ClearRegisters()
 	m_pAPU->Write(0x4012, 0);
 	m_pAPU->Write(0x4013, 0);
 
+	m_cDAC = 0;
 	m_iOffset = 0;
 }
 

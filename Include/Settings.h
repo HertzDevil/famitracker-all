@@ -73,6 +73,7 @@ public:
 		CString	strFont;
 		bool	bPatternColor;
 		bool	bPullUpDelete;
+		bool	bBackups;
 	} General;
 
 	CString	strDevice;
@@ -100,8 +101,10 @@ public:
 	struct {
 		int		iColBackground;
 		int		iColBackgroundHilite;
+		int		iColBackgroundHilite2;
 		int		iColPatternText;
 		int		iColPatternTextHilite;
+		int		iColPatternTextHilite2;
 		int		iColPatternInstrument;
 		int		iColPatternVolume;
 		int		iColPatternEffect;
@@ -116,6 +119,15 @@ public:
 		int		iBottom;
 		int		iState;
 	} WindowPos;
+
+	struct {
+		int		iKeyNoteCut;
+		int		iKeyNoteRelease;
+		int		iKeyClear;
+		int		iKeyRepeat;
+	} Keys;
+
+	int SampleWinState;
 
 private:
 	CString Paths[PATH_COUNT];

@@ -41,28 +41,33 @@
             <br />Octave
     can be changed either by F2 (octave 0) to F9 (octave 7), or stepped up and down
     with numpad keys '/' and '*'.<br />
+            <br />
         </li>
         <li>
             <strong>Instrument column<br /></strong>The instrument to use. Selected instrument is automatically inserted unless
     the instrument mask option is selected.<br />If cleared then the last instrument is 
-            used.</li>
+            used.<br />
+            <br />
+        </li>
         <li>
             <strong>Volume column</strong><br />Sets the volume for a channel, range 0 - F. 
             Works only in square and noise-channels.
+            <br />
+            <br />
             </li>
         <li>
             <strong>Channel effects<br /></strong>Used for channel effects. Format is 
             <strong>Yxx</strong>, where <strong>Y</strong>
-    = effect number and <strong>xx</strong> = effect parameter.
+    = effect letter and <strong>xx</strong> = effect parameter.
             <br />Additional effect-columns can be used by clicking the arrows in the channel header.<br />
             <a href="effect_list.htm">See this page for available effects.</a>
             <br /></li>
     </ul>
-    <strong><span class="style1">Toolbars</span><br />
+    <strong><span class="style1">Toolbar</span><br />
     <br />
     <img id="Img3" src="img/toolbar1.png" style="font-size: 10pt" alt=""/><br />
-    <br /></strong>The buttons are in order<br />
-    <table id="Table1" border="1" cellpadding="2" cellspacing="0" style="font-size: 9pt; font-family: Arial">
+    <br /></strong>The buttons are in order:<br />
+    <table id="Table1" border="1" cellpadding="2" cellspacing="2" border="1" style="background-color:ghostwhite; font-size: 9pt; font-family: Arial; border-collapse: collapse">
         <tr>
             <td class="style2">New</td>
             <td>New module</td>
@@ -96,22 +101,6 @@
             <td>Help button</td>
         </tr>
         <tr>
-            <td class="style2">Play</td>
-            <td>Play the module</td>
-        </tr>
-        <tr>
-            <td class="style2">Play pattern</td>
-            <td>Play and loop selected pattern</td>
-        </tr>
-        <tr>
-            <td class="style2">Stop</td>
-            <td>Stop player</td>
-        </tr>
-        <tr>
-            <td class="style2">Record</td>
-            <td>Record/normal mode</td>
-        </tr>
-        <tr>
             <td class="style2">Add frame</td>
             <td>Add a new frame</td>
         </tr>
@@ -126,6 +115,26 @@
         <tr>
             <td class="style2">Move frame up</td>
             <td>Move selected frame up one step</td>
+        </tr>
+        <tr>
+            <td class="style2">Duplicate frame</td>
+            <td>Inserts a copy of selected frame</td>
+        </tr>
+        <tr>
+            <td class="style2">Play</td>
+            <td>Play the module</td>
+        </tr>
+        <tr>
+            <td class="style2">Play pattern</td>
+            <td>Play and loop selected pattern</td>
+        </tr>
+        <tr>
+            <td class="style2">Stop</td>
+            <td>Stop player</td>
+        </tr>
+        <tr>
+            <td class="style2">Record</td>
+            <td>Record/normal mode</td>
         </tr>
         <tr>
             <td class="style2">Previous song</td>
@@ -147,6 +156,18 @@
             <td class="style2">Octave</td>
             <td>Selected octave</td>
         </tr>
+        <tr>
+            <td class="style2">Follow mode</td>
+            <td>Enable/disable follow mode</td>
+        </tr>
+        <tr>
+            <td class="style2">Row highlight</td>
+            <td>Steps between highlighted rows</td>
+        </tr>
+        <tr>
+            <td class="style2">2nd highlight</td>
+            <td>Steps between second row highlight</td>
+        </tr>
     </table>
     <br />
     <br />
@@ -163,15 +184,17 @@
         128 available pattern slots for each channel, and the patterns aren't shared across
         the channels. 128 frames can be used.<br />
         <br />
-    </span>To switch pattern, press the "+" - or "-" buttons or "+" &amp; "-" keys in
-    the pattern editor. If "change all" is checked, all channels will switch. To move
-    between frames in the pattern editor, use Ctrl+Right and Ctrl+Left.<br />
+    </span>To switch pattern, press the <b>"+" </b>- or <b>"-"</b> buttons or <b>"+"</b> &amp; 
+    <b>"-"</b> keys in
+    the pattern editor. If <b>"change all"</b> is checked, all channels will switch. To move
+    between frames in the pattern editor, use Ctrl+Right and Ctrl+Left. You can 
+    enter values manually by double-clicking the window.<br />
     <br />
     <br />
     <strong>Song settings &amp; edit settings<br />
         <br />
     </strong>Song settings is default play speed &amp; tempo, number
-    of rows and frames in the song. Numbers can be entered manually by double-clicking the boxes.<br />
+    of rows and frames in the song. Double-click the boxes to enter a value.<br />
     <br />
     Speed and tempo can also be changed by using pattern command <b>Fxx</b>. The real BPM
     tempo is calculated by the formula <strong>(6 * Tempo) / Speed</strong>, which means that the

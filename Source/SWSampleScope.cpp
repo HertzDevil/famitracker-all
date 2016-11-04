@@ -14,7 +14,7 @@ void CSWSampleScope::Activate()
 	memset(&bmi, 0, sizeof(BITMAPINFO));
 	bmi.bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biBitCount	= 32;
-	bmi.bmiHeader.biHeight		= -WIN_HEIGHT;
+	bmi.bmiHeader.biHeight		= WIN_HEIGHT;
 	bmi.bmiHeader.biWidth		= WIN_WIDTH;
 	bmi.bmiHeader.biPlanes		= 1;
 
@@ -39,9 +39,15 @@ void CSWSampleScope::SetSampleData(int *pSamples, unsigned int iCount)
 
 void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 {
+	/*
 	int GraphColor		= theApp.m_pSettings->Appearance.iColPatternText;
 	int GraphColor2		= DIM(theApp.m_pSettings->Appearance.iColPatternText, 50);
 	int GraphBgColor	= theApp.m_pSettings->Appearance.iColBackground;
+	*/
+
+	int GraphColor		= 0xFFFFFF;
+	int GraphColor2		= DIM(GraphColor, 50);
+	int GraphBgColor	= 0x000000;
 
 	unsigned int i = 0;
 

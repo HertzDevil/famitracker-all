@@ -68,6 +68,8 @@ void CChannelHandler::MakeSilent()
 //	m_iLastFrequency	= 0xFFFF;
 	m_bDelayEnabled		= false;
 
+	m_iDefaultDuty		= 0;
+
 	KillChannel();
 }
 
@@ -314,4 +316,33 @@ bool CChannelHandler::CheckNote(stChanNote *pNoteData, int InstrumentType)
 		return false;
 
 	return true;
+}
+
+int CChannelHandler::GetVibrato()
+{
+	// Vibrato offset
+	int VibFreq;
+
+//	VibFreq = sinf(float(m_iVibratoPhase) / 10.0f) * float(m_iVibratoDepth);
+
+	
+	VibFreq	= m_pcVibTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
+	if ((m_iVibratoDepth & 1) == 0)
+		VibFreq -= (VibFreq >> 1);
+
+		
+	return VibFreq;
+}
+
+int CChannelHandler::GetTremolo()
+{
+	// Tremolo offset
+	int TremVol;
+
+	TremVol	= (m_pcVibTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
+
+	if ((m_iTremoloDepth & 1) == 0)
+		TremVol -= (TremVol >> 1);
+
+	return TremVol;
 }
