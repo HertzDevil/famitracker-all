@@ -4,43 +4,42 @@
 		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
 	</HEAD>
 	<BODY>
-		<H2><FONT face="Verdana">Importing&nbsp;DPCM samples</FONT></H2>
-		<P><FONT face="Verdana" size="2">It is possible to import wave files (PCM) and convert 
+		<P><FONT face="Arial" size="4"><strong><span style="FONT-SIZE: 16pt; COLOR: #660099">Importing DPCM samples</span></strong></FONT>&nbsp;
+		</P>
+		<hr>
+		<P><FONT face="Arial" size="2">It is possible to import wave files (PCM) and convert 
 				them&nbsp;to 1-bit DPCM samples. The format of PCM-samples should not&nbsp;care 
 				(but it must be raw PCM). Choose import in the DPCM instruments dialog, select 
 				a file and a new dialog will come up where you choose quality and volume.</FONT></P>
-		<H3><FONT face="Verdana">Options</FONT></H3>
-		<P><FONT size="2"><FONT face="Verdana"><STRONG>Quality</STRONG> <EM>(1 - 16)</EM></FONT></FONT></P>
-		<FONT size="2"><FONT face="Verdana">
-				<UL>
-					<LI>
-						<STRONG>16</STRONG>
-					- Play the sample at normal speed using the highest pitch (15)
-					<LI>
-						<STRONG>1</STRONG>
-				-&nbsp;Play the sample at normal speed using the lowest pitch (0)</FONT></FONT></LI></UL>
-		<P><FONT size="2"><FONT face="Verdana"><STRONG>Volume</STRONG> <EM>(1 - 32)<BR>
-					</EM>Sets the&nbsp;volume level. Higher levels will&nbsp;remove noise.</FONT></FONT></P>
-		<P><FONT size="2"><FONT face="Verdana"><STRONG>Click-elimination </STRONG>
-					<BR>
-					The volume of triangle and noise&nbsp;is decreased when a DPCM sample is 
-					playing, these two options will help&nbsp;restoring the volume after&nbsp;the 
-					sample is&nbsp;finished without causing a click.</FONT></FONT><FONT size="2"><FONT face="Verdana"></P>
+		<H3><FONT face="Arial" size="3">Options</FONT></H3>
+		<P><FONT face="Arial"><FONT size="2"><STRONG>Quality -</STRONG></FONT></FONT><FONT face="Arial" size="2">This 
+				is related to the pitch setting in the DPCM instrument editor,&nbsp;use the 
+				same to play the sample at&nbsp;original pitch.&nbsp;Quality of 15 will give 
+				best result, but samples can only be&nbsp;a little less then one second.</FONT></P>
+		<P><FONT face="Arial"><FONT size="2"><STRONG>Volume -</STRONG></FONT> </FONT><FONT face="Arial">
+				<FONT size="2">Sets the&nbsp;conversion volume level, higher 
+					levels&nbsp;helps&nbsp;removing noise.</FONT></FONT></P>
+		<P><FONT face="Arial"><FONT size="2"><STRONG>Click-elimination - </STRONG>The volume of 
+					triangle and noise&nbsp;is decreased when a DPCM sample is playing and can be 
+					restored with a note-off in the DPCM channel, but this will normally result in 
+					an audible click-sound. </FONT></FONT><FONT face="Arial"><FONT size="2">These 
+					two options will help&nbsp;restoring the volume after&nbsp;the sample 
+					is&nbsp;finished without causing a click:</FONT></FONT></P>
 		<UL>
 			<LI>
-				<STRONG>Restore delta counter -&nbsp;</STRONG>Restores the&nbsp;channels 
-			delta counter&nbsp;by adding zeroes after the sample. Could cause a small echo.
+				<FONT face="Arial"><FONT size="2"><STRONG>Restore delta counter -&nbsp;</STRONG>Restores 
+						the&nbsp;channels delta counter&nbsp;by adding zeroes after the sample. Could 
+						cause a small echo-like sound.</FONT> </FONT>
 			<LI>
-				<STRONG>Clip sample</STRONG> <STRONG>- </STRONG>Cuts the 
-				avaliable&nbsp;volume-range&nbsp;for the sample and leaves it at zero after 
-				end. Decreases&nbsp;volume&nbsp;and distorts the&nbsp;sample.<BR>
-				<BR>
-				What's best depends on the sample. If no option is choosen, a 
-				note-off&nbsp;will restore&nbsp;full volume (with a pop as 
-				result).</FONT></FONT></LI></UL>
-		<P><FONT face="Verdana" size="2">Max size of DPCM samples are 3.9 kB, at best 
-				quality&nbsp;(33 kHz) it's a little less than one second and lowest quality (4 
-				kHz)&nbsp;about eight seconds.</FONT>
+				<FONT face="Arial"><FONT size="2"><STRONG>Clip sample</STRONG> <STRONG>- </STRONG>Cuts 
+						the avaliable&nbsp;volume-range&nbsp;for the sample and leaves the delta 
+						counter near zero after end. Decreases&nbsp;volume&nbsp;and heavily distorts 
+						the&nbsp;sample.</FONT></FONT></LI></UL>
+		<P><FONT face="Arial"><FONT size="2">What's best depends on the sample, most likely is that 
+					you won't use any option.</FONT></FONT></P>
+		<P><FONT face="Verdana"><FONT size="2"><FONT face="Arial">Max size of DPCM samples are 3.9 kB, 
+						at quality 15&nbsp;(33 kHz) it's a little less than one second and lowest 
+						quality (4 kHz)&nbsp;about eight seconds</FONT>.</FONT></FONT>
 		</P>
 	</BODY>
 </HTML>

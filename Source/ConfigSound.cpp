@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include "FamiTracker.h"
 #include "ConfigSound.h"
 #include "SoundGen.h"
+#include "..\include\configsound.h"
 
 
 // CConfigSound dialog
@@ -59,7 +60,7 @@ BOOL CConfigSound::OnInitDialog()
 	CString Text;
 
 	CComboBox	*SampleRate, *SampleSize, *Devices;
-	CSliderCtrl	*Slider, *BassSlider, *TrebleSliderFreq, *TrebleSliderDamping;
+	CSliderCtrl	*Slider, *BassSlider, *TrebleSliderFreq, *TrebleSliderDamping, *VolumeSlider;
 
 	SampleRate	= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLE_RATE));
 	SampleSize	= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLE_SIZE));
@@ -69,6 +70,7 @@ BOOL CConfigSound::OnInitDialog()
 	BassSlider			= (CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ);
 	TrebleSliderFreq	= (CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ);
 	TrebleSliderDamping = (CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP);
+	VolumeSlider		= (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
 
 	SampleRate->AddString("48 000 Hz");
 	SampleRate->AddString("44 100 Hz");
@@ -100,10 +102,12 @@ BOOL CConfigSound::OnInitDialog()
 	BassSlider->SetRange(16, 4000);
 	TrebleSliderFreq->SetRange(20, 20000);
 	TrebleSliderDamping->SetRange(0, 90);
+	VolumeSlider->SetRange(0, 100);
 
 	BassSlider->SetPos(theApp.m_pSettings->Sound.iBassFilter);
 	TrebleSliderFreq->SetPos(theApp.m_pSettings->Sound.iTrebleFilter);
 	TrebleSliderDamping->SetPos(theApp.m_pSettings->Sound.iTrebleDamping);
+	VolumeSlider->SetPos(theApp.m_pSettings->Sound.iMixVolume);
 
 	Text.Format("%i Hz", ((CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ))->GetPos());
 	SetDlgItemText(IDC_BASS_FREQ_T, Text);
@@ -113,6 +117,9 @@ BOOL CConfigSound::OnInitDialog()
 
 	Text.Format("-%i dB", ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos());
 	SetDlgItemText(IDC_TREBLE_DAMP_T, Text);
+
+	Text.Format("%i %%", ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos());
+	SetDlgItemText(IDC_VOLUME_T, Text);
 
 	CDSound *pDSound = reinterpret_cast<CSoundGen*>(theApp.GetSoundGenerator())->GetSoundInterface();
 	unsigned int iCount = pDSound->GetDeviceCount();
@@ -141,6 +148,9 @@ void CConfigSound::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 	Text.Format("-%i dB", ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos());
 	SetDlgItemText(IDC_TREBLE_DAMP_T, Text);
+
+	Text.Format("%i %%", ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos());
+	SetDlgItemText(IDC_VOLUME_T, Text);
 
 	SetModified();
 
@@ -173,6 +183,7 @@ BOOL CConfigSound::OnApply()
 	theApp.m_pSettings->Sound.iBassFilter		= ((CSliderCtrl*)GetDlgItem(IDC_BASS_FREQ))->GetPos();
 	theApp.m_pSettings->Sound.iTrebleFilter		= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_FREQ))->GetPos();
 	theApp.m_pSettings->Sound.iTrebleDamping	= ((CSliderCtrl*)GetDlgItem(IDC_TREBLE_DAMP))->GetPos();
+	theApp.m_pSettings->Sound.iMixVolume		= ((CSliderCtrl*)GetDlgItem(IDC_VOLUME))->GetPos();
 
 	GetDlgItemText(IDC_DEVICES, theApp.m_pSettings->strDevice);
 

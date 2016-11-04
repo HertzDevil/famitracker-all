@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,7 +20,10 @@
 
 #pragma once
 
-const int MAX_ITEMS = MAX_SEQ_ITEMS * 3;
+const int MAX_ITEMS = MAX_SEQ_ITEMS * 2 - 2;
+
+const int SEQUENCE_EDIT_WIDTH = 540;
+const int SEQUENCE_EDIT_HEIGHT = 230;
 
 class CInstrumentSettings;
 
@@ -36,7 +39,7 @@ public:
 	CSequenceEditor();
 	virtual ~CSequenceEditor();
 
-	void SetCurrentSequence(int Type, stSequence *List);
+	void SetCurrentSequence(int Type, CSequence *List);
 	void DrawLine(int PosX, int PosY);
 	void CheckEditing(int PosX, int PosY);
 	void ChangeItems(int PosX, int PosY, bool Quick);
@@ -47,12 +50,12 @@ public:
 	CString CompileList();
 
 private:
-	stSequence *m_List;
+	CSequence *m_List;
 
 	int		m_iMax, m_iMin;
 	int		m_iSequenceType;
 	int		m_iSequenceItemCount;
-	int		m_iSequenceItems[MAX_ITEMS];
+//	int		m_iSequenceItems[MAX_ITEMS];
 	int		m_iLastValueX, m_iLastValueY;
 	int		m_iLoopPoint;
 	int		m_iEditing;
@@ -90,7 +93,6 @@ private:
 	void	DrawVolumeEditor();
 	void	DrawArpeggioEditor();
 	void	DrawPitchEditor();
-//	void	DrawHiPitchEditor();
 	void	DrawDutyEditor();
 
 	void	LoadPreset();
@@ -113,6 +115,7 @@ public:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, LPVOID lpParam = NULL);
+	afx_msg void OnTimer(UINT nIDEvent);
 };
 
 

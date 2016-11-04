@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,10 +21,8 @@
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "PatternWnd.h"
-
-static const int WINDOW_WIDTH	= 163;
-static const int WINDOW_HEIGHT	= 163;
 
 // CPatternWnd
 
@@ -55,8 +53,8 @@ void CPatternWnd::OnPaint()
 
 	// Do not call CWnd::OnPaint() for painting messages
 
-	CFamiTrackerDoc *pDoc = reinterpret_cast<CFamiTrackerDoc*>(theApp.pDocument);
-	CFamiTrackerView *pView = reinterpret_cast<CFamiTrackerView*>(theApp.pView);
+	CFamiTrackerDoc *pDoc = reinterpret_cast<CFamiTrackerDoc*>(theApp.GetDocument());
+	CFamiTrackerView *pView = reinterpret_cast<CFamiTrackerView*>(theApp.GetView());
 
 	CBrush	Brush, *OldBrush;
 	CPen	Pen, *OldPen;
@@ -88,7 +86,7 @@ void CPatternWnd::OnPaint()
 
 	DWORD dwVersion = GetVersion();
 
-	GetWindowRect(&WinRect);
+	GetClientRect(&WinRect);
 
 	if (!pDoc || !pView) {
 		dc.FillSolidRect(WinRect, 0);
@@ -98,8 +96,8 @@ void CPatternWnd::OnPaint()
 	if (!pDoc->IsFileLoaded())
 		return;
 
-	Width	= WinRect.right - WinRect.left - 19;
-	Height	= WinRect.bottom - WinRect.top - 19;
+	Width	= WinRect.right - WinRect.left;
+	Height	= WinRect.bottom - WinRect.top;
 
 	Bmp.CreateCompatibleBitmap(&dc, Width, Height);
 	dcBack.CreateCompatibleDC(&dc);
@@ -144,7 +142,7 @@ void CPatternWnd::OnPaint()
 	else
 		Nr = 0;
 	
-	dcBack.FillSolidRect(26 + (ActiveChannel * 20), (ItemsToDraw / 2) * 15 + 5, 20, 12, ColCursor);
+	dcBack.FillSolidRect(28 + (ActiveChannel * 20), (ItemsToDraw / 2) * 15 + 5, 20, 12, ColCursor);
 
 	unsigned int CurrentColor;
 
@@ -157,17 +155,9 @@ void CPatternWnd::OnPaint()
 				sprintf(Text, "%02X", Nr);
 			else
 				sprintf(Text, "%02i", Nr);
-
-			/*
-			if (i == m_iHiglightLine || m_iHiglightLine == -1)
-				dcBack.SetTextColor(ColTextHilite);
-			else
-				dcBack.SetTextColor(DIM(ColTextHilite, 90));
-				*/
-
+			
 			dcBack.SetTextColor(ColTextHilite);
-
-			dcBack.TextOut(4, i * 15 + 3, Text);
+			dcBack.TextOut(6, i * 15 + 3, Text);
 
 			if (i == m_iHiglightLine || m_iHiglightLine == -1)
 				CurrentColor = ColText;
@@ -178,16 +168,16 @@ void CPatternWnd::OnPaint()
 				if (pDoc->GetPatternAtFrame(Nr, c) == pDoc->GetPatternAtFrame(ActiveFrame, c))
 					dcBack.SetTextColor(CurrentColor);
 				else
-					dcBack.SetTextColor(DIM(CurrentColor, 80));
+					dcBack.SetTextColor(DIM(CurrentColor, 70));
 
 				sprintf(Text, "%02X", pDoc->GetPatternAtFrame(Nr, c));
-				dcBack.DrawText(Text, CRect(28 + c * 20, i * 15 + 3, 28 + c * 20 + 20, i * 15 + 3 + 20), DT_LEFT | DT_TOP | DT_NOCLIP);
+				dcBack.DrawText(Text, CRect(30 + c * 20, i * 15 + 3, 28 + c * 20 + 20, i * 15 + 3 + 20), DT_LEFT | DT_TOP | DT_NOCLIP);
 			}
 			Nr++;
 		}
 	}
 
-	dcBack.FillSolidRect(23, 0, 1, Height, 0x808080);
+	dcBack.FillSolidRect(25, 0, 1, Height, 0x808080);
 
 	dcBack.Draw3dRect(2, (ItemsToDraw / 2) * 15 + 4, Width - 4, 14, ColCursor, ColCursor);
 	dcBack.Draw3dRect(1, (ItemsToDraw / 2) * 15 + 3, Width - 2, 16, ColCursor2, ColCursor2);
@@ -212,8 +202,8 @@ void CPatternWnd::OnPaint()
 
 void CPatternWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.pDocument);
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
@@ -244,7 +234,7 @@ void CPatternWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CPatternWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
@@ -268,8 +258,8 @@ void CPatternWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CPatternWnd::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.pDocument);
-	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.GetView());
 
 	int FrameDelta, Channel;
 	int NewFrame;

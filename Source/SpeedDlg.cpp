@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ BOOL CSpeedDlg::OnInitDialog()
 	CSliderCtrl *Slider = (CSliderCtrl*)GetDlgItem(IDC_SPEED_SLD);
 	CString String;
 
-	Slider->SetRange(10, 200);
+	Slider->SetRange(10, 400);
 	Slider->SetPos(m_iSpeed);
 
 	String.Format("%i Hz", m_iSpeed);

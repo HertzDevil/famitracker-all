@@ -55,4 +55,5 @@ public:
 	afx_msg void OnBnClickedWritePrg();
 	afx_msg void OnBnClickedBankswitch();
 	afx_msg void OnBnClickedBankoptimize();
+	afx_msg void OnBnClickedNewData();
 };

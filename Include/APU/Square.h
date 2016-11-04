@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -51,6 +51,8 @@ public:
 private:
 	uint8	Enabled;
 	uint8	Volume;
+
+	bool bInverted;
 
 	uint8	DutyLength, DutyCycle;
 	uint16	Wavelength;

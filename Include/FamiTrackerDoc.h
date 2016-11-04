@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,17 +21,32 @@
 
 #pragma once
 
-#define MIDI_NOTE(octave, note)	((octave) * 12 + (note - 1))
-#define GET_OCTAVE(midi_note)	((midi_note) / 12)
-#define GET_NOTE(midi_note)		((midi_note) % 12 + 1)
+#define MIDI_NOTE(octave, note)		((octave) * 12 + (note) - 1)
+#define GET_OCTAVE(midi_note)		((midi_note) / 12)
+#define GET_NOTE(midi_note)			((midi_note) % 12 + 1)
 
-const int MAX_INSTRUMENTS			= 64;		// Maximum number of instruments to use
-const int MAX_SEQUENCES				= 128;		// Maximum number of sequence lists
-const int MAX_SEQ_ITEMS				= 64;		// Maximum number of items in a sequence
-const int MAX_PATTERN				= 64;		// Maximum number of patterns per channel
-const int MAX_FRAMES				= 64;		// Maximum number of frames
+/*
+ * Here are the constants that defines the limits in the tracker
+ * change if needed
+ *
+ */
+
+// Maximum number of instruments to use
+const int MAX_INSTRUMENTS			= 64;
+
+// Maximum number of sequence lists
+const int MAX_SEQUENCES				= 128;
+
+// Maximum number of items in a sequence
+const int MAX_SEQ_ITEMS				= 128;		
+
+		// Maximum number of patterns per channel
+const int MAX_PATTERN				= 128;
+const int MAX_FRAMES				= 128;		// Maximum number of frames
 const int MAX_PATTERN_LENGTH		= 256;		// Maximum length of patterns (in rows)
-const int MAX_DSAMPLES				= 32;		// Maximum number of dmc samples (this would be more limited by NES memory)
+const int MAX_DSAMPLES				= 64;		// Maximum number of dmc samples (this would be more limited by NES memory)
+
+const int MAX_SEQUENCE_ITEMS		= 254;		// 
 
 const int MAX_EFFECT_COLUMNS		= 4;		// Number of effect columns allowed
 
@@ -51,6 +66,11 @@ const unsigned int MAX_TRACKS		= 64;
 const unsigned int FRAMERATE_NTSC	= 60;
 const unsigned int FRAMERATE_PAL	= 50;
 
+enum {
+	INST_2A03,
+	INST_VRC6
+};
+
 enum {				// Supported expansion chips
 	CHIP_NONE,
 	CHIP_VRC6
@@ -59,9 +79,11 @@ enum {				// Supported expansion chips
 enum { 
 	UPDATE_SONG_TRACKS = 1,
 	UPDATE_SONG_TRACK,
+	UPDATE_NEW_DOC,
 	UPDATE_CLEAR
 };
 
+// Shared with VRC6
 enum eModifiers {
 	MOD_VOLUME,
 	MOD_ARPEGGIO,
@@ -78,8 +100,8 @@ enum eEffects {
 	EF_SKIP,
 	EF_HALT,
 	EF_VOLUME,
-	EF_PORTAON,
-	EF_PORTAOFF,
+	EF_PORTAMENTO,
+	EF_PORTAOFF,		// unused!!
 	EF_SWEEPUP,
 	EF_SWEEPDOWN,
 	EF_ARPEGGIO,
@@ -88,6 +110,14 @@ enum eEffects {
 	EF_PITCH,
 	EF_DELAY,
 	EF_DAC,
+	EF_PORTA_UP,
+	EF_PORTA_DOWN,
+	EF_DUTY_CYCLE,
+	EF_SAMPLE_OFFSET,
+
+	EF_SLIDE_UP,
+	EF_SLIDE_DOWN,
+
 	EF_COUNT
 };
 
@@ -96,8 +126,8 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'D',	// Skip 
 						 'C',	// Halt
 						 'E',	// Volume
-						 '1',	// Porta on
-						 '2',	// Porta off
+						 '3',	// Porta on
+						 ' ',	// Porta off		// unused
 						 'H',	// Sweep up
 						 'I',	// Sweep down
 						 '0',	// Arpeggio
@@ -105,7 +135,17 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 '7',	// Tremolo
 						 'P',	// Pitch
 						 'G',	// Note delay
-						 'Z'};	// DAC setting
+						 'Z',	// DAC setting
+						 '1',	// Portamento up
+						 '2',	// Portamento down
+						 'V',	// Duty cycle
+						 'Y',	// Sample offset
+						 
+						 'Q',
+						 'R',
+
+};
+
 enum eNotes {
 	NONE = 0,
 	C,
@@ -129,28 +169,41 @@ enum eMachine {
 	PAL
 };
 
-struct stInstrument {
-	char	Name[256];
-	bool	Free;
-	int		ModEnable[MOD_COUNT];
-	int		ModIndex[MOD_COUNT];
-	char	Samples[OCTAVE_RANGE][12];				// Samples
-	char	SamplePitch[OCTAVE_RANGE][12];			// Play pitch/loop
+class CSequence {
+public:
+	void			Clear();
+	signed char		GetItem(int Index);
+	unsigned int	GetItemCount();
+	unsigned int	GetLoopPoint();
+	void			SetItem(int Index, signed char Value);
+	void			SetItemCount(unsigned int Count);
+	void			SetLoopPoint(int Point);
+private:
+	unsigned int	m_iItemCount;
+	unsigned int	m_iLoopPoint;
+	signed	 char	m_cValues[MAX_SEQUENCE_ITEMS];
 };
 
 struct stSequence {
+	// The old (remove)
 	unsigned int Count;
 	signed char Length[MAX_SEQ_ITEMS];
 	signed char Value[MAX_SEQ_ITEMS];
 };
 
-struct stDSample {
+class CDSample {
+public:
+//	unsigned int GetRoundedSampleSize() {
+//		return ((SampleSize >> 4) + 1) << 4;
+//	}
 	unsigned int SampleSize;
 	char		*SampleData;
 	char		Name[256];
 };
 
 #include "PatternData.h"
+#include "Instrument.h"
+#include "SampleBank.h"
 
 // Use this when it's done
 class CPatternCell {
@@ -193,27 +246,21 @@ public:
 public:
 	// General functions
 
-	//
-	// Abstraction access functions
-	//
-	
 	// Sequences
-	stSequence		*GetSequence(int Index, int Type);
+	CSequence		*GetSequence(int Index, int Type);
 	int				GetSequenceCount(int Index, int Type);
 
+	CSequence		*GetSequenceVRC6(int Index, int Type);
+	int				GetSequenceCountVRC6(int Index, int Type);
+
+	void			ConvertSequence(stSequence *OldSequence, CSequence *NewSequence, int Type);
+
 	// Instruments
-	stInstrument	*GetInstrument(int Instrument);
+	CInstrument		*GetInstrument(int Instrument);
 	bool			IsInstrumentUsed(int Instrument);
-	bool			GetInstEffState(int Instrument, int Effect);
-	int				GetInstEffIndex(int Instrument, int Effect);
-	int				GetInstDPCM(int Instrument, int Note, int Octave);
-	int				GetInstDPCMPitch(int Instrument, int Note, int Octave);
-	void			SetInstEffect(int Instrument, int Effect, int Sequence, bool Enabled);
-	void			SetInstDPCMPitch(int Instrument, int Note, int Octave, int Pitch);
-	void			SetInstDPCM(int Instrument, int Note, int Octave, int Sample);
 
 	// Instrument management
-	unsigned int	AddInstrument(const char *Name);						// Add a new instrument
+	unsigned int	AddInstrument(const char *Name, int Type);				// Add a new instrument
 	void			RemoveInstrument(unsigned int Index);					// Remove an instrument
 	void			SetInstrumentName(unsigned int Index, char *Name);		// Set the name of an instrument
 	void			GetInstrumentName(unsigned int Index, char *Name);		// Get the name of an instrument
@@ -226,11 +273,13 @@ public:
 	unsigned int	GetPatternLength()		const { return m_pSelectedTune->m_iPatternLength; };
 	unsigned int	GetFrameCount()			const { return m_pSelectedTune->m_iFrameCount; };
 	unsigned int	GetSongSpeed()			const { return m_pSelectedTune->m_iSongSpeed; };
+	unsigned int	GetSongTempo()			const { return m_pSelectedTune->m_iSongTempo; };
 	unsigned int	GetAvailableChannels()	const { return m_iChannelsAvailable; };
 
 	void			SetFrameCount(unsigned int Count);
 	void			SetPatternLength(unsigned int Length);
 	void			SetSongSpeed(unsigned int Speed);					// Sets the speed of song
+	void			SetSongTempo(unsigned int Tempo);
 
 	void			SetTracks(unsigned int Tracks);
 	void			SelectTrack(unsigned int Track);
@@ -275,8 +324,8 @@ public:
 	void			SetNoteData(unsigned int Frame, unsigned int Channel, unsigned int Row, stChanNote *Data);
 	void			GetNoteData(unsigned int Frame, unsigned int Channel, unsigned int Row, stChanNote *Data) const;
 
-	void			SetDataAtPattern(unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data);
-	void			GetDataAtPattern(unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data) const;
+	void			SetDataAtPattern(unsigned int Track, unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data);
+	void			GetDataAtPattern(unsigned int Track, unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data) const;
 
 	unsigned int	GetNoteEffectType(unsigned int Frame, unsigned int Channel, unsigned int Row, int Index) const;
 	unsigned int	GetNoteEffectParam(unsigned int Frame, unsigned int Channel, unsigned int Row, int Index) const;
@@ -284,6 +333,9 @@ public:
 	bool			InsertNote(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	bool			DeleteNote(unsigned int Frame, unsigned int Channel, unsigned int Row, unsigned int Column);
 	bool			RemoveNote(unsigned int Frame, unsigned int Channel, unsigned int Row);
+
+	bool			IsTrackAdded(unsigned int Track) { return (m_pTunes != NULL); };
+
 
 	// Instruments
 	void			SaveInstrument(unsigned int Instrument, CString FileName);
@@ -304,7 +356,7 @@ protected:
 	BOOL			SaveDocument(LPCSTR lpszPathName);
 	BOOL			OpenDocument(LPCTSTR lpszPathName);
 
-	BOOL			LoadOldFile(CFile OpenFile);
+	BOOL			LoadOldFile(CFile *pOpenFile);
 	BOOL			LoadNewFile(CFile OpenFile);
 
 	void			WriteBlock_Header(CDocumentFile *pDocFile);
@@ -313,6 +365,7 @@ protected:
 	void			WriteBlock_Frames(CDocumentFile *pDocFile);
 	void			WriteBlock_Patterns(CDocumentFile *pDocFile);
 	void			WriteBlock_DSamples(CDocumentFile *pDocFile);
+	void			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile);
 
 	bool			ReadBlock_Header(CDocumentFile *pDocFile);
 	bool			ReadBlock_Instruments(CDocumentFile *pDocFile);
@@ -320,10 +373,10 @@ protected:
 	bool			ReadBlock_Frames(CDocumentFile *pDocFile);
 	bool			ReadBlock_Patterns(CDocumentFile *pDocFile);
 	bool			ReadBlock_DSamples(CDocumentFile *pDocFile);
+	bool			ReadBlock_SequencesVRC6(CDocumentFile *pDocFile);
 
 	void			ReorderSequences();
-
-//	void			DisplayErrorMessage(int Message);
+	void			ConvertSequences();
 
 private:
 
@@ -338,17 +391,14 @@ private:
 	unsigned int	m_iTracks, m_iTrack;						// Tracks and selected track
 
 	// Instruments and sequences
-	stInstrument	m_Instruments[MAX_INSTRUMENTS];				// Instruments
+	CInstrument		*m_pInstruments[MAX_INSTRUMENTS];
 	stSequence		m_Sequences[MAX_SEQUENCES][MOD_COUNT];		// Allocate one sequence-list for each effect
-	stDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample
-	
-//	stChanNote		m_PatternData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];	// The patterns
+	CDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample
 
-/*
-	unsigned int	m_iPatternLength;							// Amount of rows in one pattern
-	unsigned int	m_iFrameCount;								// Number of frames
-	unsigned int	m_iSongSpeed;								// Song speed
-*/
+	CSequence		m_NewSequences[MAX_SEQUENCES][MOD_COUNT];
+	CSequence		m_SequencesVRC6[MAX_SEQUENCES][MOD_COUNT];
+
+	CSampleBank		m_SampleBank;
 
 	unsigned char	m_cExpansionChip;
 	unsigned int	m_iChannelsAvailable;						// Number of channels used
@@ -374,8 +424,8 @@ private:
 public:
 
 	// these are still here...
-	stDSample		*GetFreeDSample();
-	stDSample		*GetDSample(unsigned int Index);
+	CDSample		*GetFreeDSample();
+	CDSample		*GetDSample(unsigned int Index);
 	void			RemoveDSample(unsigned int Index);
 	void			GetSampleName(unsigned int Index, char *Name);
 
@@ -404,6 +454,7 @@ public:
 	virtual void OnCloseDocument();
 	virtual void DeleteContents();
 	afx_msg void OnFileSaveAs();
+	afx_msg void OnFileSave();
 };
 
 

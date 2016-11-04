@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 
 #include "InstrumentSettings.h"
 #include "InstrumentDPCM.h"
+#include "InstrumentSettingsVRC6.h"
 
 // CInstrumentEditDlg dialog
 
@@ -44,14 +45,22 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
+	void Load2A03();
+	void LoadVRC6();
+
 	void SwitchOnNote(int x, int y);
 	void SwitchOffNote();
 
 	int	m_iLastNote;
 	int m_iLightNote;
+	int m_iSelectedInstType;
 
+	// 2A03
 	CInstrumentSettings InstrumentSettings;
 	CInstrumentDPCM		InstrumentDPCM;
+
+	// VRC6
+	CInstrumentSettingsVRC6	InstrumentVRC6;
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -64,7 +73,6 @@ public:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-//	virtual BOOL DestroyWindow();
 	virtual BOOL DestroyWindow();
 protected:
 	virtual void OnOK();

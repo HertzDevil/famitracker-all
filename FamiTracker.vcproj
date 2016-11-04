@@ -132,6 +132,9 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath=".\Source\Accelerator.cpp">
+			</File>
+			<File
 				RelativePath=".\Source\DocumentFile.cpp">
 			</File>
 			<File
@@ -213,63 +216,16 @@
 				</FileConfiguration>
 			</File>
 			<Filter
-				Name="Sound Driver"
-				Filter="">
-				<File
-					RelativePath=".\Source\ChannelHandler.cpp">
-				</File>
-				<File
-					RelativePath=".\Source\DirectSound.cpp">
-				</File>
-				<File
-					RelativePath=".\Source\SoundGen.cpp">
-				</File>
-				<Filter
-					Name="APU"
-					Filter="">
-					<File
-						RelativePath=".\Source\Apu\Apu.cpp">
-					</File>
-					<File
-						RelativePath=".\Source\Apu\Mixer.cpp">
-					</File>
-					<Filter
-						Name="Internal"
-						Filter="">
-						<File
-							RelativePath=".\Source\Apu\Dpcm.cpp">
-						</File>
-						<File
-							RelativePath=".\Source\Apu\Noise.cpp">
-						</File>
-						<File
-							RelativePath=".\Source\Apu\Square.cpp">
-						</File>
-						<File
-							RelativePath=".\Source\Apu\Triangle.cpp">
-						</File>
-					</Filter>
-					<Filter
-						Name="External"
-						Filter="">
-						<File
-							RelativePath=".\Source\Apu\Vrc6.cpp">
-						</File>
-					</Filter>
-				</Filter>
-				<Filter
-					Name="Blip_Buffer"
-					Filter="">
-					<File
-						RelativePath=".\Source\Blip_Buffer.cpp">
-					</File>
-				</Filter>
-			</Filter>
-			<Filter
 				Name="Dialog Boxes"
 				Filter="">
 				<File
 					RelativePath=".\Source\AboutBox.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\DialogReBar.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\ExportDialog.cpp">
 				</File>
 				<File
 					RelativePath=".\Source\MIDIImportDialog.cpp">
@@ -288,21 +244,6 @@
 				</File>
 				<File
 					RelativePath=".\Source\ModulePropertiesDlg.cpp">
-				</File>
-				<File
-					RelativePath=".\Source\NSFDialog.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\Source\PerformanceDlg.cpp">
@@ -383,6 +324,9 @@
 						</FileConfiguration>
 					</File>
 					<File
+						RelativePath=".\Source\ConfigShortcuts.cpp">
+					</File>
+					<File
 						RelativePath=".\Source\ConfigSound.cpp">
 					</File>
 					<File
@@ -449,6 +393,9 @@
 								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 						</FileConfiguration>
 					</File>
+					<File
+						RelativePath=".\Source\InstrumentSettingsVRC6.cpp">
+					</File>
 					<Filter
 						Name="Related"
 						Filter="">
@@ -470,8 +417,41 @@
 						<File
 							RelativePath=".\Source\SequenceEditor.cpp">
 						</File>
+						<File
+							RelativePath=".\Source\SequenceEditorVRC6.cpp">
+						</File>
 					</Filter>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="Export"
+				Filter="">
+				<File
+					RelativePath=".\Source\Compiler.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\PatternCompiler.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="Other"
+				Filter="">
+				<File
+					RelativePath=".\Fft\Fft.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="Document Data Types"
+				Filter="">
+				<File
+					RelativePath=".\Source\Instrument.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\PatternData.cpp">
+				</File>
+				<File
+					RelativePath=".\Source\SampleBank.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="Windows"
@@ -488,13 +468,82 @@
 							UsePrecompiledHeader="2"/>
 					</FileConfiguration>
 				</File>
+				<Filter
+					Name="Sample window states"
+					Filter="">
+					<File
+						RelativePath=".\Source\SWLogo.cpp">
+					</File>
+					<File
+						RelativePath=".\Source\SWSampleScope.cpp">
+					</File>
+					<File
+						RelativePath=".\Source\SWSpectrum.cpp">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
-				Name="Exporting"
+				Name="Sound Driver"
 				Filter="">
 				<File
-					RelativePath=".\Source\Compile.cpp">
+					RelativePath=".\Source\DirectSound.cpp">
 				</File>
+				<File
+					RelativePath=".\Source\SoundGen.cpp">
+				</File>
+				<Filter
+					Name="APU"
+					Filter="">
+					<File
+						RelativePath=".\Source\Apu\Apu.cpp">
+					</File>
+					<File
+						RelativePath=".\Source\Apu\Mixer.cpp">
+					</File>
+					<Filter
+						Name="Internal"
+						Filter="">
+						<File
+							RelativePath=".\Source\Apu\Dpcm.cpp">
+						</File>
+						<File
+							RelativePath=".\Source\Apu\Noise.cpp">
+						</File>
+						<File
+							RelativePath=".\Source\Apu\Square.cpp">
+						</File>
+						<File
+							RelativePath=".\Source\Apu\Triangle.cpp">
+						</File>
+					</Filter>
+					<Filter
+						Name="External"
+						Filter="">
+						<File
+							RelativePath=".\Source\Apu\Vrc6.cpp">
+						</File>
+					</Filter>
+				</Filter>
+				<Filter
+					Name="Blip_Buffer"
+					Filter="">
+					<File
+						RelativePath=".\Source\Blip_Buffer.cpp">
+					</File>
+				</Filter>
+				<Filter
+					Name="Channels"
+					Filter="">
+					<File
+						RelativePath=".\Source\ChannelHandler.cpp">
+					</File>
+					<File
+						RelativePath=".\Source\Channels2A03.cpp">
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsVRC6.cpp">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="MIDI"
@@ -530,25 +579,14 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
-			<Filter
-				Name="Other"
-				Filter="">
-				<File
-					RelativePath=".\Fft\Fft.cpp">
-				</File>
-			</Filter>
-			<Filter
-				Name="Document Data Types"
-				Filter="">
-				<File
-					RelativePath=".\PatternData.cpp">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath=".\Include\Accelerator.h">
+			</File>
 			<File
 				RelativePath=".\Include\DocumentFile.h">
 			</File>
@@ -642,7 +680,10 @@
 				Name="Dialog Boxes Headers"
 				Filter="">
 				<File
-					RelativePath=".\AboutBox.h">
+					RelativePath=".\Include\DialogReBar.h">
+				</File>
+				<File
+					RelativePath=".\Include\ExportDialog.h">
 				</File>
 				<File
 					RelativePath=".\Include\MIDIImportDialog.h">
@@ -651,7 +692,7 @@
 					RelativePath=".\Include\ModulePropertiesDlg.h">
 				</File>
 				<File
-					RelativePath=".\Include\NSFDialog.h">
+					RelativePath=".\OctaveDlgBar.h">
 				</File>
 				<File
 					RelativePath=".\Include\PerformanceDlg.h">
@@ -672,7 +713,10 @@
 						RelativePath=".\Include\ConfigMIDI.h">
 					</File>
 					<File
-						RelativePath=".\ConfigSound.h">
+						RelativePath=".\Include\ConfigShortcuts.h">
+					</File>
+					<File
+						RelativePath=".\Include\ConfigSound.h">
 					</File>
 					<File
 						RelativePath=".\Include\ConfigWindow.h">
@@ -690,6 +734,9 @@
 					<File
 						RelativePath=".\Include\InstrumentSettings.h">
 					</File>
+					<File
+						RelativePath=".\Include\InstrumentSettingsVRC6.h">
+					</File>
 					<Filter
 						Name="Related Headers"
 						Filter="">
@@ -698,6 +745,9 @@
 						</File>
 						<File
 							RelativePath=".\Include\SequenceEditor.h">
+						</File>
+						<File
+							RelativePath=".\Include\SequenceEditorVRC6.h">
 						</File>
 					</Filter>
 				</Filter>
@@ -711,15 +761,31 @@
 				<File
 					RelativePath=".\Include\SampleWindow.h">
 				</File>
+				<Filter
+					Name="Sample window state headers"
+					Filter="">
+					<File
+						RelativePath=".\Include\SWLogo.h">
+					</File>
+					<File
+						RelativePath=".\Include\SWSampleScope.h">
+					</File>
+					<File
+						RelativePath=".\Include\SWSpectrum.h">
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
-				Name="Exporting Headers"
+				Name="Export Headers"
 				Filter="">
 				<File
-					RelativePath=".\Include\Compile.h">
+					RelativePath=".\Include\Compiler.h">
 				</File>
 				<File
 					RelativePath=".\Include\Driver.h">
+				</File>
+				<File
+					RelativePath=".\Include\PatternCompiler.h">
 				</File>
 			</Filter>
 			<Filter
@@ -746,7 +812,13 @@
 				Name="Document Data Type Headers"
 				Filter="">
 				<File
-					RelativePath=".\PatternData.h">
+					RelativePath=".\Include\Instrument.h">
+				</File>
+				<File
+					RelativePath=".\Include\PatternData.h">
+				</File>
+				<File
+					RelativePath=".\Include\SampleBank.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -764,6 +836,9 @@
 				RelativePath=".\res\bitmap3.bmp">
 			</File>
 			<File
+				RelativePath=".\res\DocIcon.ico">
+			</File>
+			<File
 				RelativePath=".\FamiTracker.rc"
 				DeploymentContent="TRUE">
 			</File>
@@ -772,6 +847,9 @@
 			</File>
 			<File
 				RelativePath=".\res\ico00001.ico">
+			</File>
+			<File
+				RelativePath=".\res\icon1.ico">
 			</File>
 			<File
 				RelativePath=".\res\icon2.ico">
@@ -796,6 +874,9 @@
 			</File>
 			<File
 				RelativePath=".\res\key_white_unpressed.bmp">
+			</File>
+			<File
+				RelativePath=".\res\MainApp.ico">
 			</File>
 			<File
 				RelativePath=".\res\SampleBg.bmp">
@@ -864,12 +945,29 @@ echo.
 				DeploymentContent="TRUE">
 			</File>
 			<File
+				RelativePath=".\hlp\ChangeLog.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
 				RelativePath=".\hlp\configuration.htm"
 				DeploymentContent="TRUE">
 			</File>
 			<File
+				RelativePath=".\hlp\effect_list.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\frame_editor.PNG">
+			</File>
+			<File
 				RelativePath=".\hlp\import_dpcm.htm"
 				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\inst_edit_1.gif">
+			</File>
+			<File
+				RelativePath=".\hlp\inst_edit_2.gif">
 			</File>
 			<File
 				RelativePath=".\hlp\instruments.htm"
@@ -886,6 +984,12 @@ echo.
 			<File
 				RelativePath=".\hlp\shortcuts.htm"
 				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\toolbar1.PNG">
+			</File>
+			<File
+				RelativePath=".\hlp\toolbar2.PNG">
 			</File>
 			<File
 				RelativePath=".\hlp\tracker_field.htm"

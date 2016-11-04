@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,11 +20,10 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "InstrumentSettings.h"
 #include "SequenceEditor.h"
-
-const int SEQUENCE_EDIT_WIDTH = 540;
-const int SEQUENCE_EDIT_HEIGHT = 230;
+#include "..\include\instrumentsettings.h"
 
 // CInstrumentSettings dialog
 
@@ -34,7 +33,6 @@ CInstrumentSettings::CInstrumentSettings(CWnd* pParent /*=NULL*/)
 {
 	ParentWin = pParent;
 
-	m_bShiftPressed			= false;
 	UpdatingSequenceItem	= false;
 	m_bInitializing			= true;
 	m_iSelectedSequence		= 0;
@@ -60,6 +58,8 @@ BEGIN_MESSAGE_MAP(CInstrumentSettings, CDialog)
 	ON_BN_CLICKED(IDC_PARSE_MML, OnBnClickedParseMml)
 	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
 	ON_WM_LBUTTONDOWN()
+	ON_WM_ERASEBKGND()
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -72,8 +72,8 @@ BOOL CInstrumentSettings::OnInitDialog()
 	m_bInitializing = true;
 	m_iCurrentEffect = 0;
 
-	pDoc = (CFamiTrackerDoc*)theApp.pDocument;
-	pView = (CFamiTrackerView*)theApp.pView;
+	pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
+	pView = (CFamiTrackerView*)theApp.GetView();
 
 	// Instrument settings
 
@@ -96,7 +96,7 @@ BOOL CInstrumentSettings::OnInitDialog()
 	SequenceEditor.CreateEx(WS_EX_STATICEDGE, NULL, "", WS_CHILD | WS_VISIBLE, CRect(190 - 2, 30 - 2, SEQUENCE_EDIT_WIDTH, SEQUENCE_EDIT_HEIGHT), this, 0);
 	SequenceEditor.ShowWindow(SW_SHOW);
 	SequenceEditor.SetParent(this);
-
+	
 	m_bInitializing = false;
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -106,8 +106,9 @@ BOOL CInstrumentSettings::OnInitDialog()
 void CInstrumentSettings::SetCurrentInstrument(int Index)
 {
 	char Text[256];
-	stInstrument *InstConf	= pDoc->GetInstrument(Index);
-	m_pSettingsListCtrl		= (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
+
+	CInstrument2A03 *InstConf = (CInstrument2A03*)pDoc->GetInstrument(Index);
+	m_pSettingsListCtrl	= (CListCtrl*)GetDlgItem(IDC_INSTSETTINGS);
 
 	m_iInstrument	= Index;
 	m_bInitializing = true;
@@ -118,12 +119,12 @@ void CInstrumentSettings::SetCurrentInstrument(int Index)
 		SelectedEffect = 0;
 
 	for (int i = 0; i < MOD_COUNT; i++) {
-		sprintf(Text, "%i", InstConf->ModIndex[i]);
-		m_pSettingsListCtrl->SetCheck(i, InstConf->ModEnable[i]);
+		sprintf(Text, "%i", InstConf->GetModIndex(i));
+		m_pSettingsListCtrl->SetCheck(i, InstConf->GetModEnable(i));
 		m_pSettingsListCtrl->SetItemText(i, 1, Text);
 	} 
 
-	int Item = pDoc->GetInstEffIndex(m_iInstrument, SelectedEffect);
+	int Item = InstConf->GetModIndex(SelectedEffect);
 
 	m_iCurrentEffect = SelectedEffect;
 
@@ -135,13 +136,15 @@ void CInstrumentSettings::SetCurrentInstrument(int Index)
 void CInstrumentSettings::CompileSequence()
 {
 	SetDlgItemText(IDC_MML, SequenceEditor.CompileList());
+	
+	CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(m_iInstrument);
+
 	TranslateMML();
 
 	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
-
 	m_pSettingsListCtrl->SetCheck(m_iCurrentEffect);
 
-	pDoc->SetInstEffect(m_iInstrument, m_iCurrentEffect, pDoc->GetInstEffIndex(m_iInstrument, m_iCurrentEffect), 1);
+	pInst->SetModEnable(m_iCurrentEffect, 1);
 }
 
 void CInstrumentSettings::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
@@ -159,17 +162,19 @@ void CInstrumentSettings::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *p
 	if (m_bInitializing)
 		return;
 
+	CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(m_iInstrument);
+
 	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
 
 	m_iCurrentEffect	= Setting;
-	SeqIndex			= pDoc->GetInstEffIndex(m_iInstrument, Setting);
+	SeqIndex			= pInst->GetModIndex(Setting);
 
 	Text.Format("%i", SeqIndex);
 	GetDlgItem(IDC_SEQ_INDEX)->SetWindowText(Text);
 
 	for (i = 0; i < MOD_COUNT; i++) {
 		Checked = m_pSettingsListCtrl->GetCheck(i);
-		pDoc->SetInstEffect(m_iInstrument, i, pDoc->GetInstEffIndex(m_iInstrument, i), (Checked == 1));
+		pInst->SetModEnable(i, (Checked == 1));
 	}
 
 	SelectSequence(SeqIndex);
@@ -195,7 +200,7 @@ void CInstrumentSettings::OnDeltaposModSelectSpin(NMHDR *pNMHDR, LRESULT *pResul
 
 void CInstrumentSettings::OnEnChangeSeqIndex()
 {
-	stInstrument *InstConf = pDoc->GetInstrument(m_iInstrument);
+	CInstrument2A03 *InstConf = (CInstrument2A03*)pDoc->GetInstrument(m_iInstrument);
 	CString Text;
 	int Index;
 	int Setting;
@@ -216,7 +221,7 @@ void CInstrumentSettings::OnEnChangeSeqIndex()
 	Text.Format("%i", Index);
 	m_pSettingsListCtrl->SetItemText(Setting, 1, Text);
 
-	InstConf->ModIndex[Setting] = Index;
+	InstConf->SetModIndex(Setting, Index);
 
 	SelectSequence(Index);
 }
@@ -224,48 +229,28 @@ void CInstrumentSettings::OnEnChangeSeqIndex()
 void CInstrumentSettings::TranslateMML()
 {
 	CString MML, Accum;
-	
-	char c, lc;
-	bool First = true, Negative = false;
-	int Len, i;
-	int Value, Length, LastValue;
-	int Items, LoopIndex, Relative = 0;
-	int RelativeCtr = 0;
-
-	CString DbgStr;
+	int Len, i, c, Value, AddedItems;
 
 	GetDlgItemText(IDC_MML, MML);
 
-	MML.AppendChar(' ');
-
 	Len = MML.GetLength();
 
-	Items	= 0;
-	Value	= 0;
-	LastValue = 0xFF;
-	Length	= -1;
-	c = lc	= 0;
+	AddedItems = 0;
 
-	LoopIndex = -1;
+	m_SelectedSeq->SetLoopPoint(-1);
 
-	// 1 2 3 4 5
-
-	for (i = 0; i < Len; i++) {
+	for (i = 0; i < (Len + 1); i++) {
 		c = MML.GetAt(i);
 
-		if (c >= '0' && c <= '9') {
+		if (c >= '0' && c <= '9' || c == '-' && i != Len) {
 			Accum.AppendChar(c);
 		}
-		else if (c == '-') {
-			Negative = true;
-		}
 		else if (c == '|') {
-			LoopIndex = Items;
-			LastValue = 0xFF;
+			m_SelectedSeq->SetLoopPoint(AddedItems);
 		}
-
-		if (c == ' ' || i == (Len - 1) && c != '|') {
-			if ((Accum.GetLength() > 0 && sscanf(Accum, "%i", &Value) != 0) || i == (Len - 1)) {
+		else {
+			if (Accum.GetLength() > 0) {
+				sscanf(Accum, "%i", &Value);
 
 				switch (m_iCurrentEffect) {
 					case MOD_VOLUME:
@@ -281,146 +266,20 @@ void CInstrumentSettings::TranslateMML()
 						break;
 				}
 
-				if (Negative)
-					Value = -Value;
-
-				if (Value == LastValue) {
-					if (i != (Len - 1))
-						m_SelectedSeq->Length[Items - 1]++;
-				}
-				else {
-					m_SelectedSeq->Length[Items] = 0;
-					m_SelectedSeq->Value[Items] = Value;
-
-					Items++;
-				}
-
-				if (Items >= 127) {
-					break; 
-				}
-
-				Negative = false;
-				Accum = "";
-
-				LastValue = Value;
+				m_SelectedSeq->SetItem(AddedItems++, Value);
 			}
+			Accum = "";
 		}
 	}
 
-	if (LoopIndex != -1) {
-		m_SelectedSeq->Length[Items] = LoopIndex - Items;
-		m_SelectedSeq->Value[Items] = 0;
-		Items++;
-	}
-
-	m_SelectedSeq->Count = Items;
-
-	pDoc->SetModifiedFlag();
-}
-
-void CInstrumentSettings::TranslateRelativeMML()
-{
-	CString MML, Accum;
+	m_SelectedSeq->SetItemCount(AddedItems);
 	
-	char c, lc;
-	bool First = true, Negative = false;
-	int Len, i;
-	int Value, Length, LastValue;
-	int Items, LoopIndex, Relative = 0;
-	int RelativeCtr = 0;
-
-	CString DbgStr;
-
-	GetDlgItemText(IDC_MML, MML);
-
-	MML.AppendChar(' ');
-
-	Len = MML.GetLength();
-
-	Items	= 0;
-	Value	= 0;
-	LastValue = 0xFF;
-	Length	= -1;
-	c = lc	= 0;
-
-	LoopIndex = -1;
-
-	// 1 2 3 4 5
-
-	for (i = 0; i < Len; i++) {
-		c = MML.GetAt(i);
-
-		if (c >= '0' && c <= '9') {
-			Accum.AppendChar(c);
-		}
-		else if (c == '-') {
-			Negative = true;
-		}
-		else if (c == '|') {
-			LoopIndex = Items;
-			LastValue = 0xFF;
-		}
-
-		if (c == ' ' || i == (Len - 1) && c != '|') {
-			if ((Accum.GetLength() > 0 && sscanf(Accum, "%i", &Value) != 0) || i == (Len - 1)) {
-
-				if (Negative)
-					RelativeCtr -= Value;
-				else
-					RelativeCtr += Value;
-
-				switch (m_iCurrentEffect) {
-					case MOD_VOLUME:
-						LIMIT(RelativeCtr, 15, 0);
-						break;
-					case MOD_ARPEGGIO:
-					case MOD_PITCH:
-					case MOD_HIPITCH:
-						LIMIT(RelativeCtr, 126, -127);
-						break;
-					case MOD_DUTYCYCLE:
-						LIMIT(RelativeCtr, 3, 0);
-						break;
-				}
-
-
-				if (RelativeCtr == LastValue) {
-					if (i != (Len - 1))
-						m_SelectedSeq->Length[Items - 1]++;
-				}
-				else {
-					m_SelectedSeq->Length[Items] = 0;
-					m_SelectedSeq->Value[Items] = RelativeCtr;
-
-					Items++;
-				}
-
-				Negative = false;
-				Accum = "";
-
-				LastValue = RelativeCtr;
-			}
-		}
-	}
-
-	if (LoopIndex != -1) {
-		m_SelectedSeq->Length[Items] = LoopIndex - Items;
-		m_SelectedSeq->Value[Items] = 0;
-		Items++;
-	}
-
-	m_SelectedSeq->Count = Items;
-
 	pDoc->SetModifiedFlag();
 }
 
 void CInstrumentSettings::OnBnClickedParseMml()
 {
-	if (m_bShiftPressed)
-		TranslateRelativeMML();
-	else
-		TranslateMML();
-
+	TranslateMML();
 	SelectSequence(m_iSelectedSequence);
 }
 
@@ -436,19 +295,13 @@ BOOL CInstrumentSettings::PreTranslateMessage(MSG* pMsg)
 				case 27:	// Esc
 					pMsg->wParam = 0;
 					return TRUE;
-				case 16:	// Shift
-					m_bShiftPressed = true;
-					return TRUE;
 				default:
 					if (GetDlgItem(IDC_MML) != GetFocus())
-						pView->PlayNote(int(pMsg->wParam));
+						static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewNote((unsigned char)pMsg->wParam);
 			}
 			break;
 		case WM_KEYUP:
-			if (pMsg->wParam == 16)
-				m_bShiftPressed = false;
-			else
-				pView->KeyReleased(int(pMsg->wParam));
+			static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewRelease((unsigned char)pMsg->wParam);
 			return TRUE;
 	}
 
@@ -493,10 +346,78 @@ void CInstrumentSettings::OnLButtonDown(UINT nFlags, CPoint point)
 	CDialog::OnLButtonDown(nFlags, point);
 }
 
-
 BOOL CInstrumentSettings::DestroyWindow()
 {
 	SequenceEditor.DestroyWindow();
-
 	return CDialog::DestroyWindow();
+}
+
+BOOL CInstrumentSettings::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
+}
+
+HBRUSH CInstrumentSettings::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	if (!theApp.IsThemeActive())
+		return hbr;
+
+	if (nCtlColor == CTLCOLOR_STATIC) {
+		pDC->SetBkMode(TRANSPARENT);
+		// this might fail on some themes?
+		return CreateSolidBrush(GetPixel(pDC->m_hDC, 15, 5));
+		//return (HBRUSH)GetStockObject(WHITE_BRUSH);
+	}
+
+	return hbr;
+}
+
+void CMML::TranslateMML(CString MML, CSequence *pSequence, int Min, int Max)
+{
+	CString Accum;
+	int Len, i, c, Value, AddedItems;
+
+	Len = MML.GetLength();
+
+	AddedItems = 0;
+
+	pSequence->SetLoopPoint(-1);
+
+	for (i = 0; i < (Len + 1); i++) {
+		c = MML.GetAt(i);
+
+		if (c >= '0' && c <= '9' || c == '-' && i != Len) {
+			Accum.AppendChar(c);
+		}
+		else if (c == '|') {
+			pSequence->SetLoopPoint(AddedItems);
+		}
+		else {
+			if (Accum.GetLength() > 0) {
+				sscanf(Accum, "%i", &Value);
+
+				LIMIT(Value, Max, Min);
+/*
+				switch (m_iCurrentEffect) {
+					case MOD_VOLUME:
+						LIMIT(Value, 15, 0);
+						break;
+					case MOD_ARPEGGIO:
+					case MOD_PITCH:
+					case MOD_HIPITCH:
+						LIMIT(Value, 126, -127);
+						break;
+					case MOD_DUTYCYCLE:
+						LIMIT(Value, 3, 0);
+						break;
+				}
+*/
+				pSequence->SetItem(AddedItems++, Value);
+			}
+			Accum = "";
+		}
+	}
+	pSequence->SetItemCount(AddedItems);
 }

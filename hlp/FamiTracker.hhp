@@ -5,27 +5,36 @@ Compiled file=FamiTracker.chm
 Contents file=FamiTracker.hhc
 Index file=FamiTracker.hhk
 Default topic=main_index.htm
-Display compile progress=No
+Display compile progress=Yes
 Full-text search=Yes
 Language=0x0409 Engelska (USA)
 
 [FILES]
 main_index.htm
+effect_list.htm
 instruments.htm
 tracker_field.htm
 import_dpcm.htm
 shortcuts.htm
 nsf_export.htm
 configuration.htm
+changelog.htm
+inst_edit_1.gif
+inst_edit_2.gif
+toolbar1.png
+toolbar2.png
+frame_editor.png
 
 [ALIAS]
 HIDR_MAINFRAME = main_index.htm
 
 instruments		= instruments.htm
+effects			= effect_list.htm
 tracker_field	= tracker_field.htm
 main_index		= main_index.htm
 configuration	= configuration.htm
 nsf_export		= nsf_export.htm
+change_log		= changelog.htm
 
 [MAP]
 #include HTMLDefines.h

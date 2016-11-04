@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,18 @@
 
 #pragma once
 
+class CSampleWinState
+{
+public:
+	virtual void Activate() = 0;
+	virtual void Deactivate() = 0;
+	virtual void SetSampleData(int *iSamples, unsigned int iCount) = 0;
+	virtual void Draw(CDC *pDC, bool bMessage) = 0;
+
+protected:
+	static const int WIN_WIDTH = 145;
+	static const int WIN_HEIGHT = 40;
+};
 
 // CSampleWindow
 
@@ -31,30 +43,29 @@ public:
 	CSampleWindow();
 	virtual ~CSampleWindow();
 
+	void DrawSamples(int *Samples, int Count);
+
 	static const int WIN_WIDTH = 145;
 	static const int WIN_HEIGHT = 40;
  	
-	bool		Active, Blur;
-	int			*BlitBuffer;
-
-	BITMAPINFO	bmi;
-
-	void DrawSamples(int *Samples, int Count);
-	void SetTime(int Min, int Sec, int MSec);
-	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
-
 private:
-	int m_iMin, m_iSec, m_iMSec;
+	static const int STATE_COUNT = 4;
+
+	void NextState();
+
+	CSampleWinState *m_pStates[STATE_COUNT];
+	unsigned int	m_iCurrentState;
+
+public:
+	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
+	virtual BOOL DestroyWindow();
 
 protected:
-	void DrawTime(CDC *pDC);
-	void DrawFFT(int *Samples, int Count, CDC *pDC);
-	void DrawGraph(int *Samples, int Count, CDC *pDC);
-
 	DECLARE_MESSAGE_MAP()
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnPaint();
+public:
+	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 };
 
 class CSampleWinProc : public CWinThread

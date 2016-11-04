@@ -26,6 +26,7 @@
 #include ".\nsfdialog.h"
 #include "..\include\nsfdialog.h"
 
+//#include "NewCompile.h"
 
 // CNSFDialog dialog
 
@@ -52,6 +53,7 @@ BEGIN_MESSAGE_MAP(CNSFDialog, CDialog)
 	ON_BN_CLICKED(IDC_WRITE_PRG, OnBnClickedWritePrg)
 	ON_BN_CLICKED(IDC_BANKSWITCH, OnBnClickedBankswitch)
 	ON_BN_CLICKED(IDC_BANKOPTIMIZE, OnBnClickedBankoptimize)
+	ON_BN_CLICKED(IDC_NEW_DATA, OnBnClickedNewData)
 END_MESSAGE_MAP()
 
 // CNSFDialog message handlers
@@ -230,3 +232,12 @@ void CNSFDialog::OnBnClickedBankoptimize()
 	else
 		GetDlgItem(IDC_BANKSWITCH)->EnableWindow(TRUE);
 }
+
+void CNSFDialog::OnBnClickedNewData()
+{/*
+	CNewCompile Compile;
+
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetDocument();
+
+	Compile.Export("e:\\programmering\\net\\famitracker\\nsf driver\\new version\\music", pDoc, (CEdit*)GetDlgItem(IDC_LOG));
+*/}

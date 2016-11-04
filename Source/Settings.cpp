@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,8 +18,15 @@
 ** must bear this legend.
 */
 
+/*
+
+	If a new setting is added, do not forget to update load, store and default settings routines!
+
+*/
+
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "Settings.h"
 
 UINT GetAppProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault)
@@ -66,6 +73,9 @@ void CSettings::LoadSettings()
 	General.strFont						= GetAppProfileString("General", "Pattern font", "Fixedsys");
 	General.bFramePreview				= GetAppProfileInt("General", "Frame preview", 1) == 1;
 	General.bNoDPCMReset				= GetAppProfileInt("General", "No DPCM reset", 0) == 1;
+	General.bNoStepMove					= GetAppProfileInt("General", "No Step moving", 0) == 1;
+	General.iPageStepSize				= GetAppProfileInt("General", "Page step size", 4);
+	General.bPatternColor				= GetAppProfileInt("General", "Pattern colors", 1) == 1;
 
 	// Sound
 	strDevice							= GetAppProfileString("Sound", "Device", "");
@@ -75,6 +85,7 @@ void CSettings::LoadSettings()
 	Sound.iBassFilter					= GetAppProfileInt("Sound", "Bass filter freq", 16);
 	Sound.iTrebleFilter					= GetAppProfileInt("Sound", "Treble filter freq", 12000);
 	Sound.iTrebleDamping				= GetAppProfileInt("Sound", "Treble filter damping", 24);
+	Sound.iMixVolume					= GetAppProfileInt("Sound", "Volume", 100);
 
 	// Midi
 	Midi.iMidiDevice					= GetAppProfileInt("MIDI", "Device", 0);
@@ -90,6 +101,9 @@ void CSettings::LoadSettings()
 	Appearance.iColBackgroundHilite		= GetAppProfileInt("Appearance", "Background highlighted", COLOR_SCHEME.BACKGROUND_HILITE);
 	Appearance.iColPatternText			= GetAppProfileInt("Appearance", "Pattern text", COLOR_SCHEME.TEXT_NORMAL);
 	Appearance.iColPatternTextHilite	= GetAppProfileInt("Appearance", "Pattern text highlighted", COLOR_SCHEME.TEXT_HILITE);
+	Appearance.iColPatternInstrument	= GetAppProfileInt("Appearance", "Pattern instrument", COLOR_SCHEME.TEXT_INSTRUMENT);
+	Appearance.iColPatternVolume		= GetAppProfileInt("Appearance", "Pattern volume", COLOR_SCHEME.TEXT_VOLUME);
+	Appearance.iColPatternEffect		= GetAppProfileInt("Appearance", "Pattern effect", COLOR_SCHEME.TEXT_EFFECT);
 	Appearance.iColSelection			= GetAppProfileInt("Appearance", "Selection", COLOR_SCHEME.SELECTION);
 	Appearance.iColCursor				= GetAppProfileInt("Appearance", "Cursor", COLOR_SCHEME.CURSOR);
 
@@ -105,54 +119,60 @@ void CSettings::LoadSettings()
 	Paths[PATH_FTI]						= GetAppProfileString("Paths", "FTI path", "");
 	Paths[PATH_NSF]						= GetAppProfileString("Paths", "NSF path", "");
 	Paths[PATH_DMC]						= GetAppProfileString("Paths", "DMC path", "");
-	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");
-}
+	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");}
 
 void CSettings::SaveSettings()
 {
 	// General
-	WriteAppProfileInt("General", "Wrap cursor",			General.bWrapCursor);
-	WriteAppProfileInt("General", "Free cursor edit",		General.bFreeCursorEdit);
-	WriteAppProfileInt("General", "Wave preview",			General.bWavePreview);
-	WriteAppProfileInt("General", "Key repeat",				General.bKeyRepeat);
-	WriteAppProfileInt("General", "Hex row display",		General.bRowInHex);
-	WriteAppProfileInt("General", "Edit style",				General.iEditStyle);
-	WriteAppProfileString("General", "Pattern font",		General.strFont);
-	WriteAppProfileInt("General", "Frame preview",			General.bFramePreview);
-	WriteAppProfileInt("General", "No DPCM reset",			General.bNoDPCMReset);
+	WriteAppProfileInt("General", "Wrap cursor",	  General.bWrapCursor);
+	WriteAppProfileInt("General", "Free cursor edit", General.bFreeCursorEdit);
+	WriteAppProfileInt("General", "Wave preview",	  General.bWavePreview);
+	WriteAppProfileInt("General", "Key repeat",		  General.bKeyRepeat);
+	WriteAppProfileInt("General", "Hex row display",  General.bRowInHex);
+	WriteAppProfileInt("General", "Edit style",		  General.iEditStyle);
+	WriteAppProfileString("General", "Pattern font",  General.strFont);
+	WriteAppProfileInt("General", "Frame preview",	  General.bFramePreview);
+	WriteAppProfileInt("General", "No DPCM reset",	  General.bNoDPCMReset);
+	WriteAppProfileInt("General", "No Step moving",	  General.bNoStepMove);
+	WriteAppProfileInt("General", "Page step size",	  General.iPageStepSize);
+	WriteAppProfileInt("General", "Pattern colors",	  General.bPatternColor);
 
 	// Sound
-	WriteAppProfileInt("Sound", "Sample rate",				Sound.iSampleRate);
-	WriteAppProfileInt("Sound", "Sample size",				Sound.iSampleSize);
-	WriteAppProfileInt("Sound", "Buffer length",			Sound.iBufferLength);
-	WriteAppProfileInt("Sound", "Bass filter freq",			Sound.iBassFilter);
-	WriteAppProfileInt("Sound", "Treble filter freq",		Sound.iTrebleFilter);
-	WriteAppProfileInt("Sound", "Treble filter damping",	Sound.iTrebleDamping);
-	WriteAppProfileString("Sound", "Device",				strDevice);
+	WriteAppProfileInt("Sound", "Sample rate",			 Sound.iSampleRate);
+	WriteAppProfileInt("Sound", "Sample size",			 Sound.iSampleSize);
+	WriteAppProfileInt("Sound", "Buffer length",		 Sound.iBufferLength);
+	WriteAppProfileInt("Sound", "Bass filter freq",		 Sound.iBassFilter);
+	WriteAppProfileInt("Sound", "Treble filter freq",	 Sound.iTrebleFilter);
+	WriteAppProfileInt("Sound", "Treble filter damping", Sound.iTrebleDamping);
+	WriteAppProfileInt("Sound", "Volume",				 Sound.iMixVolume);
+	WriteAppProfileString("Sound", "Device",			 strDevice);
 
 	// Midi
-	WriteAppProfileInt("MIDI", "Device",					Midi.iMidiDevice);
-	WriteAppProfileInt("MIDI", "Out Device",				Midi.iMidiOutDevice);
-	WriteAppProfileInt("MIDI", "Master sync",				Midi.bMidiMasterSync);
-	WriteAppProfileInt("MIDI", "Key release",				Midi.bMidiKeyRelease);
-	WriteAppProfileInt("MIDI", "Channel map",				Midi.bMidiChannelMap);
-	WriteAppProfileInt("MIDI", "Velocity control",			Midi.bMidiVelocity);
-	WriteAppProfileInt("MIDI", "Auto Arpeggio",				Midi.bMidiArpeggio);
+	WriteAppProfileInt("MIDI", "Device",		   Midi.iMidiDevice);
+	WriteAppProfileInt("MIDI", "Out Device",	   Midi.iMidiOutDevice);
+	WriteAppProfileInt("MIDI", "Master sync",	   Midi.bMidiMasterSync);
+	WriteAppProfileInt("MIDI", "Key release",	   Midi.bMidiKeyRelease);
+	WriteAppProfileInt("MIDI", "Channel map",	   Midi.bMidiChannelMap);
+	WriteAppProfileInt("MIDI", "Velocity control", Midi.bMidiVelocity);
+	WriteAppProfileInt("MIDI", "Auto Arpeggio",	   Midi.bMidiArpeggio);
 
 	// Appearance
-	WriteAppProfileInt("Appearance", "Background",					Appearance.iColBackground);
-	WriteAppProfileInt("Appearance", "Background highlighted",		Appearance.iColBackgroundHilite);
-	WriteAppProfileInt("Appearance", "Pattern text",				Appearance.iColPatternText);
-	WriteAppProfileInt("Appearance", "Pattern text highlighted",	Appearance.iColPatternTextHilite);
-	WriteAppProfileInt("Appearance", "Selection",					Appearance.iColSelection);
-	WriteAppProfileInt("Appearance", "Cursor",						Appearance.iColCursor);
+	WriteAppProfileInt("Appearance", "Background",				 Appearance.iColBackground);
+	WriteAppProfileInt("Appearance", "Background highlighted",	 Appearance.iColBackgroundHilite);
+	WriteAppProfileInt("Appearance", "Pattern text",			 Appearance.iColPatternText);
+	WriteAppProfileInt("Appearance", "Pattern text highlighted", Appearance.iColPatternTextHilite);
+	WriteAppProfileInt("Appearance", "Pattern instrument",		 Appearance.iColPatternInstrument);
+	WriteAppProfileInt("Appearance", "Pattern volume",			 Appearance.iColPatternVolume);
+	WriteAppProfileInt("Appearance", "Pattern effect",			 Appearance.iColPatternEffect);
+	WriteAppProfileInt("Appearance", "Selection",				 Appearance.iColSelection);
+	WriteAppProfileInt("Appearance", "Cursor",					 Appearance.iColCursor);
 
 	// Window position
-	WriteAppProfileInt("Window position", "Left",			WindowPos.iLeft);
-	WriteAppProfileInt("Window position", "Top",			WindowPos.iTop);
-	WriteAppProfileInt("Window position", "Right",			WindowPos.iRight);
-	WriteAppProfileInt("Window position", "Bottom",			WindowPos.iBottom);
-	WriteAppProfileInt("Window position", "State",			WindowPos.iState);
+	WriteAppProfileInt("Window position", "Left",	WindowPos.iLeft);
+	WriteAppProfileInt("Window position", "Top",	WindowPos.iTop);
+	WriteAppProfileInt("Window position", "Right",	WindowPos.iRight);
+	WriteAppProfileInt("Window position", "Bottom",	WindowPos.iBottom);
+	WriteAppProfileInt("Window position", "State",	WindowPos.iState);
 
 	// Paths
 	WriteAppProfileString("Paths", "FTM path", Paths[PATH_FTM]);
@@ -174,6 +194,9 @@ void CSettings::DefaultSettings()
 	General.iEditStyle			= EDIT_STYLE1;
 	General.bFramePreview		= true;
 	General.bNoDPCMReset		= false;
+	General.bNoStepMove			= false;
+	General.iPageStepSize		= 4;
+	General.bPatternColor		= true;
 
 	// Sound
 	strDevice				= "";
@@ -183,6 +206,7 @@ void CSettings::DefaultSettings()
 	Sound.iBassFilter		= 16;
 	Sound.iTrebleFilter		= 12000;
 	Sound.iTrebleDamping	= 3;
+	Sound.iMixVolume		= 100;
 
 	// Midi
 	Midi.iMidiDevice		= 0;
@@ -193,12 +217,15 @@ void CSettings::DefaultSettings()
 	Midi.bMidiArpeggio		= 0;
 
 	// Appearance
-	Appearance.iColBackground			= COLOR_SCHEME.BACKGROUND;
-	Appearance.iColBackgroundHilite		= COLOR_SCHEME.BACKGROUND_HILITE;
-	Appearance.iColPatternText			= COLOR_SCHEME.TEXT_NORMAL;
-	Appearance.iColPatternTextHilite	= COLOR_SCHEME.TEXT_HILITE;
-	Appearance.iColSelection			= COLOR_SCHEME.SELECTION;
-	Appearance.iColCursor				= COLOR_SCHEME.CURSOR;
+	Appearance.iColBackground		 = COLOR_SCHEME.BACKGROUND;
+	Appearance.iColBackgroundHilite	 = COLOR_SCHEME.BACKGROUND_HILITE;
+	Appearance.iColPatternText		 = COLOR_SCHEME.TEXT_NORMAL;
+	Appearance.iColPatternTextHilite = COLOR_SCHEME.TEXT_HILITE;
+	Appearance.iColPatternInstrument = COLOR_SCHEME.TEXT_INSTRUMENT;
+	Appearance.iColPatternVolume	 = COLOR_SCHEME.TEXT_VOLUME;
+	Appearance.iColPatternEffect	 = COLOR_SCHEME.TEXT_EFFECT;
+	Appearance.iColSelection		 = COLOR_SCHEME.SELECTION;
+	Appearance.iColCursor			 = COLOR_SCHEME.CURSOR;
 
 	// Window position
 	WindowPos.iLeft		= 100;
@@ -213,11 +240,11 @@ void CSettings::DefaultSettings()
 
 void CSettings::SetWindowPos(int Left, int Top, int Right, int Bottom, int State)
 {
-	WindowPos.iLeft		= Left;
-	WindowPos.iTop		= Top;
-	WindowPos.iRight	= Right;
-	WindowPos.iBottom	= Bottom;
-	WindowPos.iState	= State;
+	WindowPos.iLeft	  = Left;
+	WindowPos.iTop	  = Top;
+	WindowPos.iRight  = Right;
+	WindowPos.iBottom = Bottom;
+	WindowPos.iState  = State;
 }
 
 CString CSettings::GetPath(unsigned int PathType)
@@ -235,4 +262,14 @@ void CSettings::SetPath(CString PathName, unsigned int PathType)
 		Paths[PathType] = PathName;
 	else
 		Paths[PathType] = PathName.Left(PathName.ReverseFind('\\'));
+}
+
+void CSettings::StoreSetting(CString Section, CString Name, int Value)
+{
+	WriteAppProfileInt(Section, Name, Value);
+}
+
+int CSettings::LoadSetting(CString Section, CString Name)
+{
+	return GetAppProfileInt(Section, Name, 0);
 }

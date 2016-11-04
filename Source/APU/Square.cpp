@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -59,6 +59,14 @@ void CSquare::Write(uint16 Address, uint8 Value)
 		EnvelopeFix		= (Value & 0x10);
 		Volume			= (Value & 0x0F);
 		EnvelopeSpeed	= (Value & 0x0F) + 1;
+
+		if (DutyLength == 4) {
+			DutyLength = 0x0C;
+			bInverted = true;
+		}
+		else
+			bInverted = false;
+
 		break;
 
 	case 0x01:
@@ -110,7 +118,10 @@ void CSquare::Process(uint32 Time)
 		FrameCycles += Counter;
 		Counter		= Wavelength + 1;
 		DutyCycle	= (DutyCycle + 1) & 0x0F;
-		AddMixer((((DutyCycle >= DutyLength) && Valid) ? (EnvelopeFix ? Volume : EnvelopeVolume) : 0));
+		if (bInverted)
+			AddMixer((((DutyCycle >= DutyLength) && Valid) ? 0 : (EnvelopeFix ? Volume : EnvelopeVolume)));
+		else
+			AddMixer((((DutyCycle >= DutyLength) && Valid) ? (EnvelopeFix ? Volume : EnvelopeVolume) : 0));
 	}
 
 	Counter -= (uint16)Time;
@@ -132,7 +143,7 @@ void CSquare::SweepUpdate1()
 		SweepResult = Wavelength + SweepResult;
 
 	if (SweepEnabled && (Wavelength > 0x07) && (SweepResult < 0x800) && (SweepShift > 0)) {
-		if (SweepCounter <= 1) {
+		if (SweepCounter == 0) {
 			SweepCounter	= SweepRefresh + 1;
 			Wavelength		= SweepResult;
 		}
@@ -159,7 +170,7 @@ void CSquare::SweepUpdate2()
 		SweepResult = Wavelength + SweepResult;
 
 	if (SweepEnabled && Wavelength > 0x07 && SweepResult < 0x800 && SweepShift > 0) {
-		if (SweepCounter <= 1) {
+		if (SweepCounter == 0) {
 			SweepCounter	= SweepRefresh + 1;
 			Wavelength		= SweepResult;
 		}

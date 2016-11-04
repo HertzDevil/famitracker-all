@@ -1,156 +1,235 @@
 <HTML>
 	<HEAD>
 		<TITLE></TITLE>
-		<meta name="vs_snapToGrid" content="False">
-		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+		<META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
 	</HEAD>
-	<BODY>
-		<H2><FONT face="Verdana">The&nbsp;pattern field</FONT></H2>
-		<P><FONT face="Verdana" size="2"> The pattern field&nbsp;consists&nbsp;of&nbsp;the 
-				channels, where&nbsp;each channel by default&nbsp;have&nbsp;four columns.</FONT></P>
-		<P><FONT face="Verdana" size="4"><STRONG>Columns</STRONG></FONT></P>
-		<OL>
-			<LI>
-				<FONT face="Verdana" size="2"><STRONG>Note column<BR>
-					</STRONG>The note and octave&nbsp;to play.<BR>
-				</FONT>
-			<LI>
-				<FONT face="Verdana" size="2"><STRONG>Instrument column<BR>
-					</STRONG>The instrument to use, ranges 00 - 3F. May be&nbsp;empty for no new 
-					instrument.
-					<BR>
-					It is possible to change the instrument without retriggering the note.<BR>
-				</FONT>
-			<LI>
-				<FONT face="Verdana" size="2"><STRONG>Volume column<BR>
-					</STRONG>The volume column, range: 1 - F. Only&nbsp;affects the&nbsp;square and 
-					noise channels.<BR>
-				</FONT>
-			<LI>
-				<FONT size="2"><FONT face="Verdana"><STRONG>(5, 6, 7)&nbsp;Effect columns<BR>
-						</STRONG>Used for track effects. Format is <STRONG>Yxx</STRONG>, where&nbsp; <STRONG>
-							Y</STRONG> = effect number and <STRONG>xx</STRONG> = effect parameter. A 
-						list of the effects is below.<BR>
-						Additional effect columns are available by clicking the arrows in channel 
-						headers.</FONT></FONT></LI></OL>
-		<P><FONT face="Verdana" size="2">Use the keyboard&nbsp;letters (<STRONG>Z </STRONG>= C, <STRONG>
-					S </STRONG>= C#,&nbsp;<STRONG>X </STRONG>= D...,&nbsp;<STRONG>Q</STRONG> = 
-				C +1 octave...)&nbsp;to enter notes</FONT><FONT face="Verdana" size="2"> and 
-				function keys <STRONG>F2 - F9</STRONG> to select octave.<BR>
-				The keys <STRONG>&lt;</STRONG>, <STRONG>1</STRONG>, and <STRONG>¨</STRONG> adds 
-				a note off.</FONT></P>
-		<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys"><FONT color="#000000">
-					C-4 01 F <STRONG>---</STRONG></FONT> </FONT><FONT face="Verdana" size="2">(Plays 
-				a <STRONG>C 4</STRONG> note&nbsp;using instrument <STRONG>1</STRONG> and volume <STRONG>
-					F</STRONG>, no effect is used. Note C is on the&nbsp;'Z'-key)</FONT></P>
-		<H3><FONT face="Verdana">Channels</FONT></H3>
-		<P><FONT face="Verdana" size="2"> Each channel got it name from what kind of 
-				sound&nbsp;it produces.<BR>
-			</FONT><FONT face="Verdana" size="2">It is possible to disable channels by clicking 
-				its name (on top of pattern).</FONT></P>
-		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Square 1 &amp; 2</FONT></H3>
-		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana"><FONT size="2">Produces&nbsp;square-shaped&nbsp;waveforms.&nbsp;<BR>
-						The lowest&nbsp;possible note is A-0 (G-0 for PAL). Both channels are 
-						identical.<STRONG></P>
-		</BLOCKQUOTE></STRONG></FONT></FONT>
-		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Triangle</FONT></H3>
-		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P><FONT face="Verdana" size="2">Produces&nbsp;triangle-shaped waveforms. It is not 
-					possible to set volume,&nbsp;so&nbsp;the volume&nbsp;column have no effect on 
-					this channel.<BR>
-					This channel is&nbsp;one octave lower than the square channels and cannot 
-					produce&nbsp;sound below&nbsp;A-0 (G-0 for PAL).</FONT></P>
-		</BLOCKQUOTE>
-		<H3 dir="ltr"><FONT face="Verdana" size="2">Noise</FONT></H3>
-		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P><FONT face="Verdana" size="2">Produces white-noise&nbsp;sound.<BR>
-					It is only possible to play 16 different frequencies, where the lowest 
-					frequency is played at&nbsp;C-0 and highest at D#1 (going out of that range 
-					will wrap).</FONT></P>
-		</BLOCKQUOTE>
-		<H3 dir="ltr"><FONT face="Verdana" size="2">DPCM</FONT></H3>
-		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2"> This 
-					one&nbsp;plays&nbsp;samples that are&nbsp;loaded from 
-					DMC-files,&nbsp;instrument effects are not used at all.
-					<BR>
-					It is not possible to set volume for this channel. </FONT>
-			</P>
-		</BLOCKQUOTE>
-		<H3><FONT face="Verdana">Channel effect codes</FONT></H3>
-		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P><FONT face="Verdana" size="2"> Effects&nbsp;are entered&nbsp;in the last column, in 
-					form of <STRONG>Xxx</STRONG>. (<STRONG>X</STRONG> - Effect number, <STRONG>xx</STRONG>
-					- Effect parameter)</FONT></P>
-			<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys">C-4&nbsp;-- - 
-					047</FONT><FONT face="Verdana" size="2">, plays a C-note with 047-arpeggio. 
-					(Commonly used&nbsp;as "C-major"-chords)</FONT></P>
-			<UL>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">0xy</FONT>&nbsp;- Arpeggio, 
-						fast note shifting. <STRONG>x</STRONG> and <STRONG>y</STRONG> notes above the 
-						row-note.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">1xx</FONT> - Portamento on, 
-						slide to new notes. <STRONG>xx</STRONG> = speed.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">2xx</FONT> - Portamento off.<STRONG>xx</STRONG>
-						doesn't do anything.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">4xy</FONT> - Vibrato. <STRONG>x</STRONG>
-						= speed <EM>(0&nbsp;= disable),</EM> <STRONG>y </STRONG>= depth.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">7xy</FONT> - Tremolo. <STRONG>x</STRONG>
-						= speed <EM>(0&nbsp;= disable),</EM> <STRONG>y </STRONG>= depth.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Bxx</FONT> - Jump to frame <STRONG>xx.</STRONG></FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Cxx</FONT> - Halt.<STRONG>xx</STRONG>
-						doesn't do anything.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Dxx</FONT> - Skip to next frame 
-						and start at row <STRONG>xx.</STRONG></FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Exx</FONT> - Set volume.<STRONG>xx </STRONG>
-						= <EM>0 - 15.</EM>
-						<BR>
-						<EM>Obsolete, use the volume column!</EM></FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Fxx</FONT> - Set speed/tempo. 0 
-						&lt; <STRONG>xx</STRONG> &lt; 20 sets the speed, 20 &lt;&nbsp; <STRONG>xx</STRONG>
-						&lt;&nbsp;FF sets the tempo.</FONT>
-				<LI>
-					<FONT face="Fixedsys">Gxx</FONT><FONT face="Verdana" size="2"> - Note delay. <STRONG>xx&nbsp;</STRONG>in 
-						frames.</FONT>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Hxy</FONT> - Trigger hardware 
-						sweep up. <STRONG>x</STRONG> = period (<EM>0 - 7</EM> ), <STRONG>y</STRONG> = 
-						shift (<EM>1 - 7</EM>).
-						<BR>
-						<EM>This feature is only avaliable for the square channels.</EM></FONT><EM> </EM>
-				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Ixy</FONT> - Trigger hardware 
-						sweep down. <STRONG>x</STRONG> = period (<EM>0 - 7</EM>), <STRONG>y</STRONG> = 
-						shift (<EM>1 - 7</EM>).
-						<BR>
-						<EM>This feature is only avaliable for the square channels.</EM></FONT><EM> </EM>
-				<LI>
-					<FONT face="Fixedsys" size="2">Pxx<FONT face="Verdana"> - Fine pitch setting. Default <STRONG>
-								xx</STRONG>&nbsp;is 80, <STRONG>xx</STRONG> &gt; 80 to&nbsp;increase pitch, 
-							and <STRONG>xx</STRONG> &lt; 80 to&nbsp;decrease pitch.</FONT></FONT>
-				<LI>
-					<FONT face="Fixedsys" size="2">Zxx<FONT face="Verdana"> - Set the DPCM's delta counter. 
-							Affects volume of triangle and noise.&nbsp;0 &lt; <STRONG>xx</STRONG> &lt; 80</FONT></FONT></LI></UL>
-		</BLOCKQUOTE><EM><STRONG></STRONG>
-			<DL>
-		</EM>
-		<DD>
-			<FONT face="Verdana"><FONT size="2"><EM>Notes: <STRONG>E</STRONG> will not&nbsp;work if an 
-						instrument volume effect loop is used.&nbsp;<STRONG>1</STRONG> </EM><EM>will 
-						not&nbsp;work if an instrument&nbsp;frequency effect loop is used. (Pitch, 
-						Hi-pitch&nbsp;and Arpeggio)</EM> </FONT></FONT>
-			<DD>
-				&nbsp;</DD></DL>
+	<BODY style="FONT-SIZE: 10pt; FONT-FAMILY: Arial; TEXT-ALIGN: left">
+		<p>
+			<strong>
+				<span style="FONT-SIZE: 16pt; COLOR: #660099">
+     The pattern&nbsp;editor
+    <br>
+        </span></strong>
+			<br>
+		</p>
+		<hr>
+		<P><STRONG>Subsections</STRONG></P>
+		<P><A href="./tracker_field.htm#pattern">Pattern editor</A><BR>
+			<A href="./tracker_field.htm#frame">Frame editor</A><BR>
+			<A href="./tracker_field.htm#toolbar">Toolbars</A></P>
+		<P>
+			<HR>
+		<P></P>
+		<a name="pattern"></a>
+		<P><FONT size="3"><STRONG>Pattern editor</STRONG></FONT></P>
+		<P>
+			The pattern field consists of all channels and looks like this
+			<br>
+			<br>
+			<img id="IMG1" src="./pattern.gif" style="FONT-SIZE: 10pt">&nbsp;<br>
+			<strong>
+				<br>
+				<FONT size="3">Channels </FONT></strong>
+			<br>
+			<br>
+			The channels in the NES are named after the type of sound they generate. 
+			Channels can be muted by pressing the name.
+			<br>
+			<br>
+			<strong>Square 1&nbsp;&amp; 2&nbsp;</strong><br>
+			<br>
+			Square shaped waveform. The lowest possible note is A-0 (G-0 for PAL)
+			<br>
+			<br>
+			<strong>Triangle </strong>
+			<br>
+			<br>
+			Triangle shaped waveform. Volume cannot be changed for this channel, so it's 
+			just on or off. Like the squares, it cannot go below A-0.
+			<br>
+			<br>
+			<strong>Noise </strong>
+			<br>
+			<br>
+			White noise sound. This channel has only 16 different frequencies, notes is 
+			displayed as 0 to F.
+			<br>
+			<br>
+			<strong>DPCM
+				<br>
+			</strong>
+			<br>
+			This channel plays delta modulated PCM samples, that are loaded from DMC-files. 
+			Volume cannot be changed.<BR>
+			See DPCM instruments for more information.
+		</P>
+		<P>
+			<FONT size="3"><STRONG>Columns</STRONG></FONT>
+		</P>
+		<P></P>
+		<P>
+			Each channel are then split into four different columns.
+			<br>
+			<br>
+			<strong>1. Note column
+				<br>
+			</strong>
+			<br>
+			Note and octave to play.
+			<br>
+			<br>
+			<strong>2. Instrument column </strong>
+			<br>
+			<br>
+			The instrument to use. Can be empty to use the last used instrument. It's also 
+			possible to change the instrument without retriggering the note.
+			<br>
+			<br>
+			<strong>3. Volume column
+				<br>
+			</strong>
+			<br>
+			Sets the volume for a channel, range 0 - F. Can only be used for square and 
+			noise.
+			<br>
+			<br>
+			<strong>4. Channel effects
+				<br>
+			</strong>
+			<br>
+			Used for channel effects. Format is Yxx, where Y = effect number and xx = 
+			effect parameter.
+			<br>
+			<a href="effect_list.htm">See this list of available effects.</a>
+		</P>
+		<HR>
+		<a name="frame"></a>
+		<P><FONT size="3"><STRONG> Frame editor</STRONG></FONT></P>
+		<P><FONT size="2">One set of patterns for all channels are called a frame in this 
+				program, and frames are configured in the frame editor.</FONT></P>
+		<P><IMG id="IMG1" style="FONT-SIZE: 10pt" src="./frame_editor.png"></P>
+		<P>Each channel are represented as a pair of number, where the number is the 
+			selected pattern slot for that frame. There is a total of 128 patterns for each 
+			channel, and the patterns aren't shared across the channels. Currently 128 
+			frames&nbsp;can max&nbsp;be used.</P>
+		<P>To select another pattern, press the "+" - or "-" button, or the those buttons 
+			on the keyboard. Change all will change all patterns at once for the selected 
+			frame.</P>
+		<HR>
+		<a name="toolbar"></a>
+		<P><STRONG><FONT size="3">Toolbars</FONT></STRONG></P>
+		<P><IMG id="IMG1" style="FONT-SIZE: 10pt" src="./toolbar1.png"></P>
+		<P>The buttons are in order</P>
+		<P>
+			<TABLE id="Table1" height="233" cellSpacing="1" cellPadding="1" width="440" border="1">
+				<TR>
+					<TD><FONT size="2">New</FONT></TD>
+					<TD><FONT size="2">New module</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Open</FONT></TD>
+					<TD><FONT size="2">Open a file</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Save</FONT></TD>
+					<TD><FONT size="2">Save current file</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Cut</FONT></TD>
+					<TD><FONT size="2">Cut selected pattern</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Copy</FONT></TD>
+					<TD><FONT size="2">Copies selected pattern</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Paste</FONT></TD>
+					<TD><FONT size="2">Paste into pattern</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">About</FONT></TD>
+					<TD><FONT size="2">Display about box</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Help</FONT></TD>
+					<TD><FONT size="2">Help button</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Play</FONT></TD>
+					<TD><FONT size="2">Play the module</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Play pattern</FONT></TD>
+					<TD><FONT size="2">Play and loop&nbsp;selected pattern</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Stop</FONT></TD>
+					<TD>
+						<P><FONT size="2">Stop player</FONT></P>
+					</TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Record</FONT></TD>
+					<TD><FONT size="2">Record/normal mode</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Add frame</FONT></TD>
+					<TD><FONT size="2">Add a new frame</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Remove frame</FONT></TD>
+					<TD><FONT size="2">Remove selected frame</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Move frame down</FONT></TD>
+					<TD><FONT size="2">Move selected frame down one step</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Move frame up</FONT></TD>
+					<TD><FONT size="2">Move selected frame up one step</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Previous song</FONT></TD>
+					<TD><FONT size="2">Moves to&nbsp;previous song in list</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Next song</FONT></TD>
+					<TD><FONT size="2">Moves to next song in list</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Setting</FONT></TD>
+					<TD><FONT size="2">Bring up settings dialog</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">NSF export</FONT></TD>
+					<TD><FONT size="2">Bring up export dialog</FONT></TD>
+				</TR>
+				<TR>
+					<TD><FONT size="2">Octave</FONT></TD>
+					<TD><FONT size="2">Selected octave</FONT></TD>
+				</TR>
+			</TABLE>
+		</P>
+		<P>The other toolbar</P>
+		<P><IMG id="IMG1" style="FONT-SIZE: 10pt" src="./toolbar2.png"></P>
+		<P>The first part is the frame editor and is already covered.</P>
+		<P>The song settings is for setting tempo and speed, number of rows and frames in 
+			the song.</P>
+		<P>Speed and tempo can also be set in the pattern by using command Fxx. The real 
+			BPM tempo is calculated by <STRONG>(6 / Speed) * Tempo</STRONG>, which means 
+			that the tempo box&nbsp;is correct at speed of 6. The time base for the song is 
+			usually 60 or 50 frames per second,&nbsp;this may lead to different durations 
+			for each row as the average tempo is calculated. If you think this is 
+			noticable, leave tempo at 150 (125 for PAL)&nbsp;and only use BPMs given by the 
+			speed box to make sure all rows are given the same duration.</P>
+		<P>Edit settings: step is the number of rows to steps to move&nbsp;in pattern 
+			editor&nbsp;and key repetition disables/enables repetition of keys.</P>
+		<P>Song information is: name, artist and copyright. These fields are stored in NSFs 
+			(and also available from the NSF export dialog).</P>
+		<P>Song list is used to select the song in multi song files.&nbsp;Song 
+			count&nbsp;is entered in the module properties dialog.</P>
+		<P>The last part to the right are the instrument box. The small toolbar is used to 
+			create, delete, open, save and edit settings for instrument. Textbox are for 
+			names.</P>
 	</BODY>
 </HTML>

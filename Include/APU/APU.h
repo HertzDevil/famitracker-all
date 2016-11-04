@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ class CAPU
 		void					ReleaseBuffer();
 		void					ClearBuffer();
 
-		void					SetupMixer(int LowCut, int HighCut, int HighDamp);
+		void					SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume);
 
 		int32					GetVol(uint8 Chan);
 		bool					IRQ();

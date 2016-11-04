@@ -18,6 +18,10 @@
 		<param name="Local" value="tracker_field.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Effect List">
+		<param name="Local" value="effect_list.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Key commands">
 		<param name="Local" value="shortcuts.htm">
 		</OBJECT>
@@ -28,6 +32,10 @@
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Configuration">
 		<param name="Local" value="configuration.htm">
+		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Change log">
+		<param name="Local" value="changelog.htm">
 		</OBJECT>
 </UL>
 </BODY></HTML>

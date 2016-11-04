@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,11 +23,21 @@
 #include "FamiTrackerDoc.h"
 #include "PatternData.h"
 
-void CPatternData::Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed)
+CPatternData::CPatternData()
 {
-	m_iPatternLength		= PatternLength;
-	m_iFrameCount			= FrameCount;
-	m_iSongSpeed			= Speed;
+	memset(m_iFrameList, 0, sizeof(int) * MAX_FRAMES * MAX_CHANNELS);
+}
+
+CPatternData::~CPatternData()
+{
+}
+
+void CPatternData::Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed, unsigned int Tempo)
+{
+	m_iPatternLength = PatternLength;
+	m_iFrameCount	 = FrameCount;
+	m_iSongSpeed	 = Speed;
+	m_iSongTempo	 = Tempo;
 }
 
 void CPatternData::ClearPattern(unsigned int Channels)
@@ -35,14 +45,14 @@ void CPatternData::ClearPattern(unsigned int Channels)
 	unsigned int x, y, z;
 
 	// Clear frame list
-	for (x = 0; x < Channels; x++) {
+	for (x = 0; x < MAX_CHANNELS; x++) {
 		for (y = 0; y < MAX_FRAMES; y++) {
 			m_iFrameList[x][y] = 0;
 		}
 	}
 
 	// Clear pattern
-	for (x = 0; x < Channels; x++) {
+	for (x = 0; x < MAX_CHANNELS; x++) {
 		for (y = 0; y < MAX_PATTERN; y++) {
 			for (z = 0; z < MAX_PATTERN_LENGTH; z++) {
 				ClearNote(x, y, z);

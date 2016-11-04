@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,6 +26,30 @@
 #include "InstrumentEditDlg.h"
 #include "PerformanceDlg.h"
 #include "SampleWindow.h"
+#include "DialogReBar.h"
+
+class CCustomEdit : public CEdit {
+	DECLARE_DYNAMIC(CCustomEdit)
+protected:
+	DECLARE_MESSAGE_MAP()
+public:
+	CCustomEdit() {
+		m_bUpdate = false;
+	}
+	bool IsEditable();
+	bool Update();
+	int GetValue();
+private:
+	void OnLButtonDblClk(UINT nFlags, CPoint point);
+	void OnSetFocus(CWnd* pOldWnd);
+	void OnKillFocus(CWnd* pNewWnd);
+private:
+	bool m_bUpdate;
+	int m_iValue;
+public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnFileAddsong();
+};
 
 class CMainFrame : public CFrameWnd
 {
@@ -33,6 +57,9 @@ class CMainFrame : public CFrameWnd
 protected: // create from serialization only
 	CMainFrame();
 	DECLARE_DYNCREATE(CMainFrame)
+
+private:
+	static const char NEW_INST_NAME[];
 
 // Attributes
 public:
@@ -51,20 +78,23 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	CDocument	*GetDocument() { return GetActiveDocument(); };
-	CView		*GetView() { return GetActiveView(); };
-	void		SetStatusText(LPCTSTR Text,...);
-	void		DrawSamples(int *Samples, int Count);
-	void		ChangeNoteState(int Note);
-	void		CloseInstrumentSettings();
+	CDocument		*GetDocument() { return GetActiveDocument(); };
+	CView			*GetView() { return GetActiveView(); };
+	void			SetStatusText(LPCTSTR Text,...);
+	void			DrawSamples(int *Samples, int Count);
+	void			ChangeNoteState(int Note);
+	void			CloseInstrumentSettings();
 	
-	void		UpdateTrackBox();
+	void			UpdateTrackBox();
 
 protected:
-	bool		CreateInstrumentToolbar();
-	bool		CreateSampleWindow();
-	void		OpenInstrumentSettings();
-	void		SetTempo(unsigned int Value);
+	bool			CreateInstrumentToolbar();
+	bool			CreateSampleWindow();
+	void			OpenInstrumentSettings();
+	void			SetSpeed(int Speed);
+	void			SetTempo(int Tempo);
+	void			SetRowCount(int Count);
+	void			SetFrameCount(int Count);
 
 protected:  // control bar embedded members
 	CStatusBar		m_wndStatusBar;
@@ -72,6 +102,7 @@ protected:  // control bar embedded members
 	CPatternWnd		m_wndPatternWindow;
 	CDialogBar		m_wndDialogBar;
 	CReBar			m_wndToolBarReBar;
+	CDialogReBar	m_wndOctaveBar;
 
 	CToolBarCtrl	m_wndInstToolBar;
 	CWnd			m_wndInstToolBarWnd;
@@ -87,6 +118,12 @@ protected:  // control bar embedded members
 	CSampleWindow		m_SampleWindow;
 	CSampleWinProc		m_SampleProc;
 
+	CCustomEdit		*m_pCustomEditSpeed;
+	CCustomEdit		*m_pCustomEditTempo;
+	CCustomEdit		*m_pCustomEditLength;
+	CCustomEdit		*m_pCustomEditFrames;
+	CCustomEdit		*m_pCustomEditStep;
+
 	bool m_bInitialized;
 
 // Generated message map functions
@@ -95,24 +132,24 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	void ClearInstrumentList();
-	void AddInstrument(int Index, const char *Name);
+	void AddInstrument(int Index, const char *Name, int Type);
 	void RemoveInstrument(int Index);
 	void SetIndicatorTime(int Min, int Sec, int MSec);
 	void RefreshPattern();
 	void SetSongInfo(char *Name, char *Artist, char *Copyright);
 	void SetupColors(void);
+	void DisplayOctave();
+	void UpdateInstrumentIndex();
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle = WS_OVERLAPPEDWINDOW, const RECT& rect = rectDefault, CWnd* pParentWnd = NULL, LPCTSTR lpszMenuName = NULL, DWORD dwExStyle = 0, CCreateContext* pContext = NULL);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result);
 	afx_msg void OnDblClkInstruments(NMHDR *pNotifyStruct, LRESULT *result);
 	afx_msg void OnInstNameChange();
-	afx_msg void OnEnFramesChange();
 	afx_msg void OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnEnTempoChange();
+	afx_msg void OnDeltaposSpeedSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnTrackerKillsound();
 	afx_msg void OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnEnRowsChange();
 	afx_msg void OnCreateNSF();
 	afx_msg void OnNextFrame();
 	afx_msg void OnPrevFrame();
@@ -131,6 +168,7 @@ public:
 	afx_msg void OnUpdateSBFrequency(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateKeyStepEdit(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateSpeedEdit(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateTempoEdit(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateRowsEdit(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateFramesEdit(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateKeyRepeat(CCmdUI *pCmdUI);
@@ -149,10 +187,23 @@ public:
 	afx_msg void OnModuleModuleproperties();
 	afx_msg void OnLoadInstrument();
 	afx_msg void OnSaveInstrument();
+	afx_msg void OnEditInstrument();
 	afx_msg void OnAddInstrument();
 	afx_msg void OnRemoveInstrument();
 	afx_msg void OnBnClickedEditInst();
 	afx_msg void OnCbnSelchangeSong();
+	afx_msg void OnCbnSelchangeOctave();
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
+	afx_msg void OnRemoveFocus();
+	afx_msg void OnNextSong();
+	afx_msg void OnPrevSong();
+	afx_msg void OnUpdateNextSong(CCmdUI *pCmdUI);
+	afx_msg void OnUpdatePrevSong(CCmdUI *pCmdUI);
+	afx_msg void OnTrackerSwitchToInstrument();
+	afx_msg void OnUpdateTrackerSwitchToInstrument(CCmdUI *pCmdUI);
+	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 };
 
 

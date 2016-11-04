@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 #include "PCMImport.h"
 #include ".\pcmimport.h"
 
-const int MAX_QUALITY	= 16;
-const int MIN_QUALITY	= 1;
+const int MAX_QUALITY	= 15;
+const int MIN_QUALITY	= 0;
 const int MAX_VOLUME	= 32;
 const int MIN_VOLUME	= 1;
 
@@ -210,7 +210,7 @@ void CPCMImport::OnBnClickedOk()
 	m_fSampleFile.Read(&BlockSize, 4);
 	WaveSize = BlockSize;
 
-	// This is not perfect, but seems work for most of the files I tried
+	// This is not perfect, but seems to work for most of the files I tried
 	while (Scanning) {
 		m_fSampleFile.Read(Header, 4);
 		
@@ -259,13 +259,13 @@ void CPCMImport::OnBnClickedOk()
 	SampleBuf		= new char[0x4000];
 	dmcpos			= 0;//MAXINAMP / 2; //0;//MAXINAMP;
 
-	oversampling = ((BASE_FREQ / DPCM_RATES[m_iQuality - 1]) * 100) / WaveFormat.wf.nSamplesPerSec;
+	oversampling = ((BASE_FREQ / DPCM_RATES[m_iQuality]) * 100) / WaveFormat.wf.nSamplesPerSec;
 
 	// Length of PCM samples in ms
 	int Len = WaveSize / (WaveFormat.wf.nAvgBytesPerSec / 1000);
 
 	// Maximum length of DPCM samples in ms
-	int MaxLen = (SAMPLES_MAX * 8000) / (BASE_FREQ / DPCM_RATES[m_iQuality - 1]);
+	int MaxLen = (SAMPLES_MAX * 8000) / (BASE_FREQ / DPCM_RATES[m_iQuality]);
 
 	if (Len > MaxLen) {
 		ProgressCtrl->SetRange(0, SAMPLES_MAX);
@@ -372,6 +372,9 @@ void CPCMImport::OnBnClickedOk()
 	if (Samples > SAMPLES_MAX)
 		Samples = SAMPLES_MAX;
 
+	// remove .wav
+	m_strFileName.Truncate(m_strFileName.GetLength() - 4);
+
 	Imported.Data = SampleBuf;
 	Imported.Size = Samples;
 	Imported.Name = (char*)(LPCSTR)m_strFileName;
@@ -406,8 +409,9 @@ int CPCMImport::ReadSample(void)
 		else {
 			m_fSampleFile.Read(&Sample, 1);
 		}
+		if (Sample & 0x80)
+			Sample = -(Sample & 0x7F);
 	}
 
 	return Sample;
 }
-

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -48,7 +48,8 @@ class CSampleMem
 		uint8	Read(uint16 Address) {
 			if (!Mem)
 				return 0;
-			return (Mem[Address - 0xC000]);
+			int Addr = ((Address & 0xFFFF) - 0xC000) % MemSize;
+			return (Mem[Addr]);
 		};
 
 		void	SetMem(char *Ptr, int Size) {

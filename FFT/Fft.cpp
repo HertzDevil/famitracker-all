@@ -57,7 +57,7 @@ Fft::Fft (int Points, long sampleRate)
     // set up bit reverse mapping
     int rev = 0;
     int halfPoints = _Points/2;
-    for (i = 0; i < _Points - 1; i++)
+    for (int i = 0; i < _Points - 1; i++)
     {
         _aBitRev[i] = rev;
         int mask = halfPoints;
@@ -102,7 +102,7 @@ void Fft::CopyIn (/*SampleIter& iter*/ int SampleCount, int *Samples)
         _aTape [i + iTail] = (double) /*iter.GetSample()*/ Samples[i];
     }
     // Initialize the FFT buffer
-    for (i = 0; i < _Points; i++)
+    for (int i = 0; i < _Points; i++)
         PutAt (i, _aTape[i]);
 }
 

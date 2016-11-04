@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -32,7 +32,10 @@ struct stChanNote {
 
 class CPatternData {
 public:
-	void	Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed);
+	CPatternData();
+	~CPatternData();
+
+	void	Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed, unsigned int Tempo);
 
 	void	ClearNote(unsigned int Channel, unsigned int Pattern, unsigned int Row);
 	void	ClearPattern(unsigned int Channels);
@@ -45,26 +48,32 @@ public:
 
 	char GetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
 		{ return m_stPatternData[Channel][Pattern][Row].Note; };
+
 	char GetOctave(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
 		{ return m_stPatternData[Channel][Pattern][Row].Octave; };
+
 	char GetInstrument(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
 		{ return m_stPatternData[Channel][Pattern][Row].Instrument; };
+
 	char GetVolume(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
 		{ return m_stPatternData[Channel][Pattern][Row].Vol; };
+
 	char GetEffect(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column) 
 		{ return m_stPatternData[Channel][Pattern][Row].EffNumber[Column]; };
+
 	char GetEffectParam(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column) 
 		{ return m_stPatternData[Channel][Pattern][Row].EffParam[Column]; };
 
-	bool	IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row);
+	bool IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row);
 
-	stChanNote		m_stPatternData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];	// The patterns
+	stChanNote m_stPatternData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];	// The patterns
 
 	unsigned int	m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		// List of the patterns assigned to frames
 
 	unsigned int	m_iPatternLength;							// Amount of rows in one pattern
 	unsigned int	m_iFrameCount;								// Number of frames
 	unsigned int	m_iSongSpeed;								// Song speed
+	unsigned int	m_iSongTempo;								// Song tempo
 
 	unsigned int	m_iEffectColumns[MAX_CHANNELS];				// Effect columns enabled
 

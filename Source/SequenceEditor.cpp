@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -21,8 +21,10 @@
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "SequenceEditor.h"
 #include "InstrumentSettings.h"
+#include "..\include\sequenceeditor.h"
 
 const char *SEQUENCE_NAMES[] = {"Volume",
 								"Arpeggio",
@@ -50,21 +52,25 @@ enum EDIT {
 	EDIT_LINE
 };
 
+const int NUM_MIN[] = {0, -10, -127, -127, 0};
+const int NUM_MAX[] = {15, 10, 126, 126, 3};
+
 const int PRESET_FIRST_GROUP_LEFT		= 20;
 const int PRESET_FIRST_GROUP_TOP		= 40;
 const int PRESET_FIRST_GROUP_SPACING	= 25;
 const int PRESET_SPEED_GROUP_LEFT		= 180;
 const int PRESET_DIRECTION_GROUP_LEFT	= 270;
 
-const char *PRESET_VOL_TYPES[] = {"Linear fade out", "Linear fade in", "Exponential fade out", "Exponential fade in"};
-const char *PRESET_ARP_TYPES[] = {"Chord, major", "Chord, minor", "Chord, sus 2", "Chord, sus 4"};
-const char *PRESET_PITCH_TYPES[] = {"Slide down", "Slide up", "Vibrato", "Vibrato 2"};
-const char *PRESET_HIPITCH_TYPES[] = {"Drum (triangle)"};
-const char *PRESET_DUTY_TYPES[] = {"Duty cycle cycling 1", "Duty cycle cycling 2"};
-const char *PRESET_SPEED_TYPES[] = {"Fast", "Medium", "Slow"};
+const char *PRESET_VOL_TYPES[]		 = {"Linear fade out", "Linear fade in", "Exponential fade out", "Exponential fade in"};
+const char *PRESET_ARP_TYPES[]		 = {"Chord, major", "Chord, minor", "Chord, sus 2", "Chord, sus 4"};
+const char *PRESET_PITCH_TYPES[]	 = {"Slide down", "Slide up", "Vibrato", "Vibrato 2"};
+const char *PRESET_HIPITCH_TYPES[]	 = {"Drum (triangle)"};
+const char *PRESET_DUTY_TYPES[]		 = {"Duty cycle cycling 1", "Duty cycle cycling 2"};
+const char *PRESET_SPEED_TYPES[]	 = {"Fast", "Medium", "Slow"};
 const char *PRESET_DIRECTION_TYPES[] = {"Up", "Down"};
 
 const unsigned int COLOR_BARS = 0xC0A020;
+const unsigned int COLOR_BARS_HIGHLIGHT = 0xF0C060;
 
 bool IsInsideSequenceWin(int PosX, int PosY)
 {
@@ -107,6 +113,7 @@ BEGIN_MESSAGE_MAP(CSequenceEditor, CWnd)
 	ON_WM_LBUTTONDBLCLK()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_RBUTTONUP()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 void CSequenceEditor::SetParent(CInstrumentSettings *pParent)
@@ -116,7 +123,7 @@ void CSequenceEditor::SetParent(CInstrumentSettings *pParent)
 
 CString CSequenceEditor::CompileList()
 {
-	// Create an MML
+	// Create an MML string
 
 	CString String;
 	int i;
@@ -125,57 +132,22 @@ CString CSequenceEditor::CompileList()
 		if (m_iLoopPoint == i)
 			String.AppendFormat("| ");
 
-		String.AppendFormat("%i ", m_iSequenceItems[i]);
+		String.AppendFormat("%i ", /*m_iSequenceItems[i]*/ m_List->GetItem(i));
 	}
 	
 	return String;
 }
 
-const int NUM_MIN[] = {0, -10, -127, -127, 0};
-const int NUM_MAX[] = {15, 10, 126, 126, 3};
-
-void CSequenceEditor::SetCurrentSequence(int Type, stSequence *List)
+void CSequenceEditor::SetCurrentSequence(int Type, CSequence *List)
 {
-	unsigned int i;
-	int j, x = 0, val;
-	bool LoopEnabled = false;
-
 	m_bShowPresets = false;
-	m_iLoopPoint = -1;
 
-	memset(m_iSequenceItems, 0, sizeof(int) * MAX_ITEMS);
 	m_List = List;
 
 	m_iSequenceType = Type;
 
-	for (i = 0; i < List->Count && x < MAX_ITEMS; i++) {
-		if (List->Length[i] < 0) {
-			LoopEnabled = true;
-			m_iLoopPoint = x;
-			for (j = signed(List->Count + List->Length[i] - 1); j < signed(List->Count - 1); j++)
-				m_iLoopPoint -= (List->Length[j] + 1);
-		}
-		else {
-			for (j = 0; j < (List->Length[i] + 1) && x < MAX_ITEMS; j++) {
-				val = List->Value[i];
-				switch (m_iSequenceType) {
-					case MOD_VOLUME: LIMIT(val, 15, 0); break;
-					case MOD_DUTYCYCLE: LIMIT(val, 3, 0); break;
-				}
-				m_iSequenceItems[x++] = val;
-			}
-		}
-	}
-
-	m_iSequenceItemCount = x;
-
-	if (LoopEnabled) {
-		if (m_iLoopPoint < 0)
-			m_iLoopPoint = 0;
-	}
-	else {
-		m_iLoopPoint = x;
-	}
+	m_iSequenceItemCount	= m_List->GetItemCount();
+	m_iLoopPoint			= m_List->GetLoopPoint();
 
 	m_iSeqOrigin	= 0;
 	m_iMin			= NUM_MIN[Type];
@@ -328,17 +300,38 @@ void CSequenceEditor::OnMouseMove(UINT nFlags, CPoint point)
 	static bool Twice;
 	bool FixLoop = false;
 
-	if ((nFlags & MK_LBUTTON) != 0)
+	if ((nFlags & MK_LBUTTON) != 0) {
 		CheckEditing(point.x, point.y);
+	}
 	else if ((nFlags & MK_RBUTTON) != 0)
 		DrawLine(point.x, point.y);
+	else {
+		int WndWidth = (EDITOR_WIDTH - 2);
+		int Width;
+
+		if (m_iSequenceType == MOD_ARPEGGIO)
+			WndWidth = EDITOR_WIDTH - 18;
+
+		if (m_iSequenceItemCount > 0)
+			Width = WndWidth / m_iSequenceItemCount;
+		else
+			Width = WndWidth;
+		
+		if (Width < 1)
+			Width = 1;
+
+		m_iLastValueX = (point.x - EDITOR_LEFT) / Width;
+		m_iLastValueY = m_List->GetItem(m_iLastValueX);
+
+		RedrawWindow();
+	}
 
 	CWnd::OnMouseMove(nFlags, point);
 }
 
 void CSequenceEditor::DrawLine(int PosX, int PosY) 
 {
-	int StartX, StartY;
+	int StartX, StartY, x;
 	int EndX, EndY;
 	float DeltaY, fY;
 
@@ -354,7 +347,7 @@ void CSequenceEditor::DrawLine(int PosX, int PosY)
 		DeltaY = float(EndY - StartY) / float((EndX - StartX) + 1);
 		fY = float(StartY);
 
-		for (int x = StartX; x < EndX; x++) {
+		for (x = StartX; x < EndX; x++) {
 			ChangeItems(x, int(fY), true);
 			fY += DeltaY;
 		}
@@ -475,7 +468,11 @@ void CSequenceEditor::ChangeLoopPoint(int PosX, int PosY)
 
 	int Item = ((PosX + Width / 2) - EDITOR_LEFT) / Width;
 
+	if (Item == m_iSequenceItemCount)
+		Item = -1;
+
 	m_iLoopPoint = Item;
+	m_List->SetLoopPoint(m_iLoopPoint);
 
 	m_pParent->CompileSequence();
 	RedrawWindow();
@@ -526,7 +523,9 @@ void CSequenceEditor::ChangeItems(int PosX, int PosY, bool Quick)
 			break;
 	}
 
-	m_iSequenceItems[Item] = Value;
+	m_List->SetItem(Item, Value);
+
+//	m_iSequenceItems[Item] = Value;
 	m_iLastValueY = Value;
 	m_iLastValueX = Item;
 
@@ -580,12 +579,12 @@ BOOL CSequenceEditor::PreTranslateMessage(MSG* pMsg)
 {
 	switch (pMsg->message) {
 		case WM_KEYDOWN:
-			static_cast<CFamiTrackerView*>(theApp.pView)->PlayNote(int(pMsg->wParam));
+			static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewNote((unsigned char)pMsg->wParam);
 			return TRUE;
 		case WM_KEYUP:
-			static_cast<CFamiTrackerView*>(theApp.pView)->KeyReleased(int(pMsg->wParam));
+			static_cast<CFamiTrackerView*>(theApp.GetView())->PreviewRelease((unsigned char)pMsg->wParam);
 			return TRUE;
-	}
+	}	
 
 	return CWnd::PreTranslateMessage(pMsg);
 }
@@ -601,7 +600,6 @@ void CSequenceEditor::OnRButtonDown(UINT nFlags, CPoint point)
 	CWnd::OnRButtonDown(nFlags, point);
 }
 
-
 void CSequenceEditor::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	m_iStartLineX = m_iStartLineY = 0;
@@ -610,17 +608,10 @@ void CSequenceEditor::OnRButtonUp(UINT nFlags, CPoint point)
 	CWnd::OnRButtonUp(nFlags, point);
 }
 
-// 
-
 void CSequenceEditor::HandleScrollBar(int x, int y, int Width, int Height, int PosX, int PosY)
 {
 	if (PosX < x || PosX > (x + Width) || PosY < y || PosY > (y + Height))
 		return;
-
-	bool FixLoop = false;
-
-	if (m_iLoopPoint == m_iSequenceItemCount)
-		FixLoop = true;
 
 	// Direct
 	if (PosY >= (y + 16) && (PosY <= (y + Height - 16))) {
@@ -640,26 +631,7 @@ void CSequenceEditor::HandleScrollBar(int x, int y, int Width, int Height, int P
 		m_iButtonPressed = BUTTON_REMOVE;
 	}
 
-	/*
-	if ((PosY > LENGTH_TOP + 36) && (PosY < LENGTH_TOP + EDITOR_HEIGHT - 26)) {
-		// Directly
-		m_iSequenceItemCount = (127 * (LENGTH_TOP + EDITOR_HEIGHT - PosY - 26)) / 76;
-	}
-	else if (PosY > LENGTH_TOP + 20 && PosY < LENGTH_TOP + 34) {
-		// Add
-		if (m_iSequenceItemCount < 127)
-			m_iSequenceItemCount++;
-	}
-	else if (PosY > LENGTH_TOP + EDITOR_HEIGHT - 26 && PosY < LENGTH_TOP + EDITOR_HEIGHT - 12) {
-		// Remove
-		if (m_iSequenceItemCount > 0)
-			m_iSequenceItemCount--;
-	}
-
-*/
-
-	if (FixLoop)
-		m_iLoopPoint = m_iSequenceItemCount;
+	m_List->SetItemCount(m_iSequenceItemCount);
 
 	RedrawWindow();
 	m_pParent->CompileSequence();
@@ -692,9 +664,11 @@ void CSequenceEditor::DisplayArea(CDC *pDC)
 
 void CSequenceEditor::ClearBackground()
 {
+	int i;
+
 	m_pBackDC->FillSolidRect(0, 0, m_iWidth, m_iHeight, 0x102010);
 
-	for (int i = 0; i < 21; i++) {
+	for (i = 0; i < 21; i++) {
 		m_pBackDC->FillSolidRect(0, i, m_iWidth, 1, DIM_TO(0x804040, 0x102010, 100 - (i * 100) / 21));
 	}
 
@@ -755,7 +729,7 @@ void CSequenceEditor::DrawScrollBar(int x, int y, int Width, int Height)
 	if (m_iSequenceItemCount == 0)
 		Text.Format("Length: # 0, 0 ms");
 	else
-		Text.Format("Length: # %i, %i ms {%i: %i}", m_iSequenceItemCount, m_iSequenceItemCount * (1000 / static_cast<CFamiTrackerDoc*>(theApp.pDocument)->GetFrameRate()), m_iLastValueX, m_iLastValueY);
+		Text.Format("Length: # %i, %i ms {%i: %i}", m_iSequenceItemCount, m_iSequenceItemCount * (1000 / static_cast<CFamiTrackerDoc*>(theApp.GetDocument())->GetFrameRate()), m_iLastValueX, m_iLastValueY);
 	
 	m_pBackDC->TextOut(EDITOR_LEFT, EDITOR_TOP + EDITOR_HEIGHT + 6, Text);
 }
@@ -848,7 +822,7 @@ void CSequenceEditor::DrawVolumeEditor()
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
 
-			ItemHeight = -m_iSequenceItems[i] * EDITOR_HEIGHT / 15 + 3;
+			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 15 + 3;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT - 2;
 
 			if (InRange) {
@@ -909,7 +883,7 @@ void CSequenceEditor::DrawArpeggioEditor()
 
 			//ItemCenter = EDITOR_TOP + (EDITOR_HEIGHT / 2) - ((m_iSequenceItems[i] + m_iSeqOrigin) * EDITOR_HEIGHT) / /*m_iLevels*/ 20 - 4;
 			ItemHeight = (EDITOR_HEIGHT - 2) / 20;
-			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT / 2 - 4 - (m_iSequenceItems[i] + m_iSeqOrigin) * ItemHeight;
+			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT / 2 - 4 - (/*m_iSequenceItems[i]*/ m_List->GetItem(i) + m_iSeqOrigin) * ItemHeight;
 			InRange = ItemCenter > EDITOR_TOP && ItemCenter < (EDITOR_TOP + EDITOR_HEIGHT);
 
 			if (InRange) {
@@ -960,7 +934,7 @@ void CSequenceEditor::DrawPitchEditor()
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
 
-			ItemHeight = -m_iSequenceItems[i] * EDITOR_HEIGHT / 255;
+			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 255;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT / 2;
 
 			if (InRange) {
@@ -1020,7 +994,7 @@ void CSequenceEditor::DrawDutyEditor()
 				m_pBackDC->FillSolidRect(ItemLeft - 1, EDITOR_TOP, 1, EDITOR_HEIGHT, COL_TEXT);
 			}
 
-			ItemHeight = -m_iSequenceItems[i] * EDITOR_HEIGHT / 3 + 3;
+			ItemHeight = -/*m_iSequenceItems[i]*/ m_List->GetItem(i) * EDITOR_HEIGHT / 3 + 3;
 			ItemCenter = EDITOR_TOP + EDITOR_HEIGHT - 2;
 
 			if (InRange) {
@@ -1124,26 +1098,27 @@ void CSequenceEditor::LoadPreset()
 				case 2: m_iSequenceItemCount = 50; break;
 			}
 			m_iLoopPoint = -1;
+
 			switch (m_iSwitchGroup1) {
 				case 0:
 					for (i = 0; i < m_iSequenceItemCount; i++) {
-						m_iSequenceItems[i] = 15 - (i * 15) / (m_iSequenceItemCount - 1);
+						m_List->SetItem(i, 15 - (i * 15) / (m_iSequenceItemCount - 1));
 					}
 					break;
 				case 1:
 					for (i = 0; i < m_iSequenceItemCount; i++) {
-						m_iSequenceItems[i] = (i * 15) / (m_iSequenceItemCount - 1);
+						m_List->SetItem(i, (i * 15) / (m_iSequenceItemCount - 1));
 					}
 					break;
 				case 2:
 					for (i = 0; i < m_iSequenceItemCount; i++) {
-						m_iSequenceItems[i] = (int)exp((float(m_iSequenceItemCount - i) * 2.71f) / float(m_iSequenceItemCount));
+						m_List->SetItem(i, (int)exp((float(m_iSequenceItemCount - i) * 2.71f) / float(m_iSequenceItemCount)));
 					}
-					m_iSequenceItems[m_iSequenceItemCount - 1] = 0;
+					m_List->SetItem(m_iSequenceItemCount - 1, 0);
 					break;
 				case 3:
 					for (i = 0; i < m_iSequenceItemCount; i++) {
-						m_iSequenceItems[i] = int(exp((float(i) * 2.71f) / float(m_iSequenceItemCount)));
+						m_List->SetItem(i, int(exp((float(i) * 2.71f) / float(m_iSequenceItemCount))));
 					}
 					break;
 			}
@@ -1168,10 +1143,10 @@ void CSequenceEditor::LoadPreset()
 			for (i = 0; i < m_iSequenceItemCount; i++) {
 				Index = abs(Invert - ((i * 3) / m_iSequenceItemCount));
 				switch (m_iSwitchGroup1) {
-					case 0: m_iSequenceItems[i] = ARP_MAJOR[Index]; break;
-					case 1: m_iSequenceItems[i] = ARP_MINOR[Index]; break;
-					case 2: m_iSequenceItems[i] = ARP_SUS2[Index]; break;
-					case 3: m_iSequenceItems[i] = ARP_SUS4[Index]; break;
+					case 0: m_List->SetItem(i, ARP_MAJOR[Index]); break;
+					case 1: m_List->SetItem(i, ARP_MINOR[Index]); break;
+					case 2: m_List->SetItem(i, ARP_SUS2[Index]); break;
+					case 3: m_List->SetItem(i, ARP_SUS4[Index]); break;
 				}
 			}
 			break;
@@ -1181,25 +1156,25 @@ void CSequenceEditor::LoadPreset()
 					m_iSequenceItemCount = 8;
 					m_iLoopPoint = 7;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = i * 3;
+						m_List->SetItem(i, i * 3);
 					break;
 				case 1:
 					m_iSequenceItemCount = 8;
 					m_iLoopPoint = 7;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = -(m_iSequenceItemCount - i + 3) * 1;
+						m_List->SetItem(i, -(m_iSequenceItemCount - i + 3) * 1);
 					break;
 				case 2:
 					m_iSequenceItemCount = 8;
 					m_iLoopPoint = 0;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = PITCH_VIB[i];
+						m_List->SetItem(i, PITCH_VIB[i]);
 					break;
 				case 3:
 					m_iSequenceItemCount = 12;
 					m_iLoopPoint = 0;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = PITCH_VIB2[i];
+						m_List->SetItem(i, PITCH_VIB2[i]);
 					break;
 					
 			}
@@ -1207,9 +1182,9 @@ void CSequenceEditor::LoadPreset()
 		case 3:
 			m_iSequenceItemCount = 3;
 			m_iLoopPoint = 2;
-			m_iSequenceItems[0] = 0;
-			m_iSequenceItems[1] = 8;
-			m_iSequenceItems[2] = 11;
+			m_List->SetItem(0, 0);
+			m_List->SetItem(1, 8);
+			m_List->SetItem(2, 11);
 			break;
 		case 4:
 			switch (m_iSwitchGroup2) {
@@ -1217,21 +1192,31 @@ void CSequenceEditor::LoadPreset()
 				case 1: m_iSequenceItemCount = 20; break;
 				case 2: m_iSequenceItemCount = 28; break;
 			}
+			m_iLoopPoint = 0;
 			switch (m_iSwitchGroup1) {
 				case 0:
-					m_iLoopPoint = 0;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = DUTY_1[(i * 4) / m_iSequenceItemCount];
+						m_List->SetItem(i, DUTY_1[(i * 4) / m_iSequenceItemCount]);
 					break;
 				case 1:
-					m_iLoopPoint = 0;
 					for (i = 0; i < m_iSequenceItemCount; i++)
-						m_iSequenceItems[i] = DUTY_2[(i * 4) / m_iSequenceItemCount];
+						m_List->SetItem(i, DUTY_2[(i * 4) / m_iSequenceItemCount]);
 					break;
 			}
-
 			break;
 	}
 
+	m_List->SetItemCount(m_iSequenceItemCount);
+	m_List->SetLoopPoint(m_iLoopPoint);
+
 	m_pParent->CompileSequence();
+
+	RedrawWindow();
+}
+
+void CSequenceEditor::OnTimer(UINT nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	RedrawWindow();
+	CWnd::OnTimer(nIDEvent);
 }

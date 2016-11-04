@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -19,26 +19,22 @@
 */
 
 //
-// Sound generator
-//
-// This takes care of the NES sound playback
-//
-// ToDo:
-//
-//  - Change this to take better care of playback. Effectively,
-//    the view will only be called for refreshing the view.
+// This file takes care of the NES sound playback
 //
 
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"
 #include "MainFrm.h"
 #include "SoundGen.h"
 #include "DirectSound.h"
 #include "ChannelHandler.h"
 
 IMPLEMENT_DYNCREATE(CSoundGen, CWinThread)
+
+#define VRC6_INDEX(Channel) (Channel - CHANNELS_DEFAULT)
 
 const int PITCH	= 1000;		// 100.0 %
 
@@ -55,13 +51,25 @@ const int BASE_FREQ_PAL			= (1662607 * PITCH) / 1000;
 const unsigned int NOTE_FREQS[] = {262, 277, 294, 311, 330, 349, 370, 392, 415, 440, 466, 494};
 const unsigned int BASE_OCTAVE = 3;
 
+const unsigned int TOTAL_CHANNELS = CHANNELS_DEFAULT + CHANNELS_VRC6;
+
+// 2A03/2A07
 CSquare1Chan	Square1Channel;
 CSquare2Chan	Square2Channel;
 CTriangleChan	TriangleChannel;
 CNoiseChan		NoiseChannel;
 CDPCMChan		DPCMChannel;
 
-CChannelHandler	*ChannelCollection2A03[5];
+// Konami VRC6
+CVRC6Square1	VRC6Square1;
+CVRC6Square2	VRC6Square2;
+CVRC6Sawtooth	VRC6Sawtooth;
+
+CChannelHandler	*ChannelCollection2A03[CHANNELS_DEFAULT];
+CChannelHandler *ChannelCollectionVRC6[CHANNELS_VRC6];
+
+// ToDo: Start using this instead
+CChannelHandler	*ChannelCollection[TOTAL_CHANNELS];
 
 CSoundGen::CSoundGen()
 {
@@ -167,7 +175,8 @@ bool CSoundGen::ResetSound()
 	// Update blip-buffer filtering 
 	m_pAPU->SetupMixer(theApp.m_pSettings->Sound.iBassFilter, 
 		theApp.m_pSettings->Sound.iTrebleFilter, 
-		theApp.m_pSettings->Sound.iTrebleDamping);
+		theApp.m_pSettings->Sound.iTrebleDamping,
+		theApp.m_pSettings->Sound.iMixVolume);
 
 	return true;
 }
@@ -210,6 +219,10 @@ void CSoundGen::FlushBuffer(int16 *Buffer, uint32 Size)
 			m_pDSoundChannel->WriteSoundBuffer(m_pAccumBuffer, m_iBufSizeBytes);
 
 			theApp.DrawSamples((int*)m_iGraphBuffer, m_iBufSizeSamples);
+
+//			if (m_iGraphBuffer)
+//				delete [] m_iGraphBuffer;
+
 			m_iGraphBuffer = new int32[m_iBufSizeSamples + 16];
 
 			m_iBufferPtr = 0;
@@ -253,11 +266,12 @@ BOOL CSoundGen::InitInstance()
 			}
 
 			// Limit the freq, cannot go below $7FF on a NES
+			/*
 			if (NesFreqNTSC > 0x7FF)
 				NesFreqNTSC = 0x7FF;
 			if (NesFreqPAL > 0x7FF)
 				NesFreqPAL = 0x7FF;
-
+*/
 			m_iNoteLookupTable_NTSC[(i * 12) + j] = NesFreqNTSC;
 			m_iNoteLookupTable_PAL[(i * 12) + j] = NesFreqPAL;
 		}
@@ -281,6 +295,31 @@ BOOL CSoundGen::InitInstance()
 	ChannelCollection2A03[3] = dynamic_cast<CChannelHandler*>(&NoiseChannel);
 	ChannelCollection2A03[4] = dynamic_cast<CChannelHandler*>(&DPCMChannel);
 
+	// VRC6
+	ChannelCollectionVRC6[0] = dynamic_cast<CChannelHandler*>(&VRC6Square1);
+	ChannelCollectionVRC6[1] = dynamic_cast<CChannelHandler*>(&VRC6Square2);
+	ChannelCollectionVRC6[2] = dynamic_cast<CChannelHandler*>(&VRC6Sawtooth);
+
+	// All channels
+	ChannelCollection[0] = dynamic_cast<CChannelHandler*>(&Square1Channel);
+	ChannelCollection[1] = dynamic_cast<CChannelHandler*>(&Square2Channel);
+	ChannelCollection[2] = dynamic_cast<CChannelHandler*>(&TriangleChannel);
+	ChannelCollection[3] = dynamic_cast<CChannelHandler*>(&NoiseChannel);
+	ChannelCollection[4] = dynamic_cast<CChannelHandler*>(&DPCMChannel);
+	ChannelCollection[5] = dynamic_cast<CChannelHandler*>(&VRC6Square1);
+	ChannelCollection[6] = dynamic_cast<CChannelHandler*>(&VRC6Square2);
+	ChannelCollection[7] = dynamic_cast<CChannelHandler*>(&VRC6Sawtooth);
+
+	for (i = 0; i < CHANNELS_DEFAULT; i++) {
+		ChannelCollection2A03[i]->InitChannel(m_pAPU, m_cVibTable, pDocument);
+		ChannelCollection2A03[i]->MakeSilent();
+	}
+
+	for (i = 0; i < CHANNELS_VRC6; i++) {
+		ChannelCollectionVRC6[i]->InitChannel(m_pAPU, m_cVibTable, pDocument);
+		ChannelCollectionVRC6[i]->MakeSilent();
+	}
+
 	DPCMChannel.SetSampleMem(&m_SampleMem);
 
 	LoadMachineSettings(NTSC, 60);
@@ -296,11 +335,6 @@ BOOL CSoundGen::InitInstance()
 	m_pAPU->Write(0x4015, 0x0F);
 
 	m_SampleMem.SetMem(0, 0);
-
-	for (i = 0; i < 5; i++) {
-		ChannelCollection2A03[i]->InitChannel(m_pAPU, m_cVibTable, pDocument);
-		ChannelCollection2A03[i]->MakeSilent();
-	}
 
 	m_iSpeed = DEFAULT_SPEED;
 	m_iTempo = DEFAULT_TEMPO_NTSC;
@@ -324,6 +358,10 @@ int CSoundGen::Run()
 
 	m_bRunning = true;
 
+	for (i = 0; i < pDocument->GetAvailableChannels(); i++) {
+		pTrackerView->NewNoteData[i] = false;
+	}
+
 	// The sound generator and NES APU emulation routine
 	// This will always run in the background when the tracker is running
 	while (m_bRunning) {
@@ -346,11 +384,10 @@ int CSoundGen::Run()
 					case M_SILENT_ALL:
 						m_pAPU->Reset();
 						m_SampleMem.SetMem(0, 0);
-						//SquareChannel.MakeSilent();
-						for (int i = 0; i < 5; i++) {
+						for (int i = 0; i < CHANNELS_DEFAULT; i++)
 							ChannelCollection2A03[i]->MakeSilent();
-							//KillChannelHard(i);
-						}
+						for (int i = 0; i < CHANNELS_VRC6; i++)
+							ChannelCollectionVRC6[i]->MakeSilent();
 						break;
 					// Load new settings
 					case M_LOAD_SETTINGS:
@@ -362,6 +399,9 @@ int CSoundGen::Run()
 
 		theApp.StepFrame();
 
+		if (!theApp.IsDocLoaded())
+			continue;
+
 		RunFrame();
 
 		// Organize!
@@ -371,40 +411,65 @@ int CSoundGen::Run()
 		if (pDocument->IsFileLoaded()) {
 			for (i = 0; i < pDocument->GetAvailableChannels(); i++) {
 				if (pTrackerView->Arpeggiate[i] > 0) {
-					ChannelCollection2A03[i]->Arpeggiate(pTrackerView->Arpeggiate[i]);
+					ChannelCollection[i]->Arpeggiate(pTrackerView->Arpeggiate[i]);
 					pTrackerView->Arpeggiate[i] = 0;
 				}
-				//else {
-					if (pTrackerView->NewNoteData[i]) {
-						pTrackerView->NewNoteData[i] = false;
-						PlayNote(i, &pTrackerView->CurrentNotes[i], pDocument->GetEffColumns(i) + 1);
-					}
-				//}
+				if (pTrackerView->NewNoteData[i]) {
+					pTrackerView->NewNoteData[i] = false;
+					PlayNote(i, &pTrackerView->CurrentNotes[i], pDocument->GetEffColumns(i) + 1);
+				}
 			}
 		}
 
-		if (m_bRunning) {
-
-			for (i = 0; i < 5; i++) {
-				ChannelCollection2A03[i]->ProcessChannel();
-				ChannelCollection2A03[i]->RefreshChannel();
-			}
-			
-			if (m_pDSoundChannel)
-				m_pAPU->Run(m_iCycles);
+		for (i = 0; i < CHANNELS_DEFAULT; i++) {
+			ChannelCollection2A03[i]->ProcessChannel();
+			ChannelCollection2A03[i]->RefreshChannel();
 		}
+
+		for (i = 0; i < CHANNELS_VRC6; i++) {
+			ChannelCollectionVRC6[i]->ProcessChannel();
+			ChannelCollectionVRC6[i]->RefreshChannel();
+		}
+
+		if (m_pDSoundChannel)
+			m_pAPU->Run(m_iCycles);
 	}
 
-	// Close down thread
-	m_pDSoundChannel->Stop();
-	m_pDSound->CloseChannel(m_pDSoundChannel);
-
-	delete m_pDSound;
-	delete m_pAPU;
-
-	this->m_bAutoDelete = FALSE;
+	ExitInstance();
 
 	return 0;
+}
+
+int CSoundGen::ExitInstance()
+{
+	// Shutdown this object
+
+	// Free memories
+	if (m_iGraphBuffer) {
+		delete [] m_iGraphBuffer;
+		m_iGraphBuffer = NULL;
+	}
+
+	if (m_pAccumBuffer) {
+		delete [] m_pAccumBuffer;
+		m_pAccumBuffer = NULL;
+	}
+
+	// Kill APU
+	m_pAPU->Shutdown();
+	delete m_pAPU;
+	m_pAPU = NULL;
+
+	// Kill DirectSound
+	m_pDSoundChannel->Stop();
+	m_pDSound->CloseChannel(m_pDSoundChannel);
+	m_pDSound->Close();
+	delete m_pDSound;
+	m_pDSound = NULL;
+
+//	m_bAutoDelete = FALSE;
+
+	return CWinThread::ExitInstance();
 }
 
 void CSoundGen::StartPlayer(bool Looping)
@@ -449,30 +514,33 @@ void CSoundGen::ResetTempo()
 
 	m_iTempoAccum	= 60 * pDocument->GetFrameRate();		// 60 as in 60 seconds per minute
 	m_iTickPeriod	= pDocument->GetSongSpeed();
-	m_iSpeed		= DEFAULT_SPEED;
-	m_iTempo		= m_iTempoAccum / 24;
+	m_iSpeed		= pDocument->GetSongSpeed();
+	m_iTempo		= pDocument->GetSongTempo();
+	//m_iSpeed		= DEFAULT_SPEED;
+	//m_iTempo		= m_iTempoAccum / 24;
 
+	/*
 	if (m_iTickPeriod > 20)
 		m_iTempo = m_iTickPeriod;
 	else
 		m_iSpeed = m_iTickPeriod;
+		*/
 }
 
 // Return current tempo setting in BPM
-int	CSoundGen::GetTempo()
+unsigned int CSoundGen::GetTempo()
 {
 	if (m_iSpeed == 0)
 		return 0;
-
 	return (m_iTempo * 6) / m_iSpeed;
 }
 
 void CSoundGen::RunFrame()
 {
-	int TicksPerSec = pDocument->GetFrameRate();
-
 	if (m_bPlaying) {
-		
+
+		int TicksPerSec = pDocument->GetFrameRate();
+
 		m_iPlayTime++;
 
 		// A new row is being played, fetch notes
@@ -493,14 +561,6 @@ void CSoundGen::RunFrame()
 
 			// If looping, halt when a jump or skip command are encountered
 			if (m_bPlayLooping) {
-				/*
-				if (m_iJumpToPattern != -1 || m_iSkipToRow != -1) {
-					//StopPlayer();
-					m_iJumpToPattern = -1;
-					m_iSkipToRow = -1;
-				}
-				else
-				*/
 				if (m_iJumpToPattern != -1 || m_iSkipToRow != -1)
 					pTrackerView->PlayerCommand(CMD_MOVE_TO_TOP, 0);
 				else
@@ -509,7 +569,7 @@ void CSoundGen::RunFrame()
 			else {
 				// Jump
 				if (m_iJumpToPattern != -1)
-					pTrackerView->PlayerCommand(CMD_JUMP_TO, m_iJumpToPattern);
+					pTrackerView->PlayerCommand(CMD_JUMP_TO, m_iJumpToPattern - 1);
 				// Skip
 				else if (m_iSkipToRow != -1)
 					pTrackerView->PlayerCommand(CMD_SKIP_TO, m_iSkipToRow);
@@ -550,8 +610,14 @@ void CSoundGen::LoadMachineSettings(int Machine, int Rate)
 			break;
 	}
 
-	for (int i = 0; i < 5; i++) {
+	m_pAPU->SetExternalSound(CHIP_VRC6);
+
+	for (int i = 0; i < CHANNELS_DEFAULT; i++) {
 		ChannelCollection2A03[i]->SetNoteTable(m_pNoteLookupTable);
+	}
+
+	for (int i = 0; i < CHANNELS_VRC6; i++) {
+		ChannelCollectionVRC6[i]->SetNoteTable(m_pNoteLookupTable);
 	}
 }
 
@@ -595,7 +661,7 @@ void CSoundGen::PlayNote(int Channel, stChanNote *NoteData, int EffColumns)
 
 			// Bxx: Jump to pattern xx
 			case EF_JUMP:
-				m_iJumpToPattern = EffParam - 1;
+				m_iJumpToPattern = EffParam;
 				break;
 
 			// Cxx: Skip to next track and start at row xx
@@ -611,12 +677,10 @@ void CSoundGen::PlayNote(int Channel, stChanNote *NoteData, int EffColumns)
 	}
 	
 	// Update the individual channel
-	ChannelCollection2A03[Channel]->PlayNote(NoteData, EffColumns);
-}
-
-int CSoundGen::ExitInstance()
-{
-	// Close this
-	m_bRunning = false;
-	return CWinThread::ExitInstance();
+	if (Channel < CHANNELS_DEFAULT) { 
+		ChannelCollection2A03[Channel]->PlayNote(NoteData, EffColumns);
+	}
+	else {
+		ChannelCollectionVRC6[VRC6_INDEX(Channel)]->PlayNote(NoteData, EffColumns);
+	}
 }

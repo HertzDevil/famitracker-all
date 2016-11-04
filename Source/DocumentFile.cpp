@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 static const char			*FILE_HEADER	= "FamiTracker Module";
 static const char			*FILE_ENDER		= "END";
-static const int			FILE_VER		= 0x0203;				// Current file version (2.00)
+static const int			FILE_VER		= 0x0300;				// Current file version (3.00)
 static const int			COMPATIBLE_VER	= 0x0100;				// Compatible file version (1.0)
 
 static const unsigned int	MAX_BLOCK_SIZE	= 0x80000;				// 256 kB for now (should be enough)
@@ -151,7 +151,7 @@ void CDocumentFile::ReadBlock()
 		delete [] m_pBlockData;
 		m_pBlockData = NULL;
 	}
-
+	
 	m_pBlockData = new char[m_iBlockSize];
 
 	Read(m_pBlockData, m_iBlockSize);
@@ -195,7 +195,7 @@ char CDocumentFile::GetBlockChar()
 
 void CDocumentFile::GetBlock(void *Buffer, int Size)
 {
-	ASSERT(Size > 0 && Size < MAX_BLOCK_SIZE);
+	ASSERT(Size < MAX_BLOCK_SIZE);
 	ASSERT(Buffer != NULL);
 
 	memcpy(Buffer, m_pBlockData + m_iBlockPointer, Size);
@@ -205,4 +205,14 @@ void CDocumentFile::GetBlock(void *Buffer, int Size)
 bool CDocumentFile::BlockDone()
 {
 	return (m_iBlockPointer >= m_iBlockSize);
+}
+
+int CDocumentFile::GetBlockPos()
+{
+	return m_iBlockPointer;
+}
+
+int CDocumentFile::GetBlockSize()
+{
+	return m_iBlockSize;
 }

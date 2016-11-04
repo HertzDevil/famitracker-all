@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -121,12 +121,18 @@ bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 void CDSound::Close()
 {
 	lpDirectSound->Release();
+
+	if (m_iDevices != 0)
+		ClearEnumeration();
 }
 
 void CDSound::ClearEnumeration()
 {
-	for (unsigned int i = 0; i < m_iDevices; i++)
+	for (unsigned int i = 0; i < m_iDevices; i++) {
 		delete [] m_pcDevice[i];
+		if (m_pGUIDs[i] != NULL)
+			delete m_pGUIDs[i];
+	}
 
 	m_iDevices = 0;
 }
@@ -308,6 +314,8 @@ void CDSound::CloseChannel(CDSoundChannel *Channel)
 {
 	Channel->lpDirectSoundBuffer->Release();
 	Channel->lpDirectSoundNotify->Release();
+
+	delete Channel;
 }
 
 // CDSoundChannel

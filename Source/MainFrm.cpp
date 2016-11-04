@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 #include "MainFrm.h"
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
-#include "NsfDialog.h"
+#include "ExportDialog.h"
 #include "InstrumentEditDlg.h"
 #include "ModulePropertiesDlg.h"
 
@@ -37,18 +37,17 @@
 #include "ConfigAppearance.h"
 #include "ConfigMIDI.h"
 #include "ConfigSound.h"
+#include "ConfigShortcuts.h"
 #include "ConfigWindow.h"
+#include "..\include\mainfrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+// these are not beutiful
 #define GET_VIEW	((CFamiTrackerView*)GetActiveView())
 #define GET_DOC		((CFamiTrackerDoc*)GetDocument())
-
-const char NEW_INST_NAME[] = "New instrument";
-
-extern CSoundGen SoundGenerator;
 
 // CMainFrame
 
@@ -56,45 +55,47 @@ IMPLEMENT_DYNCREATE(CMainFrame, CFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_WM_CREATE()
+	ON_WM_SIZE()
+	ON_WM_PAINT()
+	ON_WM_TIMER()
+	ON_WM_ERASEBKGND()
 	// Global help commands
 	ON_COMMAND(ID_FILE_GENERALSETTINGS, OnFileGeneralsettings)
 	ON_COMMAND(ID_FILE_IMPORTMIDI, OnFileImportmidi)
 	ON_COMMAND(ID_FILE_CREATE_NSF, OnCreateNSF)
-	ON_COMMAND(ID_DEFAULT_HELP, CFrameWnd::OnHelpFinder)
-	ON_COMMAND(ID_HELP_FINDER, CFrameWnd::OnHelpFinder)
 	ON_COMMAND(ID_HELP, CFrameWnd::OnHelp)
+	ON_COMMAND(ID_HELP_FINDER, CFrameWnd::OnHelpFinder)
 	ON_COMMAND(ID_HELP_PERFORMANCE, OnHelpPerformance)
+	ON_COMMAND(ID_DEFAULT_HELP, CFrameWnd::OnHelpFinder)
 	ON_COMMAND(ID_CONTEXT_HELP, CFrameWnd::OnContextHelp)
 	ON_COMMAND(ID_TRACKER_KILLSOUND, OnTrackerKillsound)
 	ON_COMMAND(ID_NEXT_FRAME, OnNextFrame)
 	ON_COMMAND(ID_PREV_FRAME, OnPrevFrame)
-	ON_COMMAND(ID_EDIT_FRAMEINC, OnBnClickedIncFrame)
-	ON_COMMAND(ID_EDIT_FRAMEDEC, OnBnClickedDecFrame)
-	ON_COMMAND(IDC_CHANGE_ALL, OnChangeAll)
 	ON_COMMAND(IDC_KEYREPEAT, OnKeyRepeat)
-	ON_BN_CLICKED(IDC_FRAME_INC, OnBnClickedIncFrame)
-	ON_BN_CLICKED(IDC_FRAME_DEC, OnBnClickedDecFrame)
+	ON_COMMAND(IDC_CHANGE_ALL, OnChangeAll)
 	ON_COMMAND(ID_MODULE_ADDINSTRUMENT, OnAddInstrument)
 	ON_COMMAND(ID_MODULE_REMOVEINSTRUMENT, OnRemoveInstrument)
 	ON_COMMAND(ID_MODULE_SAVEINSTRUMENT, OnSaveInstrument)
 	ON_COMMAND(ID_MODULE_LOADINSTRUMENT, OnLoadInstrument)
+	ON_COMMAND(ID_MODULE_EDITINSTRUMENT, OnEditInstrument)
+	ON_COMMAND(ID_MODULE_MODULEPROPERTIES, OnModuleModuleproperties)
+	ON_COMMAND(ID_TRACKER_SWITCHTOTRACKINSTRUMENT, OnTrackerSwitchToInstrument)
+	ON_BN_CLICKED(IDC_FRAME_INC, OnBnClickedIncFrame)
+	ON_BN_CLICKED(IDC_FRAME_DEC, OnBnClickedDecFrame)
 	ON_BN_CLICKED(IDC_EDIT_INST, OnBnClickedEditInst)
 	ON_NOTIFY(NM_CLICK, IDC_INSTRUMENTS, OnClickInstruments)
 	ON_NOTIFY(NM_RCLICK, IDC_INSTRUMENTS, OnClickInstruments)
 	ON_NOTIFY(NM_DBLCLK, IDC_INSTRUMENTS, OnDblClkInstruments)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_SPEED_SPIN, OnDeltaposSpeedSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_TEMPO_SPIN, OnDeltaposTempoSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_ROWS_SPIN, OnDeltaposRowsSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_FRAME_SPIN, OnDeltaposFrameSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_KEYSTEP_SPIN, OnDeltaposKeyStepSpin)
 	ON_EN_CHANGE(IDC_INSTNAME, OnInstNameChange)
-	ON_EN_CHANGE(IDC_FRAMES, OnEnFramesChange)
-	ON_EN_CHANGE(IDC_SPEED, OnEnTempoChange)
-	ON_EN_CHANGE(IDC_ROWS, OnEnRowsChange)
 	ON_EN_CHANGE(IDC_KEYSTEP, OnEnKeyStepChange)
-	ON_WM_PAINT()
-	ON_WM_ERASEBKGND()
-	ON_WM_TIMER()
-	ON_WM_SIZE()
+	ON_EN_CHANGE(IDC_SONG_NAME, OnEnSongNameChange)
+	ON_EN_CHANGE(IDC_SONG_ARTIST, OnEnSongArtistChange)
+	ON_EN_CHANGE(IDC_SONG_COPYRIGHT, OnEnSongCopyrightChange)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_INSTRUMENT, OnUpdateSBInstrument)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_OCTAVE, OnUpdateSBOctave)
 	ON_UPDATE_COMMAND_UI(ID_INDICATOR_RATE, OnUpdateSBFrequency)
@@ -102,16 +103,21 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_UPDATE_COMMAND_UI(IDC_KEYSTEP, OnUpdateKeyStepEdit)
 	ON_UPDATE_COMMAND_UI(IDC_KEYREPEAT, OnUpdateKeyRepeat)
 	ON_UPDATE_COMMAND_UI(IDC_SPEED, OnUpdateSpeedEdit)
+	ON_UPDATE_COMMAND_UI(IDC_TEMPO, OnUpdateTempoEdit)
 	ON_UPDATE_COMMAND_UI(IDC_ROWS, OnUpdateRowsEdit)
 	ON_UPDATE_COMMAND_UI(IDC_FRAMES, OnUpdateFramesEdit)
-	ON_EN_CHANGE(IDC_SONG_NAME, OnEnSongNameChange)
-	ON_EN_CHANGE(IDC_SONG_ARTIST, OnEnSongArtistChange)
-	ON_EN_CHANGE(IDC_SONG_COPYRIGHT, OnEnSongCopyrightChange)
 	ON_EN_KILLFOCUS(IDC_SONG_NAME, OnEnKillfocusSongName)
 	ON_EN_KILLFOCUS(IDC_SONG_ARTIST, OnEnKillfocusSongArtist)
 	ON_EN_KILLFOCUS(IDC_SONG_COPYRIGHT, OnEnKillfocusSongCopyright)
-	ON_COMMAND(ID_MODULE_MODULEPROPERTIES, OnModuleModuleproperties)
 	ON_CBN_SELCHANGE(IDC_SUBTUNE, OnCbnSelchangeSong)
+	ON_CBN_SELCHANGE(IDC_OCTAVE, OnCbnSelchangeOctave)
+	ON_WM_KILLFOCUS()
+	ON_EN_SETFOCUS(IDC_KEYREPEAT, OnRemoveFocus)
+	ON_COMMAND(ID_NEXT_SONG, OnNextSong)
+	ON_COMMAND(ID_PREV_SONG, OnPrevSong)
+	ON_UPDATE_COMMAND_UI(ID_NEXT_SONG, OnUpdateNextSong)
+	ON_UPDATE_COMMAND_UI(ID_PREV_SONG, OnUpdatePrevSong)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_SWITCHTOTRACKINSTRUMENT, OnUpdateTrackerSwitchToInstrument)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -127,6 +133,8 @@ static UINT indicators[] =
 	ID_INDICATOR_SCRL,
 };
 
+const char CMainFrame::NEW_INST_NAME[] = "New instrument";
+
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame()
@@ -136,60 +144,75 @@ CMainFrame::CMainFrame()
 
 CMainFrame::~CMainFrame()
 {
+	delete m_pImageList;
+
+	delete m_pCustomEditSpeed;
+	delete m_pCustomEditTempo;
+	delete m_pCustomEditLength;
+	delete m_pCustomEditFrames;
+	delete m_pCustomEditStep;
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	REBARBANDINFO rbi;
+	REBARBANDINFO rbi1;
 
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | /*CBRS_GRIPPER |*/ CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
-		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME)) 
-	{
+	// Add the toolbar
+	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
+		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))  {
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // fail to create
 	}
 
 	m_wndToolBar.SetBarStyle(CBRS_ALIGN_TOP | CBRS_SIZE_DYNAMIC | CBRS_TOOLTIPS | CBRS_FLYBY);
 
-	rbi.cbSize		= sizeof(REBARBANDINFO);
-	rbi.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_TEXT;
-	rbi.fStyle		= RBBS_NOGRIPPER;
-	rbi.cxMinChild	= 300;
-	rbi.cyMinChild	= 23;
-	rbi.lpText		= "";
-	rbi.cch			= 7;
-	rbi.cx			= 10;
-	rbi.hwndChild	= m_wndToolBar;//(HWND)m_wndToolBar;
-//	rbi.clrFore		= 00; rbi.clrBack = 0xFF;
+	if (!m_wndOctaveBar.Create(this, (UINT)IDD_OCTAVE, CBRS_TOOLTIPS | CBRS_FLYBY, IDD_OCTAVE)) {
+		TRACE0("Failed to create octave bar\n");
+		return -1;      // fail to create
+	}
 
-	if (!m_wndToolBarReBar.Create(this) ||
-		!m_wndToolBarReBar.GetReBarCtrl().InsertBand(-1, &rbi))
-	{
+	if (!m_wndToolBarReBar.Create(this)) {
 		TRACE0("Failed to create rebar\n");
 		return -1;      // fail to create
 	}
 
+	rbi1.cbSize		= sizeof(REBARBANDINFO);
+	rbi1.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_SIZE;
+	rbi1.fStyle		= RBBS_NOGRIPPER;
+	rbi1.hwndChild	= m_wndToolBar;
+	rbi1.cxMinChild	= 502;
+	rbi1.cyMinChild	= 22;
+	rbi1.cx			= 450;
+
+	if (!m_wndToolBarReBar.GetReBarCtrl().InsertBand(-1, &rbi1)) {
+		TRACE0("Failed to create rebar\n");
+		return -1;      // fail to create
+	}
+
+	rbi1.cbSize		= sizeof(REBARBANDINFO);
+	rbi1.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_SIZE;
+	rbi1.fStyle		= RBBS_NOGRIPPER;
+	rbi1.hwndChild	= m_wndOctaveBar;
+	rbi1.cxMinChild	= 100;
+	rbi1.cyMinChild	= 22;
+	rbi1.cx			= 100;
+
+	if (!m_wndToolBarReBar.GetReBarCtrl().InsertBand(-1, &rbi1)) {
+		TRACE0("Failed to create rebar\n");
+		return -1;      // fail to create
+	}
+
+	m_wndToolBarReBar.GetReBarCtrl().MinimizeBand(0);
+
+	// Add the dialog bar
 	if (!m_wndDialogBar.Create(this, IDD_MAINFRAME, CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY, IDD_MAINFRAME)) {
 		TRACE0("Failed to create dialog bar\n");
 		return -1;      // fail to create
 	}
-/*
-	rbi.cbSize		= sizeof(REBARBANDINFO);
-	rbi.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_TEXT | RBBIM_COLORS;
-	rbi.fStyle		= RBBS_NOGRIPPER | RBBS_BREAK;
-	rbi.cxMinChild	= 300;
-	rbi.cyMinChild	= 300;
-	rbi.lpText		= "";
-	rbi.cch			= 7;
-	rbi.cx			= 10;
-	rbi.hwndChild	= m_wndDialogBar;//(HWND)m_wndToolBar;
-	rbi.clrFore		= rbi.clrBack = 0xFFFF;
-	
-	m_wndToolBarReBar.GetReBarCtrl().InsertBand(1, &rbi);
-*/
+
 	if (!m_wndStatusBar.Create(this) || !m_wndStatusBar.SetIndicators(indicators, sizeof(indicators) / sizeof(UINT))) {
 		TRACE0("Failed to create status bar\n");
 		return -1;      // fail to create
@@ -226,21 +249,24 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_pImageList = new CImageList();
 	m_pImageList->Create(16, 16, ILC_COLOR, 1, 1);
 	m_pImageList->Add(theApp.LoadIcon(IDI_INST_2A03INV));
+	m_pImageList->Add(theApp.LoadIcon(IDI_INST_VRC6INV));
 
 	InstrumentList->SetImageList(m_pImageList, LVSIL_NORMAL);
 	InstrumentList->SetImageList(m_pImageList, LVSIL_SMALL);
 
-//	InstrumentList->Set
-
 	SetTimer(0, 100, 0);
 
-//	MoveWindow(theApp.m_pSettings->WindowPos.iLeft, theApp.m_pSettings->WindowPos.iTop,
-//		theApp.m_pSettings->WindowPos.iRight, theApp.m_pSettings->WindowPos.iBottom);
+	m_pCustomEditSpeed	= new CCustomEdit;
+	m_pCustomEditTempo	= new CCustomEdit;
+	m_pCustomEditLength = new CCustomEdit;
+	m_pCustomEditFrames = new CCustomEdit;
+	m_pCustomEditStep	= new CCustomEdit;
 
-//	GetMainWnd()->SetWindowPos(NULL, 
-//	m_pSettings->SetWindowPos(WinRect.left, WinRect.top, WinRect.right, WinRect.bottom);
-
-	//m_wndDialogBar.ShowWindow(SW_HIDE);
+	m_pCustomEditSpeed->SubclassDlgItem(IDC_SPEED, &m_wndDialogBar);
+	m_pCustomEditTempo->SubclassDlgItem(IDC_TEMPO, &m_wndDialogBar);
+	m_pCustomEditLength->SubclassDlgItem(IDC_ROWS, &m_wndDialogBar);
+	m_pCustomEditFrames->SubclassDlgItem(IDC_FRAMES, &m_wndDialogBar);
+	m_pCustomEditStep->SubclassDlgItem(IDC_KEYSTEP, &m_wndDialogBar);
 
 	m_bInitialized = true;
 
@@ -263,13 +289,13 @@ bool CMainFrame::CreateSampleWindow()
 bool CMainFrame::CreateInstrumentToolbar()
 {
 	const TBBUTTON buttons[] = {
-		{0, ID_MODULE_ADDINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, ID_MODULE_ADDINSTRUMENT},
-		{1, ID_MODULE_REMOVEINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, ID_MODULE_REMOVEINSTRUMENT},
-		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, -1},
-		{2, ID_MODULE_LOADINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, ID_MODULE_LOADINSTRUMENT},
-		{3, ID_MODULE_SAVEINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, ID_MODULE_SAVEINSTRUMENT},
-		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, -1},
-		{4, IDC_EDIT_INST, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, IDC_EDIT_INST}};
+		{0, ID_MODULE_ADDINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, (BYTE)ID_MODULE_ADDINSTRUMENT},
+		{1, ID_MODULE_REMOVEINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, (BYTE)ID_MODULE_REMOVEINSTRUMENT},
+		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, (BYTE)-1},
+		{2, ID_MODULE_LOADINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, (BYTE)ID_MODULE_LOADINSTRUMENT},
+		{3, ID_MODULE_SAVEINSTRUMENT, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, (BYTE)ID_MODULE_SAVEINSTRUMENT},
+		{0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, (BYTE)-1},
+		{4, IDC_EDIT_INST, TBSTATE_ENABLED, TBSTYLE_BUTTON, 0, (BYTE)IDC_EDIT_INST}};
 
 	REBARBANDINFO rbi;
 
@@ -295,15 +321,14 @@ bool CMainFrame::CreateInstrumentToolbar()
 	m_wndInstToolReBar.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), &m_wndInstToolBarWnd, AFX_IDW_REBAR);
 
 	rbi.cbSize		= sizeof(REBARBANDINFO);
-	rbi.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_TEXT /*| RBBIM_COLORS*/;
+	rbi.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_TEXT;
 	rbi.fStyle		= RBBS_GRIPPERALWAYS;
 	rbi.cxMinChild	= 300;
 	rbi.cyMinChild	= 30;
 	rbi.lpText		= "";
 	rbi.cch			= 7;
 	rbi.cx			= 300;
-	rbi.hwndChild	= m_wndInstToolBar;//(HWND)m_wndToolBar;
-//	rbi.clrFore		= rbi.clrBack = 0xFFFF;
+	rbi.hwndChild	= m_wndInstToolBar;
 
 	m_wndInstToolReBar.InsertBand(-1, &rbi);
 
@@ -351,7 +376,7 @@ void CMainFrame::ClearInstrumentList()
 	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->SetWindowText("");
 }
 
-void CMainFrame::AddInstrument(int Index, const char *Name)
+void CMainFrame::AddInstrument(int Index, const char *Name, int Type)
 {
 	CComBSTR ErrorMsg;
 	CString Text;
@@ -370,7 +395,7 @@ void CMainFrame::AddInstrument(int Index, const char *Name)
 	}
 	
 	InstrumentList = (CListCtrl*)m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS);
-	InstrumentList->InsertItem(Index, Text);
+	InstrumentList->InsertItem(Index, Text, Type);
 }
 
 void CMainFrame::RemoveInstrument(int Index) 
@@ -397,7 +422,6 @@ void CMainFrame::SetIndicatorTime(int Min, int Sec, int MSec)
 		LMSec = MSec;
 		String.Format("%02i:%02i:%01i0", Min, Sec, MSec);
 		m_wndStatusBar.SetPaneText(5, String);
-		m_SampleWindow.SetTime(Min, Sec, MSec);
 	}
 }
 
@@ -410,8 +434,8 @@ void CMainFrame::OnSize(UINT nType, int cx, int cy)
 	
 	m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS)->MoveWindow(450, 14, cx - 460, 154);
 	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->MoveWindow(590, 175, cx - 600, 22);
-//	m_wndDialogBar.GetDlgItem(IDC_EDIT_INST)->MoveWindow(cx - 120, 175, 110, 22);
-//	m_wndDialogBar.GetDlgItem(IDC_VOLUME)->MoveWindow(cx - 120, 6, 110, 18);
+
+	m_wndToolBarReBar.GetReBarCtrl().MinimizeBand(0);
 }
 
 void CMainFrame::OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result)
@@ -475,7 +499,11 @@ void CMainFrame::OnInstNameChange()
 void CMainFrame::OnAddInstrument()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
-	AddInstrument(pDoc->AddInstrument(NEW_INST_NAME), NEW_INST_NAME);
+	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
+
+	int ChipType = pView->GetCurrentChannelType();
+
+	AddInstrument(pDoc->AddInstrument(NEW_INST_NAME, ChipType), NEW_INST_NAME, ChipType);
 }
 
 void CMainFrame::OnRemoveInstrument()
@@ -497,6 +525,11 @@ void CMainFrame::OnRemoveInstrument()
 }
 
 void CMainFrame::OnBnClickedEditInst()
+{
+	OpenInstrumentSettings();
+}
+
+void CMainFrame::OnEditInstrument()
 {
 	OpenInstrumentSettings();
 }
@@ -523,7 +556,7 @@ void CMainFrame::OnLoadInstrument()
 
 	pDoc->GetInstrumentName(Index, Name);
 
-	AddInstrument(Index, Name);
+	AddInstrument(Index, Name, pDoc->GetInstrument(Index)->GetType());
 
 	theApp.m_pSettings->SetPath(FileDialog.GetPathName(), PATH_FTI);
 }
@@ -570,39 +603,78 @@ void CMainFrame::OnSaveInstrument()
 	theApp.m_pSettings->SetPath(FileDialog.GetPathName(), PATH_FTI);
 }
 
-void CMainFrame::OnEnFramesChange()
+void CMainFrame::OnDeltaposSpeedSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Index;
+	int Speed = m_wndDialogBar.GetDlgItemInt(IDC_SPEED, 0, 0);
+	SetSpeed(Speed - ((NMUPDOWN*)pNMHDR)->iDelta);
+}
+
+void CMainFrame::OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int Tempo = m_wndDialogBar.GetDlgItemInt(IDC_TEMPO, 0, 0);
+	SetTempo(Tempo - ((NMUPDOWN*)pNMHDR)->iDelta);
+}
+
+void CMainFrame::OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int Rows = m_wndDialogBar.GetDlgItemInt(IDC_ROWS);
+	SetRowCount(Rows - ((NMUPDOWN*)pNMHDR)->iDelta);
+}
+
+void CMainFrame::OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	int Frames = m_wndDialogBar.GetDlgItemInt(IDC_FRAMES);
+	SetFrameCount(Frames - ((NMUPDOWN*)pNMHDR)->iDelta);
+}
+
+void CMainFrame::SetTempo(int Tempo)
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(GetDocument());
+	if (Tempo > 255) Tempo = 255;
+	if (Tempo < 20) Tempo = 20;
+	pDoc->SetSongTempo(Tempo);
+	theApp.ResetTempo();
+}
+
+void CMainFrame::SetSpeed(int Speed)
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(GetDocument());
+	
+	if (Speed > 19) 
+		Speed = 19;
+	if (Speed < 1) 
+		Speed = 1;
+
+	pDoc->SetSongSpeed(Speed);
+	theApp.ResetTempo();
+}
+
+void CMainFrame::SetRowCount(int Count)
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+
+	if (!m_bInitialized || !pDoc)
+		return;
+	
+	LIMIT(Count, MAX_PATTERN_LENGTH, 1);
+
+	if (pDoc->IsFileLoaded())
+		pDoc->SetPatternLength(Count);
+
+	GetActiveView()->RedrawWindow();
+}
+
+void CMainFrame::SetFrameCount(int Count)
+{
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
 
 	if (!m_bInitialized || !pDoc)
 		return;
 
-	Index = m_wndDialogBar.GetDlgItemInt(IDC_FRAMES, 0, 0);
-
-	LIMIT(Index, MAX_FRAMES, 1);
+	LIMIT(Count, MAX_FRAMES, 1);
 
 	if (pDoc->IsFileLoaded())
-		pDoc->SetFrameCount(Index);
-}
-
-void CMainFrame::OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	SetTempo(m_wndDialogBar.GetDlgItemInt(IDC_SPEED) - ((NMUPDOWN*)pNMHDR)->iDelta);
-}
-
-void CMainFrame::OnEnTempoChange()
-{
-	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
-	ASSERT_VALID(pView);
-	SetTempo(m_wndDialogBar.GetDlgItemInt(IDC_SPEED, 0, 0));
-}
-
-void CMainFrame::SetTempo(unsigned int Value)
-{
-	LIMIT(Value, MAX_TEMPO, MIN_TEMPO);
-	static_cast<CFamiTrackerDoc*>(GetDocument())->SetSongSpeed(Value);
-	SoundGenerator.ResetTempo();
+		pDoc->SetFrameCount(Count);
 }
 
 void CMainFrame::OnTrackerKillsound()
@@ -610,45 +682,9 @@ void CMainFrame::OnTrackerKillsound()
 	theApp.SilentEverything();
 }
 
-void CMainFrame::OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	int Pos = m_wndDialogBar.GetDlgItemInt(IDC_ROWS) - ((NMUPDOWN*)pNMHDR)->iDelta;
-	LIMIT(Pos, MAX_PATTERN_LENGTH, 1);
-	m_wndDialogBar.SetDlgItemInt(IDC_ROWS, Pos);
-}
-
-void CMainFrame::OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	int Pos = m_wndDialogBar.GetDlgItemInt(IDC_PATTERNS) - ((NMUPDOWN*)pNMHDR)->iDelta;
-	LIMIT(Pos, MAX_FRAMES, 1);
-	m_wndDialogBar.SetDlgItemInt(IDC_PATTERNS, Pos);
-}
-
-void CMainFrame::OnEnRowsChange()
-{
-	int Index;
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
-
-	if (!m_bInitialized || !pDoc)
-		return;
-
-	Index = m_wndDialogBar.GetDlgItemInt(IDC_ROWS);
-	
-	LIMIT(Index, MAX_PATTERN_LENGTH, 1);
-
-	if (pDoc->IsFileLoaded())
-		pDoc->SetPatternLength(Index);
-
-	GetActiveView()->RedrawWindow();
-}
-
 void CMainFrame::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
-	// TODO: Add your message handler code here
-	// Do not call CFrameWnd::OnPaint() for painting messages
-
 	m_wndPatternWindow.RedrawWindow();	
 }
 
@@ -689,8 +725,8 @@ void CMainFrame::OnEnKeyStepChange()
 
 void CMainFrame::OnCreateNSF()
 {
-	CNSFDialog NSFDialog;
-	NSFDialog.DoModal();
+	CExportDialog ExportDialog;
+	ExportDialog.DoModal();
 }
 
 BOOL CMainFrame::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle , const RECT& rect , CWnd* pParentWnd , LPCTSTR lpszMenuName , DWORD dwExStyle , CCreateContext* pContext)
@@ -750,7 +786,9 @@ void CMainFrame::OnHelpPerformance()
 void CMainFrame::OnUpdateSBInstrument(CCmdUI *pCmdUI)
 {
 	CString String;
-	String.Format("Instrument: %02i", GET_VIEW->GetInstrument());
+	String.Format("Instrument: %02X", GET_VIEW->GetInstrument());
+
+	UpdateInstrumentIndex();
 
 	pCmdUI->Enable(); 
 	pCmdUI->SetText(String);
@@ -809,22 +847,57 @@ void CMainFrame::OnUpdateKeyStepEdit(CCmdUI *pCmdUI)
 void CMainFrame::OnUpdateSpeedEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->GetSongSpeed());
-	pCmdUI->SetText(Text);
+
+	if (!m_pCustomEditSpeed->IsEditable()) {
+		if (m_pCustomEditSpeed->Update())
+			SetSpeed(m_pCustomEditSpeed->GetValue());
+		else {
+			Text.Format("%i", GET_DOC->GetSongSpeed());
+			pCmdUI->SetText(Text);
+		}
+	}	
+}
+
+void CMainFrame::OnUpdateTempoEdit(CCmdUI *pCmdUI)
+{
+	CString Text;
+
+	if (!m_pCustomEditTempo->IsEditable()) {
+		if (m_pCustomEditTempo->Update())
+			SetTempo(m_pCustomEditTempo->GetValue());
+		else {
+			Text.Format("%i", GET_DOC->GetSongTempo());
+			pCmdUI->SetText(Text);
+		}
+	}	
 }
 
 void CMainFrame::OnUpdateRowsEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->GetPatternLength());
-	pCmdUI->SetText(Text);
+
+	if (!m_pCustomEditLength->IsEditable()) {
+		if (m_pCustomEditLength->Update())
+			SetRowCount(m_pCustomEditLength->GetValue());
+		else {
+			Text.Format("%i", GET_DOC->GetPatternLength());
+			pCmdUI->SetText(Text);
+		}
+	}	
 }
 
 void CMainFrame::OnUpdateFramesEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->GetFrameCount());
-	pCmdUI->SetText(Text);
+
+	if (!m_pCustomEditFrames->IsEditable()) {
+		if (m_pCustomEditFrames->Update())
+			SetFrameCount(m_pCustomEditFrames->GetValue());
+		else {
+			Text.Format("%i", GET_DOC->GetFrameCount());
+			pCmdUI->SetText(Text);
+		}
+	}	
 }
 
 void CMainFrame::OnFileGeneralsettings()
@@ -838,14 +911,20 @@ void CMainFrame::OnFileGeneralsettings()
 	CConfigAppearance	TabAppearance;
 	CConfigMIDI			TabMIDI;
 	CConfigSound		TabSound;
+	CConfigShortcuts	TabShortcuts;
 
+	ConfigWindow.m_psh.dwFlags	&= ~PSH_HASHELP;
 	TabGeneral.m_psp.dwFlags	&= ~PSP_HASHELP;
 	TabAppearance.m_psp.dwFlags &= ~PSP_HASHELP;
-
+	TabMIDI.m_psp.dwFlags		&= ~PSP_HASHELP;
+	TabSound.m_psp.dwFlags		&= ~PSP_HASHELP;
+	TabShortcuts.m_psp.dwFlags	&= ~PSP_HASHELP;
+	
 	ConfigWindow.AddPage((CPropertyPage*)&TabGeneral);
 	ConfigWindow.AddPage((CPropertyPage*)&TabAppearance);
 	ConfigWindow.AddPage((CPropertyPage*)&TabMIDI);
 	ConfigWindow.AddPage((CPropertyPage*)&TabSound);
+	ConfigWindow.AddPage((CPropertyPage*)&TabShortcuts);
 
 	ConfigWindow.DoModal();
 }
@@ -886,11 +965,11 @@ void CMainFrame::OpenInstrumentSettings()
 		if (m_InstEdit.m_bOpened == false) {
 			m_InstEdit.Create(IDD_INSTRUMENT, this);
 			m_InstEdit.SetCurrentInstrument(pView->GetInstrument());
-			m_InstEdit.UpdateWindow();
 			m_InstEdit.ShowWindow(SW_SHOW);
 		}
 		else
 			m_InstEdit.SetCurrentInstrument(pView->GetInstrument());
+		m_InstEdit.UpdateWindow();
 	}
 }
 
@@ -959,6 +1038,8 @@ BOOL CMainFrame::DestroyWindow()
 	CRect WinRect;
 	int State = STATE_NORMAL;
 
+	m_bInitialized = false;
+
 	GetWindowRect(WinRect);
 
 	if (IsZoomed())
@@ -972,6 +1053,8 @@ BOOL CMainFrame::DestroyWindow()
 
 	theApp.m_pSettings->SetWindowPos(WinRect.left, WinRect.top, WinRect.right, WinRect.bottom, State);
 
+	m_wndPatternWindow.DestroyWindow();
+
 	return CFrameWnd::DestroyWindow();
 }
 
@@ -980,10 +1063,21 @@ BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
 	return FALSE;
 }
 
+void CMainFrame::OnTrackerSwitchToInstrument()
+{
+	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
+	pView->SwitchToInstrument(!pView->SwitchToInstrument());
+}
+
+void CMainFrame::OnUpdateTrackerSwitchToInstrument(CCmdUI *pCmdUI)
+{
+	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
+	pCmdUI->SetCheck(pView->SwitchToInstrument() ? 1 : 0);
+}
+
 void CMainFrame::OnModuleModuleproperties()
 {
 	CModulePropertiesDlg PropertiesDlg;
-
 	PropertiesDlg.DoModal();
 }
 
@@ -1007,10 +1101,192 @@ void CMainFrame::UpdateTrackBox()
 
 void CMainFrame::OnCbnSelchangeSong()
 {
-	CComboBox		*TrackBox	= (CComboBox*)m_wndDialogBar.GetDlgItem(IDC_SUBTUNE);
-	CFamiTrackerDoc	*pDoc		= (CFamiTrackerDoc*)GetActiveDocument();
-	
-	int Song = TrackBox->GetCurSel();
+	CComboBox *TrackBox	  = (CComboBox*)m_wndDialogBar.GetDlgItem(IDC_SUBTUNE);
+	CFamiTrackerDoc	*pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	pDoc->SelectTrack(TrackBox->GetCurSel());
+}
 
-	pDoc->SelectTrack(Song);
+void CMainFrame::OnCbnSelchangeOctave()
+{
+	CComboBox *TrackBox		= (CComboBox*)m_wndOctaveBar.GetDlgItem(IDC_OCTAVE);
+	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
+	unsigned int Octave		= TrackBox->GetCurSel();
+
+	if (pView->GetOctave() != Octave)
+		pView->SetOctave(Octave);
+}
+
+BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
+{
+	CAccelerator *pAccel = theApp.GetAccelerator();
+
+	// Dynamic accelerator translation
+	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) && (GetFocus() == (CWnd*)GetActiveView() /*(CWnd*)theApp.GetView()*/)) {
+		// WM_SYSKEYDOWN is for ALT
+		unsigned short ID = pAccel->GetAction((unsigned char)pMsg->wParam);
+		if (ID != 0) {
+			if (!(ID == ID_TRACKER_EDIT && GetFocus() != (CWnd*)GetActiveView()))	// <- ugly fix, remove it in some way!
+				SendMessage(WM_COMMAND, (0 << 16) | ID, NULL);
+		}
+	}
+	else if (pMsg->message == WM_KEYUP || pMsg->message == WM_SYSKEYUP) {
+		pAccel->KeyReleased((unsigned char)pMsg->wParam);
+	}
+
+	return CFrameWnd::PreTranslateMessage(pMsg);
+}
+
+void CMainFrame::OnKillFocus(CWnd* pNewWnd)
+{
+	CFrameWnd::OnKillFocus(pNewWnd);
+	CAccelerator *pAccel = theApp.GetAccelerator();
+	pAccel->LostFocus();
+}
+
+void CMainFrame::DisplayOctave()
+{
+	CComboBox *pOctaveList  = (CComboBox*)m_wndOctaveBar.GetDlgItem(IDC_OCTAVE);
+	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
+	pOctaveList->SetCurSel(pView->GetOctave());
+}
+
+void CMainFrame::UpdateInstrumentIndex()
+{
+	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
+	InstrumentList = reinterpret_cast<CListCtrl*>(m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS));
+	LVFINDINFO info;
+	char Txt[256];
+	int Index;
+
+	sprintf(Txt, "%02X", pView->GetInstrument());
+
+	info.flags = LVFI_PARTIAL | LVFI_STRING;
+	info.psz = Txt;
+
+	Index = InstrumentList->FindItem(&info);
+	InstrumentList->SetItemState(Index, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+}
+
+void CMainFrame::OnRemoveFocus()
+{
+	GetActiveView()->SetFocus();
+}
+
+void CMainFrame::OnNextSong()
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	CComboBox *TrackBox	  = (CComboBox*)m_wndDialogBar.GetDlgItem(IDC_SUBTUNE);
+	unsigned int CurrentSong = pDoc->GetSelectedTrack();
+	if (CurrentSong < pDoc->GetTrackCount()) {
+		pDoc->SelectTrack(CurrentSong + 1);
+		TrackBox->SetCurSel(CurrentSong + 1);
+	}
+}
+
+void CMainFrame::OnPrevSong()
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	CComboBox *TrackBox	  = (CComboBox*)m_wndDialogBar.GetDlgItem(IDC_SUBTUNE);
+	int CurrentSong = pDoc->GetSelectedTrack();
+	if (CurrentSong > 0) {
+		pDoc->SelectTrack(CurrentSong - 1);
+		TrackBox->SetCurSel(CurrentSong - 1);
+	}
+}
+
+void CMainFrame::OnUpdateNextSong(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	if (pDoc->GetSelectedTrack() < pDoc->GetTrackCount())
+		pCmdUI->Enable(TRUE);
+	else
+		pCmdUI->Enable(FALSE);
+}
+
+void CMainFrame::OnUpdatePrevSong(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	if (pDoc->GetSelectedTrack() > 0)
+		pCmdUI->Enable(TRUE);
+	else
+		pCmdUI->Enable(FALSE);
+}
+
+///
+/// CCustomEdit
+///
+
+// This class takes care of locking/unlocking edit boxes by double clicking
+
+IMPLEMENT_DYNAMIC(CCustomEdit, CEdit)
+
+BEGIN_MESSAGE_MAP(CCustomEdit, CEdit)
+	ON_WM_LBUTTONDBLCLK()
+	ON_WM_SETFOCUS()
+	ON_WM_KILLFOCUS()
+	ON_COMMAND(ID_FILE_ADDSONG, OnFileAddsong)
+END_MESSAGE_MAP()
+
+bool CCustomEdit::IsEditable()
+{
+	return !((GetWindowLong(m_hWnd, GWL_STYLE) & ES_READONLY) == ES_READONLY);
+}
+
+bool CCustomEdit::Update()
+{
+	bool ret_val = m_bUpdate;
+	m_bUpdate = false;
+	return ret_val;
+}
+
+int CCustomEdit::GetValue()
+{
+	return m_iValue;
+}
+
+void CCustomEdit::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	m_bUpdate = false;
+	if (IsEditable())
+		SetSel(0, -1);	// select all
+	else {
+		SendMessage(EM_SETREADONLY, FALSE);
+		SetFocus();
+		SetSel(0, -1);
+	}
+}
+
+void CCustomEdit::OnSetFocus(CWnd* pOldWnd)
+{
+	CEdit::OnSetFocus(pOldWnd);
+	if (!IsEditable())
+		theApp.GetView()->SetFocus();
+}
+
+void CCustomEdit::OnKillFocus(CWnd* pNewWnd)
+{
+	char Text[256];
+	CEdit::OnKillFocus(pNewWnd);
+	if (!IsEditable())
+		return;
+	GetWindowText(Text, 256);
+	sscanf(Text, "%i", &m_iValue);
+	m_bUpdate = true;
+	SendMessage(EM_SETREADONLY, TRUE);
+}
+
+BOOL CCustomEdit::PreTranslateMessage(MSG* pMsg)
+{
+	// For some reason OnKeyDown won't work
+	if (pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN) {
+		theApp.GetView()->SetFocus();
+		return TRUE;
+	}
+
+	return CEdit::PreTranslateMessage(pMsg);
+}
+
+void CCustomEdit::OnFileAddsong()
+{
+	// TODO: Add your command handler code here
 }

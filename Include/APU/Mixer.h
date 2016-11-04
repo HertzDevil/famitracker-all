@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ class CMixer
 		void	ExternalSound(int Chip);
 		void	SetChannelVolume(int ChanID, double VolLeft, double VolRight);
 		void	AddValue(int ChanID, int Value, int FrameCycles);
-		void	UpdateSettings(int LowCut, int HighCut, int HighDamp);
+		void	UpdateSettings(int LowCut, int HighCut, int HighDamp, int OverallVol);
 
 		bool	AllocateBuffer(unsigned int Size, uint32 SampleRate, uint32 ClockRate);
 		void	SetClockRate(int Rate);

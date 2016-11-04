@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -87,12 +87,10 @@ void CVRC6_Sawtooth::Write(uint16 Address, uint8 Value)
 		case 0x00:
             PhaseInput = (Value & 0x3F);
 			break;
-
 		case 0x01:
             FreqLow = Value;
             Frequency = FreqLow + (FreqHigh << 8);
 			break;
-
 		case 0x02:
             Enabled = (Value & 0x80);
             FreqHigh = (Value & 0x0F);

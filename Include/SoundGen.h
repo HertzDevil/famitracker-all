@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ const int TREMOLO_LENGTH = 64;
 struct stVolLevels {
 	int Chan1, Chan2, Chan3, Chan4, Chan5;
 };
-
+/*
 class CChannelCommon
 {
 public:
@@ -55,6 +55,8 @@ class CChannelVRC6
 	private:
 
 };
+*/
+class CFamiTrackerView;
 
 class CSoundGen : public CWinThread, ICallback
 {
@@ -117,16 +119,8 @@ private:
 
 // Functions
 private:
-//	void				KillChannel(int Channel);
-//	void				KillChannelHard(int Channel);
-//	void				PlayChannel(int Channel, stChanNote *NoteData, int EffColumns);
-//	void				PlayChannelVRC6(int Channel, stChanNote *NoteData, int EffColumns);
-
 	void				PlayNote(int Channel, stChanNote *NoteData, int EffColumns);
-
-//	void				RefreshChannel(int Channel);
 	void				ResetAPU();
-
 	void				RunFrame();
 
 public:
@@ -141,9 +135,7 @@ public:
 	void				StartPlayer(bool Looping);
 	void				StopPlayer();
 	void				ResetTempo();
-	int					GetTempo();
-//	void				UpdateTempo(unsigned int Value);
-
+	unsigned int		GetTempo();
 	bool				IsPlaying() { return m_bPlaying; };
 
 	// Sound
@@ -157,6 +149,7 @@ public:
 	// Tracker playing
 	bool				IsRunning()				{ return m_bRunning; }
 	unsigned int		GetOutput(int Chan);
+
 };
 
 extern CSoundGen SoundGenerator;

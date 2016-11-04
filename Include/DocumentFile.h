@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -51,7 +51,9 @@ public:
 	void	GetBlock(void *Buffer, int Size);
 	int		GetBlockVersion();
 	bool	BlockDone();
-	unsigned int	m_iBlockPointer;
+
+	int		GetBlockPos();
+	int		GetBlockSize();
 
 private:
 	unsigned int	m_iFileVersion;
@@ -61,5 +63,6 @@ private:
 	unsigned int	m_iBlockSize;
 	unsigned int	m_iBlockVersion;
 	char			*m_pBlockData;
-	
+
+	unsigned int	m_iBlockPointer;	
 };

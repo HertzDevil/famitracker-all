@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 // but are changed infrequently
 
 #pragma once
+
+// Get rid of warnings in VS 2005
+#define _CRT_SECURE_NO_DEPRECATE
 
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
@@ -62,3 +65,4 @@
 #include <afxdhtml.h>
 #include <afxdlgs.h>
 
+#define new DEBUG_NEW

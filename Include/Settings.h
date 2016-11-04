@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -22,8 +22,9 @@
 
 // CSettings command target
 
-const int EDIT_STYLE1	= 0;
-const int EDIT_STYLE2	= 1;
+const int EDIT_STYLE1 = 0;	// FT2
+const int EDIT_STYLE2 = 1;	// ModPlug
+const int EDIT_STYLE3 = 2;	// IT
 
 enum WIN_STATES {
 	STATE_NORMAL,
@@ -51,6 +52,9 @@ public:
 	void DefaultSettings();
 	void SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
 
+	void	StoreSetting(CString Section, CString Name, int Value);
+	int		LoadSetting(CString Section, CString Name);
+
 	CString GetPath(unsigned int PathType);
 	void	SetPath(CString PathName, unsigned int PathType);
 
@@ -63,7 +67,10 @@ public:
 		bool	bFramePreview;
 		int		iEditStyle;
 		bool	bNoDPCMReset;
+		bool	bNoStepMove;
+		int		iPageStepSize;
 		CString	strFont;
+		bool	bPatternColor;
 	} General;
 
 	CString	strDevice;
@@ -75,6 +82,7 @@ public:
 		int		iBassFilter;
 		int		iTrebleFilter;
 		int		iTrebleDamping;
+		int		iMixVolume;
 	} Sound;
 
 	struct {
@@ -92,6 +100,9 @@ public:
 		int		iColBackgroundHilite;
 		int		iColPatternText;
 		int		iColPatternTextHilite;
+		int		iColPatternInstrument;
+		int		iColPatternVolume;
+		int		iColPatternEffect;
 		int		iColSelection;
 		int		iColCursor;
 	} Appearance;

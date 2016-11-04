@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 const int MAX_VOL		= 200;
 
 const int OVERALL_AMP	= 1;
-const int INTRNAL_AMP	= 850;
+const int INTRNAL_AMP	= 750;
 const int VRC6_AMP		= 4;
 const int VRC7_AMP		= 2;
 const int MMC5_AMP		= 8;
@@ -42,7 +42,7 @@ const int FDS_AMP		= 1;
 const int N106_AMP		= 1;
 
 static Blip_Buffer	BlipBuffer;
-static Blip_Synth<blip_good_quality, -2> BlipSynth;
+static Blip_Synth<blip_high_quality, -2> BlipSynth;
 
 CMixer::CMixer()
 {
@@ -96,10 +96,14 @@ void CMixer::SetChannelVolume(int ChanID, double VolLeft, double VolRight)
 	Channels[ChanID].VolRight	= VolRight;
 }
 
-void CMixer::UpdateSettings(int LowCut, int HighCut, int HighDamp)
+void CMixer::UpdateSettings(int LowCut, int HighCut, int HighDamp, int OverallVol)
 {
 	BlipBuffer.bass_freq(LowCut);
 	BlipSynth.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
+
+	float Vol = float(OverallVol) / 100.0f;
+
+	BlipSynth.volume(0.005f * Vol);
 
 	InternalVol = INTRNAL_AMP;
 	VRC6Vol = VRC6_AMP * 2;
@@ -127,26 +131,17 @@ void CMixer::AddValue(int ChanID, int Value, int FrameCycles)
 	static double LastSumL, LastSumR, LastSum;
 	double /*SumL, SumR,*/ Sum;
 	int DeltaL, DeltaR;
+	int AbsVol;
 
-	if (abs(Value) > Channels[ChanID].VolMeasure) {
-		if (ChanID == CHANID_DPCM)
-			Channels[ChanID].VolMeasure = abs(Value);
-		else
-			Channels[ChanID].VolMeasure = abs(Value);
-		//Channels[ChanID].Peak = 10;
-		//m_bVolRead = false;
-		Channels[ChanID].VolFallOff = 3;
+	AbsVol = abs(Value);
+
+	if (ChanID == CHANID_VRC6_SAWTOOTH) {
+		AbsVol /= 2;
 	}
-	else {
-		/*
-		if (Channels[ChanID].VolFallOff > 0)
-			Channels[ChanID].VolFallOff--;
-		else {
-			Channels[ChanID].VolFallOff = 2 ;
-			if (Channels[ChanID].VolMeasure > 0)
-				Channels[ChanID].VolMeasure--;
-		}
-		*/
+
+	if (AbsVol >= Channels[ChanID].VolMeasure) {
+		Channels[ChanID].VolMeasure = AbsVol;
+		Channels[ChanID].VolFallOff = 3;
 	}
 
 	Channels[ChanID].Mono	= Value;
@@ -267,7 +262,7 @@ int CMixer::FinishBuffer(int t)
 
 	BlipBuffer.end_frame(t);
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < CHANNELS; i++) {
 		if (Channels[i].VolFallOff > 0) {
 			Channels[i].VolFallOff--;
 		}
@@ -275,12 +270,14 @@ int CMixer::FinishBuffer(int t)
 			Channels[i].VolFallOff = 1;
 			if (Channels[i].VolMeasure > 0) {
 				if (i == 4) {
-					Channels[i].VolMeasure -= 4;
+					Channels[i].VolMeasure -= 8;
 					if (Channels[i].VolMeasure < 0)
 						Channels[i].VolMeasure = 0;
 				}
 				else
-					Channels[i].VolMeasure--;
+					Channels[i].VolMeasure -= 1;
+				if (Channels[i].VolMeasure < 0)
+					Channels[i].VolMeasure = 0;
 			}
 		}
 	}
@@ -290,9 +287,7 @@ int CMixer::FinishBuffer(int t)
 
 int CMixer::ReadBuffer(int Size, void *Buffer, bool Stereo)
 {
-	int samples = BlipBuffer.read_samples((blip_sample_t*)Buffer, Size);
-
-	return samples;
+	return BlipBuffer.read_samples((blip_sample_t*)Buffer, Size);
 }
 
 int32 CMixer::GetChanOutput(uint8 Chan)

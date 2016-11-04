@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 2;
-const int VERSION_REV = 6;
+const int VERSION_REV = 7;
 
-const int VERSION_WIP = 0;
+//const int VERSION_WIP = 6;
 
 #define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 
@@ -54,14 +54,12 @@ const int VERSION_WIP = 0;
 
 #include "resource.h"       // main symbols
 #include "Settings.h"
-
-//#include "../sound driver/SoundGen.h"
-
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "FamiTrackerView.h"
+#include "Accelerator.h"
 
 class CMIDI;
+class CSoundGen;
 
 // CFamiTrackerApp:
 // See FamiTracker.cpp for the implementation of this class
@@ -70,53 +68,64 @@ class CMIDI;
 class CFamiTrackerApp : public CWinApp
 {
 public:
+	// Constructor
 	CFamiTrackerApp();
-	void DisplayError(int Message);
-	void SilentEverything();
-	void LoadSoundConfig();
-	void SetMachineType(int Type, int Rate);
-	void DrawSamples(int *Samples, int Count);
-	void MidiEvent(void);
 
-	unsigned int GetOutput(int Chan);
-	
-	void RegisterKeyState(int Channel, int Note);
+	// Different app-oriented functions
+	void			DisplayError(int Message);
+	void			LoadSoundConfig();
+	void			ReloadColorScheme(void);
+	void			SetMachineType(int Type, int Rate);
+	void			DrawSamples(int *Samples, int Count);
+	void			MidiEvent(void);
+	int				GetCPUUsage();
+	int				GetFrameRate();
+	int				GetUnderruns();
+	void			SetDocumentLoaded(bool Loaded);
+	bool			IsDocLoaded() { return m_bDocLoaded; };
+	bool			IsThemeActive() { return m_bThemeActive; };
 
-	int GetCPUUsage();
-	int GetFrameRate();
-	int GetUnderruns();
+	// Sound functions
+	void			SilentEverything();
+	void			ShutDownSynth();
+	unsigned int	GetOutput(int Chan);
 
-	void StepFrame();
+	// Tracker player functions
+	void			RegisterKeyState(int Channel, int Note);
+	void			StepFrame();
+	void			StopPlayer();
+	bool			IsPlaying();
+	int				GetTempo();
+	void			ResetTempo();
 
-	void StopPlayer();
-//	void PlayTracker();
-//	void StopTracker();
-	int GetTempo();
+	// Different get-functions
+	CAccelerator	*GetAccelerator() { return m_pAccel; };
+	void			*GetSoundGenerator();
+	CMIDI			*GetMIDI();
+	CDocument		*GetDocument() { return pDocument; };
+	CView			*GetView() { return pView; };
+	CDocument		*GetFirstDocument();
 
-	char m_cAppPath[MAX_PATH];
-
-	int m_iFrameRate;
-
+	// Private variables and objects
 private:
-//	CSoundGen	*pSoundGen;
-	CMIDI		*pMIDI;
+	CDocument		*pDocument;
+	CView			*pView;
+	CMIDI			*pMIDI;
+	CAccelerator	*m_pAccel;
+	CSoundGen		*m_pSoundGenerator;
+	char			m_cAppPath[MAX_PATH];
+	int				m_iFrameRate;
+	bool			m_bShuttingDown;
+	bool			m_bInitialized;
+	bool			m_bDocLoaded;
+	bool			m_bThemeActive;
 
 // Overrides
 public:
-	virtual BOOL InitInstance();
-
-	void	ShutDownSynth();
-	void	ReloadColorScheme(void);
-
-	void	*GetSoundGenerator();
-
-	CDocument	*pDocument;
-	CView		*pView;
-
-	CMIDI		*GetMIDI();
-
-	// Program settings
+	// Program settings. I'll leave this global to make things easier
 	CSettings	*m_pSettings;
+
+	virtual BOOL InitInstance();
 
 // Implementation
 	afx_msg void OnAppAbout();
@@ -130,6 +139,9 @@ public:
 	afx_msg void OnTrackerPlaypattern();
 	afx_msg void OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI);
 	afx_msg void OnFileOpen();
+	afx_msg void OnEditEnableMIDI();
+	afx_msg void OnUpdateEditEnablemidi(CCmdUI *pCmdUI);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 extern CFamiTrackerApp theApp;

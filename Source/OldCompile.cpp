@@ -594,10 +594,11 @@ void CCompile::BuildMusicData(int StartAddress, bool BankSwitched, CFamiTrackerD
 	// Store instruments
 	for (i = 0; i < m_cInstrumentsUsed; i++) {
 		// Write pointer
+		CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(i);
 		WriteBankOffset(INST_POINTERS, i * 2);
 		for (c = 0; c < MOD_COUNT; c++) {
-			if (pDoc->GetInstEffState(i, c)) {
-				int Sequence = pDoc->GetInstEffIndex(i, c);
+			if (/*pDoc->GetInstEffState(i, c)*/ pInst->GetModEnable(c)) {
+				int Sequence = pInst->GetModIndex(c);// pDoc->GetInstEffIndex(i, c);
 				int Index = m_iSequenceIndices[Sequence * MOD_COUNT + c];
 				WriteToBank(Index + 1);
 				SequencesAccessed[Sequence * MOD_COUNT + c] = true;
@@ -613,16 +614,18 @@ void CCompile::BuildMusicData(int StartAddress, bool BankSwitched, CFamiTrackerD
 		unsigned char Sample, SamplePitch;
 		int o, n, Item = 1;
 		bool First = true;
+		CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(i);
 
 		for (o = 0; o < OCTAVE_RANGE; o++) {
 			for (n = 0; n < 12; n++) {
-				if (pDoc->GetInstDPCM(i, n, o) > 0) {
+				//if (pDoc->GetInstDPCM(i, n, o) > 0) {
+				if (pInst->GetSample(o, n) > 0) {
 					if (First) {
 						WriteBankOffset(DPCM_INST_POINTERS, i * 2);
 						First = false;
 					}
-					Sample		= pDoc->GetInstDPCM(i, n, o) - 1;
-					SamplePitch = pDoc->GetInstDPCMPitch(i, n, o);
+					Sample		= pInst->GetSample(o, n) - 1;// pDoc->GetInstDPCM(i, n, o) - 1;
+					SamplePitch = pInst->GetSamplePitch(o, n);// pDoc->GetInstDPCMPitch(i, n, o);
 					if (SamplePitch & 0x80)
 						SamplePitch = (SamplePitch & 0x0F) | 0x40;	// I know this was stupid
 					WriteToBank(Sample);
@@ -646,7 +649,7 @@ void CCompile::BuildMusicData(int StartAddress, bool BankSwitched, CFamiTrackerD
 			int Index;
 
 			Index		= m_iSequenceIndices[i * MOD_COUNT + x];
-			Sequence	= pDoc->GetSequence(i, x);
+//			Sequence	= pDoc->GetSequence(i, x);
 			
 			if (Sequence->Count > 0 && SequencesAccessed[i * MOD_COUNT + x]) {
 
@@ -963,7 +966,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Pattern, int Chann
 
 		stChanNote NoteData;
 
-		pDoc->GetDataAtPattern(Pattern, Channel, k, &NoteData);
+		pDoc->GetDataAtPattern(0, Pattern, Channel, k, &NoteData);
 
 		Note		= NoteData.Note;
 		Octave		= NoteData.Octave;
@@ -1000,7 +1003,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Pattern, int Chann
 				int LookUp = (*DPCM_LookUp)[Instrument][Octave][Note - 1];
 				if (LookUp > 0) {
 					AsmNote = LookUp * 2;
-					int Sample = pDoc->GetInstrument(Instrument)->Samples[Octave][Note - 1] - 1;
+					int Sample = ((CInstrument2A03*)pDoc->GetInstrument(Instrument))->GetSample(Octave, Note - 1) /*Samples[Octave][Note - 1]*/ - 1;
 					m_bDSamplesAccessed[Sample] = true;
 				}
 				else
@@ -1070,27 +1073,18 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Pattern, int Chann
 				case EF_SWEEPUP: {
 					// this need some extra work
 					unsigned char Shift = EffParam & 0x07;
-					unsigned char Period = ((EffParam >> 4) & 0x07) << 4;
+					//unsigned char Period = ((EffParam >> 4) & 0x07) << 4;
+					unsigned char Period = EffParam & 0x70;
 					unsigned char Sweep = 0x88 | Shift | Period;
-
-					/*
-					unsigned char shift	= EffParam & 0x07;
-					unsigned char len	= (EffParam >> 4) & 0x07;
-					unsigned char Val	= 0x88 | (len << 4) | shift;
-					*/
 					Write(NSF_EFF_BEGIN + 10);
 					Write(Sweep);
 					break;
 				}
 				case EF_SWEEPDOWN: {
 					unsigned char Shift = EffParam & 0x07;
-					unsigned char Period = ((EffParam >> 4) & 0x07) << 4;
+//					unsigned char Period = ((EffParam >> 4) & 0x07) << 4;
+					unsigned char Period = EffParam & 0x70;
 					unsigned char Sweep = 0x80 | Shift | Period;
-					/*
-					unsigned char shift	= EffParam & 0x07;
-					unsigned char len	= (EffParam >> 4) & 0x07;
-					unsigned char Val	= 0x80 | (len << 4) | shift;
-					*/
 					Write(NSF_EFF_BEGIN + 10);
 					Write(Sweep);
 					break;
@@ -1101,12 +1095,6 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Pattern, int Chann
 						Write(EffParam);
 					}
 					break;
-					/*
-				case EF_DELAY:
-					Write(NSF_EFF_BEGIN + 12);
-					Write(EffParam);
-					break;
-					*/
 				case EF_DAC:
 					if (Channel == 4) {
 						Write(NSF_EFF_BEGIN + 13);

@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -23,7 +23,15 @@
 #include "SequenceEditor.h"
 
 static const char			*INST_SETTINGS[]	= {"Volume", "Arpeggio", "Pitch",  "Hi-pitch", "Duty / Noise"};
-static const unsigned int	MAX_MML_ITEMS		= 512;
+static const unsigned int	MAX_MML_ITEMS		= 254;
+
+class CMML {
+protected:
+	void TranslateMML(CString MML, CSequence *pSequence, int Min, int Max);
+};
+
+class CFamiTrackerView;
+class CFamiTrackerDoc;
 
 // CInstrumentSettings dialog
 
@@ -41,7 +49,6 @@ public:
 	// Public, but used internal
 	void CompileSequence();
 	void TranslateMML();
-	void TranslateRelativeMML();
 
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT_INTERNAL };
@@ -52,8 +59,7 @@ protected:
 	void SelectSequence(int Sequence);
 
 	CSequenceEditor		SequenceEditor;
-
-	stSequence			*m_SelectedSeq;
+	CSequence 			*m_SelectedSeq;
 
 	CListCtrl			*m_pSettingsListCtrl;
 	CListCtrl			*m_pSequenceListCtrl;
@@ -72,7 +78,6 @@ protected:
 
 	bool				UpdatingSequenceItem;
 	bool				m_bInitializing;
-	bool				m_bShiftPressed;
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -80,12 +85,11 @@ public:
 	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposModSelectSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnChangeSeqIndex();
-	afx_msg void OnPaint();
 	afx_msg void OnBnClickedParseMml();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-protected:
-public:
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 };

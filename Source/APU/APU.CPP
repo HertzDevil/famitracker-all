@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -28,13 +28,12 @@
 #include "stdafx.h"
 #include <cstdio>
 #include <memory>
+#include "FamiTracker.h"
 #include "apu/apu.h"
 #include "apu/square.h"
 #include "apu/triangle.h"
 #include "apu/noise.h"
 #include "apu/dpcm.h"
-
-#include "FamiTracker.h"
 
 const int		CAPU::SEQUENCER_PERIOD		= 14915;
 const double	CAPU::BASE_FREQ_NTSC		= 1789772.7272;
@@ -173,6 +172,8 @@ void CAPU::Shutdown()
 
 	delete VRC6;
 
+	delete Mixer;
+
 	ReleaseBuffer();
 }
 
@@ -304,9 +305,9 @@ void CAPU::Reset()
 	}
 }
 
-void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp)
+void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume)
 {
-	Mixer->UpdateSettings(LowCut, HighCut, HighDamp);
+	Mixer->UpdateSettings(LowCut, HighCut, HighDamp, Volume);
 }
 
 void CAPU::SetExternalSound(uint8 Chip)
@@ -507,14 +508,14 @@ uint8 CAPU::ExternalRead(uint16 Address)
 	//
 
 	Process();
-/*
 	switch (ExternalSoundChip) {
 		case SNDCHIP_VRC6: break;
+/*
 		case SNDCHIP_MMC5: break;
 		case SNDCHIP_N106: return N106.Read(Address);
 		case SNDCHIP_FDS: break;
 		case SNDCHIP_VRC7: break;
-	}*/
+	*/}
 
 	return 0;
 }

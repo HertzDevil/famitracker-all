@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "InstrumentEditDlg.h"
-#include "..\include\instrumenteditdlg.h"
 
 const int KEYBOARD_TOP		= 313;
 const int KEYBOARD_LEFT		= 12;
@@ -49,7 +49,6 @@ void CInstrumentEditDlg::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CInstrumentEditDlg, CDialog)
-	ON_BN_CLICKED(IDC_CLOSE, OnBnClickedClose)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_INST_TAB, OnTcnSelchangeInstTab)
 	ON_WM_PAINT()
 	ON_WM_LBUTTONDOWN()
@@ -68,21 +67,25 @@ void CInstrumentEditDlg::OnBnClickedClose()
 
 BOOL CInstrumentEditDlg::OnInitDialog()
 {
-	/*
-	const int TAB_WND_WIDTH = 559;
-	const int TAB_WND_HEIGHT = 269;
-	*/
-
 	CDialog::OnInitDialog();
 
+	m_iSelectedInstType = -1;
+	m_iLastNote = -1;
+	m_bOpened = true;
+
+	return TRUE;  // return TRUE unless you set the focus to a control
+	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CInstrumentEditDlg::Load2A03()
+{
+	CRect Rect, ParentRect;
 	CTabCtrl *pTabControl = static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB));
 
+	pTabControl->GetWindowRect(&ParentRect);
+	pTabControl->DeleteAllItems();
 	pTabControl->InsertItem(0, "Instrument settings");
 	pTabControl->InsertItem(1, "DPCM samples");
-
-	CRect Rect, ParentRect;
-
-	GetDlgItem(IDC_INST_TAB)->GetWindowRect(&ParentRect);
 
 	InstrumentSettings.Create(IDD_INSTRUMENT_INTERNAL, this);
 	InstrumentSettings.GetWindowRect(&Rect);
@@ -100,28 +103,70 @@ BOOL CInstrumentEditDlg::OnInitDialog()
 
 	InstrumentSettings.ShowWindow(SW_SHOW);
 	InstrumentDPCM.ShowWindow(SW_HIDE);
+}
 
-	m_iLastNote = -1;
+void CInstrumentEditDlg::LoadVRC6()
+{
+	CRect Rect, ParentRect;
+	CTabCtrl *pTabControl = static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB));
 
-	m_bOpened = true;
+	pTabControl->GetWindowRect(&ParentRect);
+	pTabControl->DeleteAllItems();
+	pTabControl->InsertItem(0, "Konami VRC6");
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+	InstrumentVRC6.Create(IDD_INSTRUMENT_INTERNAL, this);
+	InstrumentVRC6.GetWindowRect(&Rect);
+	Rect.MoveToXY(ParentRect.left - Rect.left + 1, ParentRect.top - Rect.top + 21);
+	Rect.bottom -= 2;
+	Rect.right += 1;
+	InstrumentVRC6.MoveWindow(Rect);
+	InstrumentVRC6.ShowWindow(SW_SHOW);
 }
 
 void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 {
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetDocument());
 	CString Title;
 	char Name[256];
 
-	static_cast<CFamiTrackerDoc*>(theApp.pDocument)->GetInstrumentName(Index, Name);
+	pDoc->GetInstrumentName(Index, Name);
 	Title.Format("Instrument editor - %s", Name);
 	SetWindowText(Title);
 
-	InstrumentSettings.SetCurrentInstrument(Index);
-	InstrumentSettings.RedrawWindow();
+	CInstrument *pInst = pDoc->GetInstrument(Index);
+	int InstType = pInst->GetType();
 
-	InstrumentDPCM.SetCurrentInstrument(Index);
+	if (m_iSelectedInstType != InstType) {
+		switch (m_iSelectedInstType) {
+			case INST_2A03:
+				InstrumentSettings.DestroyWindow();
+				InstrumentDPCM.DestroyWindow();
+				break;
+			case INST_VRC6:
+				InstrumentVRC6.DestroyWindow();
+				break;
+		}
+		switch (InstType) {
+			case INST_2A03:
+				Load2A03();
+				break;
+			case INST_VRC6:
+				LoadVRC6();
+				break;
+		}
+	}
+
+	switch (InstType) {
+		case INST_2A03:
+			InstrumentSettings.SetCurrentInstrument(Index);
+			InstrumentDPCM.SetCurrentInstrument(Index);
+			break;
+		case INST_VRC6:
+			InstrumentVRC6.SetCurrentInstrument(Index);
+			break;
+	}
+
+	m_iSelectedInstType = InstType;
 }
 
 void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
@@ -162,7 +207,6 @@ void CInstrumentEditDlg::OnPaint()
 	CBitmap Bmp, *OldBmp;
 
 	Bmp.CreateCompatibleBitmap(&dc, 800, 800);
-//	BackDC->CreateCompatibleDC(pDC);
 	BackDC.CreateCompatibleDC(&dc);
 	OldBmp = BackDC.SelectObject(&Bmp);
 
@@ -245,7 +289,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 	int Note;
 	int KeyPos;
 
-	int Channel = ((CFamiTrackerView*)theApp.pView)->GetSelectedChannel();
+	int Channel = ((CFamiTrackerView*)theApp.GetView())->GetSelectedChannel();
 
 	Octave = (x - KEYBOARD_LEFT) / 70;
 
@@ -304,11 +348,11 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 			NoteData.Note			= Note + 1;
 			NoteData.Octave			= Octave;
 			NoteData.Vol			= 0x0F;
-			NoteData.Instrument		= ((CFamiTrackerView*)theApp.pView)->GetInstrument();
+			NoteData.Instrument		= ((CFamiTrackerView*)theApp.GetView())->GetInstrument();
 			NoteData.EffNumber[0]	= 0;
 			NoteData.EffParam[0]	= 0;
 
-			((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
+			((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
 		}
 
 		m_iLastNote = Note + (Octave * 12);
@@ -321,7 +365,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 		NoteData.EffNumber[0]	= 0;
 		NoteData.EffParam[0]	= 0;
 
-		((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
+		((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
 
 		m_iLastNote = -1;
 	}
@@ -331,7 +375,7 @@ void CInstrumentEditDlg::SwitchOffNote()
 {
 	stChanNote NoteData;
 
-	int Channel = ((CFamiTrackerView*)theApp.pView)->GetSelectedChannel();
+	int Channel = ((CFamiTrackerView*)theApp.GetView())->GetSelectedChannel();
 
 	NoteData.Note			= HALT;
 	NoteData.Octave			= 0;
@@ -340,7 +384,7 @@ void CInstrumentEditDlg::SwitchOffNote()
 	NoteData.EffNumber[0]	= 0;
 	NoteData.EffParam[0]	= 0;
 
-	((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
+	((CFamiTrackerView*)theApp.GetView())->FeedNote(Channel, &NoteData);
 
 	m_iLastNote = -1;
 }
@@ -355,7 +399,6 @@ void CInstrumentEditDlg::OnLButtonDown(UINT nFlags, CPoint point)
 void CInstrumentEditDlg::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	SwitchOffNote();
-
 	CDialog::OnLButtonUp(nFlags, point);
 }
 
@@ -370,15 +413,24 @@ void CInstrumentEditDlg::OnMouseMove(UINT nFlags, CPoint point)
 void CInstrumentEditDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
 	SwitchOnNote(point.x, point.y);
-
 	CDialog::OnLButtonDblClk(nFlags, point);
 }
 
 BOOL CInstrumentEditDlg::DestroyWindow()
 {
-	if (m_bOpened)
-		InstrumentSettings.DestroyWindow();
+	if (m_bOpened) {
+		switch (m_iSelectedInstType) {
+			case INST_2A03:
+				InstrumentSettings.DestroyWindow();
+				InstrumentDPCM.DestroyWindow();
+				break;
+			case INST_VRC6:
+				InstrumentVRC6.DestroyWindow();
+				break;
+		}
+	}
 	
+	m_iSelectedInstType = -1;
 	m_bOpened = false;
 	
 	return CDialog::DestroyWindow();
@@ -393,5 +445,4 @@ void CInstrumentEditDlg::OnOK()
 void CInstrumentEditDlg::OnCancel()
 {
 	DestroyWindow();
-	//CDialog::OnCancel();
 }

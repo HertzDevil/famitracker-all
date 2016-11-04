@@ -36,7 +36,7 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.pDocument;
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
 	CSliderCtrl *SubTuneSlider = (CSliderCtrl*)GetDlgItem(IDC_SUBTUNE);
 	CString Text;
 
@@ -54,12 +54,15 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 
 void CModulePropertiesDlg::OnBnClickedOk()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.pDocument;
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetDocument();
 	CSliderCtrl *SubTuneSlider = (CSliderCtrl*)GetDlgItem(IDC_SUBTUNE);
+	CComboBox	*ExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
 
-	unsigned int NewCount = SubTuneSlider->GetPos();
+	unsigned int iNewCount = SubTuneSlider->GetPos();
+	unsigned int iExpansionChip = ExpansionChipBox->GetCurSel();
 
-	pDoc->SetTracks(NewCount);
+	pDoc->SetTracks(iNewCount);
+	pDoc->SelectExpansionChip(iExpansionChip);
 	
 	OnOK();
 }

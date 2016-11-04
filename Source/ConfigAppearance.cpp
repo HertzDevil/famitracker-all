@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,35 +20,28 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerView.h"
 #include "ConfigAppearance.h"
-#include ".\configappearance.h"
-
-enum E_COLOR_ITEMS {
-	COL_BACKGROUND,
-	COL_BACKGROUND_HILITE,
-	COL_PATTERN_TEXT,
-	COL_PATTERN_TEXT_HILITE,
-	COL_SELECTION,
-	COL_CURSOR,
-	COLOR_ITEM_COUNT
-};
 
 const char *COLOR_ITEMS[] = {
 	"Background", 
 	"Higlighed background",
 	"Pattern text", 
-	"Highlighted pattern text", 
+	"Highlighted pattern text",
+	"Instrument column",
+	"Volume column",
+	"Effect number column",
 	"Selection",
 	"Cursor"
 };
-
-const int NUM_COLOR_SCHEMES = 3;
 
 const char *COLOR_SCHEMES[] = {
 	"Default",
 	"Monochrome",
 	"Renoise"
 };
+
+const int NUM_COLOR_SCHEMES = 3;
 
 CConfigAppearance *pCallback;
 
@@ -111,7 +104,7 @@ void CConfigAppearance::OnPaint()
 	Rect.bottom -= ParentRect.top;
 	Rect.left -= ParentRect.left;
 	Rect.right -= ParentRect.left;
-
+/*
 	switch (m_iSelectedItem) {
 		case COL_BACKGROUND:
 			BrushColor.CreateSolidBrush(m_iColBackground);
@@ -125,6 +118,15 @@ void CConfigAppearance::OnPaint()
 		case COL_PATTERN_TEXT_HILITE:
 			BrushColor.CreateSolidBrush(m_iColTextHilite);
 			break;
+		case COL_PATTERN_INSTRUMENT:
+			BrushColor.CreateSolidBrush
+			break;
+		case COL_PATTERN_VOLUME:
+			break;
+		case COL_PATTERN_EFF_NUM:
+			break;
+		case COL_PATTERN_EFF_PARAM:
+			break;
 		case COL_SELECTION:
 			BrushColor.CreateSolidBrush(m_iColSelection);
 			break;
@@ -132,6 +134,8 @@ void CConfigAppearance::OnPaint()
 			BrushColor.CreateSolidBrush(m_iColCursor);
 			break;
 	}
+*/
+	BrushColor.CreateSolidBrush(m_iColors[m_iSelectedItem]);
 
 	OldBrush = dc.SelectObject(&BrushColor);
 
@@ -162,10 +166,10 @@ void CConfigAppearance::OnPaint()
 
 	OldFont = dc.SelectObject(&Font);
 
-	dc.FillSolidRect(Rect, m_iColBackground);
+	dc.FillSolidRect(Rect, GetColor(COL_BACKGROUND));
 
-	ShadedCol = DIM(m_iColText, 50);
-	ShadedHiCol = DIM(m_iColTextHilite, 50);
+	ShadedCol = DIM(GetColor(COL_PATTERN_TEXT), 50);
+	ShadedHiCol = DIM(GetColor(COL_PATTERN_TEXT_HILITE), 50);
 
 	for (int j = 0; j < 3; j++) {
 
@@ -175,22 +179,22 @@ void CConfigAppearance::OnPaint()
 
 			if (i == 0) {
 				if (j == 0)
-					dc.SetTextColor(m_iColTextHilite);
+					dc.SetTextColor(GetColor(COL_PATTERN_TEXT_HILITE));
 				else
 					dc.SetTextColor(ShadedHiCol);
-				dc.SetBkColor(m_iColBackgroundHilite);
-				dc.FillSolidRect(Rect.left, OffsetTop, Rect.right - Rect.left, 18, m_iColBackgroundHilite);
+				dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
+				dc.FillSolidRect(Rect.left, OffsetTop, Rect.right - Rect.left, 18, GetColor(COL_BACKGROUND_HILITE));
 				if (j == 0) {
-					dc.SetBkColor(m_iColCursor);
-					dc.FillSolidRect(Rect.left + 5, OffsetTop + 1, 40, 16, m_iColCursor);
+					dc.SetBkColor(GetColor(COL_CURSOR));
+					dc.FillSolidRect(Rect.left + 5, OffsetTop + 1, 40, 16, GetColor(COL_CURSOR));
 				}
 			}
 			else {
 				if (j == 0)
-					dc.SetTextColor(m_iColText);
+					dc.SetTextColor(GetColor(COL_PATTERN_TEXT));
 				else
 					dc.SetTextColor(ShadedCol);
-				dc.SetBkColor(m_iColBackground);
+				dc.SetBkColor(GetColor(COL_BACKGROUND));
 			}
 
 			if (j == 0) {
@@ -205,7 +209,7 @@ void CConfigAppearance::OnPaint()
 			}
 
 			if (j == 0 && i == 0) {
-				dc.SetBkColor(m_iColBackgroundHilite);
+				dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
 			}
 
 			if (i == 0) {
@@ -259,12 +263,24 @@ BOOL CConfigAppearance::OnInitDialog()
 
 	m_iSelectedItem = 0;
 
+	m_iColors[COL_BACKGROUND]			= theApp.m_pSettings->Appearance.iColBackground;
+	m_iColors[COL_BACKGROUND_HILITE]	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
+	m_iColors[COL_PATTERN_TEXT]			= theApp.m_pSettings->Appearance.iColPatternText;
+	m_iColors[COL_PATTERN_TEXT_HILITE]	= theApp.m_pSettings->Appearance.iColPatternTextHilite;
+	m_iColors[COL_PATTERN_INSTRUMENT]	= theApp.m_pSettings->Appearance.iColPatternInstrument;
+	m_iColors[COL_PATTERN_VOLUME]		= theApp.m_pSettings->Appearance.iColPatternVolume;
+	m_iColors[COL_PATTERN_EFF_NUM]		= theApp.m_pSettings->Appearance.iColPatternEffect;
+	m_iColors[COL_SELECTION]			= theApp.m_pSettings->Appearance.iColSelection;
+	m_iColors[COL_CURSOR]				= theApp.m_pSettings->Appearance.iColCursor;
+
+		/*
 	m_iColBackground		= theApp.m_pSettings->Appearance.iColBackground;
 	m_iColBackgroundHilite	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
 	m_iColText				= theApp.m_pSettings->Appearance.iColPatternText;
 	m_iColTextHilite		= theApp.m_pSettings->Appearance.iColPatternTextHilite;
 	m_iColSelection			= theApp.m_pSettings->Appearance.iColSelection;
 	m_iColCursor			= theApp.m_pSettings->Appearance.iColCursor;
+	*/
 
 	ItemsBox = (CComboBox*)GetDlgItem(IDC_SCHEME);
 
@@ -287,14 +303,24 @@ void CConfigAppearance::AddFontName(char *Name)
 BOOL CConfigAppearance::OnApply()
 {
 	theApp.m_pSettings->General.strFont = m_strFont;
-	
+
+	theApp.m_pSettings->Appearance.iColBackground			= m_iColors[COL_BACKGROUND];
+	theApp.m_pSettings->Appearance.iColBackgroundHilite		= m_iColors[COL_BACKGROUND_HILITE];
+	theApp.m_pSettings->Appearance.iColPatternText			= m_iColors[COL_PATTERN_TEXT];
+	theApp.m_pSettings->Appearance.iColPatternTextHilite	= m_iColors[COL_PATTERN_TEXT_HILITE];
+	theApp.m_pSettings->Appearance.iColPatternInstrument	= m_iColors[COL_PATTERN_INSTRUMENT];
+	theApp.m_pSettings->Appearance.iColPatternVolume		= m_iColors[COL_PATTERN_VOLUME];
+	theApp.m_pSettings->Appearance.iColPatternEffect		= m_iColors[COL_PATTERN_EFF_NUM];
+	theApp.m_pSettings->Appearance.iColSelection			= m_iColors[COL_SELECTION];
+	theApp.m_pSettings->Appearance.iColCursor				= m_iColors[COL_CURSOR];
+/*
 	theApp.m_pSettings->Appearance.iColBackground			= m_iColBackground;
 	theApp.m_pSettings->Appearance.iColBackgroundHilite		= m_iColBackgroundHilite;
 	theApp.m_pSettings->Appearance.iColPatternText			= m_iColText;
 	theApp.m_pSettings->Appearance.iColPatternTextHilite	= m_iColTextHilite;
 	theApp.m_pSettings->Appearance.iColSelection			= m_iColSelection;
 	theApp.m_pSettings->Appearance.iColCursor				= m_iColCursor;
-
+*/
 	theApp.ReloadColorScheme();
 
 	return CPropertyPage::OnApply();
@@ -318,6 +344,7 @@ void CConfigAppearance::OnBnClickedPickCol()
 
 	ColorDialog.m_cc.Flags |= CC_FULLOPEN | CC_RGBINIT;
 
+	/*
 	switch (m_iSelectedItem) {
 		case COL_BACKGROUND:
 			ColorDialog.m_cc.rgbResult = m_iColBackground;
@@ -338,9 +365,13 @@ void CConfigAppearance::OnBnClickedPickCol()
 			ColorDialog.m_cc.rgbResult = m_iColCursor;
 			break;
 	}
+*/
+	ColorDialog.m_cc.rgbResult = m_iColors[m_iSelectedItem];
 
 	ColorDialog.DoModal();
 
+	m_iColors[m_iSelectedItem] = ColorDialog.GetColor();
+/*
 	switch (m_iSelectedItem) {
 		case COL_BACKGROUND:
 			m_iColBackground = ColorDialog.GetColor();
@@ -361,7 +392,7 @@ void CConfigAppearance::OnBnClickedPickCol()
 			m_iColCursor = ColorDialog.GetColor();
 			break;
 	}
-
+*/
 	SetModified();
 	RedrawWindow();
 }
@@ -380,35 +411,47 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 	
 	int Index = List->GetCurSel();
 
+	SetColor(COL_PATTERN_INSTRUMENT, 0x80FF80);
+	SetColor(COL_PATTERN_VOLUME, 0xFF8080);
+	SetColor(COL_PATTERN_EFF_NUM, 0x8080FF);
+
 	switch (Index) {
 		case 0:
+			SetColor(COL_BACKGROUND, COLOR_SCHEME.BACKGROUND);
+			SetColor(COL_BACKGROUND_HILITE, COLOR_SCHEME.BACKGROUND_HILITE);
+			SetColor(COL_PATTERN_TEXT, COLOR_SCHEME.TEXT_NORMAL);
+			SetColor(COL_PATTERN_TEXT_HILITE, COLOR_SCHEME.TEXT_HILITE);
+			SetColor(COL_SELECTION, COLOR_SCHEME.SELECTION);
+			SetColor(COL_CURSOR, COLOR_SCHEME.CURSOR);
+			/*
 			m_iColBackground		= COLOR_SCHEME.BACKGROUND;
 			m_iColBackgroundHilite	= COLOR_SCHEME.BACKGROUND_HILITE;
 			m_iColText				= COLOR_SCHEME.TEXT_NORMAL;
 			m_iColTextHilite		= COLOR_SCHEME.TEXT_HILITE;
 			m_iColSelection			= COLOR_SCHEME.SELECTION;
 			m_iColCursor			= COLOR_SCHEME.CURSOR;
-			m_strFont				= "Fixedsys";
+			*/
+			m_strFont = "Fixedsys";
 			FontList->SelectString(0, m_strFont);
 			break;
 		case 1:
-			m_iColBackground		= 0x00181818;
-			m_iColBackgroundHilite	= 0x00202020;
-			m_iColText				= 0x00C0C0C0;
-			m_iColTextHilite		= 0x00F0F0F0;
-			m_iColSelection			= 0x00454550;
-			m_iColCursor			= 0x00908080;
-			m_strFont				= "Fixedsys";
+			SetColor(COL_BACKGROUND, 0x00181818);
+			SetColor(COL_BACKGROUND_HILITE, 0x00202020);
+			SetColor(COL_PATTERN_TEXT, 0x00C0C0C0);
+			SetColor(COL_PATTERN_TEXT_HILITE, 0x00F0F0F0);
+			SetColor(COL_SELECTION, 0x00454550);
+			SetColor(COL_CURSOR, 0x00908080);
+			m_strFont = "Fixedsys";
 			FontList->SelectString(0, m_strFont);
 			break;
 		case 2:
-			m_iColBackground		= 0x00131313;
-			m_iColBackgroundHilite	= 0x00231A18;
-			m_iColText				= 0x00FBF4F0;
-			m_iColTextHilite		= 0x00FFD6B9;
-			m_iColSelection			= 0x00355D93;
-			m_iColCursor			= 0x00707070;
-			m_strFont				= "Fixedsys";
+			SetColor(COL_BACKGROUND, 0x00131313);
+			SetColor(COL_BACKGROUND_HILITE, 0x00231A18);
+			SetColor(COL_PATTERN_TEXT, 0x00FBF4F0);
+			SetColor(COL_PATTERN_TEXT_HILITE, 0x00FFD6B9);
+			SetColor(COL_SELECTION, 0x00355D93);
+			SetColor(COL_CURSOR, 0x00707070);
+			m_strFont = "Fixedsys";
 			FontList->SelectString(0, m_strFont);
 			break;
 	}
@@ -416,4 +459,14 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 	SetModified();
 
 	RedrawWindow();
+}
+
+void CConfigAppearance::SetColor(int Index, int Color) 
+{
+	m_iColors[Index] = Color;
+}
+
+int CConfigAppearance::GetColor(int Index) const
+{
+	return m_iColors[Index];
 }

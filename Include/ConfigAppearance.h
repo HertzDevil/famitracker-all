@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2006  Jonathan Liss
+** Copyright (C) 2005-2007  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -20,6 +20,18 @@
 
 #pragma once
 
+enum E_COLOR_ITEMS {
+	COL_BACKGROUND,
+	COL_BACKGROUND_HILITE,
+	COL_PATTERN_TEXT,
+	COL_PATTERN_TEXT_HILITE,
+	COL_PATTERN_INSTRUMENT,
+	COL_PATTERN_VOLUME,
+	COL_PATTERN_EFF_NUM,
+	COL_SELECTION,
+	COL_CURSOR,
+	COLOR_ITEM_COUNT
+};
 
 // CConfigAppearance dialog
 
@@ -39,17 +51,22 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
+	void SetColor(int Index, int Color);
+	int GetColor(int Index) const;
+
 	CComboBox*	m_pFontList;
 	CString		m_strFont;
 	
 	int m_iSelectedItem;
-
+/*
 	int	m_iColBackground;
 	int m_iColBackgroundHilite;
 	int m_iColText;
 	int m_iColTextHilite;
 	int m_iColSelection;
 	int m_iColCursor;
+*/
+	int m_iColors[COLOR_ITEM_COUNT];
 
 	DECLARE_MESSAGE_MAP()
 public:
