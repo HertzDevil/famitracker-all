@@ -73,7 +73,8 @@ void CTriangle::Write(uint16 Address, uint8 Value)
 void CTriangle::WriteControl(uint8 Value)
 {
 	ControlReg = Value;
-	if (Value == 0) Enabled = 0;
+	if (Value == 0)
+		Enabled = 0;
 }
 
 uint8 CTriangle::ReadControl()
@@ -83,7 +84,7 @@ uint8 CTriangle::ReadControl()
 
 void CTriangle::Process(int Time)
 {
-	// The triangle will be skipped if a wavelength less than 2 is used
+	// The triangle is skipped if a frequency lesser than 2 is used
 	// It takes to much CPU and it wouldn't be possible to hear anyway
 	//
 

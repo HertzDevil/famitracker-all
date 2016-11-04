@@ -29,17 +29,17 @@ const int MAX_FRAMES			= 64;		// Maximum number of frames
 const int MAX_PATTERN_LENGTH	= 256;		// Maximum length of patterns (in rows)
 const int MAX_DSAMPLES			= 32;		// Maximum number of dmc samples (this would be limited by NES memory)
 
-const int MAX_EFFECT_COLUMNS	= 4;
+const int MAX_EFFECT_COLUMNS	= 4;		// Number of effect columns allowed
 
-const int MAX_TEMPO = 255;
-const int MIN_TEMPO = 1;
+const int MAX_TEMPO				= 255;		// Max tempo
+const int MIN_TEMPO				= 1;		// Min tempo
 
-const int MAX_CHANNELS = 5;
+const int MAX_CHANNELS			= 5;		// Number of avaliable channels (the internal ones right now)
 
-const int CHANNELS_DEFAULT	= 5;
-const int CHANNELS_VRC6		= 3;
-const int CHANNELS_FDS		= 1;
-const int CHANNELS_N106		= 8;
+const int CHANNELS_DEFAULT		= 5;
+const int CHANNELS_VRC6			= 3;
+
+const int OCTAVE_RANGE			= 8;
 
 enum eModifiers {
 	MOD_VOLUME,
@@ -64,6 +64,7 @@ enum eEffects {
 	EF_ARPEGGIO,
 	EF_VIBRATO,
 	EF_TREMOLO,
+	EF_PITCH
 };
 
 const char EFF_CHAR[] = {'F',	// Speed
@@ -77,7 +78,8 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'I',	// Sweep down
 						 '0',	// Arpeggio
 						 '4',	// Vibrato
-						 '7'};	// Tremolo
+						 '7',	// Tremolo
+						 'P'};	// Pitch
 
 enum eNotes {
 	C = 1,
@@ -106,8 +108,8 @@ struct stInstrument {
 	bool	Free;
 	int		ModEnable[MOD_COUNT];
 	int		ModIndex[MOD_COUNT];
-	char	Samples[6][12];				// Samples
-	char	SamplePitch[6][12];			// Play pitch
+	char	Samples[OCTAVE_RANGE][12];				// Samples
+	char	SamplePitch[OCTAVE_RANGE][12];			// Play pitch/loop
 };
 
 struct stSequence {
@@ -134,6 +136,10 @@ struct stChanNote {
 class CMainFrame;
 class CDocumentFile;
 
+//
+// I'll try to organize this class, things are quite messy right now!
+//
+
 class CFamiTrackerDoc : public CDocument
 {
 protected: // create from serialization only
@@ -142,85 +148,168 @@ protected: // create from serialization only
 
 // Attributes
 public:
+
+//
+// Public functions
+//
+public:
 	// General functions
 
+	//
+	// Abstraction access functions
+	//
+	
+	// Sequences
+	stSequence		*GetSequence(int Index, int Type);
+	int				GetSequenceCount(int Index, int Type);
+
 	// Instruments
-	int				AddInstrument(const char *Name);			// Add a new instrument
-	void			RemoveInstrument(int Index);				// Remove an instrument
-	void			InstrumentName(int Index, char *Name);		// Set the name of an instrument
-	void			GetInstName(int Instrument, char *Name);	// Get the name of an instrument
+	stInstrument	*GetInstrument(int Instrument);
+	bool			IsInstrumentUsed(int Instrument);
+	bool			GetInstEffState(int Instrument, int Effect);
+	int				GetInstEffIndex(int Instrument, int Effect);
+	int				GetInstDPCM(int Instrument, int Note, int Octave);
+	int				GetInstDPCMPitch(int Instrument, int Note, int Octave);
+	void			SetInstEffect(int Instrument, int Effect, int Sequence, bool Enabled);
+	void			SetInstDPCMPitch(int Instrument, int Note, int Octave, int Pitch);
+	void			SetInstDPCM(int Instrument, int Note, int Octave, int Sample);
 
-	// Sequence list
-	void			InsertModifierItem(unsigned int Index, unsigned int SelectedSequence);
-	void			RemoveModifierItem(unsigned int Index, unsigned int SelectedSequence);
+	// Instrument management
+	unsigned int	AddInstrument(const char *Name);						// Add a new instrument
+	void			RemoveInstrument(unsigned int Index);					// Remove an instrument
+	void			SetInstrumentName(unsigned int Index, char *Name);		// Set the name of an instrument
+	void			GetInstrumentName(unsigned int Index, char *Name);		// Get the name of an instrument
 
-	// General document
-	void			SetPatternCount(int Count);					// ???
-	void			SetRowCount(int Index);						// Amount of rows / pattern
-	void			SetSongSpeed(int Speed);					// Sets the speed of song
+	// DPCM samples
+	int				GetSampleSize(unsigned int Sample);
+	char			GetSampleData(unsigned int Sample, unsigned int Offset);
+
+	// Document
+	unsigned int	GetPatternLength()		const { return m_iPatternLength; };
+	unsigned int	GetFrameCount()			const { return m_iFrameCount; };
+	unsigned int	GetSongSpeed()			const { return m_iSongSpeed; };
+	unsigned int	GetAvailableChannels()	const { return m_iChannelsAvailable; };
+
+	void			SetFrameCount(unsigned int Count);
+	void			SetPatternLength(unsigned int Length);
+	void			SetSongSpeed(unsigned int Speed);					// Sets the speed of song
 
 	void			SetSongInfo(char *Name, char *Artist, char *Copyright);
+	char			*GetSongName()			 { return m_strName; };
+	char			*GetSongArtist()		 { return m_strArtist; };
+	char			*GetSongCopyright()		 { return m_strCopyright; };
 
-	bool			IncreaseFrame(int PatternPos, int Channel);
-	bool			DecreaseFrame(int PatternPos, int Channel);
+	unsigned int	GetEngineSpeed()		const { return m_iEngineSpeed; };
+	unsigned int	GetMachine()			const { return m_iMachine; };
 
-	void			IncreaseInstrument(int Frame, int Channel, int Row);
-	void			DecreaseInstrument(int Frame, int Channel, int Row);
-	void			IncreaseEffect(int Frame, int Channel, int Row, int Index);
-	void			DecreaseEffect(int Frame, int Channel, int Row, int Index);
-	void			IncreaseVolume(int Frame, int Channel, int Row);
-	void			DecreaseVolume(int Frame, int Channel, int Row);
+	void			SetEngineSpeed(unsigned int Speed);
+	void			SetMachine(unsigned int Machine);
 
-	// Document edit functions
-	stChanNote		*GetPatternData(int Pattern, int Nr, int Chan);
-	stDSample		*GetFreeDSample();
+	unsigned int	GetEffColumns(unsigned int Channel) const; 
+	void			SetEffColumns(unsigned int Channel, unsigned int Columns);
 
-	stInstrument	*GetInstrument(int Index);
-	stSequence		*GetModifier(int Index);
-	stDSample		*GetDSample(int Index);
-	void			RemoveDSample(int Index);
+	unsigned int	GetPatternAtFrame(unsigned int Frame, unsigned int Channel) const;
+	void			SetPatternAtFrame(unsigned int Frame, unsigned int Channel, unsigned int Pattern);
 
-	bool			DeleteNote(int RowPos, int PatternPos, int Channel, int Column);
-	bool			InsertNote(int RowPos, int PatternPos, int Channel);
-	bool			RemoveNote(int RowPos, int PatternPos, int Channel);
+	// General
+	bool			IsFileLoaded()			const { return m_bFileLoaded; };
+	unsigned int	GetFrameRate(void) const;
 
-	stChanNote		*GetNoteData(int Channel, int RowPos, int PatternPos);
-	void			SetNoteData(unsigned int Channel, unsigned int RowPos, unsigned int PatternPos, stChanNote *Note);
-	int				GetNoteEffect(int Channel, int RowPos, int Pattern, int Index);
-	int				GetNoteEffectValue(int Channel, int RowPos, int Pattern, int Index);
-	int				GetNote(int Channel, int RowPos, int Pattern);
-	void			GetNoteData(stChanNote *Data, int Channel, int RowPos, int Frame);
+	// Pattern editing
+	void			IncreasePattern(unsigned int PatternPos, unsigned int Channel);
+	void			DecreasePattern(unsigned int PatternPos, unsigned int Channel);
+	void			IncreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	void			DecreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	void			IncreaseVolume(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	void			DecreaseVolume(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	void			IncreaseEffect(unsigned int Frame, unsigned int Channel, unsigned int Row, unsigned int Index);
+	void			DecreaseEffect(unsigned int Frame, unsigned int Channel, unsigned int Row, unsigned int Index);
 
-	void			GetSampleName(int Index, char *Name);
+	void			SetNoteData(unsigned int Frame, unsigned int Channel, unsigned int Row, stChanNote *Data);
+	void			GetNoteData(unsigned int Frame, unsigned int Channel, unsigned int Row, stChanNote *Data) const;
 
-	// Document data (will be stored/read when opening/saving)
+	void			SetDataAtPattern(unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data);
+	void			GetDataAtPattern(unsigned int Pattern, unsigned int Channel, unsigned int Row, stChanNote *Data) const;
 
-	int				m_iPatternLength;			// Amount of rows in one pattern
-	int				m_iFrameCount;				// Number of frames
-	int				m_iChannelsAvailable;		// Number of channels used
-	int				m_iSongSpeed;				// Song speed
+	unsigned int	GetNoteEffectType(unsigned int Frame, unsigned int Channel, unsigned int Row, int Index) const;
+	unsigned int	GetNoteEffectParam(unsigned int Frame, unsigned int Channel, unsigned int Row, int Index) const;
 
-	int				m_iMachine;					// NTSC / PAL
-	int				m_iEngineSpeed;				// Refresh rate
+	bool			InsertNote(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	bool			DeleteNote(unsigned int Frame, unsigned int Channel, unsigned int Row, unsigned int Column);
+	bool			RemoveNote(unsigned int Frame, unsigned int Channel, unsigned int Row);
 
-	char			m_strName[32];				// Song name
-	char			m_strArtist[32];			// Song artist
-	char			m_strCopyright[32];			// Song copyright
+protected:
 
+	//
+	// File management functions (load/save)
+	//
+
+	void			CleanDocument();
+
+	BOOL			SaveDocument(LPCSTR lpszPathName);
+	BOOL			OpenDocument(LPCTSTR lpszPathName);
+
+	BOOL			LoadOldFile(CFile OpenFile);
+	BOOL			LoadNewFile(CFile OpenFile);
+
+	void			WriteBlock_Header(CDocumentFile *pDocFile);
+	void			WriteBlock_Instruments(CDocumentFile *pDocFile);
+	void			WriteBlock_Sequences(CDocumentFile *pDocFile);
+	void			WriteBlock_Frames(CDocumentFile *pDocFile);
+	void			WriteBlock_Patterns(CDocumentFile *pDocFile);
+	void			WriteBlock_DSamples(CDocumentFile *pDocFile);
+
+	bool			ReadBlock_Header(CDocumentFile *pDocFile);
+	bool			ReadBlock_Instruments(CDocumentFile *pDocFile);
+	bool			ReadBlock_Sequences(CDocumentFile *pDocFile);
+	bool			ReadBlock_Frames(CDocumentFile *pDocFile);
+	bool			ReadBlock_Patterns(CDocumentFile *pDocFile);
+	bool			ReadBlock_DSamples(CDocumentFile *pDocFile);
+
+	void			ReorderSequences();
+
+private:
+
+	//
+	// Document data
+	//
+	stChanNote		m_PatternData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];	// The patterns
+	stSequence		m_Sequences[MAX_SEQUENCES][MOD_COUNT];		// Allocate one sequence-list for each effect
+	stInstrument	m_Instruments[MAX_INSTRUMENTS];				// Instruments
+	stDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample
+
+	unsigned int	m_iEffectColumns[MAX_CHANNELS];				// Effect columns enabled
+	unsigned int	m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		// List of the patterns assigned to frames
+
+	unsigned int	m_iPatternLength;							// Amount of rows in one pattern
+	unsigned int	m_iFrameCount;								// Number of frames
+	unsigned int	m_iChannelsAvailable;						// Number of channels used
+	unsigned int	m_iSongSpeed;								// Song speed
+
+	char			m_strName[32];								// Song name
+	char			m_strArtist[32];							// Song artist
+	char			m_strCopyright[32];							// Song copyright
+
+	unsigned int	m_iMachine;									// NTSC / PAL
+	unsigned int	m_iEngineSpeed;								// Refresh rate
+
+	// Remove this eventually
+	stSequence		Sequences[MAX_SEQUENCES];
+
+	//
 	// End of document data
+	//
 
-	bool			m_bFileLoaded;				// Is file loaded?
+	bool			m_bFileLoaded;								// Is file loaded?
 	unsigned int	m_iFileVersion;
 
-	// Document data
-	stInstrument	Instruments[MAX_INSTRUMENTS];
-	stSequence		Sequences[MAX_SEQUENCES];
-	stDSample		DSamples[MAX_DSAMPLES];
+public:
 
-	stChanNote		ChannelData[MAX_CHANNELS][MAX_PATTERN][MAX_PATTERN_LENGTH];
-	unsigned int	FrameList[MAX_FRAMES][MAX_CHANNELS];
-
-	unsigned int	m_iEffectColumns[MAX_CHANNELS];
+	// these are still here...
+	stDSample		*GetFreeDSample();
+	stDSample		*GetDSample(int Index);
+	void			RemoveDSample(int Index);
+	void			GetSampleName(int Index, char *Name);
 
 // Operations
 public:
@@ -238,26 +327,6 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-protected:
-	void CleanDocument();
-
-	BOOL SaveDocument(LPCSTR lpszPathName);
-	BOOL OpenDocument(LPCTSTR lpszPathName);
-
-	void WriteBlock_Header(CDocumentFile *pDocFile);
-	void WriteBlock_Instruments(CDocumentFile *pDocFile);
-	void WriteBlock_Sequences(CDocumentFile *pDocFile);
-	void WriteBlock_Frames(CDocumentFile *pDocFile);
-	void WriteBlock_Patterns(CDocumentFile *pDocFile);
-	void WriteBlock_DSamples(CDocumentFile *pDocFile);
-
-	bool ReadBlock_Header(CDocumentFile *pDocFile);
-	bool ReadBlock_Instruments(CDocumentFile *pDocFile);
-	bool ReadBlock_Sequences(CDocumentFile *pDocFile);
-	bool ReadBlock_Frames(CDocumentFile *pDocFile);
-	bool ReadBlock_Patterns(CDocumentFile *pDocFile);
-	bool ReadBlock_DSamples(CDocumentFile *pDocFile);
-
 // Generated message map functions
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -265,7 +334,6 @@ public:
 	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
 	virtual void OnCloseDocument();
-	unsigned int GetFrameRate(void);
 };
 
 

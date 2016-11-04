@@ -120,9 +120,9 @@ void CCompile::WriteBankOffset(int Number, int Offset)
 	m_pBank[Pos + 1] = (m_iBankPointer >> 8) & 0xFF;
 }
 
-void CCompile::CreateBIN(CString FileName, CFamiTrackerDoc *pDoc)
+void CCompile::CreatePRG(CString FileName, CFamiTrackerDoc *pDoc, bool ForcePAL)
 {
-	// Only create the binary song data, don't apply driver & header
+	// Create a file that's ready to burn on an eprom
 	unsigned short FileSize;
 	
 	CString Text;
@@ -133,6 +133,19 @@ void CCompile::CreateBIN(CString FileName, CFamiTrackerDoc *pDoc)
 	Text.Format("Writing %s...", FileName);
 	AddLog(Text);
 
+	// Add the music driver
+	memcpy(m_pBank /*+ 0x80*/, DRIVER_BIN, DRIVER_SIZE);
+
+	// Apply nsf caller...
+	memcpy(m_pBank + (0x8000 - NSF_CALLER_SIZE), NSF_CALLER_BIN, NSF_CALLER_SIZE);
+
+	// ...and patch it
+	m_pBank[0x7FC4] = (ForcePAL ? 0x01 : 0x00);
+	m_pBank[0x7FC6] = 0x00;
+	m_pBank[0x7FC7] = 0x80;
+	m_pBank[0x7FD1] = 0x03;
+	m_pBank[0x7FD2] = 0x80;
+
 	// Write file and then return
 	if (!File.Open(FileName, CFile::modeWrite | CFile::modeCreate)) {
 		AfxMessageBox("Couldn't open file");
@@ -140,12 +153,54 @@ void CCompile::CreateBIN(CString FileName, CFamiTrackerDoc *pDoc)
 		return;
 	}
 
-	File.Write(m_pBank + (m_iMusicDataAddr - 0x8000), m_iMusicDataSize);
+	// Size will always be 32kB, fill one whole PRG
+	FileSize = 0x8000;
 
+	File.Write(m_pBank, FileSize);
 	File.Close();
 
 	delete [] m_pBank;
 
+	Text.Format("Done (%i bytes)", FileSize);
+	AddLog(Text);
+}
+
+void CCompile::CreateBIN(CString FileName, CString SampleFile, CFamiTrackerDoc *pDoc)
+{
+	// Only create the binary song data, don't apply driver & header
+	unsigned short FileSize;
+	
+	CString Text;
+	CFile BinFile, DmcFile;
+
+	FileSize = m_iBankPointer - m_iMusicDataAddr;
+
+	Text.Format("Writing %s...", FileName);
+	AddLog(Text);
+
+	// Write file and then return
+	if (!BinFile.Open(FileName, CFile::modeWrite | CFile::modeCreate) ||
+		!DmcFile.Open(SampleFile, CFile::modeWrite | CFile::modeCreate)) {
+		AfxMessageBox("Couldn't open file(s)");
+		delete [] m_pBank;
+		return;
+	}
+
+	BinFile.Write(m_pBank + (m_iMusicDataAddr - 0x8000), m_iRawMusicSize);
+	if (m_iDPCMStart != 0)
+		DmcFile.Write(m_pBank + (m_iDPCMStart - 0x8000), m_iRawSampleSize);
+	else
+		m_iRawSampleSize = 0;
+
+	BinFile.Close();
+	DmcFile.Close();
+
+	delete [] m_pBank;
+
+	Text.Format(" - Music address: $%04X (%i bytes)", m_iMusicDataAddr, m_iRawMusicSize);
+	AddLog(Text);
+	Text.Format(" - Samples address: $%04X (%i bytes)", m_iDPCMStart, m_iRawSampleSize);
+	AddLog(Text);
 	Text.Format("Done (%i bytes)", FileSize);
 	AddLog(Text);
 }
@@ -158,16 +213,21 @@ void CCompile::CreateNSF(CString FileName, CFamiTrackerDoc *pDoc, bool BankSwitc
 	CString Text;
 	CFile File;
 
-	if (pDoc->m_iEngineSpeed == 0)
-		Speed = 1000000 / (pDoc->m_iMachine == NTSC ? 60 : 50);
+	if (pDoc->GetEngineSpeed() == 0)
+		Speed = 1000000 / (pDoc->GetMachine() == NTSC ? 60 : 50);
 	else
-		Speed = 1000000 / pDoc->m_iEngineSpeed;
+		Speed = 1000000 / pDoc->GetEngineSpeed();
 
-	Text.Format(" * NSF speed: %i (%s)", Speed, (pDoc->m_iMachine == NTSC ? "NTSC" : "PAL"));
+	Text.Format(" * NSF speed: %i (%s)", Speed, (pDoc->GetMachine() == NTSC ? "NTSC" : "PAL"));
 	AddLog(Text);
 
 	// Create a header
-	SetSongInfo(pDoc->m_strName, pDoc->m_strArtist, pDoc->m_strCopyright, pDoc->m_iEngineSpeed, pDoc->m_iMachine, ForcePAL);
+	SetSongInfo(pDoc->GetSongName(), 
+		pDoc->GetSongArtist(), 
+		pDoc->GetSongCopyright(), 
+		pDoc->GetEngineSpeed(), 
+		pDoc->GetMachine(), 
+		ForcePAL);
 
 	// Add the music driver
 	memcpy(m_pBank /*+ 0x80*/, DRIVER_BIN, DRIVER_SIZE);
@@ -184,7 +244,7 @@ void CCompile::CreateNSF(CString FileName, CFamiTrackerDoc *pDoc, bool BankSwitc
 
 		for (i = 0; i < 8; i++) {
 			if (m_bPageDirty[i]) {
-				if (((i + 1) * 0x1000) < (m_iBankPointer & 0x7FFF))
+				if (((i + 1) * 0x1000) < int(m_iBankPointer & 0x7FFF))
 					Size = 0x1000;
 				else
 					Size = (m_iBankPointer & 0x7FFF) - (i * 0x1000);
@@ -213,6 +273,9 @@ void CCompile::CreateNSF(CString FileName, CFamiTrackerDoc *pDoc, bool BankSwitc
 		return;
 	}
 
+	// Make sure it's below 32kB
+	FileSize &= 0x7FFF;
+
 	File.Write(&Header, 0x80);
 	File.Write(m_pBank, FileSize);
 
@@ -222,6 +285,25 @@ void CCompile::CreateNSF(CString FileName, CFamiTrackerDoc *pDoc, bool BankSwitc
 
 	Text.Format("Done (%i bytes)", FileSize);
 	AddLog(Text);
+}
+
+void CCompile::AccumulateZero()
+{
+	m_iZeroes++;
+}
+
+void CCompile::DispatchZeroes()
+{
+	if (m_iZeroes < 3) {
+		for (unsigned int i = 0; i < m_iZeroes; i++)
+			WriteToBank(0);
+	}
+	else {
+		WriteToBank(0xFF);
+		WriteToBank(m_iZeroes - 1);
+	}
+
+	m_iZeroes = 0;
 }
 
 void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
@@ -235,14 +317,21 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 	unsigned char DPCM_LookUp[MAX_INSTRUMENTS][8][12];
 
 	unsigned int MaxPattern[NES_CHANNELS];
-	unsigned int i, j, k, c;
+	unsigned int i, j, k, c, x;
 	unsigned int SelectedInstrument;
 	unsigned int TicksPerSec;
 	unsigned int SavedPointer, PointerBeforeDPCM, DPCMStart, TotalSize;
 
+	unsigned int SequenceIndices[MAX_SEQUENCES * MOD_COUNT];
+	bool SequencesAccessed[MAX_SEQUENCES * MOD_COUNT];
+
 	unsigned short PattAddr[MAX_PATTERN][NES_CHANNELS];
 
 	bool MusicDataFilled = false;
+
+	m_iDPCMStart = 0xC000;
+	m_iRawMusicSize = 0;
+	m_iRawSampleSize = 0;
 
 	LogText = "";
 
@@ -262,39 +351,47 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 	memset(MaxPattern, 0, sizeof(int) * NES_CHANNELS);
 	memset(m_pBank, 0, 0x8000);
 
+	memset(SequencesAccessed, 0, sizeof(bool) * MAX_SEQUENCES * MOD_COUNT);
+
+	m_iZeroes = 0;
+
 	TicksPerSec = pDoc->GetFrameRate();
-	TickPeriod	= pDoc->m_iSongSpeed;
+	TickPeriod	= pDoc->GetSongSpeed();
 
 	// Determine number of used instruments
 	for (i = 0; i < MAX_INSTRUMENTS; i++) {
-		if (pDoc->Instruments[i].Free == false)
+		if (pDoc->IsInstrumentUsed(i))
 			InstrumentsUsed = i + 1;
 	}
 
-	// Determine number of used sequences
+	// Determine number of used sequences and store indices in a lookup table
 	for (i = 0; i < MAX_SEQUENCES; i++) {
-		if (pDoc->Sequences[i].Count > 0)
-			SequencesUsed = i + 1;
+		for (x = 0; x < MOD_COUNT; x++) {
+			if (pDoc->GetSequenceCount(i, x) > 0)
+				SequenceIndices[i * MOD_COUNT + x] = SequencesUsed++;
+			else
+				SequenceIndices[i * MOD_COUNT + x] = 0;
+		}
 	}
 
 	// Determine number of used dpcm samples
 	for (i = 0; i < MAX_DSAMPLES; i++) {
-		if (pDoc->DSamples[i].SampleSize > 0)
+		if (pDoc->GetSampleSize(i) > 0)
 			DSamplesUsed = i + 1;
 	}
 
 	// Find all patterns that has been addressed to
-	for (i = 0; i < unsigned(pDoc->m_iFrameCount); i++) {
-		for (j = 0; j < unsigned(pDoc->m_iChannelsAvailable); j++) {
-			if (pDoc->FrameList[i][j] > MaxPattern[j])
-				MaxPattern[j] = pDoc->FrameList[i][j] + 1;
+	for (i = 0; i < unsigned(pDoc->GetFrameCount()); i++) {
+		for (j = 0; j < unsigned(pDoc->GetAvailableChannels()); j++) {
+			if (pDoc->GetPatternAtFrame(i, j) /*pDoc->FrameList[i][j]*/ > MaxPattern[j])
+				MaxPattern[j] = pDoc->GetPatternAtFrame(i, j) + 1; //pDoc->FrameList[i][j] + 1;
 		}
 	}
 
 	WriteToBank(TickPeriod);
 	WriteToBank((TicksPerSec * 5) / 2);		// 60 / 24
-	WriteToBank(pDoc->m_iFrameCount);
-	WriteToBank(pDoc->m_iPatternLength - 1);
+	WriteToBank(pDoc->GetFrameCount());
+	WriteToBank(pDoc->GetPatternLength() - 1);
 
 	// Save offsets for later (and allocate space)
 	StoreBankPosition(INSTLIST_POINTER,			2);
@@ -319,7 +416,7 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 
 	// Allocate space for frame pointers
 	WriteBankOffset(FRAMELIST_POINTER, 0);
-	StoreBankPosition(FRAME_POINTERS, pDoc->m_iFrameCount * 2);
+	StoreBankPosition(FRAME_POINTERS, pDoc->GetFrameCount() * 2);
 
 	// Allocate space for DPCM sample pointers
 	WriteBankOffset(DPCMLIST_POINTER, 0);
@@ -330,8 +427,12 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 		// Write pointer
 		WriteBankOffset(INST_POINTERS, i * 2);
 		for (c = 0; c < MOD_COUNT; c++) {
-			if (pDoc->Instruments[i].ModEnable[c])
-				WriteToBank(pDoc->Instruments[i].ModIndex[c] + 1);
+			if (pDoc->GetInstEffState(i, c)) {
+				int Sequence = pDoc->GetInstEffIndex(i, c);
+				int Index = SequenceIndices[Sequence * MOD_COUNT + c];
+				WriteToBank(Index + 1);
+				SequencesAccessed[Sequence * MOD_COUNT + c] = true;
+			}
 			else
 				WriteToBank(0);
 		}
@@ -344,15 +445,15 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 		int o, n, Item = 1;
 		bool First = true;
 
-		for (o = 0; o < 6; o++) {
+		for (o = 0; o < OCTAVE_RANGE; o++) {
 			for (n = 0; n < 12; n++) {
-				if (pDoc->Instruments[i].Samples[o][n] > 0) {
+				if (pDoc->GetInstDPCM(i, n, o) > 0) {
 					if (First) {
 						WriteBankOffset(DPCM_INST_POINTERS, i * 2);
 						First = false;
 					}
-					Sample		= pDoc->Instruments[i].Samples[o][n] - 1;
-					SamplePitch = pDoc->Instruments[i].SamplePitch[o][n];
+					Sample		= pDoc->GetInstDPCM(i, n, o) - 1;
+					SamplePitch = pDoc->GetInstDPCMPitch(i, n, o);
 					WriteToBank(Sample);
 					WriteToBank(SamplePitch);
 					DPCM_LookUp[i][o][n] = Item++;
@@ -364,69 +465,83 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 		}
 	}
 
-	// Store sequence lists
-	for (i = 0; i < SequencesUsed; i++) {
-		signed short Value, Length, Count;
-		WriteToBank(pDoc->Sequences[i].Count);
-		// Save a pointer to this list
-		WriteBankOffset(SEQ_POINTERS, i * 2);
+	// Store sequences
+	for (i = 0; i < MAX_SEQUENCES; i++) {
+		for (x = 0; x < MOD_COUNT; x++) {
+			signed short Value, Length;
+			signed short Count;
+			stSequence *Sequence;
+			int Index;
 
-		for (c = 0; c < pDoc->Sequences[i].Count; c++) {
-			Value	= pDoc->Sequences[i].Value[c];
-			Length	= pDoc->Sequences[i].Length[c];
-			Count	= pDoc->Sequences[i].Count;
-			if (Value < 0)
-				Value += 256;
-			if (Length >= 0)
-				WriteToBank(Length + 1);
-			else {
-				// fix for the nsf driver
-				Length--;
-				if ((-Length) > Count)
-					Length = -Count;
-				Length += 256;
-				WriteToBank((unsigned char)Length);
+			Index		= SequenceIndices[i * MOD_COUNT + x];
+			Sequence	= pDoc->GetSequence(i, x);
+			
+			if (Sequence->Count > 0 && SequencesAccessed[i * MOD_COUNT + x]) {
+
+				WriteToBank(Sequence->Count);
+				// Save a pointer to this list
+				WriteBankOffset(SEQ_POINTERS, Index * 2);
+
+				Count = (signed short)Sequence->Count;
+
+				for (c = 0; c < unsigned(Count); c++) {
+					Value	= Sequence->Value[c];
+					Length	= Sequence->Length[c];
+					if (Value < 0)
+						Value += 256;
+					if (Length >= 0)
+						WriteToBank(Length + 1);
+					else {
+						// fix for the nsf driver
+						Length--;
+						if (-Length > Count)
+							Length = -Count;
+						Length += 256;
+						WriteToBank((unsigned char)Length);
+					}
+
+					WriteToBank((unsigned char)Value);
+				}
+				WriteToBank(0);
+				WriteToBank(0);
 			}
-
-			WriteToBank((unsigned char)Value);
 		}
-
-		WriteToBank(0);
-		WriteToBank(0);
 	}
 
 	// Fill addresses for frames
 	SavedPointer = m_iBankPointer;
-	for (i = 0; i < unsigned(pDoc->m_iFrameCount); i++) {
+	for (i = 0; i < unsigned(pDoc->GetFrameCount()); i++) {
 		WriteBankOffset(FRAME_POINTERS, i * 2);
-		m_iBankPointer += pDoc->m_iChannelsAvailable * 2;
+		m_iBankPointer += pDoc->GetAvailableChannels() * 2;
 	}
 
 	m_iBankPointer = SavedPointer;
 
 	// Allocate space for the frame list
-	StoreBankPosition(FRAME_LIST, (pDoc->m_iChannelsAvailable * pDoc->m_iFrameCount) * 2);
+	StoreBankPosition(FRAME_LIST, (pDoc->GetAvailableChannels() * pDoc->GetFrameCount()) * 2);
 
 	// Now, store pattern data
 	for (i = 0; i < MAX_PATTERN; i++) {
-		for (j = 0; j < unsigned(pDoc->m_iChannelsAvailable); j++) {
+		for (j = 0; j < pDoc->GetAvailableChannels(); j++) {
 
 			SelectedInstrument = MAX_INSTRUMENTS + 1;
-			int Zeroes = 0;
-			bool BreakZeroes = false;
 
 			// Write pattern only if it has been addressed
 			if (MaxPattern[j] >= i) {
 				PattAddr[i][j] = m_iBankPointer;
-				for (k = 0; k < unsigned(pDoc->m_iPatternLength); k++) {
+				for (k = 0; k < pDoc->GetPatternLength(); k++) {
 
 					unsigned char Note, Octave, Instrument, AsmNote, Volume;
 					unsigned char Effect, EffParam;
 
-					Note		= pDoc->ChannelData[j][i][k].Note;
-					Octave		= pDoc->ChannelData[j][i][k].Octave;
-					Instrument	= pDoc->ChannelData[j][i][k].Instrument;
-					Volume		= pDoc->ChannelData[j][i][k].Vol;
+					stChanNote NoteData;
+
+					pDoc->GetDataAtPattern(i, j, k, &NoteData);
+
+					Note		= NoteData.Note;
+					Octave		= NoteData.Octave;
+					Instrument	= NoteData.Instrument;
+					Volume		= NoteData.Vol;
 
 					if (Note == 0) {
 						AsmNote = 0;
@@ -450,15 +565,18 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 					if (Instrument != MAX_INSTRUMENTS && Instrument != SelectedInstrument && Note != HALT) {
 						// write instrument change
 						SelectedInstrument = Instrument;
+						DispatchZeroes();
 						WriteToBank(0x80);
 						WriteToBank(Instrument);
-						BreakZeroes = true;
 					}
 
-					for (int n = 0; n < signed(pDoc->m_iEffectColumns[j] + 1); n++) {
-						Effect		= pDoc->ChannelData[j][i][k].EffNumber[n];
-						EffParam	= pDoc->ChannelData[j][i][k].EffParam[n];
-						BreakZeroes	= true;
+					for (unsigned int n = 0; n < (pDoc->GetEffColumns(j) + 1); n++) {
+						Effect		= NoteData.EffNumber[n];
+						EffParam	= NoteData.EffParam[n];
+						
+						if (Effect > 0)
+							DispatchZeroes();
+
 						switch (Effect) {
 							case EF_ARPEGGIO:
 								WriteToBank(NSF_EFF_BEGIN + 0);
@@ -517,39 +635,31 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 								WriteToBank(Val);
 								break;
 							}
+							case EF_PITCH:
+								if (j < 5) {
+									WriteToBank(NSF_EFF_BEGIN + 11);
+									WriteToBank(EffParam);
+								}
+								break;
 						}
 					}
 
 					if (Volume < 0x10) {
+						DispatchZeroes();
 						WriteToBank(0x81);
 						WriteToBank((Volume ^ 0x0F) & 0x0F);
-						BreakZeroes = true;
 					}
 
-					/*
-					// Compress zeroes
-					if (AsmNote == 0 && BreakZeroes != true) {
-						Zeroes++;
-					}
+					if (AsmNote == 0)
+						AccumulateZero();
 					else {
-						if (Zeroes > 0) {
-							if (Zeroes < 3) {
-								for (int i = 0; i < Zeroes; i++) {
-									WriteToBank(0);
-								}
-							}
-							else {
-								WriteToBank(0xFF);
-								WriteToBank(Zeroes);
-							}
-						}
+						DispatchZeroes();
 						WriteToBank(AsmNote);
-						Zeroes = 0;
-						BreakZeroes = false;
 					}
-					*/
-					WriteToBank(AsmNote);
+
+//					WriteToBank(AsmNote);
 				}
+				DispatchZeroes();
 			}
 		}
 	}
@@ -557,46 +667,45 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 	PointerBeforeDPCM = m_iBankPointer;
 
 	// Write pattern addresses in the frame list
-	for (i = 0; i < unsigned(pDoc->m_iFrameCount); i++) {
-		for (j = 0; j < unsigned(pDoc->m_iChannelsAvailable); j++) {
-			 m_iBankPointer = PattAddr[pDoc->FrameList[i][j]][j];
-			 WriteBankOffset(FRAME_LIST, ((i * pDoc->m_iChannelsAvailable) + j) * 2);
+	for (i = 0; i < unsigned(pDoc->GetFrameCount()); i++) {
+		for (j = 0; j < unsigned(pDoc->GetAvailableChannels()); j++) {
+			m_iBankPointer = PattAddr[pDoc->GetPatternAtFrame(i, j)][j];
+			WriteBankOffset(FRAME_LIST, ((i * pDoc->GetAvailableChannels()) + j) * 2);
 		}
 	}
 	
 	m_iBankPointer = PointerBeforeDPCM;
+
+	m_iMusicDataEnd = PointerBeforeDPCM;
+	m_iRawMusicSize = PointerBeforeDPCM - StartAddress;
 
 	if (DSamplesUsed > 0) {
 
 		if (m_iBankPointer < 0xC000)
 			m_iBankPointer = 0xC000;
 		else
-			m_iBankPointer = ((m_iBankPointer / 0x40) + 1) * 0x40;
+			m_iBankPointer = ((m_iBankPointer / 0x40) + 1) << 6;
 
+		m_iDPCMStart = m_iBankPointer;
 		DPCMStart = m_iBankPointer;
 
 		// Write DPCM samples
 		for (i = 0; i < MAX_DSAMPLES; i++) {
-			if (pDoc->DSamples[i].SampleSize > 0) {
+			if (pDoc->GetSampleSize(i) > 0) {
 				
-				/*
-				if ((pDoc->DSamples[i].SampleSize + int(m_iBankPointer)) > 0xFFFF) {
-					m_iBankPointer = 0xFFFF;
-					break;
-				}*/
-
+				unsigned int SampleSize = pDoc->GetSampleSize(i);
 				// Store position and length
-				m_pBank[(m_iPointerOffsets[DPCM_POINTERS] + (i * 2)) & 0x7FFF]		= ((m_iBankPointer - 0xC000) / 0x40);
-				m_pBank[(m_iPointerOffsets[DPCM_POINTERS] + (i * 2) + 1) & 0x7FFF]	= (pDoc->DSamples[i].SampleSize / 0x10);
+				m_pBank[(m_iPointerOffsets[DPCM_POINTERS] + (i * 2)) & 0x7FFF]		= (m_iBankPointer - 0xC000) >> 6;
+				m_pBank[(m_iPointerOffsets[DPCM_POINTERS] + (i * 2) + 1) & 0x7FFF]	= SampleSize >> 4;
 
 				SavedPointer = m_iBankPointer;
 
-				for (j = 0; j < pDoc->DSamples[i].SampleSize; j++) {
-					WriteToBank(pDoc->DSamples[i].SampleData[j]);
+				for (j = 0; j < SampleSize; j++) {
+					WriteToBank(pDoc->GetSampleData(i, j));
 				}
 
-				unsigned short OldSize = pDoc->DSamples[i].SampleSize;
-				unsigned short NewSize = (pDoc->DSamples[i].SampleSize / 0x40) * 0x40;
+				unsigned short OldSize = SampleSize;
+				unsigned short NewSize = (SampleSize >> 6) << 6;
 
 				if (OldSize != NewSize) {
 					NewSize += 0x40;
@@ -606,8 +715,11 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 			}
 		}
 	}
+	else
+		m_iDPCMStart = 0;
 
 	m_iMusicDataSize = m_iBankPointer - StartAddress;
+	m_iRawSampleSize = m_iBankPointer - m_iDPCMStart;
 
 	if (DSamplesUsed > 0)
 		TotalSize = (PointerBeforeDPCM - 0x8000) + (m_iBankPointer - DPCMStart);
@@ -632,7 +744,7 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 	Text.Format(" * Instruments/sequences used: %i / %i", InstrumentsUsed, SequencesUsed);
 	AddLog(Text);
 
-	Text.Format(" * Frames: %i", pDoc->m_iFrameCount);
+	Text.Format(" * Frames: %i", pDoc->GetFrameCount());
 	AddLog(Text);
 
 	if (DSamplesUsed > 0)
@@ -652,8 +764,8 @@ void CCompile::BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc)
 	AddLog(Text);
 
 	if (TotalSize > 0x8000) {
-		AddLog(" ! Error: Music data size exceeded limit. NSF will not work properly !");
-		AfxMessageBox("Error: Music data size exceeded limit. NSF will not work properly!");
+		AddLog(" ! Error: Music data size exceeded limit. NSF may not work properly !");
+		AfxMessageBox("Error: Music data size exceeded limit. NSF may not work properly!");
 	}
 }
 

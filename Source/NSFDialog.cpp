@@ -24,6 +24,7 @@
 #include "FamiTrackerDoc.h"
 #include "Compile.h"
 #include ".\nsfdialog.h"
+#include "..\include\nsfdialog.h"
 
 
 // CNSFDialog dialog
@@ -45,14 +46,15 @@ void CNSFDialog::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CNSFDialog, CDialog)
-	ON_BN_CLICKED(IDOK, OnBnClickedOk)
+	ON_BN_CLICKED(IDC_WRITE_NSF, OnBnClickedWriteNSF)
 	ON_BN_CLICKED(IDCANCEL, OnBnClickedCancel)
-	ON_BN_CLICKED(IDC_WRITEBIN, OnBnClickedWritebin)
+	ON_BN_CLICKED(IDC_WRITE_BIN, OnBnClickedWriteBIN)
+	ON_BN_CLICKED(IDC_WRITE_PRG, OnBnClickedWritePrg)
 END_MESSAGE_MAP()
 
 // CNSFDialog message handlers
 
-void CNSFDialog::OnBnClickedOk()
+void CNSFDialog::OnBnClickedWriteNSF()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetDocument();
 	CEdit *EditLog = (CEdit*)GetDlgItem(IDC_LOG);
@@ -61,7 +63,6 @@ void CNSFDialog::OnBnClickedOk()
 	unsigned int InitOrg;
 	bool BankSwitch = false, ForcePAL = false;
 
-	//InitOrg = ReadStartAddress();
 	InitOrg = MUSIC_ORIGIN;
 
 	if (DefFileName.Right(4).CompareNoCase(".ftm") == 0) {
@@ -112,13 +113,13 @@ BOOL CNSFDialog::OnInitDialog()
 
 	CDialog::OnInitDialog();
 
-	SetDlgItemText(IDC_NAME, pDoc->m_strName);
-	SetDlgItemText(IDC_ARTIST, pDoc->m_strArtist);
-	SetDlgItemText(IDC_COPYRIGHT, pDoc->m_strCopyright);
+	SetDlgItemText(IDC_NAME, pDoc->GetSongName());
+	SetDlgItemText(IDC_ARTIST, pDoc->GetSongArtist());
+	SetDlgItemText(IDC_COPYRIGHT, pDoc->GetSongCopyright());
 
 	OrgString.Format("$%04X", MUSIC_ORIGIN);
 
-	if (pDoc->m_iMachine == PAL) {
+	if (pDoc->GetMachine() == PAL) {
 		CheckDlgButton(IDC_PAL, 1);
 	}
 
@@ -141,25 +142,25 @@ CDocument *CNSFDialog::GetDocument()
 	return pDocTemp->GetNextDoc(DocPos);
 }
 
-void CNSFDialog::OnBnClickedWritebin()
+void CNSFDialog::OnBnClickedWriteBIN()
 {
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetDocument();
 	CEdit *EditLog = (CEdit*)GetDlgItem(IDC_LOG);
-	CString DefFileName = pDoc->GetTitle();
+	CString DefFileName = "music.bin", DmcName = "samples.bin";
 	CCompile Compiler;
+
 	unsigned int InitOrg;
 
 	InitOrg = ReadStartAddress();
 
-	DefFileName = "musicdata.bin";
+	CFileDialog FileDialogBin(FALSE, "bin", DefFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Binary song data (*.bin)|*.bin|All files|*.*||");
+	CFileDialog FileDialogDmc(FALSE, "bin", DmcName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Sample data (*.bin)|*.bin|All files|*.*||");
 
-	CFileDialog FileDialog(FALSE, "bin", DefFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Binary song data (*.bin)|*.bin|All files|*.*||");
-
-	if (FileDialog.DoModal() == IDCANCEL)
+	if ((FileDialogBin.DoModal() == IDCANCEL) || (FileDialogDmc.DoModal() == IDCANCEL))
 		return;
 
 	Compiler.BuildMusicData(InitOrg, pDoc);
-	Compiler.CreateBIN(FileDialog.GetPathName(), pDoc);
+	Compiler.CreateBIN(FileDialogBin.GetPathName(), FileDialogDmc.GetPathName(), pDoc);
 
 	EditLog->SetWindowText(Compiler.GetLogOutput());
 }
@@ -178,4 +179,29 @@ int CNSFDialog::ReadStartAddress()
 	sscanf(bp, "%X", &InitOrg);
 
 	return InitOrg;
+}
+
+void CNSFDialog::OnBnClickedWritePrg()
+{
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetDocument();
+	CEdit *EditLog = (CEdit*)GetDlgItem(IDC_LOG);
+	CString DefFileName = "prg.bin";
+	CCompile Compiler;
+	unsigned int InitOrg;
+	bool ForcePAL = false;
+
+	InitOrg = ReadStartAddress();
+
+	CFileDialog FileDialog(FALSE, "bin", DefFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Binary song data (*.bin)|*.bin|All files|*.*||");
+
+	if (FileDialog.DoModal() == IDCANCEL)
+		return;
+
+	if (IsDlgButtonChecked(IDC_PAL) != 0)
+		ForcePAL = true;
+
+	Compiler.BuildMusicData(InitOrg, pDoc);
+	Compiler.CreatePRG(FileDialog.GetPathName(), pDoc, ForcePAL);
+
+	EditLog->SetWindowText(Compiler.GetLogOutput());
 }

@@ -21,9 +21,11 @@
 
 #pragma once
 
-#include "famitrackerdoc.h"
+#include "Famitrackerdoc.h"
 #include "PatternWnd.h"
 #include "InstrumentEditDlg.h"
+#include "PerformanceDlg.h"
+#include "SampleWindow.h"
 
 class CMainFrame : public CFrameWnd
 {
@@ -54,6 +56,10 @@ public:
 	void		SetStatusText(LPCTSTR Text,...);
 	void		DrawSamples(int *Samples, int Count);
 	void		ChangeNoteState(int Note);
+	void		CloseInstrumentSettings();
+
+protected:
+	void		OpenInstrumentSettings();
 
 protected:  // control bar embedded members
 	CStatusBar	m_wndStatusBar;
@@ -64,12 +70,14 @@ protected:  // control bar embedded members
 	CListCtrl	*InstrumentList;
 	CListCtrl	*InstSettingsList;
 	CListCtrl	*ModifierList;
-
-	bool		m_bInitialized;
-
-	void		OpenInstrumentSettings();
+	CImageList	*m_pImageList;
 
 	CInstrumentEditDlg	m_InstEdit;
+	CPerformanceDlg		m_PerformanceDlg;
+	CSampleWindow		m_SampleWindow;
+	CSampleWinProc		m_SampleProc;
+
+	bool m_bInitialized;
 
 // Generated message map functions
 protected:
@@ -89,15 +97,14 @@ public:
 	afx_msg void OnDblClkInstruments(NMHDR *pNotifyStruct, LRESULT *result);
 	afx_msg void OnInstNameChange();
 	afx_msg void OnTrackerTogglePlay();
-	afx_msg void OnEnPatternsChange();
+	afx_msg void OnEnFramesChange();
 	afx_msg void OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnTempoChange();
 	afx_msg void OnTrackerKillsound();
 	afx_msg void OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnDeltaposPatternsSpin(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnRowsChange();
 	afx_msg void OnCreateNSF();
-	afx_msg void OnSoundSettings();
 	afx_msg void OnNextFrame();
 	afx_msg void OnPrevFrame();
 	afx_msg void OnChangeAll();
@@ -131,6 +138,8 @@ public:
 	afx_msg void OnEnKillfocusSongArtist();
 	afx_msg void OnEnKillfocusSongCopyright();
 	afx_msg void OnEnKillfocusTempo();
+	virtual BOOL DestroyWindow();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 

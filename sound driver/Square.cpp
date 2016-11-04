@@ -132,7 +132,7 @@ void CSquare::SweepUpdate1()
 		SweepResult = Wavelength + SweepResult;
 
 	if (SweepEnabled && (Wavelength > 0x07) && (SweepResult < 0x800) && (SweepShift > 0)) {
-		if (SweepCounter < 1) {
+		if (SweepCounter <= 1) {
 			SweepCounter	= SweepRefresh + 1;
 			Wavelength		= SweepResult;
 		}
@@ -159,7 +159,7 @@ void CSquare::SweepUpdate2()
 		SweepResult = Wavelength + SweepResult;
 
 	if (SweepEnabled && Wavelength > 0x07 && SweepResult < 0x800 && SweepShift > 0) {
-		if (SweepCounter < 1) {
+		if (SweepCounter <= 1) {
 			SweepCounter	= SweepRefresh + 1;
 			Wavelength		= SweepResult;
 		}

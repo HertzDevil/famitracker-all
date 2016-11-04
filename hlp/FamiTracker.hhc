@@ -25,5 +25,9 @@
 		<param name="Name" value="NSF exporting">
 		<param name="Local" value="nsf_export.htm">
 		</OBJECT>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Configuration">
+		<param name="Local" value="configuration.htm">
+		</OBJECT>
 </UL>
 </BODY></HTML>

@@ -43,6 +43,9 @@ public:
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 
 protected:
+	void DrawFFT(int *Samples, int Count, CDC *pDC);
+	void DrawGraph(int *Samples, int Count, CDC *pDC);
+
 	DECLARE_MESSAGE_MAP()
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);

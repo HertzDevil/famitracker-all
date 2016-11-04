@@ -58,8 +58,6 @@ const int NotesPAL[] = {
 	(BASE_FREQ_PAL / 466) / 16, (BASE_FREQ_PAL / 493) / 16
 };
 
-int Underruns;
-
 CSoundGen::CSoundGen()
 {
 	m_pAPU				= NULL;
@@ -75,11 +73,13 @@ CSoundGen::~CSoundGen()
 
 BOOL CSoundGen::InitInstance()
 {
+	// Setup the synth
+
 	unsigned int BaseOctave = 3;
 	unsigned int i;
 	unsigned int Octave, NesFreqPAL, NesFreqNTSC;
 
-	memset(m_stChannels, 0, sizeof(stChanData) * 5);
+	memset(m_stChannels, 0, sizeof(CMusicChannel) * 5);
 
 	for (Octave = 0; Octave < 8; Octave++) {
 
@@ -110,25 +110,15 @@ BOOL CSoundGen::InitInstance()
 
 	LoadMachineSettings(NTSC, 60);
 
-	for (i = 0; i < VIBRATO_LENGTH; i++) {
-//		m_cVibTable[i] = char(sin((float(i) / float(VIBRATO_LENGTH)) * (2 * 3.1415)) * 64);
-		
+	// Create the LFO-table for vibrato and tremolo
+	for (i = 0; i < VIBRATO_LENGTH; i++) {		
 		double k, m, C, o;
 		k = (double(i) / double((VIBRATO_LENGTH - 1))) * 6.283185;
 		m = (6.283185 * 3) / 4;
 		C = 128;
 		o = 1.0f;
 		
-		//m_cVibTable[i] = char((sin( ) * (2 * 3.1415) /*+ (6.2832 * (3 / 4))*/ ) + 0.0f) * 64 );
 		m_cVibTable[i] = unsigned char(C * (sin(k + m) + o));
-
-		// 128 * sin(phase * 2pi + 3pi/4) + 1
-		//m_cVibTable[i] = unsigned char(128.0f * sinf( (double(i) / double(VIBRATO_LENGTH - 1)) * 6.283185 + ((6.283185 * 3.0) / 4.0)) + 1.0f);
-	}
-
-	for (i = 0; i < TREMOLO_LENGTH; i++) {
-//		m_cTremTable[i] = char(sin((float(i) / float(TREMOLO_LENGTH)) * (2 * 3.1415)) * 8);
-		//m_cTremTable[i] = unsigned char(sin((float(i) / float(TREMOLO_LENGTH)) * (2 * 3.1415)) * 8);
 	}
 
 	return TRUE;
@@ -136,14 +126,17 @@ BOOL CSoundGen::InitInstance()
 
 bool CSoundGen::InitializeSound(HWND hWnd)
 {
-	// Start NTSC by default
-	m_iMachineType			= SPEED_NTSC;
+	// Start with NTSC by default
 
-	m_pDSound				= new CDSound;
-	m_pAPU					= new CAPU;
-	m_hNotificationEvent	= CreateEvent(NULL, FALSE, FALSE, NULL);
+	m_iMachineType	= SPEED_NTSC;
 
-	m_pDSound->Init(hWnd, m_hNotificationEvent);
+	m_hWnd		= hWnd;
+	m_pDSound	= new CDSound;
+	m_pAPU		= new CAPU;
+
+	m_hNotificationEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+	m_pDSound->EnumerateDevices();
 
 	m_pAPU->Init(this, &m_SampleMem);
 
@@ -153,8 +146,16 @@ bool CSoundGen::InitializeSound(HWND hWnd)
 	return true;
 }
 
+CDSound *CSoundGen::GetSoundInterface()
+{
+	return m_pDSound;
+}
+
 void CSoundGen::FlushBuffer(int16 *Buffer, uint32 Size)
 {
+	// Called when a buffer is filled enough for playing
+	//
+
 	const int SAMPLE_MAX = 32767;
 	const int SAMPLE_MIN = -32768;
 
@@ -187,7 +188,7 @@ void CSoundGen::FlushBuffer(int16 *Buffer, uint32 Size)
 				m_pDSoundChannel->WaitForDirectSoundEvent();
 			}
 
-			Underruns		= m_pDSoundChannel->Underruns;
+			m_iUnderruns	= m_pDSoundChannel->Underruns;
 			SamplesInBytes	= m_iBufferSize * (m_iSampleSize / 8);
 
 			m_pDSoundChannel->WriteSoundBuffer(m_pAccumBuffer, SamplesInBytes);
@@ -227,6 +228,10 @@ void CSoundGen::LoadMachineSettings(int Machine, int Rate)
 			m_pAPU->ChangeSpeed(SPEED_PAL);
 			break;
 	}
+
+	for (int i = 0; i < 5; i++) {
+		m_stChannels[i].SetNoteTable(m_pNoteLookupTable);
+	}
 }
 
 void CSoundGen::LoadSettings(int SampleRate, int SampleSize, int BufferLength)
@@ -241,7 +246,6 @@ void CSoundGen::LoadSettings(int SampleRate, int SampleSize, int BufferLength)
 	m_bNewSettings	= true;
 }
 
-
 bool CSoundGen::LoadBuffer()
 {
 	// Setup sound, return false if failed
@@ -251,6 +255,12 @@ bool CSoundGen::LoadBuffer()
 	if (m_pDSoundChannel)
 		m_pDSound->CloseChannel(m_pDSoundChannel);
 
+	// Reinitialize sound channel
+
+	int DevID = m_pDSound->MatchDeviceID((char*)theApp.m_pSettings->strDevice.GetBuffer());
+	m_pDSound->Init(m_hWnd, m_hNotificationEvent, DevID);
+
+	// Create channel
 	m_pDSoundChannel = m_pDSound->OpenChannel(m_iSampleRate, m_iSampleSize, 1, m_iBufferLen, 2);
 
 	if (m_pDSoundChannel == NULL)
@@ -289,7 +299,7 @@ bool CSoundGen::LoadBuffer()
 
 	m_bNewSettings	= false;
 	m_iBufferPtr	= 0;
-	Underruns		= 0;
+	m_iUnderruns	= 0;
 
 	return true;
 }
@@ -307,8 +317,11 @@ int CSoundGen::Run()
 	// This is the main entry of the sound synthesizer
 	// 
 
-	int	i;
 	MSG	msg;
+	int	i;
+
+	// Make sure sound isn't skipping due to heavy CPU usage by other applications
+	SetThreadPriority(THREAD_PRIORITY_TIME_CRITICAL);
 
 	if (m_pDSoundChannel == NULL) {
 		m_bAutoDelete = FALSE;
@@ -320,50 +333,40 @@ int CSoundGen::Run()
 	// Enable all channels
 	m_pAPU->Write(0x4015, 0x0F);
 
-	KillChannel(0);
-	KillChannel(1);
-	KillChannel(2);
-	KillChannel(3);
-	KillChannel(4);
-	
 	m_SampleMem.SetMem(0, 0);
 
-	SetThreadPriority(THREAD_PRIORITY_TIME_CRITICAL);
+	for (i = 0; i < 5; i++) {
+		m_stChannels[i].InitChannel(i);
+		KillChannelHard(i);
+	}
 
 	m_bRunning = true;
 
+	// The sound generator and NES APU emulation routine
+	// This will always run in the background when the tracker is running
 	while (m_bRunning) {
 
 		// As of this version (v0.2.3) I exterminated the sync code
-		// Notes are fetched on the fly from the FamiTrackerView, and
-		// everything seems to work well so far
+		// Notes are fetched on the fly from FamiTrackerView,
+		// and everything seems to work well so far
 
 		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) && m_bRunning) {
 
 			if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 				switch (msg.message) {
+					// Close the thread
 					case WM_QUIT:
 						m_bRunning = false;
 						if (m_pDSoundChannel)
 							m_pDSoundChannel->Stop();
 						break;
-					case WM_USER + 1:		// Make everything silent
+					// Make everything silent
+					case WM_USER + 1:
 						m_pAPU->Reset();
 						m_SampleMem.SetMem(0, 0);
-						memset(m_stChannels, 0, sizeof(stChanData) * 5);
-						KillChannel(0);
-						KillChannel(1);
-						KillChannel(2);
-						KillChannel(3);
-						KillChannel(4);
-						m_stChannels[0].Volume = 0x0F;
-						m_stChannels[1].Volume = 0x0F;
-						m_stChannels[2].Volume = 0x0F;
-						m_stChannels[3].Volume = 0x0F;
-						m_stChannels[0].PortaSpeed = 0;
-						m_stChannels[1].PortaSpeed = 0;
-						m_stChannels[2].PortaSpeed = 0;
-						m_stChannels[3].PortaSpeed = 0;
+						for (int i = 0; i < 5; i++) {
+							KillChannelHard(i);
+						}
 						break;
 				}
 			}
@@ -375,13 +378,13 @@ int CSoundGen::Run()
 		for (i = 0; i < 5; i++) {
 			if (pTrackerView->NewNoteData[i]) {
 				pTrackerView->NewNoteData[i] = false;
-				PlayChannel(i, &pTrackerView->CurrentNotes[i], pTrackerView->EffectColumns[i]);
+				PlayChannel(i, &pTrackerView->CurrentNotes[i], pDocument->GetEffColumns(i) + 1);
 			}
 		}
 
 		if (m_bRunning) {
 			for (i = 0; i < 5; i++) {
-				ModifyChannel(i);
+				m_stChannels[i].Run(pDocument);
 				RefreshChannel(i);
 			}
 
@@ -414,12 +417,12 @@ void CSoundGen::SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView)
 void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 {
 	stInstrument	*Inst;
-	stChanData		*Chan;
+	CMusicChannel	*Chan;
 
 	unsigned int NesFreq;
 	unsigned int Note, Octave;
-	int PortUp = 0, PortDown = 0;
 	unsigned char Sweep = 0;
+	int PortUp = 0, PortDown = 0;
 	int Instrument, Volume, LastInstrument;
 	bool Sweeping = false;
 
@@ -465,7 +468,7 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 				int Shift = EffParam & 0x07;
 				int Period = ((EffParam >> 4) & 0x07) << 4;
 				Sweep = 0x88 | Shift | Period;
-				Chan->LastFreq = 0xFFFF;
+				Chan->m_iLastFrequency = 0xFFFF;
 				if (Note == 0)
 					Chan->Sweep = Sweep;
 				Sweeping = true;
@@ -475,27 +478,29 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 				int Shift = EffParam & 0x07;
 				int Period = ((EffParam >> 4) & 0x07) << 4;
 				Sweep = 0x80 | Shift | Period;
-				Chan->LastFreq = 0xFFFF;
+				Chan->m_iLastFrequency = 0xFFFF;
 				if (Note == 0)
 					Chan->Sweep = Sweep;
 				Sweeping = true;
 				break;
 				}
 			case EF_VIBRATO:
-				Chan->VibratoDepth = (EffParam & 0x0F) + 2;
-				Chan->VibratoSpeed = EffParam >> 4;
+				Chan->m_iVibratoDepth = (EffParam & 0x0F) + 2;
+				Chan->m_iVibratoSpeed = EffParam >> 4;
 				if (!EffParam)
-					Chan->VibratoPhase = 0;
+					Chan->m_iVibratoPhase = 0;
 				break;
 			case EF_TREMOLO:
-				Chan->TremoloDepth = (EffParam & 0x0F) + 2;
-				Chan->TremoloSpeed = EffParam >> 4;
+				Chan->m_iTremoloDepth = (EffParam & 0x0F) + 2;
+				Chan->m_iTremoloSpeed = EffParam >> 4;
 				if (!EffParam)
-					Chan->TremoloPhase = 0;
+					Chan->m_iTremoloPhase = 0;
 				break;
 			case EF_ARPEGGIO:
-				Chan->Effect	= EF_ARPEGGIO;
-				Chan->EffParam	= EffParam;
+				Chan->m_cArpeggio = EffParam;
+				break;
+			case EF_PITCH:
+				Chan->m_iFinePitch = EffParam;
 				break;
 		}
 	}
@@ -503,10 +508,10 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 	// Change instrument
 	if (Instrument != LastInstrument) {
 
-		if (/*NoteData->Instrument*/ Instrument == MAX_INSTRUMENTS)
+		if (Instrument == MAX_INSTRUMENTS)
 			Instrument = Chan->LastInstrument;
 		else
-			Chan->LastInstrument = /*NoteData->Instrument*/Instrument;
+			Chan->LastInstrument = Instrument;
 
 		Inst = pDocument->GetInstrument(Instrument);
 		
@@ -525,10 +530,10 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 		Chan->Instrument = Instrument;
 	}
 	else {
-		if (/*NoteData->Instrument*/ Instrument == MAX_INSTRUMENTS)
+		if (Instrument == MAX_INSTRUMENTS)
 			Instrument = Chan->LastInstrument;
 		else
-			Chan->LastInstrument = /*NoteData->Instrument*/Instrument;
+			Chan->LastInstrument = Instrument;
 
 		Inst = pDocument->GetInstrument(Instrument);
 
@@ -550,17 +555,14 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 		return;
 	}
 
-	// sweep is wrong! try enl2
-
-//	if (NoteData->EffNumber[0] != EF_SWEEPUP && NoteData->EffNumber[0] != EF_SWEEPDOWN && (Chan->Sweep != 0 || Sweep  != 0)) {
 	if (!Sweeping && (Chan->Sweep != 0 || Sweep  != 0)) {
 		Sweep = 0;
 		Chan->Sweep = 0;
-		Chan->LastFreq = 0xFFFF;
+		Chan->m_iLastFrequency = 0xFFFF;
 	}
 	else if (Sweeping) {
 		Chan->Sweep = Sweep;
-		Chan->LastFreq = 0xFFFF;
+		Chan->m_iLastFrequency = 0xFFFF;
 	}
 
 	// Trigger instrument
@@ -580,165 +582,46 @@ void CSoundGen::PlayChannel(int Channel, stChanNote *NoteData, int EffColumns)
 		NesFreq = m_pNoteLookupTable[NewNote];
 
 	if (Chan->PortaSpeed > 0) {
-		if (Chan->Freq == 0)
-			Chan->Freq = NesFreq;
-
+		if (Chan->m_iFrequency == 0)
+			Chan->m_iFrequency = NesFreq;
 		Chan->PortaTo = NesFreq;
 	}
 	else
-		Chan->Freq = NesFreq;
+		Chan->m_iFrequency = NesFreq;
 
 	Chan->DutyCycle	= 0;
 	Chan->Note		= NewNote;
 	Chan->Octave	= Octave;
 	Chan->OutVol	= InitVolume;
-	Chan->Enabled	= 1;
+	Chan->m_bEnabled	= true;
 
 	pTrackerView->RegisterKeyState(Channel, (Note - 1) + (Octave * 12));
 
+	// DPCM
 	if (Channel == 4) {
-
-		if (Octave > 5)
-			Octave -= 5;
-
 		int SampleIndex = Inst->Samples[Octave][Note - 1];
-
 		if (SampleIndex > 0) {
-
-			if (Octave > 5)
-				Octave -= 6;
+			int Pitch = Inst->SamplePitch[Octave][Note - 1];
+			if (Pitch & 0x80)
+				Chan->Octave = 0x40;
+			else
+				Chan->Octave = 0;
 
 			stDSample *DSample = pDocument->GetDSample(SampleIndex - 1);
-
 			m_SampleMem.SetMem(DSample->SampleData, DSample->SampleSize);
-			Chan->Length = DSample->SampleSize;		// this will be adjusted
-			Chan->Freq = Inst->SamplePitch[Octave][Note - 1];
+			Chan->Length	= DSample->SampleSize;		// this will be adjusted
+			Chan->m_iFrequency		= Pitch & 0x0F;
 		}
 		else
-			Chan->Enabled = 0;
-	}
-}
-
-void CSoundGen::ModifyChannel(int Channel)
-{
-	// Apply selected sequnces on channel
-
-	stSequence	*Mod;
-	int			Delay, Value, Pointer;
-	int			i;
-
-	stChanData	*Chan = m_stChannels + Channel;
-
-	if (!Chan->Enabled || Channel == 4)
-		return;
-
-	Chan->VibratoPhase = (Chan->VibratoPhase + Chan->VibratoSpeed) & (VIBRATO_LENGTH - 1);
-	Chan->TremoloPhase = (Chan->TremoloPhase + Chan->TremoloSpeed) & (TREMOLO_LENGTH - 1);
-
-	if (Chan->PortaSpeed > 0 && Chan->PortaTo > 0) {
-		if (Chan->Freq > Chan->PortaTo) {
-			Chan->Freq -= Chan->PortaSpeed;
-			if (Chan->Freq > 0x1000)	// it was negative
-				Chan->Freq = 0x00;
-			if (Chan->Freq < Chan->PortaTo)
-				Chan->Freq = Chan->PortaTo;
-		}
-		else if (Chan->Freq < Chan->PortaTo) {
-			Chan->Freq += Chan->PortaSpeed;
-			if (Chan->Freq > Chan->PortaTo)
-				Chan->Freq = Chan->PortaTo;
-		}
-	}
-
-	if (Chan->Effect == EF_ARPEGGIO) {
-		switch (Chan->EffVar) {
-			case 0:
-				Chan->Freq = m_pNoteLookupTable[Chan->Note];
-				pTrackerView->RegisterKeyState(Channel, Chan->Note);
-				break;
-			case 1:
-				Chan->Freq = m_pNoteLookupTable[Chan->Note + (Chan->EffParam >> 4)];
-				pTrackerView->RegisterKeyState(Channel, (Chan->Note + (Chan->EffParam >> 4)));
-				if ((Chan->EffParam & 0x0F) == 0)
-					Chan->EffVar = 2;
-				break;
-			case 2:
-				Chan->Freq = m_pNoteLookupTable[Chan->Note + (Chan->EffParam & 0x0F)];
-				pTrackerView->RegisterKeyState(Channel, (Chan->Note + (Chan->EffParam & 0x0F)));
-				break;
-		}
-
-		Chan->EffVar++;
-
-		if (Chan->EffVar > 2)
-			Chan->EffVar = 0;
-	}
-
-	for (i = 0; i < MOD_COUNT; i++) {		
-		if (Chan->ModEnable[i]) {
-			Chan->ModDelay[i]--;
-			Mod = pDocument->GetModifier(Chan->ModIndex[i]);
-
-			if (Chan->ModDelay[i] == 0) {
-				Pointer = Chan->ModPointer[i];
-				Value	= Mod->Value[Pointer];
-				Delay	= Mod->Length[Pointer];
-				
-				// Jump, jump and fetch new values
-				if (Delay < 0) {
-					Chan->ModPointer[i] += Delay;
-					if (Chan->ModPointer[i] < 0)
-						Chan->ModPointer[i] = 0;
-
-					// New values
-					Pointer = Chan->ModPointer[i];
-					Value	= Mod->Value[Pointer];
-					Delay	= Mod->Length[Pointer];
-				}
-
-				// Only apply values if it wasn't a jump
-				switch (i) {
-					case MOD_VOLUME:	// Volume modifier
-						Chan->OutVol = Value;
-						break;
-					case MOD_ARPEGGIO:	// Arpeggiator
-						if (Channel == 3)
-							Chan->Freq = Chan->Note + Value;
-						else
-							Chan->Freq = m_pNoteLookupTable[Chan->Note + Value];
-						pTrackerView->RegisterKeyState(Channel, (Chan->Note + Value));
-						break;
-					case MOD_HIPITCH:	// Hi-pitch
-						Chan->Freq += Value << 4;
-						if (Chan->Freq > 0x7FF)
-							Chan->Freq = 0x7FF;
-						if (Chan->Freq < 0)
-							Chan->Freq = 0;
-						break;
-					case MOD_PITCH:		// Pitch
-						Chan->Freq += Value;
-						if (Chan->Freq > 0x7FF)
-							Chan->Freq = 0x7FF;
-						if (Chan->Freq < 0)
-							Chan->Freq = 0;
-						break;
-					case MOD_DUTYCYCLE:	// Duty cycling
-						Chan->DutyCycle = Value;
-						break;
-				}
-
-				Chan->ModDelay[i] = Delay + 1;
-				Chan->ModPointer[i]++;
-			}
-
-			if (Chan->ModPointer[i] == Mod->Count)
-				Chan->ModEnable[i] = 0;
-		}
+			Chan->m_bEnabled = false;
 	}
 }
 
 void CSoundGen::RefreshChannel(int Channel)
 {
+	// Write to the channels
+	//
+
 	unsigned char LoFreq, HiFreq;
 	unsigned char LastLoFreq, LastHiFreq;
 
@@ -746,27 +629,27 @@ void CSoundGen::RefreshChannel(int Channel)
 
 	int Volume, Freq, VibFreq, TremVol;
 
-	stChanData	*Chan = m_stChannels + Channel;
+	CMusicChannel	*Chan = m_stChannels + Channel;
 
-	if (!Chan->Enabled)
+	if (!Chan->m_bEnabled)
 		return;
 
-	VibFreq	= m_cVibTable[Chan->VibratoPhase] >> (0x8 - (Chan->VibratoDepth >> 1));
-	
-	if ((Chan->VibratoDepth & 1) == 0)
+	VibFreq	= m_cVibTable[Chan->m_iVibratoPhase] >> (0x8 - (Chan->m_iVibratoDepth >> 1));
+
+	if ((Chan->m_iVibratoDepth & 1) == 0)
 		VibFreq -= (VibFreq >> 1);
 
-	TremVol	= (m_cVibTable[Chan->TremoloPhase] >> 4) >> (4 - (Chan->TremoloDepth >> 1));
+	TremVol	= (m_cVibTable[Chan->m_iTremoloPhase] >> 4) >> (4 - (Chan->m_iTremoloDepth >> 1));
 
-	if ((Chan->TremoloDepth & 1) == 0)
+	if ((Chan->m_iTremoloDepth & 1) == 0)
 		TremVol -= (TremVol >> 1);
 
-	Freq = Chan->Freq - VibFreq;
+	Freq = Chan->m_iFrequency - VibFreq + (0x80 - Chan->m_iFinePitch);
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
-	LastHiFreq	= (Chan->LastFreq & 0xFF);
-	LastLoFreq	= (Chan->LastFreq >> 8);
+	LastHiFreq	= (Chan->m_iLastFrequency & 0xFF);
+	LastLoFreq	= (Chan->m_iLastFrequency >> 8);
 
 	DutyCycle	= (Chan->DutyCycle & 0x03);
 	Volume		= (Chan->OutVol - (0x0F - Chan->Volume)) - TremVol;
@@ -776,10 +659,13 @@ void CSoundGen::RefreshChannel(int Channel)
 	if (Volume > 15)
 		Volume = 15;
 
-	Chan->LastFreq = Freq;
+	Chan->m_iLastFrequency = Freq;
 
 	switch (Channel) {
-		case 0:	// Square 1
+		//
+		// Square 1
+		//
+		case 0:	
 			m_pAPU->Write(0x4000, (DutyCycle << 6) | 0x30 | Volume);
 			if (Chan->Sweep) {
 				if (Chan->Sweep & 0x80) {
@@ -798,11 +684,64 @@ void CSoundGen::RefreshChannel(int Channel)
 				m_pAPU->Write(0x4017, 0x80);
 				m_pAPU->Write(0x4017, 0x00);
 				m_pAPU->Write(0x4002, HiFreq);
-				if (LoFreq != LastLoFreq)
-					m_pAPU->Write(0x4003, LoFreq);
+
+				if (LoFreq != LastLoFreq) {
+
+					// Damn, it is impossible to use this hack below since
+					// most NSF players don't support it!
+
+//					if (theApp.m_pSettings->General.bDisableSquareHack) {
+						m_pAPU->Write(0x4003, LoFreq);
+/*
+					}
+					else {
+						// Hack to set the whole frequency without accessing the high-part register
+						// credits goes to blargg!
+						if (LastLoFreq == 0xFF) {
+							m_pAPU->Write(0x4003, LoFreq);
+						}
+						else if (LastLoFreq > LoFreq) {
+							while (LastLoFreq != LoFreq) {
+								m_pAPU->Write(0x4017, 0x40);
+								m_pAPU->Write(0x4002, 0x00);
+								m_pAPU->Write(0x4001, 0x8F);
+								// Trigger the sweep unit twice to do it properly
+								// (since there's not sure shift will be 7)
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0x00);
+								LastLoFreq--;
+							}
+							// Reset the sweep unit afterward
+							m_pAPU->Write(0x4001, 0x08);
+							m_pAPU->Write(0x4017, 0xC0);
+							m_pAPU->Write(0x4017, 0x00);
+							m_pAPU->Write(0x4002, HiFreq);
+						}
+						else if (LastLoFreq < LoFreq) {
+							while (LastLoFreq != LoFreq) {
+								m_pAPU->Write(0x4017, 0x40);
+								m_pAPU->Write(0x4002, 0xFF);
+								m_pAPU->Write(0x4001, 0x86);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0x00);
+								LastLoFreq++;
+							}
+							m_pAPU->Write(0x4001, 0x08);
+							m_pAPU->Write(0x4017, 0xC0);
+							m_pAPU->Write(0x4017, 0x00);
+							m_pAPU->Write(0x4002, HiFreq);
+						}
+					}
+*/
+				}
 			}
 			break;
-		case 1:	// Square 2
+		//
+		// Square 2
+		//
+		case 1:
 			m_pAPU->Write(0x4004, (DutyCycle << 6) | 0x30 | Volume);
 
 			if (Chan->Sweep) {
@@ -822,11 +761,59 @@ void CSoundGen::RefreshChannel(int Channel)
 				m_pAPU->Write(0x4017, 0x80);
 				m_pAPU->Write(0x4017, 0x00);
 				m_pAPU->Write(0x4006, HiFreq);
-				if (LoFreq != LastLoFreq) 
-					m_pAPU->Write(0x4007, LoFreq);
+
+				if (LoFreq != LastLoFreq)  {
+
+//					if (theApp.m_pSettings->General.bDisableSquareHack) {
+						m_pAPU->Write(0x4007, LoFreq);
+						/*
+					}
+					else {
+						// (Same as above)
+						if (LastLoFreq == 0xFF) {
+							m_pAPU->Write(0x4007, LoFreq);
+						}
+						else if (LastLoFreq > LoFreq) {
+							while (LastLoFreq != LoFreq) {
+								m_pAPU->Write(0x4017, 0x40);
+								m_pAPU->Write(0x4006, 0x00);
+								m_pAPU->Write(0x4005, 0x8F);
+								// Trigger the sweep unit twice to do it properly
+								// (since there's not sure shift will be 7)
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0x00);
+								LastLoFreq--;
+							}
+							m_pAPU->Write(0x4005, 0x08);
+							m_pAPU->Write(0x4017, 0xC0);
+							m_pAPU->Write(0x4017, 0x00);
+							m_pAPU->Write(0x4006, HiFreq);
+						}
+						else if (LastLoFreq < LoFreq) {
+							while (LastLoFreq != LoFreq) {
+								m_pAPU->Write(0x4017, 0x40);
+								m_pAPU->Write(0x4006, 0xFF);
+								m_pAPU->Write(0x4005, 0x87);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0xC0);
+								m_pAPU->Write(0x4017, 0x00);
+								LastLoFreq++;
+							}
+							m_pAPU->Write(0x4005, 0x08);
+							m_pAPU->Write(0x4017, 0xC0);
+							m_pAPU->Write(0x4017, 0x00);
+							m_pAPU->Write(0x4006, HiFreq);
+						}
+					}
+					*/
+				}
 			}
 			break;
-		case 2: // Triangle
+		//
+		// Triangle
+		//
+		case 2:
 			if (Chan->OutVol)
 				m_pAPU->Write(0x4008, 0xC0);
 			else
@@ -835,36 +822,47 @@ void CSoundGen::RefreshChannel(int Channel)
 			m_pAPU->Write(0x400A, HiFreq);
 			m_pAPU->Write(0x400B, LoFreq);
 			break;
-		case 3: // Noise
+		//
+		// Noise
+		//
+		case 3:
 			m_pAPU->Write(0x400C, 0x30 | Volume);
 			m_pAPU->Write(0x400D, 0x00);
 			m_pAPU->Write(0x400E, ((HiFreq & 0x0F) ^ 0x0F) | ((DutyCycle & 0x01) << 7));
 			m_pAPU->Write(0x400F, 0x00);
 			break;
-		case 4: // DPCM, this is special
-			m_pAPU->Write(0x4010, (HiFreq & 0x0F) | (Chan->Octave > 5 ? 0x40 : 0x00));	// freq & loop 
+		//
+		// DPCM, this is special
+		//
+		case 4:
+			m_pAPU->Write(0x4010, 0x00 | (HiFreq & 0x0F) | Chan->Octave /*(Chan->Octave > 5 ? 0x40 : 0x00)*/);	// freq & loop 
 			//Player->Write(0x4011, 0x00);	// counter load (altering this causes clicks)
 			m_pAPU->Write(0x4012, 0x00);	// load address, start at $C000
 			m_pAPU->Write(0x4013, Chan->Length / 16);	// length
 			m_pAPU->Write(0x4015, 0x0F);
 			m_pAPU->Write(0x4015, 0x1F);	// fire sample
-			Chan->Enabled = 0;	// don't write to this channel anymore
+			Chan->m_bEnabled = false;	// don't write to this channel anymore
 			break;
 	}
 }
 
-void CSoundGen::KillChannel(int Chan)
+void CSoundGen::KillChannelHard(int Channel)
 {
-	m_stChannels[Chan].Freq		= 0;
-	m_stChannels[Chan].PortaTo	= 0;
-	m_stChannels[Chan].LastFreq	= 0xFFFF;
-	m_stChannels[Chan].OutVol	= 0x00;
-	m_stChannels[Chan].Enabled	= 0;
-//	m_stChannels[Chan].Volume	= 0x0F;
-//	m_stChannels[Chan].Effect	= 0;
-//	m_stChannels[Chan].EffVar	= 0;
+	KillChannel(Channel);
+	m_stChannels[Channel].Volume = 0x0F;
+	m_stChannels[Channel].PortaSpeed = 0;
+	m_stChannels[Channel].DutyCycle = 0;
+	m_stChannels[Channel].m_cArpeggio = 0;
+	m_stChannels[Channel].m_cArpVar = 0;
+	m_stChannels[Channel].m_iVibratoSpeed = m_stChannels[Channel].m_iVibratoPhase = 0;
+	m_stChannels[Channel].m_iTremoloSpeed = m_stChannels[Channel].m_iTremoloPhase = 0;
+}
 
-	switch (Chan) {
+void CSoundGen::KillChannel(int Channel)
+{
+	m_stChannels[Channel].KillChannel();
+
+	switch (Channel) {
 		case 0:
 			m_pAPU->Write(0x4000, 0);
 			m_pAPU->Write(0x4001, 0);
@@ -903,4 +901,160 @@ int CSoundGen::ExitInstance()
 {
 	m_bRunning = false;
 	return CWinThread::ExitInstance();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CMusicChannel::InitChannel(int ID)
+{
+	m_iChannelID = ID;
+}
+
+void CMusicChannel::KillChannel()
+{
+	m_bEnabled = false;
+
+	m_iFrequency = 0;
+	m_iLastFrequency = 0xFFFF;
+	m_iFinePitch = 0x80;
+	
+	PortaTo = 0;
+	//PortaSpeed = 0;
+	OutVol = 0x00;
+}
+
+void CMusicChannel::Run(CFamiTrackerDoc *pDocument)
+{
+	int	i;
+
+	if (!m_bEnabled || m_iChannelID == 4)
+		return;
+
+	// Vibrato and tremolo
+	m_iVibratoPhase = (m_iVibratoPhase + m_iVibratoSpeed) & (VIBRATO_LENGTH - 1);
+	m_iTremoloPhase = (m_iTremoloPhase + m_iTremoloSpeed) & (TREMOLO_LENGTH - 1);
+
+	// Automatic portamento
+	if (PortaSpeed > 0 && PortaTo > 0) {
+		if (m_iFrequency > PortaTo) {
+			m_iFrequency -= PortaSpeed;
+			if (m_iFrequency > 0x1000)	// it was negative
+				m_iFrequency = 0x00;
+			if (m_iFrequency < PortaTo)
+				m_iFrequency = PortaTo;
+		}
+		else if (m_iFrequency < PortaTo) {
+			m_iFrequency += PortaSpeed;
+			if (m_iFrequency > PortaTo)
+				m_iFrequency = PortaTo;
+		}
+	}
+
+	// Arpeggio
+	if (m_cArpeggio != 0) {
+		switch (m_cArpVar) {
+			case 0:
+				m_iFrequency = TriggerNote(Note);
+				break;
+			case 1:
+				m_iFrequency = TriggerNote(Note + (m_cArpeggio >> 4));
+				if ((m_cArpeggio & 0x0F) == 0)
+					m_cArpVar = 2;
+				break;
+			case 2:
+				m_iFrequency = TriggerNote(Note + (m_cArpeggio & 0x0F));
+				break;
+		}
+
+		if (++m_cArpVar > 2)
+			m_cArpVar = 0;
+	}
+	
+	// Sequences
+	for (i = 0; i < MOD_COUNT; i++) {
+		RunSequence(i, pDocument->GetSequence(ModIndex[i], i));
+	}
+}
+
+void CMusicChannel::RunSequence(int Index, stSequence *pSequence)
+{
+	int Value, Pointer, Delay;
+
+	if (ModEnable[Index]) {
+		ModDelay[Index]--;
+
+		if (ModDelay[Index] == 0) {
+			Pointer = ModPointer[Index];
+			Value	= pSequence->Value[Pointer];
+			Delay	= pSequence->Length[Pointer];
+			
+			// Jump: jump and fetch new values
+			if (Delay < 0) {
+				ModPointer[Index] += Delay;
+				if (ModPointer[Index] < 0)
+					ModPointer[Index] = 0;
+
+				// New values
+				Pointer = ModPointer[Index];
+				Value	= pSequence->Value[Pointer];
+				Delay	= pSequence->Length[Pointer];
+			}
+
+			// Only apply values if it wasn't a jump
+			switch (Index) {
+				// Volume modifier
+				case MOD_VOLUME:
+					OutVol = Value;
+					break;
+				// Arpeggiator
+				case MOD_ARPEGGIO:
+					m_iFrequency = TriggerNote(Note + Value);
+					break;
+				// Hi-pitch
+				case MOD_HIPITCH:
+					m_iFrequency += Value << 4;
+					LimitFreq();
+					break;
+				// Pitch
+				case MOD_PITCH:
+					m_iFrequency += Value;
+					LimitFreq();
+					break;
+				// Duty cycling
+				case MOD_DUTYCYCLE:
+					DutyCycle = Value;
+					break;
+			}
+
+			ModDelay[Index] = Delay + 1;
+			ModPointer[Index]++;
+		}
+
+		if (ModPointer[Index] == pSequence->Count)
+			ModEnable[Index] = 0;
+	}
+}
+
+void CMusicChannel::LimitFreq()
+{
+	if (m_iFrequency > 0x7FF)
+		m_iFrequency = 0x7FF;
+
+	if (m_iFrequency < 0)
+		m_iFrequency = 0;
+}
+
+void CMusicChannel::SetNoteTable(unsigned int *NoteLookupTable)
+{
+	m_pNoteLookupTable = NoteLookupTable;
+}
+
+unsigned int CMusicChannel::TriggerNote(int Note)
+{
+	theApp.RegisterKeyState(m_iChannelID, Note);
+	
+	if (m_iChannelID == 3)
+		return Note;
+
+	return m_pNoteLookupTable[Note];
 }

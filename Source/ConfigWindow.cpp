@@ -23,6 +23,7 @@
 #include "ConfigWindow.h"
 #include "ConfigGeneral.h"
 #include "ConfigAppearance.h"
+#include "ConfigSound.h"
 
 
 // CConfigWindow

@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "mixer.h"
+#include "vrc6.h"
 
 const int SNDCHIP_NONE	= 0;
 const int SNDCHIP_VRC6	= 1;			// Konami VRCVI
@@ -74,6 +75,7 @@ class CAPU
 		void					SetupMixer(int LowCut, int HighCut, int HighDamp);
 
 		int32					GetVol(uint8 Chan);
+		bool					IRQ();
 
 		static const uint8		DUTY_PULSE[];
 		static const uint8		LENGTH_TABLE[];
@@ -97,12 +99,16 @@ class CAPU
 		
 		CMixer					*Mixer;
 
+		// Channels
 		CSquare					*SquareCh1;
 		CSquare					*SquareCh2;
 		CTriangle				*TriangleCh;
 		CNoise					*NoiseCh;
 		CDPCM					*DPCMCh;
 		
+		// Chips
+		CVRC6					*VRC6;
+
 		ICallback				*Parent;
 
 		uint8					ExternalSoundChip;					// External sound chip, if used
@@ -116,6 +122,7 @@ class CAPU
 		int32					FrameClock;							// Clock for frame sequencer
 		uint8					FrameSequence;						// Frame sequence
 		uint8					FrameMode;							// 4 or 5-steps frame sequence
+		int32					FrameLength;
 
 		uint32					SampleSizeShift;					// To convert samples to bytes
 		uint32					SoundBufferSize;					// Size of buffer, counting int32s

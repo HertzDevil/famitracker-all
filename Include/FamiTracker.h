@@ -27,7 +27,9 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 2;
-const int VERSION_REV = 4;
+const int VERSION_REV = 5;
+
+const int VERSION_WIP = 2;
 
 #define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 
@@ -40,7 +42,11 @@ const int VERSION_REV = 4;
 #include "resource.h"       // main symbols
 #include "Settings.h"
 
-#include "../sound driver/SoundGen.h"
+//#include "../sound driver/SoundGen.h"
+
+#include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"
 
 class CMIDI;
 
@@ -59,6 +65,8 @@ public:
 	void MidiEvent(void);
 
 	unsigned int GetOutput(int Chan);
+	
+	void RegisterKeyState(int Channel, int Note);
 
 	int GetCPUUsage();
 	int GetFrameRate();
@@ -71,7 +79,7 @@ public:
 	int m_iFrameRate;
 
 private:
-	CSoundGen	*pSoundGen;
+//	CSoundGen	*pSoundGen;
 	CMIDI		*pMIDI;
 
 // Overrides
@@ -80,6 +88,8 @@ public:
 
 	void	ShutDownSynth();
 	void	ReloadColorScheme(void);
+
+	void	*GetSoundGenerator();
 
 	CDocument	*pDocument;
 	CView		*pView;

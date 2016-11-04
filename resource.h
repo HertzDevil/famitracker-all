@@ -7,19 +7,21 @@
 #define ID_REMOVE                       3
 #define IDC_APPLY                       3
 #define IDC_WRITEBIN                    3
+#define IDC_WRITE_BIN                   3
 #define IDC_IMPORT                      4
 #define IDC_DPCM_ADD                    5
+#define IDC_WRITE_PRG                   5
 #define IDC_SAVE                        6
 #define IDD_ABOUTBOX                    100
 #define IDR_HTML_PERFORMANCEDLG         103
 #define IDR_HTML_CONFIGMIDI             105
+#define IDR_HTML_ABOUTBOX               106
 #define IDR_MAINFRAME                   128
 #define IDR_FamiTrackerTYPE             129
 #define ID_INDICATOR_RATE               129
 #define ID_INDICATOR_TIME               130
 #define IDD_MAINFRAME                   131
 #define ID_INDICATOR_POSITION           131
-#define IDD_SND_SETTINGS                136
 #define IDD_NSF                         137
 #define IDD_EXPORTNSF                   137
 #define IDD_PERFORMANCE                 145
@@ -49,6 +51,8 @@
 #define IDR_POPUP                       198
 #define IDI_ICON2                       199
 #define IDI_MAINFRAME                   199
+#define IDD_CONFIG_SOUND                201
+#define IDD_ABOUT                       203
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_MODIFIER                    1003
@@ -85,6 +89,7 @@
 #define IDC_PATTERNS                    1026
 #define IDC_FRAMES                      1026
 #define IDC_PATTERNS_SPIN               1027
+#define IDC_FRAME_SPIN                  1027
 #define IDC_KEYSTEP                     1028
 #define IDC_LIST                        1029
 #define IDC_KEYSTEP_SPIN                1029
@@ -183,6 +188,10 @@
 #define IDC_PAL                         1112
 #define IDC_EFFECT                      1113
 #define IDC_RADIO4                      1114
+#define IDC_LOOP                        1118
+#define IDC_WRITE_NSF                   1119
+#define IDC_SLIDER1                     1120
+#define IDC_CHECK1                      1121
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -233,6 +242,7 @@
 #define ID_BUTTON32871                  32871
 #define ID_BUTTON32872                  32872
 #define ID_VIEW_MAINFRAME               32891
+#define ID_BUTTON32892                  32892
 #define ID_INDICATOR_INSTRUMENT         61204
 #define ID_INDICATOR_PATTERN            61205
 #define ID_INDICATOR_TEMPO              61205
@@ -241,9 +251,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        201
-#define _APS_NEXT_COMMAND_VALUE         32892
-#define _APS_NEXT_CONTROL_VALUE         1115
-#define _APS_NEXT_SYMED_VALUE           106
+#define _APS_NEXT_RESOURCE_VALUE        204
+#define _APS_NEXT_COMMAND_VALUE         32893
+#define _APS_NEXT_CONTROL_VALUE         1124
+#define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

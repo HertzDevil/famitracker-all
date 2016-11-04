@@ -44,7 +44,7 @@ protected:
 	bool	m_bRowInHex;
 	bool	m_bKeySelect;
 	int		m_iEditStyle;
-
+	
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnSetActive();
@@ -59,4 +59,5 @@ public:
 	afx_msg void OnBnClickedStyle2();
 	afx_msg void OnBnClickedOptHexadecimal();
 	afx_msg void OnBnClickedOptKeyselect();
+	afx_msg void OnBnClickedSquarehack();
 };

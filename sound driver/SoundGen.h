@@ -22,12 +22,8 @@
 
 //
 // This thread will take care of the NES sound generation
-// Notes are sent to the thread as standard window messages
 //
 
-#include "FamiTracker.h"
-#include "FamiTrackerDoc.h"
-#include "FamiTrackerView.h"
 #include "../sound driver/APU.h"
 #include "../sound driver/DSound.h"
 
@@ -38,12 +34,21 @@ struct stVolLevels {
 	int Chan1, Chan2, Chan3, Chan4, Chan5;
 };
 
-struct stChanData {
-	unsigned int Enabled;
+class CMusicChannel
+{
+public:
+	bool m_bEnabled;
+	unsigned int m_iFrequency, m_iLastFrequency;
+	unsigned int m_iFinePitch;
+
+	// Effects
+	unsigned char m_cArpeggio, m_cArpVar;
+	unsigned int m_iVibratoDepth, m_iVibratoSpeed, m_iVibratoPhase;
+	unsigned int m_iTremoloDepth, m_iTremoloSpeed, m_iTremoloPhase;
+
+
 	unsigned int OutVol, InitVol;
 	unsigned int Length;
-	unsigned int LastFreq;
-	unsigned int Freq;
 
 	unsigned char Sweep;
 
@@ -64,11 +69,19 @@ struct stChanData {
 	int ModDelay[MOD_COUNT];
 	int ModPointer[MOD_COUNT];
 
-	unsigned int VibratoDepth, VibratoSpeed, VibratoPhase;
-	unsigned int TremoloDepth, TremoloSpeed, TremoloPhase;
-	signed char TremoloAcc;
+private:
+	unsigned int m_iChannelID;
+	unsigned int *m_pNoteLookupTable;
 
-	unsigned char Effect, EffParam, EffVar;
+	void LimitFreq();
+	void RunSequence(int Index, stSequence *pSequence);
+	unsigned int TriggerNote(int Note);
+
+public:
+	void InitChannel(int ID);
+	void KillChannel();
+	void Run(CFamiTrackerDoc *pDocument);
+	void SetNoteTable(unsigned int *NoteLookupTable);
 };
 
 class CSoundGen : public CWinThread, ICallback
@@ -86,6 +99,7 @@ private:
 	unsigned int	m_iSampleSize;
 	unsigned int	m_iBufferLen;						// Buffer length in ms
 	unsigned int	m_iBufferSize;						// Buffer size in bytes
+	unsigned int	m_iUnderruns;
 	uint32			m_iBufferPtr;
 
 	int				m_iBassFreq;
@@ -112,26 +126,32 @@ private:
 
 	CDSound			*m_pDSound;
 	CDSoundChannel	*m_pDSoundChannel;
-	stChanData		m_stChannels[5];
 	CSampleMem		m_SampleMem;
 
-	HANDLE			m_hNotificationEvent;
+	CMusicChannel	m_stChannels[CHANNELS_DEFAULT];
 
-	void			KillChannel(int Chan);
+	HANDLE			m_hNotificationEvent;
+	HWND			m_hWnd;
+
+	void			KillChannel(int Channel);
+	void			KillChannelHard(int Channel);
 
 public:
 	virtual BOOL InitInstance();
 	virtual int Run();
 	void SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
 	void PlayChannel(int Channel, stChanNote *NoteData, int EffColumns);
-	void ModifyChannel(int Channel);
 	void RefreshChannel(int Channel);
 	void LoadMachineSettings(int Machine, int Rate);
+	void ResetAPU();
 
 	// Sound
 	bool InitializeSound(HWND hWnd);
 	bool LoadBuffer();
 	void LoadSettings(int SampleRate, int SampleSize, int BufferLength);
+	int GetUnderruns() { return m_iUnderruns; };
+
+	CDSound *GetSoundInterface();
 
 	void FlushBuffer(int16 *Buffer, uint32 Size);
 
@@ -142,3 +162,5 @@ public:
 	stVolLevels Levels;
 	virtual int ExitInstance();
 };
+
+extern CSoundGen SoundGenerator;

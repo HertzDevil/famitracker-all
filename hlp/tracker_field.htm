@@ -17,7 +17,7 @@
 			<LI>
 				<FONT face="Verdana" size="2"><STRONG>2. Instrument column<BR>
 					</STRONG>The instrument to use, range 00 - 3F. May be&nbsp;empty for no new 
-					instrument. It's possible to change instrument without retriggering the note.<BR>
+					instrument. It is possible to change instrument without retriggering the note.<BR>
 				</FONT>
 			<LI>
 				<FONT face="Verdana" size="2"><STRONG>3. Volume column<BR>
@@ -26,9 +26,9 @@
 				</FONT>
 			<LI>
 				<FONT size="2"><FONT face="Verdana"><STRONG>4. (5, 6, 7)&nbsp;Effect columns<BR>
-						</STRONG>Used for track effects. Format is <STRONG>Xxx</STRONG>, where <STRONG>X</STRONG>
-						= effect number and <STRONG>xx</STRONG> = effect parameter. A list of the 
-						effects is below.<BR>
+						</STRONG>Used for track effects. Format is <STRONG>Yxx</STRONG>, where&nbsp; <STRONG>
+							Y</STRONG> = effect number and <STRONG>xx</STRONG> = effect parameter. A 
+						list of the effects is below.<BR>
 						Additional effect columns are available by clicking the arrows in channel 
 						headers.</FONT></FONT></LI></UL>
 		<P><FONT face="Verdana" size="2">Use the keyboard&nbsp;letters to enter notes, and 
@@ -36,41 +36,43 @@
 		<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys"><FONT color="#000000">
 					C-4 01 F <STRONG>---</STRONG></FONT> </FONT><FONT face="Verdana" size="2">(Plays 
 				a <STRONG>C 4</STRONG> note&nbsp;using instrument <STRONG>1</STRONG> and volume <STRONG>
-					F</STRONG>, no effect is used. C is on the&nbsp;'Q'-key)</FONT></P>
+					F</STRONG>, no effect is used. Note C is on the&nbsp;'Q'-key)</FONT></P>
 		<H3><FONT face="Verdana">Channels</FONT></H3>
 		<P><FONT face="Verdana" size="2">Each channel got it name from what kind of sound the 
 				produce.<BR>
-			</FONT><FONT face="Verdana" size="2">It's possible to disable channels by clicking 
+			</FONT><FONT face="Verdana" size="2">It is possible to disable channels by clicking 
 				its name on top of pattern.</FONT></P>
 		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Square 1 &amp; 2</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
 			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana"><FONT size="2">Produces&nbsp;square-shaped&nbsp;waveforms.&nbsp;The 
-						lowest&nbsp;note&nbsp;that's possible to play is A-0 (G-0 for PAL). Both 
+						lowest&nbsp;note&nbsp;that&nbsp;is possible to play is A-0 (G-0 for PAL). Both 
 						channels are identical.<STRONG></P>
 		</BLOCKQUOTE></STRONG></FONT></FONT>
 		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Triangle</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P><FONT face="Verdana" size="2">Produces&nbsp;triangle-shaped waveforms. It isn't 
+			<P><FONT face="Verdana" size="2">Produces&nbsp;triangle-shaped waveforms. It is not 
 					possible to set volume,&nbsp;so&nbsp;the volume&nbsp;column have no effect on 
 					this channel.<BR>
-					It's&nbsp;one octave lower than the square channels and cannot 
+					This channel is&nbsp;one octave lower than the square channels and cannot 
 					produce&nbsp;sound below&nbsp;A-0 (G-0 for PAL).</FONT></P>
 		</BLOCKQUOTE>
 		<H3 dir="ltr"><FONT face="Verdana" size="2">Noise</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
 			<P><FONT face="Verdana" size="2">Produces white-noise&nbsp;sound.<BR>
-					It's only possible to play 16 different frequencies, where the lowest frequency 
-					is played at&nbsp;C-0 and highest at D#1 (going out of that range will wrap).</FONT></P>
+					It is only possible to play 16 different frequencies, where the lowest 
+					frequency is played at&nbsp;C-0 and highest at D#1 (going out of that range 
+					will wrap).</FONT></P>
 		</BLOCKQUOTE>
 		<H3 dir="ltr"><FONT face="Verdana" size="2">DPCM</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
 			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2"> This 
 					one&nbsp;plays&nbsp;samples that are&nbsp;loaded from files,&nbsp;instrument 
-					effects are not used at all. It isn't possible to set volume for this channel 
+					effects are not used at all. It is not possible to set volume for this channel 
 					either.<BR>
 					It is only able to play samples at&nbsp;16&nbsp;different pitches, defined in 
 					the instrument settings (DPCM samples-tab).<BR>
-					Notes above octave 5 will&nbsp;cause samples to loop.</FONT></P>
+				</FONT>
+			</P>
 		</BLOCKQUOTE>
 		<H3><FONT face="Verdana">Channel effect codes</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
@@ -79,7 +81,7 @@
 					- Effect parameter)</FONT></P>
 			<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys">C-4&nbsp;-- - 
 					047</FONT><FONT face="Verdana" size="2">, plays a C-note with 047-arpeggio. 
-					(Commonly used for C-chords)</FONT></P>
+					(Commonly used for "C-major"-chords)</FONT></P>
 			<UL>
 				<LI>
 					<FONT face="Verdana" size="2"><FONT face="Fixedsys">0xy</FONT>&nbsp;- Arpeggio, <STRONG>
@@ -120,14 +122,19 @@
 				<LI>
 					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Ixy</FONT> - Trigger hardware 
 						sweep down, <STRONG>x</STRONG> = period (<EM>0 - 7</EM>), <STRONG>y</STRONG> = 
-						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT></LI></UL>
+						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT>
+				<LI>
+					<FONT face="Fixedsys" size="2">Pxx<FONT face="Verdana"> - Fine pitch setting. Default <STRONG>
+								xx</STRONG> = 80, <STRONG>xx</STRONG> &gt; 80 increase pitch, <STRONG>xx</STRONG>
+							&lt; 80 decrease pitch.</FONT></FONT></LI></UL>
 		</BLOCKQUOTE><EM><STRONG></STRONG>
 			<DL>
 		</EM>
 		<DD>
-			<FONT face="Verdana"><FONT size="2"><EM>Notes: E won't work if an instrument volume effect 
-						loop is used.&nbsp;1 </EM><EM>&nbsp;won't work if an instrument&nbsp;frequency 
-						effect loop is used. (Pitch, Hi-pitch&nbsp;and Arpeggio)</EM> </FONT></FONT>
+			<FONT face="Verdana"><FONT size="2"><EM>Notes: E will not&nbsp;work if an instrument volume 
+						effect loop is used.&nbsp;1 </EM><EM>will not&nbsp;work if an 
+						instrument&nbsp;frequency effect loop is used. (Pitch, Hi-pitch&nbsp;and 
+						Arpeggio)</EM> </FONT></FONT>
 			<DD>
 				&nbsp;</DD></DL>
 	</BODY>

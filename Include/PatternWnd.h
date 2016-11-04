@@ -30,16 +30,20 @@ class CPatternWnd : public CWnd
 public:
 	CPatternWnd();
 	virtual ~CPatternWnd();
-	void SetDocument(CDocument *pDoc, CView *pView);
-
+/*	void SetDocument(CDocument *pDoc, CView *pView) {
+		Document = pDoc;;
+		View = pView;
+	}
+*/
 protected:
 	DECLARE_MESSAGE_MAP()
-	CDocument	*Document;
-	CView		*View;
+/*	CDocument	*Document;
+	CView		*View;*/
 public:
 	afx_msg void OnPaint();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 };
 
 

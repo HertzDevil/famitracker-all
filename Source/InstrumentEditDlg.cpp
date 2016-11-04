@@ -21,9 +21,9 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "InstrumentEditDlg.h"
-#include ".\instrumenteditdlg.h"
+#include "..\include\instrumenteditdlg.h"
 
-const int KEYBOARD_TOP	= 295;
+const int KEYBOARD_TOP	= 313;
 const int KEYBOARD_LEFT	= 12;
 
 // CInstrumentEditDlg dialog
@@ -33,6 +33,7 @@ IMPLEMENT_DYNAMIC(CInstrumentEditDlg, CDialog)
 CInstrumentEditDlg::CInstrumentEditDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CInstrumentEditDlg::IDD, pParent)
 {
+	m_bOpened = false;
 }
 
 CInstrumentEditDlg::~CInstrumentEditDlg()
@@ -65,28 +66,47 @@ void CInstrumentEditDlg::OnBnClickedClose()
 
 BOOL CInstrumentEditDlg::OnInitDialog()
 {
+	const int TAB_WND_WIDTH = 559;
+	const int TAB_WND_HEIGHT = 269;
+
 	CDialog::OnInitDialog();
 
-	CTabCtrl *pTabControl;
-
-	pTabControl = (CTabCtrl*)GetDlgItem(IDC_INST_TAB);
+	CTabCtrl *pTabControl = static_cast<CTabCtrl*>(GetDlgItem(IDC_INST_TAB));
 
 	pTabControl->InsertItem(0, "Instrument settings");
 	pTabControl->InsertItem(1, "DPCM samples");
 
 	InstrumentSettings.Create(IDD_INSTRUMENT_INTERNAL, this);
-	InstrumentSettings.MoveWindow(12, 32, 559, 251);
+	InstrumentSettings.MoveWindow(12, 32, TAB_WND_WIDTH, TAB_WND_HEIGHT);
 
 	InstrumentDPCM.Create(IDD_INSTRUMENT_DPCM, this);
-	InstrumentDPCM.MoveWindow(12, 32, 559, 251);
+	InstrumentDPCM.MoveWindow(12, 32, TAB_WND_WIDTH, TAB_WND_HEIGHT);
 
 	InstrumentSettings.ShowWindow(SW_SHOW);
 	InstrumentDPCM.ShowWindow(SW_HIDE);
 
 	m_iLastNote = -1;
 
+	m_bOpened = true;
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CInstrumentEditDlg::SetCurrentInstrument(int Index)
+{
+	CString Title;
+	char Name[256];
+
+	static_cast<CFamiTrackerDoc*>(theApp.pDocument)->GetInstrumentName(Index, Name);
+	Title.Format("Instrument editor - %s", Name);
+	SetWindowText(Title);
+
+	InstrumentSettings.SetCurrentInstrument(Index);
+	InstrumentSettings.RedrawWindow();
+
+	InstrumentDPCM.SetCurrentInstrument(Index);
+	//InstrumentDPCM.RedrawWindow();
 }
 
 void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
@@ -117,8 +137,6 @@ void CInstrumentEditDlg::OnPaint()
 
 	const int WHITE_KEY_W	= 10;
 	const int BLACK_KEY_W	= 8;
-	//const int TOP			= 295;
-	//const int LEFT			= 12;
 
 	CBitmap WhiteKeyBmp, BlackKeyBmp, *OldWhite;
 	CBitmap WhiteKeyMarkBmp, BlackKeyMarkBmp, *OldBlack;
@@ -190,7 +208,7 @@ void CInstrumentEditDlg::ChangeNoteState(int Note)
 	m_iLightNote = Note;
 
 	if (m_hWnd)
-		RedrawWindow(CRect(KEYBOARD_LEFT, KEYBOARD_TOP, 580, 360), 0, RDW_INVALIDATE);
+		RedrawWindow(CRect(KEYBOARD_LEFT, KEYBOARD_TOP, 580, KEYBOARD_TOP + 100), 0, RDW_INVALIDATE);
 }
 
 void CInstrumentEditDlg::SwitchOnNote(int x, int y)
@@ -259,15 +277,10 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 			NoteData.Note			= Note + 1;
 			NoteData.Octave			= Octave;
 			NoteData.Vol			= 0x0F;
-			NoteData.Instrument		= ((CFamiTrackerView*)theApp.pView)->m_iInstrument;
+			NoteData.Instrument		= ((CFamiTrackerView*)theApp.pView)->GetInstrument();
 			NoteData.EffNumber[0]	= 0;
 			NoteData.EffParam[0]	= 0;
 
-			//theApp.PlayNote(((CFamiTrackerView*)theApp.pView)->GetSelectedChannel(), &NoteData);
-			/*
-			((CFamiTrackerView*)theApp.pView)->CurrentNotes[Channel] = NoteData;
-			((CFamiTrackerView*)theApp.pView)->NewNoteData = true;
-			*/
 			((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
 		}
 
@@ -280,10 +293,6 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 		NoteData.Instrument		= 0;
 		NoteData.EffNumber[0]	= 0;
 		NoteData.EffParam[0]	= 0;
-
-//		theApp.PlayNote(0, &NoteData);
-//		((CFamiTrackerView*)theApp.pView)->CurrentNotes[Channel] = NoteData;
-//		((CFamiTrackerView*)theApp.pView)->NewNoteData = true;
 
 		((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
 
@@ -304,9 +313,6 @@ void CInstrumentEditDlg::SwitchOffNote()
 	NoteData.EffNumber[0]	= 0;
 	NoteData.EffParam[0]	= 0;
 
-//	theApp.PlayNote(0, &NoteData);
-//	((CFamiTrackerView*)theApp.pView)->CurrentNotes[Channel] = NoteData;
-//	((CFamiTrackerView*)theApp.pView)->NewNoteData = true;
 	((CFamiTrackerView*)theApp.pView)->FeedNote(Channel, &NoteData);
 
 	m_iLastNote = -1;
@@ -341,3 +347,22 @@ void CInstrumentEditDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 	CDialog::OnLButtonDblClk(nFlags, point);
 }
 
+BOOL CInstrumentEditDlg::DestroyWindow()
+{
+	m_bOpened = false;
+	return CDialog::DestroyWindow();
+}
+
+void CInstrumentEditDlg::OnOK()
+{
+	m_bOpened = false;
+	DestroyWindow();
+	CDialog::OnOK();
+}
+
+void CInstrumentEditDlg::OnCancel()
+{
+	m_bOpened = false;
+	DestroyWindow();
+	//CDialog::OnCancel();
+}

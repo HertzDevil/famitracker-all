@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "SequenceEditor.h"
+
 static const char			*INST_SETTINGS[]	= {"Volume", "Arpeggio", "Pitch",  "Hi-pitch", "Duty / Noise"};
 static const unsigned int	MAX_MML_ITEMS		= 512;
 
@@ -33,53 +35,56 @@ public:
 	CInstrumentSettings(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentSettings();
 
+	// Public
+	void SetCurrentInstrument(int Index);
+
+	// Public, but used internal
+	void CompileSequence();
+	void TranslateMML();
+	void TranslateRelativeMML();
+
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT_INTERNAL };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-	CListCtrl *m_pSettingsListCtrl;
-	CListCtrl *m_pSequenceListCtrl;
+	void SelectSequence(int Sequence);
+
+	CSequenceEditor		SequenceEditor;
+
+	stSequence			*m_SelectedSeq;
+
+	CListCtrl			*m_pSettingsListCtrl;
+	CListCtrl			*m_pSequenceListCtrl;
+	CWnd				*ParentWin;
 
 	CFamiTrackerDoc		*pDoc;
 	CFamiTrackerView	*pView;
 
-	void FillSequenceList(int ListIndex);
-	void FillMML();
+	unsigned int		SelectedSeqItem;
+	unsigned int		m_iSelectedSequence;
+	unsigned int		m_iInstrument;
+	unsigned int		m_iCurrentEffect;
 
-	unsigned int SelectedSetting;
-	unsigned int SelectedSeqItem;
-	unsigned int SelectedSequence;
+	signed short		MML_Values[MAX_MML_ITEMS];		// Maximum allowed values?
+	unsigned int		MML_Count;
 
-	signed short	MML_Values[MAX_MML_ITEMS];		// Maximum allowed values?
-	unsigned int	MML_Count;
-
-	bool UpdatingSequenceItem;
-	bool Initializing;
-
-	CWnd *ParentWin;
+	bool				UpdatingSequenceItem;
+	bool				m_bInitializing;
+	bool				m_bShiftPressed;
 
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnInitDialog();
-	afx_msg void OnBnClickedInsert();
 	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnDeltaposModSelectSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnChangeSeqIndex();
-	afx_msg void OnLvnItemchangedSequenceList(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnBnClickedRemove();
-	afx_msg void OnEnChangeLength();
-	afx_msg void OnEnChangeValue();
-	afx_msg void OnDeltaposModLengthSpin(NMHDR *pNMHDR, LRESULT *pResult);
-	afx_msg void OnDeltaposModValueSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnPaint();
 	afx_msg void OnBnClickedParseMml();
-//	afx_msg void OnNMClickInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 protected:
-//	virtual void OnOK();
 public:
-//	virtual BOOL DestroyWindow();
 	afx_msg void OnBnClickedFreeSeq();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };

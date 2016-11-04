@@ -21,9 +21,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ConfigGeneral.h"
-//#include ".\configgeneral.h"
-//#include "..\include\configgeneral.h"
-
+#include "..\include\configgeneral.h"
 
 // CConfigGeneral dialog
 
@@ -102,13 +100,13 @@ void CConfigGeneral::OnBnClickedOptKeyrepeat()
 
 BOOL CConfigGeneral::OnApply()
 {
-	theApp.m_pSettings->General.bWrapCursor		= m_bWrapCursor;
-	theApp.m_pSettings->General.bFreeCursorEdit = m_bFreeCursorEdit;
-	theApp.m_pSettings->General.bWavePreview	= m_bPreviewWAV;
-	theApp.m_pSettings->General.bKeyRepeat		= m_bKeyRepeat;
-	theApp.m_pSettings->General.bRowInHex		= m_bRowInHex;
-	theApp.m_pSettings->General.iEditStyle		= m_iEditStyle;
-	theApp.m_pSettings->General.bKeySelect		= m_bKeySelect;
+	theApp.m_pSettings->General.bWrapCursor			= m_bWrapCursor;
+	theApp.m_pSettings->General.bFreeCursorEdit		= m_bFreeCursorEdit;
+	theApp.m_pSettings->General.bWavePreview		= m_bPreviewWAV;
+	theApp.m_pSettings->General.bKeyRepeat			= m_bKeyRepeat;
+	theApp.m_pSettings->General.bRowInHex			= m_bRowInHex;
+	theApp.m_pSettings->General.iEditStyle			= m_iEditStyle;
+	theApp.m_pSettings->General.bKeySelect			= m_bKeySelect;
 
 	return CPropertyPage::OnApply();
 }

@@ -55,8 +55,6 @@ const uint16	CAPU::NOISE_FREQ[]			= {0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0
 const uint16	CAPU::DMC_FREQ_NTSC[]		= {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54};
 const uint16	CAPU::DMC_FREQ_PAL[]		= {398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50};
 
-int32 FrameLength;
-
 CAPU::CAPU() 
 {
 }
@@ -141,12 +139,15 @@ bool CAPU::Init(ICallback *pCallback, CSampleMem *pSampleMem)
 	NoiseCh		= new CNoise(Mixer, CHANID_NOISE);
 	DPCMCh		= new CDPCM(Mixer, CHANID_DPCM);
 	
+	VRC6		= new CVRC6;
+
 	SoundBuffer	= NULL;
 	
 	DPCMCh->Init(pSampleMem);
 	DPCMCh->SetSpeed(SPEED_NTSC);
+
+	VRC6->Init(Mixer);
 /*
-	VRC6.Init(Mixer);
 	MMC5.Init(Mixer);
 	N106.Init(Mixer);
 	FDS.Init(Mixer);
@@ -170,6 +171,8 @@ void CAPU::Shutdown()
 	delete NoiseCh;
 	delete DPCMCh;
 
+	delete VRC6;
+
 	ReleaseBuffer();
 }
 
@@ -181,16 +184,6 @@ void CAPU::Process()
 	//
 	
 	static uint32 Time;
-
-	/*
-	switch (ExternalSoundChip) {
-		case SNDCHIP_VRC6:	VRC6.Process(ClockCycles);	break;
-		case SNDCHIP_MMC5:	MMC5.Process(ClockCycles);	break;
-		case SNDCHIP_N106:	N106.Process(ClockCycles);	break;
-		case SNDCHIP_FDS:	FDS.Process(ClockCycles);	break;
-		case SNDCHIP_VRC7:	VRC7.Process(ClockCycles);	break;
-	}
-	*/
 
 	ClockCycles <<= 1;
 
@@ -214,6 +207,16 @@ void CAPU::Process()
 		TriangleCh->Process(Time >> 1);
 		NoiseCh->Process(Time >> 1);
 		DPCMCh->Process(Time >> 1);
+
+		switch (ExternalSoundChip) {
+			case SNDCHIP_VRC6:	VRC6->Process(Time >> 1);	break;
+		/*
+			case SNDCHIP_MMC5:	MMC5.Process(ClockCycles);	break;
+			case SNDCHIP_N106:	N106.Process(ClockCycles);	break;
+			case SNDCHIP_FDS:	FDS.Process(ClockCycles);	break;
+			case SNDCHIP_VRC7:	VRC7.Process(ClockCycles);	break;
+		*/
+		}
 
 		FrameCycles += (Time >> 1);
 
@@ -250,15 +253,17 @@ void CAPU::EndFrame()
 	TriangleCh->EndFrame();
 	NoiseCh->EndFrame();
 	DPCMCh->EndFrame();
-/*
+
 	switch (ExternalSoundChip) {
-		case SNDCHIP_VRC6:	VRC6.EndFrame(); break;
+		case SNDCHIP_VRC6:	VRC6->EndFrame(); break;
+/*
 		case SNDCHIP_MMC5:	MMC5.EndFrame(); break;
 		case SNDCHIP_N106:	N106.EndFrame(); break;
 		case SNDCHIP_FDS:	FDS.EndFrame();	 break;
 		case SNDCHIP_VRC7:	VRC7.EndFrame(); break;
-	}
 */
+	}
+
 	FrameCycles = 0;
 }
 
@@ -287,14 +292,16 @@ void CAPU::Reset()
 	
 	ClearBuffer();
 	Mixer->ClearBuffer();
-	/*
+	
 	switch (ExternalSoundChip) {
-		case SNDCHIP_VRC6:	VRC6.Reset(); break;
+		case SNDCHIP_VRC6:	VRC6->Reset(); break;
+		/*
 		case SNDCHIP_MMC5:	MMC5.Reset(); break;
 		case SNDCHIP_N106:	N106.Reset(); break;
 		case SNDCHIP_FDS:	FDS.Reset();  break;
 		case SNDCHIP_VRC7:	VRC6.Reset(); break;
-	}*/
+		*/
+	}
 }
 
 void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp)
@@ -305,7 +312,7 @@ void CAPU::SetupMixer(int LowCut, int HighCut, int HighDamp)
 void CAPU::SetExternalSound(uint8 Chip)
 {
 	ExternalSoundChip = Chip;
-//	Mixer->ExternalSound(Chip);
+	Mixer->ExternalSound(Chip);
 }
 
 void CAPU::ChangeSpeed(int Speed)
@@ -465,7 +472,6 @@ void CAPU::Write4017(uint8 Value)
 	Process();
 
 	FrameSequence = 0;
-//	FrameClock = 0;
 
 	if (Value & 0x80) 
 		FrameMode = 1;
@@ -484,14 +490,15 @@ void CAPU::ExternalWrite(uint16 Address, uint8 Value)
 	//
 
 	Process();
-/*
+
 	switch (ExternalSoundChip) {
-		case SNDCHIP_VRC6:	VRC6.Write(Address, Value); break;
-		case SNDCHIP_MMC5:	MMC5.Write(Address, Value); break;
+		case SNDCHIP_VRC6:	VRC6->Write(Address, Value); break;
+/*		case SNDCHIP_MMC5:	MMC5.Write(Address, Value); break;
 		case SNDCHIP_N106:	N106.Write(Address, Value); break;
 		case SNDCHIP_FDS:	FDS.Write(Address, Value);	break;
 		case SNDCHIP_VRC7:	VRC7.Write(Address, Value); break;
-	}*/
+		*/
+	}
 }
 
 uint8 CAPU::ExternalRead(uint16 Address)
@@ -550,4 +557,9 @@ uint8 CAPU::ReadControl()
 int32 CAPU::GetVol(uint8 Chan)
 {
 	return Mixer->GetChanOutput(Chan);
+}
+
+bool CAPU::IRQ()
+{
+	return DPCMCh->IRQ();
 }

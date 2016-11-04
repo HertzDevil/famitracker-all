@@ -88,7 +88,10 @@ class CMixer
 		inline double	CalcPin1(double Val1, double Val2);
 		inline double	CalcPin2(double Val1, double Val2, double Val3);
 
-		void	AddDelta(int AmpLeft, int AmpRight, int Time);
+		void			AddDelta(int AmpLeft, int AmpRight, int Time);
+
+		bool			m_bVolRead;
+		int				m_iSampleRate;
 
 		stChanVal		Channels[CHANNELS];
 		

@@ -41,8 +41,18 @@ protected:
 	void		BuildSampleList();
 	void		UpdateKey(int Index);
 
+	CListCtrl	*m_pTableListCtrl;
+	CListCtrl	*m_pSampleListCtrl;
+
+	int			m_iSelectedSample;
+	int			m_iOctave, m_iSelectedKey;
+
+	CFamiTrackerDoc		*pDoc;
+	CFamiTrackerView	*pView;
+
 	DECLARE_MESSAGE_MAP()
 public:
+	void SetCurrentInstrument(int Index);
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedLoad();
 	afx_msg void OnBnClickedUnload();
@@ -54,4 +64,8 @@ public:
 	afx_msg void OnNMClickTable(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnCbnSelchangeSamples();
 	afx_msg void OnBnClickedSave();
+	afx_msg void OnBnClickedLoop();
+//	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedSawhack();
 };

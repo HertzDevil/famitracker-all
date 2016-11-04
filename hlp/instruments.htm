@@ -5,139 +5,106 @@
 	</HEAD>
 	<BODY>
 		<H2 align="left"><FONT face="Verdana">Instruments</FONT></H2>
-		<P align="left"><FONT face="Verdana" size="2">Instruments are used to&nbsp;alter the 
-				output of the channels.</FONT></P>
-		<P align="left"><FONT face="Verdana" size="2">As no samples are used (except for the 
-				DPCM), no actual&nbsp;sound is stored in the instruments.<BR>
-				Instead, it has some controls for changing the output of each oscillator 
-				(channel), called "instrument effects". Each one of these effects may be 
-				connected to&nbsp;a sequence&nbsp;(that is&nbsp;created in the&nbsp;sequence 
-				editor).<BR>
-				The sequence items&nbsp;are then&nbsp;applied to the channel&nbsp;at the same 
-				rate as the framerate. (Default is&nbsp;60/second&nbsp;for NTSC)</FONT><FONT face="Verdana" size="2">
+		<P align="left"><FONT face="Verdana" size="2">Instruments are used to&nbsp;customize 
+				the&nbsp;sound.<BR>
+			</FONT><FONT size="2">
 				<BR>
-				(A list&nbsp;of the instrument effects is found at the bottom of this 
-				document.)</FONT></P>
-		<P align="left"><STRONG><FONT size="4" face="Verdana">Instrument list</FONT></STRONG></P>
-		<P align="left"><FONT face="Verdana"><FONT size="2">Found to the right in the main 
-					window,&nbsp;contains all instruments used&nbsp;by&nbsp;the song.
-					<BR>
-					Instruments will be added from the lowest&nbsp;free number, not from 
-					a&nbsp;selection in the list.<BR>
-					<BR>
-					To edit instruments, double-click or click the <STRONG>Edit instrument-</STRONG>button.</FONT></FONT></P>
+				<FONT face="Verdana">As no samples are used (except for the DPCM), no 
+					actual&nbsp;sound is stored in&nbsp;instruments.<BR>
+					Instead it has some controls for changing the output of each&nbsp;channel, 
+					called instrument effects. </FONT></FONT><FONT face="Verdana" size="2">These 
+				effects are then connected to sequences.<BR>
+				<BR>
+				A sequence is a list of values that are applied to the channel at the same rate 
+				as the frame rate, shown in the main window.&nbsp;Default for NTSC is 60 items 
+				/ second.</FONT></P>
+		<P align="left"><STRONG><FONT face="Verdana" size="4">Instrument list</FONT></STRONG></P>
+		<P align="left"><FONT size="2" face="Verdana">This is the big list found to the right 
+				in the main window. To add instruments click <STRONG>Add instrument</STRONG>, 
+				and double click it or click the&nbsp;<STRONG>Edit instrument</STRONG>-button 
+				to&nbsp;edit it.</FONT></P>
 		<P align="left"><STRONG><FONT size="4" face="Verdana"> Instrument editor</FONT></STRONG></P>
+		<P align="left"><FONT face="Verdana" size="2">The instrument 
+				editor&nbsp;is&nbsp;splitted up in two parts.</FONT></P>
 		<UL>
 			<LI>
 				<DIV align="left"><FONT face="Verdana"><FONT size="2"><STRONG>Instrument settings<BR>
-							</STRONG>Contains&nbsp;a list used&nbsp;to&nbsp;connect&nbsp;sequences 
-							for&nbsp;the instrument&nbsp;effects.<BR>
+							</STRONG><FONT size="2"></FONT>Select sequences for each effect, the 
+							checkbox&nbsp;will enable it.<BR>
+						</FONT><FONT size="2"><STRONG></STRONG></FONT></FONT>
+				</DIV>
+			<LI>
+				<DIV align="left"><FONT face="Verdana" size="2"><STRONG>Sequence editor<BR>
+						</STRONG></FONT><FONT face="Verdana" size="2">Used to set up sequences, either 
+						directly in the editor or through the MML-macro box. </FONT><FONT size="2">
+						<BR>
+						<FONT face="Verdana">The items-scroll will set the length of the sequence.&nbsp;The 
+							number is the amount of items, and the time is how long&nbsp;one sequence takes 
+							to run.<BR>
+							Left mouse button&nbsp;changes&nbsp;single&nbsp;items&nbsp;and the right button 
+							draw lines.</FONT></FONT></DIV>
+			</LI>
+		</UL>
+		<P align="left"><FONT face="Verdana" size="2">The following effects are avaliable</FONT></P>
+		<UL>
+			<LI>
+				<DIV align="left"><FONT size="2"><FONT face="Verdana"><STRONG>Volume<BR>
+							</STRONG>Selects the&nbsp;amplitude.
+							<BR>
+							It is not possible to change triangle volume, but a zero 
+							will&nbsp;disable&nbsp;the channel&nbsp;and non-zero will enable it.&nbsp;<BR>
+							Sixteen levels are avaliable.<BR>
 						</FONT></FONT>
 				</DIV>
 			<LI>
-				<DIV align="left"><FONT face="Verdana"><FONT size="2"> <STRONG>Sequence editor
-								<BR>
-							</STRONG>Used to set up the sequence lists. Each sequence item consists of two 
-							values:<BR>
-						</FONT></FONT>
+				<DIV align="left"><FONT face="Verdana"><FONT size="2"><STRONG>Arpeggio (affects all channels)<BR>
+							</STRONG>Produces fast note-shifting, commonly used for&nbsp;chords.</FONT>
+						<BR>
+						<FONT size="2">Ranges from -79 to +79</FONT><BR>
+					</FONT></FONT></FONT></DIV>
+			<LI>
+				<DIV align="left"><FONT size="2"><FONT face="Verdana"><STRONG>Pith &amp; Hi-pitch (affects all 
+								channels)<BR>
+							</STRONG>Alters the pitch, Hi-pitch is sixteen times faster.</FONT></FONT><FONT face="Verdana" size="2">
+						<BR>
+						-127 to 126 levels avaliable<BR>
+					</FONT>
 				</DIV>
-				<UL>
-					<LI>
-						<DIV align="left"><FONT face="Verdana"><FONT size="2"> <EM>Length,&nbsp;</EM>has 
-									two&nbsp;purposes: a positive value adds a delay before the next item is 
-									executed, a negative will jump backward in the list. The delay is counted in 
-									frames. (A&nbsp;NES do 60/50 frames per second&nbsp;(NTSC/PAL))
-									<BR>
-								</FONT></FONT>
-						</DIV>
-					<LI>
-						<DIV align="left"><FONT face="Verdana"><FONT size="2"> <EM>Value</EM>, is the number used 
-									by effect.</FONT></FONT><FONT face="Verdana"><FONT size="2">
-									<BR>
-								</FONT></FONT><FONT face="Verdana"><FONT size="2">
-									<BR>
-									The MML field is used for MML-style sequences. All&nbsp;values are absolute, 
-									and <STRONG>'|'</STRONG> defines&nbsp;the loop point.&nbsp;<BR>
-									For example:&nbsp;<STRONG>"| 0 0 4 4 7 7"</STRONG> &nbsp;(a looped 047 
-									arpeggio). Enter the string and press <STRONG>Parse </STRONG>to convert to a 
-									sequence.
-									<BR>
-								</FONT></FONT>
-						</DIV>
-					</LI>
-				</UL>
+			<LI>
+				<DIV align="left"><FONT face="Verdana" size="2"><STRONG>Duty cycle / noise mode (affects 
+							square and noise)<BR>
+						</STRONG></FONT><FONT size="2"><FONT face="Verdana">Sets the duty cycle and noise 
+							mode.<BR>
+							Square: 0 : 12.5%, 1&nbsp;: 25%, 2&nbsp;: 50%, 3&nbsp;: 75%<BR>
+							Noise:&nbsp;0&nbsp;: 32k-bit mode, 1&nbsp;:&nbsp;93-bit mode</EM></FONT></FONT></DIV>
 			</LI>
 		</UL>
-		<P align="left"><STRONG><FONT size="4" face="Verdana">The DPCM channel</FONT></STRONG></P>
-		<P dir="ltr" align="left"><FONT face="Verdana" size="2">This channel is 
-				different&nbsp;from the others,&nbsp;it uses samples&nbsp;loaded from 
-				files.&nbsp;(None of the&nbsp;instrument effects will affect it.) </FONT>
+		<P align="left"><FONT size="2"><FONT face="Verdana" size="2">A loop-point can be set by 
+					clicking the part right below the editor.</FONT></FONT></P>
+		<P align="left"><FONT face="Verdana" size="2">Sequences may also be entered as 
+				absolute&nbsp;MML-macro strings. Enter it and press enter / click <STRONG>Parse</STRONG>. 
+				It is also possible to read relative MML strings by holding <STRONG>shift</STRONG>
+				while clicking <STRONG>Parse.</STRONG></FONT></P>
+		<P align="left"><STRONG><FONT face="Verdana" size="4">The DPCM channel</FONT></STRONG></P>
+		<P dir="ltr" align="left"><FONT face="Verdana" size="2"> This channel&nbsp;behaves 
+				different&nbsp;from the others, as&nbsp;it uses samples&nbsp;loaded from files. </FONT>
 		</P>
-		<P dir="ltr" align="left"><FONT face="Verdana"><FONT size="2">To assign samples, open the 
-					instrument editor and click the <STRONG>DPCM samples</STRONG> -tab. 
-					On&nbsp;the&nbsp;left side&nbsp;you'll find a list with loaded samples, 
+		<P dir="ltr" align="left"><FONT size="2"><FONT face="Verdana">To assign samples, open the 
+					instrument editor and click the <STRONG>DPCM samples</STRONG>-tab. 
+					On&nbsp;the&nbsp;left side&nbsp;you will find a list with loaded samples 
 					and&nbsp;on the right side&nbsp;a list with the&nbsp;assigned samples. The 
 					format&nbsp;of&nbsp;samples&nbsp;must be&nbsp;1-bit delta modulation, but it's 
 					possible to import and convert wave-files. <EM>See </EM></FONT></FONT><a href="import_dpcm.htm">
-				<EM><FONT face="Verdana" size="2">importing PCM</FONT></EM></a><FONT face="Verdana"><FONT size="2"><EM>.
-						<BR>
-					</EM>
-					<BR>
-				</FONT></FONT><FONT face="Verdana"><FONT size="2"><EM>Note!<BR>
+				<EM><FONT face="Verdana" size="2">importing PCM</FONT></EM></a><FONT size="2" face="Verdana"><EM>.
+				</EM></FONT>
+		</P>
+		<P dir="ltr" align="left"><FONT size="2" face="Verdana">None of the instrument effects 
+				will affect this channel.
+				<BR>
+				<BR>
+			</FONT><FONT size="2"><FONT face="Verdana"><EM>Note!<BR>
 					</EM>Playing a&nbsp;DPCM&nbsp;sample will decrease the output level of triangle 
 					and noise. If&nbsp;full volume isn't regained after&nbsp;a sample is finished, 
 					a note stop will fix it.</FONT></FONT></P>
-		<P align="left"><STRONG><FONT size="4" face="Verdana">Instrument settings</FONT></STRONG></P>
-		<OL>
-			<LI>
-				<DIV align="left"><FONT face="Verdana"><FONT size="2"> <STRONG>Volume</STRONG>&nbsp;<BR>
-							<EM>Range:&nbsp;0 - 15&nbsp;</EM><BR>
-							Sets the channel output volume. It isn't possible to set&nbsp;volume of 
-							the&nbsp;triangle channel,&nbsp;but a&nbsp;non-zero value will activate 
-							it.&nbsp;<BR>
-						</FONT></FONT>
-				</DIV>
-			<LI>
-				<DIV align="left"><FONT face="Verdana"><FONT size="2"> <STRONG>Arpeggio
-								<BR>
-							</STRONG><EM>Range -128 - 127</EM><BR>
-							Produces fast note-shifting, commonly used for&nbsp;chords. </FONT></FONT>
-					<EM>
-						<BR>
-				</DIV>
-			</EM>
-			<LI>
-				<DIV align="left"><FONT face="Verdana"><FONT size="2"> <STRONG>Pitch
-								<BR>
-							</STRONG><EM>Range -128 - 127</EM><BR>
-							Alters the pitch,&nbsp;a negative value will lower the&nbsp;frequency.</FONT></FONT>
-					<EM>
-						<BR>
-				</DIV>
-			</EM>
-			<LI>
-				<DIV align="left"><FONT face="Verdana"><FONT size="2"> <STRONG>Hi-pitch
-								<BR>
-							</STRONG><EM>Range -128 - 127</EM><BR>
-							Same as pitch,&nbsp;but sixteen times faster.<BR>
-						</FONT></FONT>
-				</DIV>
-			<LI>
-				<DIV align="left">
-					<STRONG><FONT face="Verdana" size="2">Duty cycle / Noise
-							<BR>
-						</FONT></STRONG><FONT face="Verdana"><FONT size="2"><EM>Square:&nbsp;0 - 12.5%, 1 - 
-								25%, 2 - 50%, 3 - 25% (inverted),
-								<BR>
-								Noise: 0 - 32k-bit mode, 1 -&nbsp;93-bit mode</EM><BR>
-							Square -&nbsp;Changes the duty cycle for the square channles.
-							<BR>
-							Noise -&nbsp;Changes the noise random generation mode. 1 will generate 93-bit 
-							sequences (causes noise&nbsp;to sound looped).<BR>
-							This item does not affect&nbsp;other channels. </FONT></FONT>
-				</DIV>
-			</LI>
-		</OL>
-		<P align="left"><FONT face="Verdana"></FONT>&nbsp;</P>
 	</BODY>
 </HTML>

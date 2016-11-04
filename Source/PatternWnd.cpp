@@ -21,37 +21,30 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "PatternWnd.h"
-#include ".\patternwnd.h"
 
+static const int WINDOW_WIDTH	= 163;
+static const int WINDOW_HEIGHT	= 163;
 
 // CPatternWnd
 
 IMPLEMENT_DYNAMIC(CPatternWnd, CWnd)
 CPatternWnd::CPatternWnd()
 {
-	Document = NULL;
+//	Document = NULL;
 }
 
 CPatternWnd::~CPatternWnd()
 {
 }
 
-
 BEGIN_MESSAGE_MAP(CPatternWnd, CWnd)
 	ON_WM_PAINT()
 	ON_WM_VSCROLL()
 	ON_WM_HSCROLL()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
-void CPatternWnd::SetDocument(CDocument *pDoc, CView *pView)
-{
-	Document = pDoc;
-	View = pView;
-}
-
-
 // CPatternWnd message handlers
-
 
 void CPatternWnd::OnPaint()
 {
@@ -59,17 +52,20 @@ void CPatternWnd::OnPaint()
 
 	// Do not call CWnd::OnPaint() for painting messages
 
-	const int WND_WIDTH = 163;
+	CFamiTrackerDoc *pDoc = reinterpret_cast<CFamiTrackerDoc*>(theApp.pDocument);
+	CFamiTrackerView *pView = reinterpret_cast<CFamiTrackerView*>(theApp.pView);
 
 	CBrush	Brush, *OldBrush;
 	CPen	Pen, *OldPen;
 	CDC		dcBack;
 	CBitmap	Bmp, *OldBmp;
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)Document;
-	CFamiTrackerView *pView = (CFamiTrackerView*)View;
-
 	CFont	Font, *OldFont;
+	CRect	WinRect;
+
+	const int OFFSET_LEFT	= 0;
+	const int OFFSET_TOP	= 0;
+
+	unsigned int Width, Height;
 
 	int ColBackground	= theApp.m_pSettings->Appearance.iColBackground;
 	int ColText			= theApp.m_pSettings->Appearance.iColPatternText;
@@ -78,19 +74,24 @@ void CPatternWnd::OnPaint()
 	int ColCursor2		= DIM(theApp.m_pSettings->Appearance.iColCursor, 70);
 
 	int ItemsToDraw;
-	int PatternCount;
-	int ChannelCount;
-	int ActivePattern;
-	int ActiveChannel;
+	int FrameCount, ChannelCount;
+	int ActiveFrame, ActiveChannel;
 	int Nr;
 
 	char Text[256];
 	int i, c;
 
-	if (!Document)
-		return;
+	GetWindowRect(&WinRect);
 
-	Bmp.CreateCompatibleBitmap(&dc, WND_WIDTH - 33, 140);
+	if (!pDoc || !pView) {
+		dc.FillSolidRect(WinRect, 0);
+		return;
+	}
+
+	Width	= WinRect.right - WinRect.left - 19;
+	Height	= WinRect.bottom - WinRect.top - 19;
+
+	Bmp.CreateCompatibleBitmap(&dc, Width, Height);
 	dcBack.CreateCompatibleDC(&dc);
 	OldBmp = dcBack.SelectObject(&Bmp);
 
@@ -98,15 +99,15 @@ void CPatternWnd::OnPaint()
 
 	ItemsToDraw = 9;
 
-	ActivePattern	= pView->GetCurrentPattern();
-	ActiveChannel	= pView->GetCurrentChannel();
-	PatternCount	= pDoc->m_iFrameCount;
-	ChannelCount	= pDoc->m_iChannelsAvailable;
+	ActiveFrame		= pView->GetSelectedFrame();
+	ActiveChannel	= pView->GetSelectedChannel();
+	FrameCount		= pDoc->GetFrameCount();
+	ChannelCount	= pDoc->GetAvailableChannels();
 
-	if (ActivePattern > (PatternCount - 1))
-		ActivePattern = (PatternCount - 1);
-	if (ActivePattern < 0)
-		ActivePattern = 0;
+	if (ActiveFrame > (FrameCount - 1))
+		ActiveFrame = (FrameCount - 1);
+	if (ActiveFrame < 0)
+		ActiveFrame = 0;
 
 	Brush.CreateSolidBrush(ColBackground);
 	Pen.CreatePen(0, 0, ColBackground);
@@ -114,22 +115,22 @@ void CPatternWnd::OnPaint()
 	OldBrush	= dcBack.SelectObject(&Brush);
 	OldPen		= dcBack.SelectObject(&Pen);
 
-	dcBack.Rectangle(0, 0, WND_WIDTH - 33, 140);
+	dcBack.Rectangle(OFFSET_LEFT, OFFSET_TOP, Width, Height);
 	dcBack.SetBkColor(ColBackground);
 
 	OldFont = dcBack.SelectObject(&Font);
 
-	if (ActivePattern > (ItemsToDraw / 2))
-		Nr = ActivePattern - (ItemsToDraw / 2);
+	if (ActiveFrame > (ItemsToDraw / 2))
+		Nr = ActiveFrame - (ItemsToDraw / 2);
 	else
 		Nr = 0;
 	
-	dcBack.FillSolidRect(25 + (ActiveChannel * 20), (ItemsToDraw / 2) * 15 + 2, 20, 12, ColCursor);
+	dcBack.FillSolidRect(26 + (ActiveChannel * 20), (ItemsToDraw / 2) * 15 + 5, 20, 12, ColCursor);
 
 	for (i = 0; i < ItemsToDraw; i++) {
 
-		if ((ActivePattern - (ItemsToDraw / 2) + i) >= 0 && 
-			(ActivePattern - (ItemsToDraw / 2) + i) < PatternCount) {
+		if ((ActiveFrame - (ItemsToDraw / 2) + i) >= 0 && 
+			(ActiveFrame - (ItemsToDraw / 2) + i) < FrameCount) {
 
 			if (theApp.m_pSettings->General.bRowInHex)
 				sprintf(Text, "%02X", Nr);
@@ -138,68 +139,71 @@ void CPatternWnd::OnPaint()
 
 			dcBack.SetTextColor(ColTextHilite);
 			dcBack.SetBkColor(ColBackground);
-			dcBack.TextOut(4, i * 15 + 0, Text);
+			dcBack.TextOut(4, i * 15 + 3, Text);
 
 			dcBack.SetTextColor(ColText);
 
 			for (c = 0; c < ChannelCount; c++) {
-				if (Nr == ActivePattern && c == ActiveChannel)
+				if (Nr == ActiveFrame && c == ActiveChannel)
 					dcBack.SetBkColor(ColCursor);
 				else
 					dcBack.SetBkColor(ColBackground);
-				sprintf(Text, "%02i", pDoc->FrameList[Nr][c]);
-				dcBack.TextOut(27 + c * 20, i * 15 + 0, Text);
+				sprintf(Text, "%02i", pDoc->GetPatternAtFrame(Nr, c));
+				dcBack.TextOut(28 + c * 20, i * 15 + 3, Text);
 			}
 			Nr++;
 		}
 	}
 
-	dcBack.Draw3dRect(2, (ItemsToDraw / 2) * 15 + 1, WND_WIDTH - 40, 14, ColCursor, ColCursor);
-	dcBack.Draw3dRect(1, (ItemsToDraw / 2) * 15 + 0, WND_WIDTH - 38, 16, ColCursor2, ColCursor2);
+	dcBack.FillSolidRect(23, 0, 1, Height, 0x808080);
+
+	dcBack.Draw3dRect(2, (ItemsToDraw / 2) * 15 + 4, Width - 4, 14, ColCursor, ColCursor);
+	dcBack.Draw3dRect(1, (ItemsToDraw / 2) * 15 + 3, Width - 2, 16, ColCursor2, ColCursor2);
 
 	dcBack.SelectObject(OldBrush);
 	dcBack.SelectObject(OldPen);
 
-	dc.BitBlt(0, 0, WND_WIDTH - 33, 140, &dcBack, 0, 0, SRCCOPY);
-	dcBack.SelectObject(OldBmp);
+	dc.BitBlt(0, 0, Width, Height, &dcBack, 0, 0, SRCCOPY);
 
+	dcBack.SelectObject(OldBmp);
 	dcBack.SelectObject(OldFont);
 
-	if (PatternCount == 1)
+	if (FrameCount == 1)
 		SetScrollRange(SB_VERT, 0, 1);
 	else
-		SetScrollRange(SB_VERT, 0, PatternCount - 1);
+		SetScrollRange(SB_VERT, 0, FrameCount - 1);
 	
-	SetScrollPos(SB_VERT, ActivePattern);
+	SetScrollPos(SB_VERT, ActiveFrame);
 	SetScrollRange(SB_HORZ, 0, ChannelCount - 1);
 	SetScrollPos(SB_HORZ, ActiveChannel);
 }
 
 void CPatternWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerDoc		*pDoc = (CFamiTrackerDoc*)Document;
-	CFamiTrackerView	*pView = (CFamiTrackerView*)View;
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.pDocument);
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
 			return;
 		case SB_LINEDOWN:
 		case SB_PAGEDOWN:
-			pView->SelectNextPattern();
+			pView->SelectNextFrame();
 			break;
 		case SB_PAGEUP:
 		case SB_LINEUP:
-			pView->SelectPrevPattern();
+			pView->SelectPrevFrame();
 			break;
 		case SB_TOP:
-			pView->SelectFirstPattern();
+			pView->SelectFirstFrame();
 			break;
 		case SB_BOTTOM:
-			pView->SelectLastPattern();
+			pView->SelectLastFrame();
 			break;
 		case SB_THUMBPOSITION:
 		case SB_THUMBTRACK:
-			pView->SelectPattern(nPos);
+			if (pDoc->GetFrameCount() > 1)
+				pView->SelectFrame(nPos);
 			break;	
 	}
 
@@ -208,8 +212,7 @@ void CPatternWnd::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 
 void CPatternWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)Document;
-	CFamiTrackerView *pView = (CFamiTrackerView*)View;
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
 
 	switch (nSBCode) {
 		case SB_ENDSCROLL:
@@ -229,4 +232,27 @@ void CPatternWnd::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	}
 
 	CWnd::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+void CPatternWnd::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.pDocument);
+	CFamiTrackerView *pView = static_cast<CFamiTrackerView*>(theApp.pView);
+
+	int FrameDelta, Channel;
+	int NewFrame;
+
+	FrameDelta	= (point.y / 15) - 4;
+	Channel		= (point.x - 28) / 20;
+	NewFrame	= pView->GetSelectedFrame() + FrameDelta;
+
+	if ((NewFrame >= signed(pDoc->GetFrameCount())) || (NewFrame < 0))
+		return;
+
+	pView->SelectFrame(NewFrame);
+
+	if (Channel >= 0)
+		pView->SelectChannel(Channel);
+
+	CWnd::OnLButtonDown(nFlags, point);
 }

@@ -44,11 +44,9 @@ const int N106_AMP		= 1;
 static Blip_Buffer	BlipBuffer;
 static Blip_Synth<blip_good_quality, -2> BlipSynth;
 
-static bool m_bVolRead = false;
-static int	m_iSampleRate;
-
 CMixer::CMixer()
 {
+	m_bVolRead = false;
 }
 
 CMixer::~CMixer()
@@ -72,7 +70,7 @@ inline double CMixer::CalcPin2(double Val1, double Val2, double Val3)
 	//
 
 	if ((Val1 + Val2 + Val3) > 0)
-		return 159.79 / ((1.0 / ((Val1 / 8227.0) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
+		return 159.79 / ((1.0 / ((Val1 / /*10227.0*/  8227.0 ) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
 
 	return 0;
 }
@@ -100,52 +98,11 @@ void CMixer::SetChannelVolume(int ChanID, double VolLeft, double VolRight)
 
 void CMixer::UpdateSettings(int LowCut, int HighCut, int HighDamp)
 {
-	/*
-	stSettings	Settings;
-	double		Stereo;
-	double		Volume;
-	int			BassFreq, TrebleFreq, TrebleDamping;
-
-	GetGlobalSettings(&Settings);
-
-	StereoEnabled = (Settings.SoundSettings.Channels == 2);
-
-	MasterVol	= (double(MAX_VOL - Settings.MixerSettings.MasterVol) / 100.0) * OVERALL_AMP;
-	InternalVol	= (double(MAX_VOL - Settings.MixerSettings.InternalVol) / 100.0) * INTRNAL_AMP;
-	MMC5Vol		= (double(MAX_VOL - Settings.MixerSettings.MMC5Vol) / 100.0) * MMC5_AMP;
-	VRC6Vol		= (double(MAX_VOL - Settings.MixerSettings.VRC6Vol) / 100.0) * VRC6_AMP;
-	FDSVol		= (double(MAX_VOL - Settings.MixerSettings.FDSVol) / 100.0) * FDS_AMP;
-	N106Vol		= (double(MAX_VOL - Settings.MixerSettings.N106Vol) / 100.0) * N106_AMP;
-	VRC7Vol		= (double(MAX_VOL - Settings.MixerSettings.VRC7Vol) / 100.0) * VRC7_AMP;
-
-	for (int i = 0; i < CHANNELS; i++) {
-		Volume = double(10 - Settings.MixerSettings.Channels[i]) / 10.0;
-		Stereo = double(Settings.MixerSettings.ChannelsStereo[i]) / 10.0;
-
-		if (StereoEnabled) {
-			Channels[i].VolLeft		= Volume * (1.0 - Stereo);
-			Channels[i].VolRight	= Volume * Stereo;
-		}
-		else {
-			Channels[i].VolLeft		= Volume;
-		}
-	}
-	// Blip-buffer filtering
-
-	BassFreq		= Settings.SoundSettings.BassFreq;
-	TrebleFreq		= Settings.SoundSettings.TrebleFreq;
-	TrebleDamping	= Settings.SoundSettings.TrebleDamping;
-*/
-
-	/*
-	BlipBufferLeft.bass_freq(15);
-	BlipBufferRight.bass_freq(15);
-	*/
-
 	BlipBuffer.bass_freq(LowCut);
 	BlipSynth.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
 	InternalVol = INTRNAL_AMP;
+	VRC6Vol = VRC6_AMP * 2;
 	MasterVol = OVERALL_AMP;
 }
 
@@ -200,18 +157,20 @@ void CMixer::AddValue(int ChanID, int Value, int FrameCycles)
 #else /* LINEAR_MIXING */
 		Sum = (CalcPin1(Channels[CHANID_SQUARE1].Mono, Channels[CHANID_SQUARE2].Mono) + CalcPin2(Channels[CHANID_TRIANGLE].Mono, Channels[CHANID_NOISE].Mono, Channels[CHANID_DPCM].Mono)) * InternalVol;
 #endif /* LINEAR_MIXING */
-/*
+
 		// External channels are mixed linear
 		switch (ExternalChip) {
 			case SNDCHIP_VRC6: Sum += (Channels[CHANID_VRC6_PULSE1].Mono + Channels[CHANID_VRC6_PULSE2].Mono + Channels[CHANID_VRC6_SAWTOOTH].Mono) * VRC6Vol; break;
+				/*
 			case SNDCHIP_VRC7: Sum += Channels[CHANID_VRC7].Mono * VRC7Vol; break;
 			case SNDCHIP_FDS: Sum += (Channels[CHANID_FDS].Mono) * FDSVol; break;
 			case SNDCHIP_MMC5: Sum += (Channels[CHANID_MMC5_SQUARE1].Mono + Channels[CHANID_MMC5_SQUARE2].Mono) * MMC5Vol; break;
 			case SNDCHIP_N106: Sum += (Channels[CHANID_N106_CHAN1].Mono + Channels[CHANID_N106_CHAN2].Mono + Channels[CHANID_N106_CHAN3].Mono + Channels[CHANID_N106_CHAN4].Mono + Channels[CHANID_N106_CHAN5].Mono + Channels[CHANID_N106_CHAN6].Mono + Channels[CHANID_N106_CHAN7].Mono + Channels[CHANID_N106_CHAN8].Mono) * N106Vol; break;
 			case SNDCHIP_FME07:
 				break;
+				*/
 		}
-*/
+
 		Sum *= MasterVol / 2;
 		DeltaL = int(Sum - LastSum);
 		DeltaR = DeltaL;

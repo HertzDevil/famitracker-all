@@ -228,20 +228,31 @@
 						RelativePath=".\sound driver\Apu.cpp">
 					</File>
 					<File
-						RelativePath=".\sound driver\Dpcm.cpp">
-					</File>
-					<File
 						RelativePath=".\sound driver\Mixer.cpp">
 					</File>
-					<File
-						RelativePath=".\sound driver\Noise.cpp">
-					</File>
-					<File
-						RelativePath=".\sound driver\Square.cpp">
-					</File>
-					<File
-						RelativePath=".\sound driver\Triangle.cpp">
-					</File>
+					<Filter
+						Name="Internal"
+						Filter="">
+						<File
+							RelativePath=".\sound driver\Dpcm.cpp">
+						</File>
+						<File
+							RelativePath=".\sound driver\Noise.cpp">
+						</File>
+						<File
+							RelativePath=".\sound driver\Square.cpp">
+						</File>
+						<File
+							RelativePath=".\sound driver\Triangle.cpp">
+						</File>
+					</Filter>
+					<Filter
+						Name="External"
+						Filter="">
+						<File
+							RelativePath=".\sound driver\Vrc6.cpp">
+						</File>
+					</Filter>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer"
@@ -254,6 +265,9 @@
 			<Filter
 				Name="Dialog Boxes"
 				Filter="">
+				<File
+					RelativePath=".\AboutBox.cpp">
+				</File>
 				<File
 					RelativePath=".\Source\MIDIImportDialog.cpp">
 					<FileConfiguration
@@ -286,21 +300,6 @@
 				</File>
 				<File
 					RelativePath=".\Source\PerformanceDlg.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\Source\SoundSettings.cpp">
 					<FileConfiguration
 						Name="Debug|Win32">
 						<Tool
@@ -376,6 +375,9 @@
 								Name="VCCLCompilerTool"
 								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 						</FileConfiguration>
+					</File>
+					<File
+						RelativePath=".\ConfigSound.cpp">
 					</File>
 					<File
 						RelativePath=".\Source\ConfigWindow.cpp">
@@ -459,6 +461,9 @@
 									ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 							</FileConfiguration>
 						</File>
+						<File
+							RelativePath=".\Source\SequenceEditor.cpp">
+						</File>
 					</Filter>
 				</Filter>
 			</Filter>
@@ -479,7 +484,7 @@
 				</File>
 			</Filter>
 			<Filter
-				Name="NSF"
+				Name="Exporting"
 				Filter="">
 				<File
 					RelativePath=".\Source\Compile.cpp">
@@ -517,6 +522,13 @@
 							Name="VCCLCompilerTool"
 							ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 					</FileConfiguration>
+				</File>
+			</Filter>
+			<Filter
+				Name="Other"
+				Filter="">
+				<File
+					RelativePath=".\Fft\Fft.cpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -570,23 +582,37 @@
 						RelativePath=".\sound driver\Channel.h">
 					</File>
 					<File
-						RelativePath=".\sound driver\Dpcm.h">
-					</File>
-					<File
 						RelativePath=".\sound driver\Envelope.h">
 					</File>
 					<File
 						RelativePath=".\sound driver\Mixer.h">
 					</File>
-					<File
-						RelativePath=".\sound driver\Noise.h">
-					</File>
-					<File
-						RelativePath=".\sound driver\Square.h">
-					</File>
-					<File
-						RelativePath=".\sound driver\Triangle.h">
-					</File>
+					<Filter
+						Name="Internal Headers"
+						Filter="">
+						<File
+							RelativePath=".\sound driver\Dpcm.h">
+						</File>
+						<File
+							RelativePath=".\sound driver\Noise.h">
+						</File>
+						<File
+							RelativePath=".\sound driver\Square.h">
+						</File>
+						<File
+							RelativePath=".\sound driver\Triangle.h">
+						</File>
+					</Filter>
+					<Filter
+						Name="External Headers"
+						Filter="">
+						<File
+							RelativePath=".\sound driver\External.h">
+						</File>
+						<File
+							RelativePath=".\sound driver\Vrc6.h">
+						</File>
+					</Filter>
 				</Filter>
 				<Filter
 					Name="Blip_Buffer Headers"
@@ -600,6 +626,9 @@
 				Name="Dialog Boxes Headers"
 				Filter="">
 				<File
+					RelativePath=".\AboutBox.h">
+				</File>
+				<File
 					RelativePath=".\Include\MIDIImportDialog.h">
 				</File>
 				<File
@@ -607,9 +636,6 @@
 				</File>
 				<File
 					RelativePath=".\Include\PerformanceDlg.h">
-				</File>
-				<File
-					RelativePath=".\Include\SoundSettings.h">
 				</File>
 				<File
 					RelativePath=".\Include\SpeedDlg.h">
@@ -625,6 +651,9 @@
 					</File>
 					<File
 						RelativePath=".\Include\ConfigMIDI.h">
+					</File>
+					<File
+						RelativePath=".\ConfigSound.h">
 					</File>
 					<File
 						RelativePath=".\Include\ConfigWindow.h">
@@ -648,6 +677,9 @@
 						<File
 							RelativePath=".\Include\PCMImport.h">
 						</File>
+						<File
+							RelativePath=".\Include\SequenceEditor.h">
+						</File>
 					</Filter>
 				</Filter>
 			</Filter>
@@ -669,6 +701,16 @@
 				</File>
 				<File
 					RelativePath=".\Include\Driver.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Other Headers"
+				Filter="">
+				<File
+					RelativePath=".\Fft\Complex.h">
+				</File>
+				<File
+					RelativePath=".\Fft\Fft.h">
 				</File>
 			</Filter>
 			<Filter
@@ -786,6 +828,10 @@ echo.
 			Name="HTML Help Topics"
 			Filter="htm;html">
 			<File
+				RelativePath=".\AboutBox.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
 				RelativePath=".\hlp\import_dpcm.htm"
 				DeploymentContent="TRUE">
 			</File>
@@ -795,10 +841,6 @@ echo.
 			</File>
 			<File
 				RelativePath=".\hlp\main_index.htm"
-				DeploymentContent="TRUE">
-			</File>
-			<File
-				RelativePath=".\hlp\midi_settings.htm"
 				DeploymentContent="TRUE">
 			</File>
 			<File
@@ -813,6 +855,14 @@ echo.
 				RelativePath=".\hlp\tracker_field.htm"
 				DeploymentContent="TRUE">
 			</File>
+			<Filter
+				Name="Settings"
+				Filter="">
+				<File
+					RelativePath=".\hlp\configuration.htm"
+					DeploymentContent="TRUE">
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\res\FamiTracker.manifest">

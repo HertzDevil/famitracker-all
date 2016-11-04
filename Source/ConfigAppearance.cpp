@@ -23,8 +23,6 @@
 #include "ConfigAppearance.h"
 #include ".\configappearance.h"
 
-//const int COLOR_ITEM_COUNT = 5;
-
 enum E_COLOR_ITEMS {
 	COL_BACKGROUND,
 	COL_BACKGROUND_HILITE,
@@ -32,7 +30,6 @@ enum E_COLOR_ITEMS {
 	COL_PATTERN_TEXT_HILITE,
 	COL_SELECTION,
 	COL_CURSOR,
-
 	COLOR_ITEM_COUNT
 };
 

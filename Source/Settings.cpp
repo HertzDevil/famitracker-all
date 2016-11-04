@@ -58,16 +58,17 @@ CSettings::~CSettings()
 void CSettings::LoadSettings()
 {
 	// General 
-	General.bWrapCursor		= GetAppProfileInt("General", "Wrap cursor", 1) == 1;
-	General.bFreeCursorEdit	= GetAppProfileInt("General", "Free cursor edit", 0) == 1;
-	General.bWavePreview	= GetAppProfileInt("General", "Wave preview", 1) == 1;
-	General.bKeyRepeat		= GetAppProfileInt("General", "Key repeat", 1) == 1;
-	General.bRowInHex		= GetAppProfileInt("General", "Hex row display", 0) == 1;
-	General.iEditStyle		= GetAppProfileInt("General", "Edit style", EDIT_STYLE1);
-	General.strFont			= GetAppProfileString("General", "Pattern font", "Fixedsys");
-	General.bKeySelect		= GetAppProfileInt("General", "Keyboard select", 0) == 1;
+	General.bWrapCursor			= GetAppProfileInt("General", "Wrap cursor", 1) == 1;
+	General.bFreeCursorEdit		= GetAppProfileInt("General", "Free cursor edit", 0) == 1;
+	General.bWavePreview		= GetAppProfileInt("General", "Wave preview", 1) == 1;
+	General.bKeyRepeat			= GetAppProfileInt("General", "Key repeat", 1) == 1;
+	General.bRowInHex			= GetAppProfileInt("General", "Hex row display", 0) == 1;
+	General.iEditStyle			= GetAppProfileInt("General", "Edit style", EDIT_STYLE1);
+	General.strFont				= GetAppProfileString("General", "Pattern font", "Fixedsys");
+	General.bKeySelect			= GetAppProfileInt("General", "Keyboard select", 0) == 1;
 
 	// Sound
+	strDevice				= GetAppProfileString("Sound", "Device", "");
 	Sound.iSampleRate		= GetAppProfileInt("Sound", "Sample rate", 44100);
 	Sound.iSampleSize		= GetAppProfileInt("Sound", "Sample size", 16);
 	Sound.iBufferLength		= GetAppProfileInt("Sound", "Buffer length", 40);
@@ -90,6 +91,12 @@ void CSettings::LoadSettings()
 	Appearance.iColSelection			= GetAppProfileInt("Appearance", "Selection", COLOR_SCHEME.SELECTION);
 	Appearance.iColCursor				= GetAppProfileInt("Appearance", "Cursor", COLOR_SCHEME.CURSOR);
 
+	// Windows position
+	WindowPos.iLeft			= GetAppProfileInt("Window position", "Left", 100);
+	WindowPos.iTop			= GetAppProfileInt("Window position", "Top", 100);
+	WindowPos.iRight		= GetAppProfileInt("Window position", "Right", 950);
+	WindowPos.iBottom		= GetAppProfileInt("Window position", "Bottom", 920);
+	WindowPos.iState		= GetAppProfileInt("Window position", "State", STATE_NORMAL);
 }
 
 void CSettings::SaveSettings()
@@ -111,13 +118,14 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("Sound", "Bass filter freq",			Sound.iBassFilter);
 	WriteAppProfileInt("Sound", "Treble filter freq",		Sound.iTrebleFilter);
 	WriteAppProfileInt("Sound", "Treble filter damping",	Sound.iTrebleDamping);
+	WriteAppProfileString("Sound", "Device",				strDevice);
 
 	// Midi
-	WriteAppProfileInt("MIDI", "Device",					Midi.iMidiDevice);
-	WriteAppProfileInt("MIDI", "Master sync",				Midi.bMidiMasterSync);
-	WriteAppProfileInt("MIDI", "Key release",				Midi.bMidiKeyRelease);
-	WriteAppProfileInt("MIDI", "Channel map",				Midi.bMidiChannelMap);
-	WriteAppProfileInt("MIDI", "Velocity control",			Midi.bMidiVelocity);
+	WriteAppProfileInt("MIDI", "Device",			Midi.iMidiDevice);
+	WriteAppProfileInt("MIDI", "Master sync",		Midi.bMidiMasterSync);
+	WriteAppProfileInt("MIDI", "Key release",		Midi.bMidiKeyRelease);
+	WriteAppProfileInt("MIDI", "Channel map",		Midi.bMidiChannelMap);
+	WriteAppProfileInt("MIDI", "Velocity control",	Midi.bMidiVelocity);
 
 	// Appearance
 	WriteAppProfileInt("Appearance", "Background",					Appearance.iColBackground);
@@ -126,27 +134,35 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("Appearance", "Pattern text highlighted",	Appearance.iColPatternTextHilite);
 	WriteAppProfileInt("Appearance", "Selection",					Appearance.iColSelection);
 	WriteAppProfileInt("Appearance", "Cursor",						Appearance.iColCursor);
+
+	// Window position
+	WriteAppProfileInt("Window position", "Left",	WindowPos.iLeft);
+	WriteAppProfileInt("Window position", "Top",	WindowPos.iTop);
+	WriteAppProfileInt("Window position", "Right",	WindowPos.iRight);
+	WriteAppProfileInt("Window position", "Bottom", WindowPos.iBottom);
+	WriteAppProfileInt("Window position", "State",	WindowPos.iState);
 }
 
 void CSettings::DefaultSettings()
 {
 	// General
-	General.bWrapCursor		= 1;
-	General.bFreeCursorEdit	= 0;
-	General.bWavePreview	= 1;
-	General.bKeyRepeat		= 0;
-	General.bRowInHex		= 0;
-	General.strFont			= "Fixedsys";
-	General.iEditStyle		= EDIT_STYLE1;
-	General.bKeySelect		= false;
+	General.bWrapCursor			= 1;
+	General.bFreeCursorEdit		= 0;
+	General.bWavePreview		= 1;
+	General.bKeyRepeat			= 0;
+	General.bRowInHex			= 0;
+	General.strFont				= "Fixedsys";
+	General.iEditStyle			= EDIT_STYLE1;
+	General.bKeySelect			= false;
 
 	// Sound
+	strDevice				= "";
 	Sound.iSampleRate		= 44100;
 	Sound.iSampleSize		= 16;
-	Sound.iBufferLength		= 40;
+	Sound.iBufferLength		= 50;
 	Sound.iBassFilter		= 16;
 	Sound.iTrebleFilter		= 12000;
-	Sound.iTrebleDamping	= 24;
+	Sound.iTrebleDamping	= 3;
 
 	// Midi
 	Midi.iMidiDevice		= 0;
@@ -161,4 +177,20 @@ void CSettings::DefaultSettings()
 	Appearance.iColPatternTextHilite	= COLOR_SCHEME.TEXT_HILITE;
 	Appearance.iColSelection			= COLOR_SCHEME.SELECTION;
 	Appearance.iColCursor				= COLOR_SCHEME.CURSOR;
+
+	// Window position
+	WindowPos.iLeft		= 100;
+	WindowPos.iTop		= 100;
+	WindowPos.iRight	= 950;
+	WindowPos.iBottom	= 920;
+	WindowPos.iState	= STATE_NORMAL;
+}
+
+void CSettings::SetWindowPos(int Left, int Top, int Right, int Bottom, int State)
+{
+	WindowPos.iLeft		= Left;
+	WindowPos.iTop		= Top;
+	WindowPos.iRight	= Right;
+	WindowPos.iBottom	= Bottom;
+	WindowPos.iState	= State;
 }

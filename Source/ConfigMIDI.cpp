@@ -1,10 +1,28 @@
-// ConfigMIDI.cpp : implementation file
-//
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2006  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
 
 #include "stdafx.h"
 #include "./FamiTracker.h"
 #include "ConfigMIDI.h"
 #include "./MIDI.h"
+#include "..\include\configmidi.h"
 
 
 // CConfigMIDI dialog
@@ -26,6 +44,11 @@ void CConfigMIDI::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CConfigMIDI, CPropertyPage)
+	ON_CBN_SELCHANGE(IDC_DEVICES, OnCbnSelchangeDevices)
+	ON_BN_CLICKED(IDC_MASTER_SYNC, OnBnClickedMasterSync)
+	ON_BN_CLICKED(IDC_KEY_RELEASE, OnBnClickedKeyRelease)
+	ON_BN_CLICKED(IDC_CHANMAP, OnBnClickedChanmap)
+	ON_BN_CLICKED(IDC_VELOCITY, OnBnClickedVelocity)
 END_MESSAGE_MAP()
 
 
@@ -74,4 +97,29 @@ BOOL CConfigMIDI::OnApply()
 	theApp.m_pSettings->Midi.bMidiVelocity		= IsDlgButtonChecked(IDC_VELOCITY)		== 1;
 
 	return CPropertyPage::OnApply();
+}
+
+void CConfigMIDI::OnCbnSelchangeDevices()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnBnClickedMasterSync()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnBnClickedKeyRelease()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnBnClickedChanmap()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnBnClickedVelocity()
+{
+	SetModified();
 }

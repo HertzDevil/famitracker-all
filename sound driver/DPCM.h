@@ -46,6 +46,8 @@ public:
 	void	Process(int Time);
 	void	Reload();
 
+	bool	IRQ() { bool ret = (TriggeredIRQ != 0); TriggeredIRQ = 0; return ret; };
+
 private:
 	uint8	ControlReg;
 

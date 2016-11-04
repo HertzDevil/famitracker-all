@@ -47,34 +47,104 @@
 
 const int CDSound::MAX_BLOCKS = 16;
 
+static CDSound *pObject;
+
 static int CalculateBufferLenght(int BufferLen, int Samplerate, int Samplesize, int Channels)
 {
 	// Calculate size of the buffer, in bytes
 	return ((Samplerate * BufferLen) / 1000) * (Samplesize / 8) * Channels;
 }
 
-bool CDSound::Init(HWND hWnd, HANDLE hNotification)
+static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
+{
+	pObject->EnumerateCallback(lpGuid, lpcstrDescription, lpcstrModule, lpContext);
+	return TRUE;
+}
+
+CDSound::CDSound()
+{
+	m_iDevices = 0;
+	pObject = this;
+}
+
+bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 {
 	HRESULT hRes;
 	
 	hNotificationHandle = hNotification;
 	hWndTarget			= hWnd;
 
-	hRes = DirectSoundCreate(NULL, &lpDirectSound, NULL);
+	hRes = DirectSoundCreate((LPCGUID)m_pGUIDs[Device], &lpDirectSound, NULL);
 
 	if FAILED(hRes) {
-		MessageBox(hWnd, "Error: DirectSound initialisation failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWnd, "Error: DirectSound initialization failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
 	hRes = lpDirectSound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY);
 
 	if FAILED(hRes) {
-		MessageBox(hWnd, "Error: DirectSound initialisation failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWnd, "Error: DirectSound initialization failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 	
 	return true;
+}
+
+void CDSound::Close()
+{
+	lpDirectSound->Release();
+}
+
+void CDSound::ClearEnumeration()
+{
+	for (unsigned int i = 0; i < m_iDevices; i++)
+		delete [] m_pcDevice[i];
+
+	m_iDevices = 0;
+}
+
+void CDSound::EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext)
+{
+	m_pcDevice[m_iDevices] = new char[strlen(lpcstrDescription) + 1];
+	strcpy(m_pcDevice[m_iDevices], lpcstrDescription);
+
+	if (lpGuid != NULL) {
+		m_pGUIDs[m_iDevices] = new GUID;
+		memcpy(m_pGUIDs[m_iDevices], lpGuid, sizeof(GUID));
+	}
+	else
+		m_pGUIDs[m_iDevices] = NULL;
+
+	m_iDevices++;
+}
+
+void CDSound::EnumerateDevices()
+{
+	if (m_iDevices != 0)
+		ClearEnumeration();
+
+	DirectSoundEnumerate(DSEnumCallback, NULL);
+}
+
+unsigned int CDSound::GetDeviceCount()
+{
+	return m_iDevices;
+}
+
+char *CDSound::GetDeviceName(int iDevice)
+{
+	return m_pcDevice[iDevice];
+}
+
+int CDSound::MatchDeviceID(char *Name)
+{
+	for (unsigned int i = 0; i < m_iDevices; i++) {
+		if (!strcmp(Name, m_pcDevice[i]))
+			return i;
+	}
+
+	return 0;
 }
 
 CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks)
@@ -94,19 +164,19 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	char				Text[256];
 
 	if (Blocks > MAX_BLOCKS) {
-		sprintf(Text, "DirectSound::OpenChannel - Only %i blocks allowed!", MAX_BLOCKS);
+		sprintf(Text, "DirectSound::OpenChannel - Max %i blocks allowed!", MAX_BLOCKS);
 		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
 
 	if (SampleRate > 96000) {
-		sprintf(Text, "DirectSound::OpenChannel - Samplerate above 96kHz is not allowed!", MAX_BLOCKS);
+		sprintf(Text, "DirectSound::OpenChannel - Samplerate above 96kHz is not supported!", MAX_BLOCKS);
 		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
 
 	if (BufferLength > 10000) {
-		sprintf(Text, "DirectSound::OpenChannel - Buffer length above 10 seconds is not allowed!", MAX_BLOCKS);
+		sprintf(Text, "DirectSound::OpenChannel - Buffer length above 10 seconds is not supported!", MAX_BLOCKS);
 		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
@@ -163,7 +233,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	if FAILED(hRes) {
 		char ErrText[256];
 
-		strcpy(ErrText, "Error: DirectSound initialisation failed! Could not create a buffer, following error was returned: ");
+		strcpy(ErrText, "Error: DirectSound initialization failed: Could not create a buffer, following error was returned: ");
 
 		switch (hRes) {			
 			case DSERR_ALLOCATED:		strcat(ErrText, "DSERR_ALLOCATED");			break;
@@ -189,7 +259,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	hRes = Channel->lpDirectSoundBuffer->QueryInterface(IID_IDirectSoundNotify, (void**)&Channel->lpDirectSoundNotify);
 
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Error: DirectSound initialisation failed, could not query IID_IDirectSoundNotify!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWndTarget, "Error: DirectSound initialization failed, could not query IID_IDirectSoundNotify!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
 		delete Channel;
 		return NULL;
 	}
@@ -197,7 +267,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	hRes = Channel->lpDirectSoundNotify->SetNotificationPositions(Blocks, PositionNotify);
 
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Error: DirectSound initialisation failed, could not set notification positions!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWndTarget, "Error: DirectSound initialization failed, could not set notification positions!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
 		delete Channel;
 		return NULL;
 	}

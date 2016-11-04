@@ -38,8 +38,13 @@ const static char *FONT_FACE = "Fixedsys";
 
 const int UNDO_LEVELS = 30;
 
-enum eCOLUMNS {C_NOTE, C_INSTRUMENT1, C_INSTRUMENT2, C_VOLUME, C_EFF_NUM, C_EFF_PARAM1, C_EFF_PARAM2,
-C_EFF2_NUM, C_EFF2_PARAM1, C_EFF2_PARAM2, C_EFF3_NUM, C_EFF3_PARAM1, C_EFF3_PARAM2, C_EFF4_NUM, C_EFF4_PARAM1, C_EFF4_PARAM2};
+enum eCOLUMNS {C_NOTE, 
+			   C_INSTRUMENT1, C_INSTRUMENT2, 
+			   C_VOLUME, 
+			   C_EFF_NUM, C_EFF_PARAM1, C_EFF_PARAM2,
+			   C_EFF2_NUM, C_EFF2_PARAM1, C_EFF2_PARAM2, 
+			   C_EFF3_NUM, C_EFF3_PARAM1, C_EFF3_PARAM2, 
+			   C_EFF4_NUM, C_EFF4_PARAM1, C_EFF4_PARAM2};
 
 struct stUndoBlock {
 	stChanNote ChannelData[MAX_PATTERN_LENGTH];
@@ -48,6 +53,8 @@ struct stUndoBlock {
 	int Row, Column;
 	int Frame;
 };
+
+const unsigned int COLUMNS = 7;
 
 class CFamiTrackerView : public CView
 {
@@ -59,19 +66,180 @@ protected: // create from serialization only
 public:
 	CFamiTrackerDoc* GetDocument() const;
 
+
+
+//
+// View access functions
+//
+public:
+	// General
+	void				SetInstrument(int Instrument);
+	unsigned int		GetInstrument() const { return m_iInstrument; };
+
+	unsigned int		GetOctave() const { return m_iOctave; };
+	
+	// Scrolling/viewing no-editing functions
+	void				MoveCursorUp();
+	void				MoveCursorDown();
+	void				MoveCursorPageUp();
+	void				MoveCursorPageDown();
+	void				MoveCursorToTop();
+	void				MoveCursorToBottom();
+
+	void				MoveCursorLeft();
+	void				MoveCursorRight();
+	void				MoveCursorNextChannel();
+	void				MoveCursorPrevChannel();
+	void				MoveCursorFirstChannel();
+	void				MoveCursorLastChannel();
+
+	void				SelectNextFrame();
+	void				SelectPrevFrame();
+	void				SelectFirstFrame();
+	void				SelectLastFrame();
+	void				SelectFrame(unsigned int Frame);
+	unsigned int		GetSelectedFrame() const { return m_iCurrentFrame; };
+
+	unsigned int		GetCurrentTempo() const { return (m_iTempo * 6) / m_iSpeed; };
+	void				SetSongSpeed(unsigned int Speed);
+
+	void				SelectChannel(unsigned int Channel);
+	unsigned int		GetSelectedChannel() const { return m_iCursorChannel; };
+
+	// Settings
+	unsigned int		GetStepping() const { return m_iKeyStepping; };
+	void				SetStepping(int Step) { m_iKeyStepping = Step; };
+	void				SetChangeAllPattern(bool ChangeAll) { m_bChangeAllPattern = ChangeAll; };
+
+	// Document editing functions
+	void				IncreaseCurrentPattern();
+	void				DecreaseCurrentPattern();
+
+	// Player
+	void				PlaybackTick(CFamiTrackerDoc *pDoc);
+
+protected:
+	// Drawing functions
+	void				DrawChar(int x, int y, char c, int Color, CDC *dc);
+	void				DrawLine(int Offset, stChanNote *NoteData, int Line, int Column, int Channel, int Color, CDC *dc);
+	void				DrawMeters(CDC *pDC);
+	void				PrepareBackground(CDC *dc);
+	void				DrawPatternField(CDC *dc);
+
+	unsigned int		GetChannelAtPoint(unsigned int PointX);
+	unsigned int		GetColumnAtPoint(unsigned int PointX, unsigned int MaxColumns);
+
+	// General
+	void				StepDown();
+	void				AddUndo(unsigned int Channel);
+	void				SelectWholePattern(unsigned int Channel);
+
+	unsigned int		GetCurrentColumnCount() const { return COLUMNS + GetDocument()->GetEffColumns(m_iCursorChannel) * 3; };
+
+	unsigned int		GetSelectStart() const { return (m_iSelectEnd > m_iSelectStart ? m_iSelectStart : m_iSelectEnd); };
+	unsigned int		GetSelectEnd()	 const { return (m_iSelectEnd > m_iSelectStart ? m_iSelectEnd : m_iSelectStart); };
+	unsigned int		GetSelectColStart() const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColStart : m_iSelectColEnd); };
+	unsigned int		GetSelectColEnd()	const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColEnd : m_iSelectColStart); };
+
+	// Player
+	void				GetStartSpeed();
+
+	// Input handling
+	void				HandleKeyboardInput(int Key);
+	void				TranslateMidiMessage();
+	void				InterpretKey(int Key);
+	bool				PreventRepeat(int Key);
+	stChanNote			TranslateKey(int Key);
+
+	void				RemoveWithoutDelete();
+
+//
+// Important View variables
+//
+protected:
+	unsigned int		m_iInstrument;			// Selected instrument
+	unsigned int		m_iOctave;
+
+	// Cursor & editing
+	unsigned int		m_iCurrentFrame;										// Middle row in frame list (current frame on screen)
+	unsigned int		m_iCurrentRow;											// Middle row in pattern field (mostly locked at m_iCursorRow)
+	unsigned int		m_iCursorRow, m_iCursorChannel, m_iCursorColumn;		// Selected channel-part (note, instrument or effect)
+
+	unsigned int		m_iLastRowState, m_iLastFrameState, m_iLastCursorColumn;
+	unsigned int		m_iKeyStepping;
+
+	bool				m_bChangeAllPattern;
+	bool				m_bPasteOverwrite;
+	bool				m_bEditEnable;
+
+	// General
+	bool				m_bInitialized;
+	bool				m_bShiftPressed;
+	bool				m_bHasFocus;
+	UINT				m_iClipBoard;
+
+	// Playing
+	bool				m_bPlaying, m_bPlayLooped;
+	bool				m_bFirstTick;
+	bool				m_bMuteChannels[5];
+	unsigned int		m_iPlayTime;
+	unsigned int		m_iTickPeriod;
+	unsigned int		m_iPlayerSyncTick;
+
+	unsigned int		m_iTempo, m_iSpeed;		// Tempo and speed
+	int					m_iTempoAccum;			// Used for speed calculation
+
+	// Window size
+	unsigned int		m_iWindowWidth, m_iWindowHeight;
+	unsigned int		m_iVisibleRows;
+
+	// Selection
+	unsigned int		m_iSelectStart, m_iSelectEnd;
+	unsigned int		m_iSelectColStart, m_iSelectColEnd;
+	unsigned int		m_iSelectChannel;
+
+	// Drawing
+	bool				m_bForceRedraw;						// Draw the thing
+	unsigned int		m_iStartChan;						// The first drawn channel
+	unsigned int		m_iChannelsVisible;
+	unsigned int		m_iChannelWidths[MAX_CHANNELS];
+	unsigned int		m_iChannelColumns[MAX_CHANNELS];
+	unsigned int		m_iVolLevels[5];
+
+	// Undo
+	unsigned int		m_iUndoLevel, m_iRedoLevel;
+	stUndoBlock			m_UndoStack[UNDO_LEVELS + 1];
+
+	// Input
+	char				m_cKeyList[256];
+
+	// Unsorted
+	bool				IgnoreFirst;
+
+	unsigned int		m_iKeyboardNote;
+	unsigned int		m_iSoloChannel;
+
+
+
+// ---------------------------
+// These below will be removed
+// ---------------------------
+
 // Operations
 public:
+	void	PlayNote(int Key);
+	void	KeyReleased(int Key);
+	void	RegisterKeyState(int Channel, int Note);
+
+/////////7
+	stChanNote	CurrentNotes[MAX_CHANNELS];
+	bool		NewNoteData[MAX_CHANNELS];
+////////7777777
+
 
 // Overrides
-	public:
-//	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
-virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-protected:
-	unsigned int WindowWidth;
-	unsigned int WindowHeight;
-	int			 VisibleRows;
-	int			 ViewAreaHeight;
-	int			 ViewAreaWidth;
+public:
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
 // Implementation
 public:
@@ -80,132 +248,6 @@ public:
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-
-	// Drawing
-	void	DrawChar(int x, int y, char c, int Color);
-	void	DrawLine(int Offset, stChanNote *NoteData, int Line, int Column, int Color);
-
-	int		GetChannelAtPoint(int PointX);
-	int		GetColumnAtPoint(int PointX, int MaxColumns);
-
-	void	ResetView();
-
-	void	SelectPattern(int Index);
-	void	SelectNextPattern();
-	void	SelectPrevPattern();
-	void	SelectFirstPattern();
-	void	SelectLastPattern();
-
-	int		GetCurrentPattern() { return m_iCurrentFrame; };
-	int		GetCurrentChannel() { return m_iCursorChannel; };
-
-	void	IncreaseCurrentFrame();
-	void	DecreaseCurrentFrame();
-
-	void	MoveCursorLeft();
-	void	MoveCursorRight();
-	void	MoveCursorNextChannel();
-	void	MoveCursorPrevChannel();
-	void	MoveCursorFirstChannel();
-	void	MoveCursorLastChannel();
-	void	SelectChannel(int Index);
-
-	void	SetSongSpeed(int Speed);
-	void	SetInstrument(int Instrument);
-
-	int		GetCurrentColumnCount();
-
-	void	RegisterKeyState(int Channel, int Note);
-
-	int		m_iKeyStepping;
-	bool	m_bChangeAllPattern;
-	bool	m_bEditEnable;
-	bool	m_bPasteOverwrite;
-
-	bool	m_bMuteChannels[5];
-
-	int		m_iInstrument;			// Selected instrument
-	int		m_iOctave;
-	int		m_iCurrentTempo;
-
-	bool	m_bInitialized;
-
-	stChanNote CurrentNotes[MAX_CHANNELS];
-	bool	NewNoteData[MAX_CHANNELS];
-	int		EffectColumns[MAX_CHANNELS];
-
-	void	PlaybackTick(/*void*/ CFamiTrackerDoc *pDoc);
-	void	GetStartSpeed();
-
-	int		m_iTempo, m_iSpeed;
-
-	int					m_iCursorRow;			// Selected row
-	int					m_iCursorChannel;		// Selected channel
-	int					m_iCursorColumn;		// Selected channel-part (note, instrument or effect)
-
-protected:
-	void	WrapSelectedLine();
-	void	WrapSelectedPattern();
-
-	void	ScrollRowUp();
-	void	ScrollRowDown();
-	void	ScrollPageUp();
-	void	ScrollPageDown();
-	void	ScrollToTop();
-	void	ScrollToBottom();
-
-	void	StepDown();
-
-	void	InterpretKey(int Key);
-	void	KeyReleased(int Key);
-	bool	TranslateKey(int Key, stChanNote *Note);
-	bool	PreventRepeat(int Key);
-
-	void	DrawMeters(CDC *pDC);
-
-	void	RemoveWithoutDelete();
-	void	SelectWholePattern(int Channel);
-
-protected:
-	int					m_iCurrentFrame;		// Middle row in frame list
-	int					m_iCurrentRow;			// Middle row in pattern field
-	int					m_iStartChan;
-
-	int					m_iChannelWidths[MAX_CHANNELS];
-	int					m_iChannelColumns[MAX_CHANNELS];
-
-	bool				m_bPlayLooped;
-	bool				m_bPlaying;
-	bool				m_bFirstTick;
-
-	unsigned int		m_iPlayTime;
-	unsigned int		m_iTickPeriod;
-	unsigned int		m_iPlayerSyncTick;
-	int					m_iTempoAccum;
-
-	bool				m_bShiftPressed;
-	bool				m_bForceRedraw;
-
-	unsigned int		m_iLastRowState, m_iLastFrameState, m_iLastCursorColumn;
-
-	int		m_iUndoLevel;
-	int		m_iRedoLevel;
-	bool	m_bHasFocus;
-
-	bool	m_bRedrawed;
-	int		m_iChannelsVisible;
-
-	int		m_iSelectStart;
-	int		m_iSelectEnd;
-	int		m_iSelectChannel;
-	int		m_iSelectColStart;
-	int		m_iSelectColEnd;
-	int		m_iClipBoard;
-
-	char	m_cKeyList[256];
-
-	unsigned int	m_iVolLevels[5];
-	stUndoBlock		m_UndoStack[UNDO_LEVELS + 1];
 
 // Generated message map functions
 protected:
@@ -217,25 +259,25 @@ public:
 	bool IsPlaying(void);
 	void SetSpeed(int Speed);
 	void ForceRedraw();
-	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 
-	void AddUndo(int Channel);
-
-	int GetSelectedChannel() {
-		return m_iCursorChannel;
-	}
-
-protected:
-	virtual void CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType = adjustBorder);
-public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-private:
-	void SetMessageText(LPCSTR lpszText);
 	void InsertNote(int Note, int Octave, int Channel, int Velocity);
 	void StopNote(int Channel);
 	void RefreshStatusMessage();
 
+	void FeedNote(int Channel, stChanNote *NoteData);
+	void MuteNote(int Channel);
+
+protected:
+	virtual void CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType = adjustBorder);
+	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
+	virtual void PostNcDestroy();
+
+private:
+	void SetMessageText(LPCSTR lpszText);
+
 public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
@@ -258,9 +300,6 @@ public:
 	afx_msg void OnTrackerStop();
 	afx_msg void OnTrackerEdit();
 	afx_msg void OnUpdateTrackerEdit(CCmdUI *pCmdUI);
-protected:
-	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-public:
 	afx_msg void OnTrackerPal();
 	afx_msg void OnTrackerNtsc();
 	afx_msg void OnUpdateTrackerPal(CCmdUI *pCmdUI);
@@ -285,10 +324,6 @@ public:
 	afx_msg void OnEditSelectall();
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	void TranslateMidiMessage();
-protected:
-	virtual void PostNcDestroy();
-public:
 	afx_msg void OnTimer(UINT nIDEvent);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnEditEnablemidi();
@@ -298,8 +333,6 @@ public:
 	afx_msg void OnTrackerPlayrow();
 	afx_msg void OnUpdateFrameRemove(CCmdUI *pCmdUI);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	void FeedNote(int Channel, stChanNote *NoteData);
-//	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 };
 

@@ -24,12 +24,13 @@
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "MIDI.h"
+#include "AboutBox.h"
+#include "../sound driver/SoundGen.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-extern int Underruns;		// remove this
 bool ShuttingDown;
 bool Initialized;
 
@@ -57,6 +58,7 @@ CFamiTrackerApp::CFamiTrackerApp()
 // The one and only CFamiTrackerApp object
 
 CFamiTrackerApp theApp;
+CSoundGen		SoundGenerator;
 static CMainFrame *pMainFrame;
 static CFamiTrackerView *pTrackerView;
 
@@ -89,13 +91,14 @@ BOOL CFamiTrackerApp::InitInstance()
 	m_pSettings->LoadSettings();
 
 	// Create a synth
-	pSoundGen = new CSoundGen;
+	//pSoundGen = new CSoundGen;
 
 	// Create the MIDI interface
 	pMIDI = new CMIDI();
 
 	// Allow SoundGen access to the document, for instruments and things
-	pSoundGen->LoadSettings(m_pSettings->Sound.iSampleRate, m_pSettings->Sound.iSampleSize, m_pSettings->Sound.iBufferLength);
+	SoundGenerator.LoadSettings(m_pSettings->Sound.iSampleRate, m_pSettings->Sound.iSampleSize, m_pSettings->Sound.iBufferLength);
+	//pSoundGen->LoadSettings(m_pSettings->Sound.iSampleRate, m_pSettings->Sound.iSampleSize, m_pSettings->Sound.iBufferLength);
 
 	CSingleDocTemplate* pDocTemplate;
 	pDocTemplate = new CSingleDocTemplate(
@@ -137,8 +140,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	pDocument	= pTrackerView->GetDocument();
 	pView		= pTrackerView;
 
-	if (!pSoundGen->InitializeSound(GetMainWnd()->m_hWnd)) {
-		delete pSoundGen;
+	if (!SoundGenerator.InitializeSound(GetMainWnd()->m_hWnd)) {
 		// If failed, restore default settings
 		m_pSettings->DefaultSettings();
 		m_pSettings->SaveSettings();
@@ -147,7 +149,7 @@ BOOL CFamiTrackerApp::InitInstance()
 		return FALSE;
 	}
 
-	pSoundGen->SetDocument(pDoc, pTrackerView);
+	SoundGenerator.SetDocument(pDoc, pTrackerView);
 
 	m_iFrameRate	= 0;
 	ShuttingDown	= false;
@@ -156,7 +158,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	GetCurrentDirectory(256, m_cAppPath);
 
 	// Initialize sound generator
-	if (pSoundGen->CreateThread() == 0) {
+	if (/*pSoundGen->*/SoundGenerator.CreateThread() == 0) {
 		AfxMessageBox("Couldn't start sound generator thread.");
 		return FALSE;
 	}
@@ -167,14 +169,19 @@ BOOL CFamiTrackerApp::InitInstance()
 	return TRUE;
 }
 
+void *CFamiTrackerApp::GetSoundGenerator()
+{
+	return &SoundGenerator;
+}
+
 void CFamiTrackerApp::LoadSoundConfig()
 {
-	pSoundGen->LoadSettings(m_pSettings->Sound.iSampleRate, m_pSettings->Sound.iSampleSize, m_pSettings->Sound.iBufferLength);
+	SoundGenerator.LoadSettings(m_pSettings->Sound.iSampleRate, m_pSettings->Sound.iSampleSize, m_pSettings->Sound.iBufferLength);
 }
 
 void CFamiTrackerApp::SetMachineType(int Type, int Rate)
 {
-	pSoundGen->LoadMachineSettings(Type, Rate);
+	SoundGenerator.LoadMachineSettings(Type, Rate);
 }
 
 CMIDI *CFamiTrackerApp::GetMIDI()
@@ -217,7 +224,10 @@ END_MESSAGE_MAP()
 // App command to run the dialog
 void CFamiTrackerApp::OnAppAbout()
 {
+	/*
 	CAboutDlg aboutDlg;
+	*/
+	CAboutBox aboutDlg;
 	aboutDlg.DoModal();
 }
 
@@ -226,7 +236,7 @@ void CFamiTrackerApp::OnAppAbout()
 
 void CFamiTrackerApp::SilentEverything()
 {
-	pSoundGen->PostThreadMessage(WM_USER + 1, 0, 0);
+	/*pSoundGen->*/SoundGenerator.PostThreadMessage(WM_USER + 1, 0, 0);
 }
 
 void CFamiTrackerApp::DrawSamples(int *Samples, int Count)
@@ -243,10 +253,10 @@ void CFamiTrackerApp::ShutDownSynth()
 
 	ShuttingDown = true;
 
-	pSoundGen->PostThreadMessage(WM_QUIT, 0, 0);
+	/*pSoundGen->*/SoundGenerator.PostThreadMessage(WM_QUIT, 0, 0);
 
 	for (i = 0; i < 50; i++) {
-		if (pSoundGen->IsRunning() == false) {
+		if (/*pSoundGen->*/SoundGenerator.IsRunning() == false) {
 			ThreadClosed = true;
 			break;
 		}
@@ -256,8 +266,8 @@ void CFamiTrackerApp::ShutDownSynth()
 
 	if (!ThreadClosed)
 		AfxMessageBox("Could not close sound generator thread!");
-	else
-		delete pSoundGen;
+	//else
+		//delete pSoundGen;
 }
 
 int CFamiTrackerApp::GetCPUUsage()
@@ -266,7 +276,7 @@ int CFamiTrackerApp::GetCPUUsage()
 	FILETIME CreationTime[2], ExitTime[2], KernelTime[2], UserTime[2];
 	unsigned int TotalTime[2];
 
-	HANDLE hThreads[2] = {m_hThread, pSoundGen->m_hThread};
+	HANDLE hThreads[2] = {m_hThread, /*pSoundGen->*/SoundGenerator.m_hThread};
 
 	GetThreadTimes(hThreads[0], CreationTime + 0, ExitTime + 0, KernelTime + 0, UserTime + 0);
 	GetThreadTimes(hThreads[1], CreationTime + 1, ExitTime + 1, KernelTime + 1, UserTime + 1);
@@ -297,7 +307,7 @@ void CFamiTrackerApp::StepFrame()
 
 int CFamiTrackerApp::GetUnderruns()
 {
-	return Underruns;
+	return SoundGenerator.GetUnderruns();
 }
 
 int CFamiTrackerApp::ExitInstance()
@@ -313,8 +323,7 @@ int CFamiTrackerApp::ExitInstance()
 
 void CFamiTrackerApp::MidiEvent(void)
 {
-	if (pTrackerView->m_bInitialized)
-		pTrackerView->PostMessage(WM_USER + 1);
+	pTrackerView->PostMessage(WM_USER + 1);
 }
 
 unsigned int CFamiTrackerApp::GetOutput(int Chan)
@@ -322,7 +331,12 @@ unsigned int CFamiTrackerApp::GetOutput(int Chan)
 	if (!Initialized)
 		return 0;
 
-	return pSoundGen->GetOutput(Chan);
+	return SoundGenerator.GetOutput(Chan);
+}
+
+void CFamiTrackerApp::RegisterKeyState(int Channel, int Note)
+{
+	static_cast<CFamiTrackerView*>(pView)->RegisterKeyState(Channel, Note);
 }
 
 BOOL CAboutDlg::OnInitDialog()

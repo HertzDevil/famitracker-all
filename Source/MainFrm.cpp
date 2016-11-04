@@ -24,10 +24,7 @@
 #include "MainFrm.h"
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
-#include "SampleWindow.h"
-#include "soundsettings.h"
-#include "nsfdialog.h"
-#include "PerformanceDlg.h"
+#include "NsfDialog.h"
 #include "InstrumentEditDlg.h"
 
 #include "InstrumentSettings.h"
@@ -37,9 +34,8 @@
 #include "ConfigGeneral.h"
 #include "ConfigAppearance.h"
 #include "ConfigMIDI.h"
+#include "ConfigSound.h"
 #include "ConfigWindow.h"
-#include ".\mainfrm.h"
-#include "..\include\mainfrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -62,7 +58,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_CONTEXT_HELP, CFrameWnd::OnContextHelp)
 	ON_COMMAND(ID_DEFAULT_HELP, CFrameWnd::OnHelpFinder)
 	ON_COMMAND(ID_FILE_CREATE_NSF, OnCreateNSF)
-	ON_COMMAND(ID_FILE_SOUNDSETTINGS, OnSoundSettings)
 	ON_COMMAND(ID_TRACKER_KILLSOUND, OnTrackerKillsound)
 	ON_COMMAND(ID_TRACKER_TOGGLE_PLAY, OnTrackerTogglePlay)
 	ON_COMMAND(IDC_KEYREPEAT, OnKeyRepeat)
@@ -81,10 +76,10 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_NOTIFY(NM_DBLCLK, IDC_INSTRUMENTS, OnDblClkInstruments)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_TEMPO_SPIN, OnDeltaposTempoSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_ROWS_SPIN, OnDeltaposRowsSpin)
-	ON_NOTIFY(UDN_DELTAPOS, IDC_PATTERNS_SPIN, OnDeltaposPatternsSpin)
+	ON_NOTIFY(UDN_DELTAPOS, IDC_FRAME_SPIN, OnDeltaposFrameSpin)
 	ON_NOTIFY(UDN_DELTAPOS, IDC_KEYSTEP_SPIN, OnDeltaposKeyStepSpin)
 	ON_EN_CHANGE(IDC_INSTNAME, OnInstNameChange)
-	ON_EN_CHANGE(IDC_PATTERNS, OnEnPatternsChange)
+	ON_EN_CHANGE(IDC_FRAMES, OnEnFramesChange)
 	ON_EN_CHANGE(IDC_SPEED, OnEnTempoChange)
 	ON_EN_CHANGE(IDC_ROWS, OnEnRowsChange)
 	ON_EN_CHANGE(IDC_KEYSTEP, OnEnKeyStepChange)
@@ -124,7 +119,6 @@ static UINT indicators[] =
 	ID_INDICATOR_SCRL,
 };
 
-
 // CMainFrame construction/destruction
 
 CMainFrame::CMainFrame()
@@ -135,15 +129,6 @@ CMainFrame::CMainFrame()
 CMainFrame::~CMainFrame()
 {
 }
-
-CPerformanceDlg PerformanceDlg;
-
-CSampleWindow	SampleWindow;
-CSampleWinProc	SampleProc;
-
-CInstrumentEditDlg	m_InstrumentEdit;
-
-CImageList *m_pImageList;
 
 ////////////////
 
@@ -174,7 +159,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 
-	if (!m_wndPatternWindow.CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | WS_DLGFRAME, CRect(10, 10, 164, 173), (CWnd*)&m_wndDialogBar, 0)) {
+	if (!m_wndPatternWindow.CreateEx(WS_EX_STATICEDGE, NULL, "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL /*| WS_DLGFRAME*/, CRect(12, 12, 162, 173), (CWnd*)&m_wndDialogBar, 0)) {
 		TRACE0("Failed to create pattern window\n");
 		return -1;      // fail to create
 	}
@@ -186,19 +171,16 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	DockControlBar(&m_wndToolBar);
 	*/
 	
-	SampleWindow.CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE, CRect(297, 115, 297 + CSampleWindow::WIN_WIDTH, 115 + CSampleWindow::WIN_HEIGHT), (CWnd*)&m_wndDialogBar, 0);
+	m_SampleWindow.CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE, CRect(297, 115, 297 + CSampleWindow::WIN_WIDTH, 115 + CSampleWindow::WIN_HEIGHT), (CWnd*)&m_wndDialogBar, 0);
 
-	SampleProc.Wnd = &SampleWindow;
-	SampleProc.CreateThread();
+	m_SampleProc.Wnd = &m_SampleWindow;
+	m_SampleProc.CreateThread();
 
-	InstrumentList = (CListCtrl*)m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS);
+	InstrumentList = reinterpret_cast<CListCtrl*>(m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS));
 
 	InstrumentList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
 	SetupColors();
-
-	m_wndToolBar.SetButtonStyle(13, TBBS_CHECKBOX);
-	m_wndToolBar.SetDlgItemText(IDC_KEYSTEP, "1");
 
 	m_pImageList = new CImageList();
 	m_pImageList->Create(16, 16, ILC_COLOR, 1, 1);
@@ -207,15 +189,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	InstrumentList->SetImageList(m_pImageList, LVSIL_NORMAL);
 	InstrumentList->SetImageList(m_pImageList, LVSIL_SMALL);
 
-	CSliderCtrl *VolSlider;
-
-	VolSlider = (CSliderCtrl*)m_wndDialogBar.GetDlgItem(IDC_VOLUME);
-
-	VolSlider->SetRange(1, 100);
-
 	SetTimer(0, 100, 0);
 
-//	m_wndDialogBar.ShowWindow(SW_HIDE);
+//	MoveWindow(theApp.m_pSettings->WindowPos.iLeft, theApp.m_pSettings->WindowPos.iTop,
+//		theApp.m_pSettings->WindowPos.iRight, theApp.m_pSettings->WindowPos.iBottom);
+
+//	GetMainWnd()->SetWindowPos(NULL, 
+//	m_pSettings->SetWindowPos(WinRect.left, WinRect.top, WinRect.right, WinRect.bottom);
 
 	m_bInitialized = true;
 
@@ -266,7 +246,6 @@ void CMainFrame::ClearInstrumentList()
 void CMainFrame::AddInstrument(int Index, const char *Name)
 {
 	CString Text;
-//	Text.Format("%i - %s", Index, Name);
 	Text.Format("%02X - %s", Index, Name);
 
 	if (Text.GetLength() > 30) {
@@ -329,11 +308,13 @@ void CMainFrame::OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result)
 	InstrumentList->GetItemText(InstrumentList->GetSelectionMark(), 0, Text, 256);
 	sscanf(Text, "%X", &Instrument);
 
-	pDoc->GetInstName(Instrument, Text);
-
+	pDoc->GetInstrumentName(Instrument, Text);
 	pView->SetInstrument(Instrument);
 
 	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->SetWindowText(Text);
+
+	if (m_InstEdit.m_bOpened)
+		m_InstEdit.SetCurrentInstrument(Instrument);
 
 	GetActiveView()->SetFocus();
 }
@@ -355,7 +336,7 @@ void CMainFrame::OnInstNameChange()
 	if (InstrumentList->GetSelectionMark() == -1)
 		return;
 
-	Instrument = pView->m_iInstrument;
+	Instrument = pView->GetInstrument();
 
 	((CEdit*)m_wndDialogBar.GetDlgItem(IDC_INSTNAME))->GetWindowText(Text, 256);
 
@@ -364,9 +345,8 @@ void CMainFrame::OnInstNameChange()
 
 	sprintf(Name, "%02X - %s", Instrument, Text);
 	InstrumentList->SetItemText(InstrumentList->GetSelectionMark(), 0, Name);
-	strcpy(Name, pDoc->Instruments[Instrument].Name);
-
-	pDoc->InstrumentName(Instrument, Text);
+	pDoc->GetInstrumentName(Instrument, Name);
+	pDoc->SetInstrumentName(Instrument, Text);
 }
 
 void CMainFrame::OnBnClickedAddInst()
@@ -386,8 +366,8 @@ void CMainFrame::OnBnClickedRemoveInst()
 	if (InstrumentList->GetSelectionMark() == -1)
 		return;
 
-	pDoc->RemoveInstrument(pView->m_iInstrument);
-	RemoveInstrument(pView->m_iInstrument);
+	pDoc->RemoveInstrument(pView->GetInstrument());
+	RemoveInstrument(pView->GetInstrument());
 }
 
 void CMainFrame::OnBnClickedEditInst()
@@ -397,10 +377,10 @@ void CMainFrame::OnBnClickedEditInst()
 
 void CMainFrame::OnTrackerTogglePlay()
 {
-	((CFamiTrackerView*)GetView())->TogglePlayback();
+	static_cast<CFamiTrackerView*>(GetView())->TogglePlayback();
 }
 
-void CMainFrame::OnEnPatternsChange()
+void CMainFrame::OnEnFramesChange()
 {
 	int Index;
 	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
@@ -408,12 +388,12 @@ void CMainFrame::OnEnPatternsChange()
 	if (!m_bInitialized || !pDoc)
 		return;
 
-	Index = m_wndDialogBar.GetDlgItemInt(IDC_PATTERNS, 0, 0);
+	Index = m_wndDialogBar.GetDlgItemInt(IDC_FRAMES, 0, 0);
 
 	LIMIT(Index, MAX_FRAMES, 1);
 
-	pDoc->SetPatternCount(Index);
-	RefreshPattern();
+	if (pDoc->IsFileLoaded())
+		pDoc->SetFrameCount(Index);
 }
 
 void CMainFrame::OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult)
@@ -445,7 +425,7 @@ void CMainFrame::OnDeltaposRowsSpin(NMHDR *pNMHDR, LRESULT *pResult)
 	m_wndDialogBar.SetDlgItemInt(IDC_ROWS, Pos);
 }
 
-void CMainFrame::OnDeltaposPatternsSpin(NMHDR *pNMHDR, LRESULT *pResult)
+void CMainFrame::OnDeltaposFrameSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	int Pos = m_wndDialogBar.GetDlgItemInt(IDC_PATTERNS) - ((NMUPDOWN*)pNMHDR)->iDelta;
 	LIMIT(Pos, MAX_FRAMES, 1);
@@ -465,7 +445,9 @@ void CMainFrame::OnEnRowsChange()
 	
 	LIMIT(Index, MAX_PATTERN_LENGTH, 1);
 
-	pDoc->SetRowCount(Index);
+	if (pDoc->IsFileLoaded())
+		pDoc->SetPatternLength(Index);
+
 	GetActiveView()->RedrawWindow();
 }
 
@@ -475,106 +457,90 @@ void CMainFrame::OnPaint()
 	// TODO: Add your message handler code here
 	// Do not call CFrameWnd::OnPaint() for painting messages
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
-	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
-
-	// hmm, fix this
-
-	m_wndPatternWindow.SetDocument(pDoc, pView);
 	m_wndPatternWindow.RedrawWindow();	
 }
 
 void CMainFrame::RefreshPattern()
 {
-	m_wndPatternWindow.Invalidate(FALSE);
-	m_wndPatternWindow.PostMessage(WM_PAINT);
+	m_wndPatternWindow.RedrawWindow();
 }
 
 void CMainFrame::OnBnClickedIncFrame()
 {
-	((CFamiTrackerView*)GetActiveView())->IncreaseCurrentFrame();
-	RedrawWindow();
+	static_cast<CFamiTrackerView*>(GetActiveView())->IncreaseCurrentPattern();
 }
 
 void CMainFrame::OnBnClickedDecFrame()
 {
-	((CFamiTrackerView*)GetActiveView())->DecreaseCurrentFrame();
-	RedrawWindow();
+	static_cast<CFamiTrackerView*>(GetActiveView())->DecreaseCurrentPattern();
 }
 
 void CMainFrame::OnKeyRepeat()
 {
-	if (m_wndDialogBar.IsDlgButtonChecked(IDC_KEYREPEAT))
-		theApp.m_pSettings->General.bKeyRepeat = true;
-	else
-		theApp.m_pSettings->General.bKeyRepeat = false;
+	theApp.m_pSettings->General.bKeyRepeat = (m_wndDialogBar.IsDlgButtonChecked(IDC_KEYREPEAT) == 1);
 }
 
 void CMainFrame::OnDeltaposKeyStepSpin(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	int Pos;
-
-	Pos = m_wndDialogBar.GetDlgItemInt(IDC_KEYSTEP) - ((NMUPDOWN*)pNMHDR)->iDelta;
-
+	int Pos= m_wndDialogBar.GetDlgItemInt(IDC_KEYSTEP) - ((NMUPDOWN*)pNMHDR)->iDelta;
 	LIMIT(Pos, MAX_PATTERN_LENGTH, 0);
-
 	m_wndDialogBar.SetDlgItemInt(IDC_KEYSTEP, Pos);
 }
 
 void CMainFrame::OnEnKeyStepChange()
 {
-	int Step;
-
-	Step = m_wndDialogBar.GetDlgItemInt(IDC_KEYSTEP);
-
+	int Step = m_wndDialogBar.GetDlgItemInt(IDC_KEYSTEP);
 	LIMIT(Step, MAX_PATTERN_LENGTH, 0);
-
-	((CFamiTrackerView*)GetActiveView())->m_iKeyStepping = Step;
+	static_cast<CFamiTrackerView*>(GetActiveView())->SetStepping(Step);
 }
 
 void CMainFrame::OnCreateNSF()
 {
 	CNSFDialog NSFDialog;
-
 	NSFDialog.DoModal();
-}
-
-void CMainFrame::OnSoundSettings()
-{
-	CSoundSettings SoundSettings;
-
-	SoundSettings.DoModal();
 }
 
 BOOL CMainFrame::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle , const RECT& rect , CWnd* pParentWnd , LPCTSTR lpszMenuName , DWORD dwExStyle , CCreateContext* pContext)
 {
 	RECT newrect;
 
+	// Load stored position
+	newrect.bottom	= theApp.m_pSettings->WindowPos.iBottom;
+	newrect.left	= theApp.m_pSettings->WindowPos.iLeft;
+	newrect.right	= theApp.m_pSettings->WindowPos.iRight;
+	newrect.top		= theApp.m_pSettings->WindowPos.iTop;
+	
+	if ((dwStyle & WS_MAXIMIZE) == 0) {
+		if (theApp.m_pSettings->WindowPos.iState == STATE_MAXIMIZED)
+			dwStyle |= WS_MAXIMIZE;
+	}
+
 	// Resize the window after startup
+	/*
 	newrect.top		= 100;
 	newrect.left	= 100;
 	newrect.right	= newrect.left + 850;
 	newrect.bottom	= newrect.top + 820;
-
+	*/
 	return CFrameWnd::Create(lpszClassName, lpszWindowName, dwStyle, newrect, pParentWnd, lpszMenuName, dwExStyle, pContext);
 }
 
 void CMainFrame::OnNextFrame()
 {
-	((CFamiTrackerView*)GetActiveView())->SelectNextPattern();
+	reinterpret_cast<CFamiTrackerView*>(GetActiveView())->SelectNextFrame();
 }
 
 void CMainFrame::OnPrevFrame()
 {
-	((CFamiTrackerView*)GetActiveView())->SelectPrevPattern();
+	reinterpret_cast<CFamiTrackerView*>(GetActiveView())->SelectPrevFrame();
 }
 
 void CMainFrame::OnChangeAll()
 {
 	if (m_wndDialogBar.IsDlgButtonChecked(IDC_CHANGE_ALL))
-		((CFamiTrackerView*)GetActiveView())->m_bChangeAllPattern = true;
+		((CFamiTrackerView*)GetActiveView())->SetChangeAllPattern(true);
 	else
-		((CFamiTrackerView*)GetActiveView())->m_bChangeAllPattern = false;
+		((CFamiTrackerView*)GetActiveView())->SetChangeAllPattern(false);
 }
 
 void CMainFrame::DrawSamples(int *Samples, int Count)
@@ -582,19 +548,19 @@ void CMainFrame::DrawSamples(int *Samples, int Count)
 	if (!m_bInitialized)
 		return;
 
-	SampleProc.PostThreadMessage(WM_USER, (WPARAM)Samples, Count);
+	m_SampleProc.PostThreadMessage(WM_USER, (WPARAM)Samples, Count);
 }
 
 void CMainFrame::OnHelpPerformance()
 {
-	PerformanceDlg.Create(MAKEINTRESOURCE(IDD_PERFORMANCE), this);
-	PerformanceDlg.ShowWindow(SW_SHOW);
+	m_PerformanceDlg.Create(MAKEINTRESOURCE(IDD_PERFORMANCE), this);
+	m_PerformanceDlg.ShowWindow(SW_SHOW);
 }
 
 void CMainFrame::OnUpdateSBInstrument(CCmdUI *pCmdUI)
 {
 	CString String;
-	String.Format("Instrument: %02i", GET_VIEW->m_iInstrument);
+	String.Format("Instrument: %02i", GET_VIEW->GetInstrument());
 
 	pCmdUI->Enable(); 
 	pCmdUI->SetText(String);
@@ -603,7 +569,7 @@ void CMainFrame::OnUpdateSBInstrument(CCmdUI *pCmdUI)
 void CMainFrame::OnUpdateSBOctave(CCmdUI *pCmdUI)
 {
 	CString String;
-	String.Format("Octave: %i", GET_VIEW->m_iOctave);
+	String.Format("Octave: %i", GET_VIEW->GetOctave());
 
 	pCmdUI->Enable(); 
 	pCmdUI->SetText(String);
@@ -612,8 +578,8 @@ void CMainFrame::OnUpdateSBOctave(CCmdUI *pCmdUI)
 void CMainFrame::OnUpdateSBFrequency(CCmdUI *pCmdUI)
 {
 	CString String;
-	int Machine = GET_DOC->m_iMachine;
-	int EngineSpeed = GET_DOC->m_iEngineSpeed;
+	int Machine = GET_DOC->GetMachine();
+	int EngineSpeed = GET_DOC->GetEngineSpeed();
 
 	if (EngineSpeed == 0)
 		EngineSpeed = (Machine == NTSC ? 60 : 50);
@@ -627,16 +593,7 @@ void CMainFrame::OnUpdateSBFrequency(CCmdUI *pCmdUI)
 void CMainFrame::OnUpdateSBTempo(CCmdUI *pCmdUI)
 {
 	CString String;
-	String.Format("%i BPM", GET_VIEW->m_iCurrentTempo);
-
-	pCmdUI->Enable(); 
-	pCmdUI->SetText(String);
-}
-
-void CMainFrame::OnUpdateSBPosition(CCmdUI *pCmdUI)
-{
-	CString String;
-	String.Format("Row %i", GET_VIEW->m_iCursorRow);
+	String.Format("%i BPM", GET_VIEW->GetCurrentTempo());
 
 	pCmdUI->Enable(); 
 	pCmdUI->SetText(String);
@@ -652,28 +609,28 @@ void CMainFrame::OnTimer(UINT nIDEvent)
 void CMainFrame::OnUpdateKeyStepEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_VIEW->m_iKeyStepping);
+	Text.Format("%i", GET_VIEW->GetStepping());
 	pCmdUI->SetText(Text);
 }
 
 void CMainFrame::OnUpdateSpeedEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->m_iSongSpeed);
+	Text.Format("%i", GET_DOC->GetSongSpeed());
 	pCmdUI->SetText(Text);
 }
 
 void CMainFrame::OnUpdateRowsEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->m_iPatternLength);
+	Text.Format("%i", GET_DOC->GetPatternLength());
 	pCmdUI->SetText(Text);
 }
 
 void CMainFrame::OnUpdateFramesEdit(CCmdUI *pCmdUI)
 {
 	CString Text;
-	Text.Format("%i", GET_DOC->m_iFrameCount);
+	Text.Format("%i", GET_DOC->GetFrameCount());
 	pCmdUI->SetText(Text);
 }
 
@@ -684,6 +641,7 @@ void CMainFrame::OnFileGeneralsettings()
 	CConfigGeneral		TabGeneral;
 	CConfigAppearance	TabAppearance;
 	CConfigMIDI			TabMIDI;
+	CConfigSound		TabSound;
 
 	TabGeneral.m_psp.dwFlags	&= ~PSP_HASHELP;
 	TabAppearance.m_psp.dwFlags &= ~PSP_HASHELP;
@@ -691,6 +649,7 @@ void CMainFrame::OnFileGeneralsettings()
 	ConfigWindow.AddPage((CPropertyPage*)&TabGeneral);
 	ConfigWindow.AddPage((CPropertyPage*)&TabAppearance);
 	ConfigWindow.AddPage((CPropertyPage*)&TabMIDI);
+	ConfigWindow.AddPage((CPropertyPage*)&TabSound);
 
 	ConfigWindow.DoModal();
 }
@@ -704,17 +663,17 @@ void CMainFrame::SetSongInfo(char *Name, char *Artist, char *Copyright)
 
 void CMainFrame::OnEnSongNameChange()
 {
-	m_wndDialogBar.GetDlgItemText(IDC_SONG_NAME, ((CFamiTrackerDoc*)GetActiveDocument())->m_strName, 32);
+	m_wndDialogBar.GetDlgItemText(IDC_SONG_NAME, ((CFamiTrackerDoc*)GetActiveDocument())->GetSongName(), 32);
 }
 
 void CMainFrame::OnEnSongArtistChange()
 {
-	m_wndDialogBar.GetDlgItemText(IDC_SONG_ARTIST, ((CFamiTrackerDoc*)GetActiveDocument())->m_strArtist, 32);
+	m_wndDialogBar.GetDlgItemText(IDC_SONG_ARTIST, ((CFamiTrackerDoc*)GetActiveDocument())->GetSongArtist(), 32);
 }
 
 void CMainFrame::OnEnSongCopyrightChange()
 {
-	m_wndDialogBar.GetDlgItemText(IDC_SONG_COPYRIGHT, ((CFamiTrackerDoc*)GetActiveDocument())->m_strCopyright, 32);
+	m_wndDialogBar.GetDlgItemText(IDC_SONG_COPYRIGHT, ((CFamiTrackerDoc*)GetActiveDocument())->GetSongCopyright(), 32);
 }
 
 void CMainFrame::ChangeNoteState(int Note)
@@ -727,8 +686,21 @@ void CMainFrame::OpenInstrumentSettings()
 	CFamiTrackerDoc		*pDoc	= (CFamiTrackerDoc*)GetActiveDocument();
 	CFamiTrackerView	*pView	= (CFamiTrackerView*)GetActiveView();
 
-	if (pDoc->Instruments[pView->m_iInstrument].Free == false)
-		m_InstEdit.DoModal();
+	if (pDoc->IsInstrumentUsed(pView->GetInstrument())) {
+		if (m_InstEdit.m_bOpened == false) {
+			m_InstEdit.Create(IDD_INSTRUMENT, this);
+			m_InstEdit.SetCurrentInstrument(pView->GetInstrument());
+			m_InstEdit.UpdateWindow();
+			m_InstEdit.ShowWindow(SW_SHOW);
+		}
+		else
+			m_InstEdit.SetCurrentInstrument(pView->GetInstrument());
+	}
+}
+
+void CMainFrame::CloseInstrumentSettings()
+{
+	m_InstEdit.DestroyWindow();
 }
 
 void CMainFrame::OnUpdateKeyRepeat(CCmdUI *pCmdUI)
@@ -783,4 +755,32 @@ void CMainFrame::OnEnKillfocusSongCopyright()
 	char Limit[32];
 	m_wndDialogBar.GetDlgItemText(IDC_SONG_COPYRIGHT, Limit, 32);
 	m_wndDialogBar.SetDlgItemText(IDC_SONG_COPYRIGHT, Limit);
+}
+
+BOOL CMainFrame::DestroyWindow()
+{
+	// Store window position
+
+	CRect WinRect;
+	int State = STATE_NORMAL;
+
+	GetWindowRect(WinRect);
+
+	if (IsZoomed())
+		State = STATE_MAXIMIZED;
+
+	if (IsIconic()) {
+		WinRect.top = WinRect.left = 100;
+		WinRect.bottom = 920;
+		WinRect.right = 950;
+	}
+
+	theApp.m_pSettings->SetWindowPos(WinRect.left, WinRect.top, WinRect.right, WinRect.bottom, State);
+
+	return CFrameWnd::DestroyWindow();
+}
+
+BOOL CMainFrame::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
 }

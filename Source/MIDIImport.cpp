@@ -133,14 +133,21 @@ bool CMIDIImport::ImportFile(LPCSTR FileName)
 
 	m_iPatternLength = ImportDialog.m_iPatLen;
 
-	pDocument->SetRowCount(m_iPatternLength);
+	pDocument->SetPatternLength(m_iPatternLength);
+	pDocument->SetFrameCount(m_iPatterns);
 
-	pDocument->SetPatternCount(m_iPatterns);
+	/*
 	pDocument->FrameList[m_iPatterns][0] = m_iPatterns;
 	pDocument->FrameList[m_iPatterns][1] = m_iPatterns;
 	pDocument->FrameList[m_iPatterns][2] = m_iPatterns;
 	pDocument->FrameList[m_iPatterns][3] = m_iPatterns;
-	pDocument->FrameList[m_iPatterns][4] = m_iPatterns;
+	pDocument->FrameList[m_iPatterns][4] = m_iPatterns;*/
+
+	pDocument->SetPatternAtFrame(m_iPatterns, 0, m_iPatterns);
+	pDocument->SetPatternAtFrame(m_iPatterns, 1, m_iPatterns);
+	pDocument->SetPatternAtFrame(m_iPatterns, 2, m_iPatterns);
+	pDocument->SetPatternAtFrame(m_iPatterns, 3, m_iPatterns);
+	pDocument->SetPatternAtFrame(m_iPatterns, 4, m_iPatterns);
 
 	File.Open(FileName, CFile::modeRead);
 
@@ -159,6 +166,9 @@ bool CMIDIImport::ImportFile(LPCSTR FileName)
 		}
 	}
 	
+	if (m_iTempo > 0xFF)
+		m_iTempo = 0xFF;
+
 	pDocument->SetSongSpeed(m_iTempo);
 
 	File.Close();
@@ -385,10 +395,11 @@ void CMIDIImport::ProcessNote(unsigned char Status, unsigned char Data1, unsigne
 
 	if (Pattern > m_iPatterns) {
 		m_iPatterns++;
-		pDocument->SetPatternCount(m_iPatterns);
+		pDocument->SetFrameCount(m_iPatterns);
 		for (i = 0; i < MAX_CHANNELS; i++) {
 			if (m_iChannelMap[i] < 16 ) {
-				pDocument->FrameList[m_iPatterns][i] = m_iPatterns;
+				//pDocument->FrameList[m_iPatterns][i] = m_iPatterns;
+				pDocument->SetPatternAtFrame(m_iPatterns, i, m_iPatterns);
 			}
 		}
 	}
@@ -403,7 +414,7 @@ void CMIDIImport::ProcessNote(unsigned char Status, unsigned char Data1, unsigne
 	for (i = 0; i < MAX_CHANNELS; i++) {
 		if (m_iChannelMap[i] == Channel) {
 			Note.Instrument = i;
-			pDocument->SetNoteData(i, Row, Pattern, &Note);
+			pDocument->SetNoteData(Pattern, i, Row, &Note);
 		}
 	}
 }

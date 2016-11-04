@@ -26,7 +26,6 @@
 #include "MIDI.h"
 #include "InstrumentEditDlg.h"
 #include "SpeedDlg.h"
-#include "..\include\famitrackerview.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -35,63 +34,64 @@
 #define GET_CHANNEL(x)	((x - LEFT_OFFSET - 40) / CHANNEL_WIDTH)
 #define GET_COLUMN(x)	((x - LEFT_OFFSET - 40) - (GET_CHANNEL(x) * CHANNEL_WIDTH))
 
-const int DEFAULT_TEMPO_NTSC	= 150;
-const int DEFAULT_TEMPO_PAL		= 125;
-const int DEFAULT_SPEED			= 6;
-
 enum { COL_NOTE, COL_INSTRUMENT, COL_VOLUME, COL_EFFECT };
 
-const unsigned int TEXT_POSITION	= 10;
-const unsigned int TOP_OFFSET		= 46;
-const unsigned int LEFT_OFFSET		= 10;
-const unsigned int ROW_HEIGHT		= 18;
-const unsigned int COLUMNS			= 7;
+const unsigned int PAGE_SIZE = 4;
 
-const unsigned int COLUMN_SPACING	= 4;
-const unsigned int CHAR_WIDTH		= 12;
+const unsigned int DEFAULT_TEMPO_NTSC	= 150;
+const unsigned int DEFAULT_TEMPO_PAL	= 125;
+const unsigned int DEFAULT_SPEED		= 6;
 
-const unsigned int ROW_NUMBER_WIDTH	= 20;
-const unsigned int CHANNEL_SPACING	= 10;
+const unsigned int TEXT_POSITION		= 10;
+const unsigned int TOP_OFFSET			= 46;
+const unsigned int LEFT_OFFSET			= 10;
+const unsigned int ROW_HEIGHT			= 18;
 
-const unsigned int CHANNEL_START	= LEFT_OFFSET * 2 + ROW_NUMBER_WIDTH - 3;
+const unsigned int COLUMN_SPACING		= 4;
+const unsigned int CHAR_WIDTH			= 12;
 
-const unsigned int CHANNEL_WIDTH	= CHAR_WIDTH * 9 + COLUMN_SPACING * 3;
-const unsigned int CHAN_AREA_WIDTH	= CHANNEL_WIDTH + CHANNEL_SPACING * 2;
+const unsigned int ROW_NUMBER_WIDTH		= 20;
+const unsigned int CHANNEL_SPACING		= 10;
 
-const unsigned int COLUMN_SPACE[]	= {CHAR_WIDTH * 3 + COLUMN_SPACING,
-									   CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING, 
-									   CHAR_WIDTH + COLUMN_SPACING,  
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING};
+const unsigned int CHANNEL_START		= LEFT_OFFSET * 2 + ROW_NUMBER_WIDTH - 3;
 
-const unsigned int CURSOR_SPACE[]	= {CHAR_WIDTH * 3,
-									   CHAR_WIDTH, CHAR_WIDTH,
-									   CHAR_WIDTH,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
-									   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH};
+const unsigned int CHANNEL_WIDTH		= CHAR_WIDTH * 9 + COLUMN_SPACING * 3;
+const unsigned int CHAN_AREA_WIDTH		= CHANNEL_WIDTH + CHANNEL_SPACING * 2;
 
-const unsigned int COLUMN_SEL[]		= {0, CHAR_WIDTH * 3 + COLUMN_SPACING,
-										CHAR_WIDTH * 4 + COLUMN_SPACING + 2,
-										CHAR_WIDTH * 5 + COLUMN_SPACING * 2, 
-										CHAR_WIDTH * 6 + COLUMN_SPACING * 3,
-										CHAR_WIDTH * 7 + COLUMN_SPACING * 4 - 2,
-										CHAR_WIDTH * 8 + COLUMN_SPACING * 4 - 2, 
-										CHAR_WIDTH * 9 + COLUMN_SPACING * 4,
-										CHAR_WIDTH * 10 + COLUMN_SPACING * 5 - 2,
-										CHAR_WIDTH * 11 + COLUMN_SPACING * 5 - 2, 
-										CHAR_WIDTH * 12 + COLUMN_SPACING * 5,
-										CHAR_WIDTH * 13 + COLUMN_SPACING * 6 - 2,
-										CHAR_WIDTH * 14 + COLUMN_SPACING * 6 - 2, 
-										CHAR_WIDTH * 15 + COLUMN_SPACING * 6,
-										CHAR_WIDTH * 16 + COLUMN_SPACING * 7 - 2,
-										CHAR_WIDTH * 17 + COLUMN_SPACING * 7 - 2, 
-										CHAR_WIDTH * 18 + COLUMN_SPACING * 7};
+const unsigned int COLUMN_SPACE[]		= {CHAR_WIDTH * 3 + COLUMN_SPACING,
+										   CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING, 
+										   CHAR_WIDTH + COLUMN_SPACING,  
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH + COLUMN_SPACING};
 
-const unsigned int GET_APPR_START_SEL[] = {0, 1, 1, 3, 4, 4, 4, 7, 7, 7, 10, 10, 10, 13, 13, 13};
+const unsigned int CURSOR_SPACE[]		= {CHAR_WIDTH * 3,
+										   CHAR_WIDTH, CHAR_WIDTH,
+										   CHAR_WIDTH,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH,
+										   CHAR_WIDTH, CHAR_WIDTH, CHAR_WIDTH};
+
+const unsigned int COLUMN_SEL[]			= {0, CHAR_WIDTH * 3 + COLUMN_SPACING,
+											CHAR_WIDTH * 4 + COLUMN_SPACING + 2,
+											CHAR_WIDTH * 5 + COLUMN_SPACING * 2, 
+											CHAR_WIDTH * 6 + COLUMN_SPACING * 3,
+											CHAR_WIDTH * 7 + COLUMN_SPACING * 4 - 2,
+											CHAR_WIDTH * 8 + COLUMN_SPACING * 4 - 2, 
+											CHAR_WIDTH * 9 + COLUMN_SPACING * 4,
+											CHAR_WIDTH * 10 + COLUMN_SPACING * 5 - 2,
+											CHAR_WIDTH * 11 + COLUMN_SPACING * 5 - 2, 
+											CHAR_WIDTH * 12 + COLUMN_SPACING * 5,
+											CHAR_WIDTH * 13 + COLUMN_SPACING * 6 - 2,
+											CHAR_WIDTH * 14 + COLUMN_SPACING * 6 - 2, 
+											CHAR_WIDTH * 15 + COLUMN_SPACING * 6,
+											CHAR_WIDTH * 16 + COLUMN_SPACING * 7 - 2,
+											CHAR_WIDTH * 17 + COLUMN_SPACING * 7 - 2, 
+											CHAR_WIDTH * 18 + COLUMN_SPACING * 7};
+
+const unsigned int GET_APPR_START_SEL[]	= {0, 1, 1, 3, 4, 4, 4, 7, 7, 7, 10, 10, 10, 13, 13, 13};
 const unsigned int GET_APPR_END_SEL[]	= {0, 2, 2, 3, 6, 6, 6, 9, 9, 9, 12, 12, 12, 15, 15, 15};
 
 // CFamiTrackerView
@@ -99,77 +99,72 @@ const unsigned int GET_APPR_END_SEL[]	= {0, 2, 2, 3, 6, 6, 6, 9, 9, 9, 12, 12, 1
 IMPLEMENT_DYNCREATE(CFamiTrackerView, CView)
 
 BEGIN_MESSAGE_MAP(CFamiTrackerView, CView)
+	ON_WM_CREATE()
 	ON_WM_ERASEBKGND()
-	ON_WM_LBUTTONDOWN()
+	ON_WM_KILLFOCUS()
+	ON_WM_SETFOCUS()
+	ON_WM_TIMER()
 	ON_WM_VSCROLL()
+	ON_WM_HSCROLL()
 	ON_WM_KEYDOWN()
 	ON_WM_KEYUP()
-	ON_WM_MOUSEWHEEL()
 	ON_WM_MOUSEMOVE()
+	ON_WM_MOUSEWHEEL()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_LBUTTONDBLCLK()
+	ON_WM_RBUTTONUP()
+	ON_COMMAND(ID_EDIT_UNDO, OnEditUndo)
+	ON_COMMAND(ID_EDIT_REDO, OnEditRedo)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CUT, OnEditCut)
 	ON_COMMAND(ID_EDIT_PASTE, OnEditPaste)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
 	ON_COMMAND(ID_EDIT_DELETE, OnEditDelete)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_STOP, OnUpdateTrackerStop)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_PLAY, OnUpdateTrackerPlay)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_PLAYPATTERN, OnUpdateTrackerPlaypattern)
-	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
-	ON_COMMAND(ID_TRACKER_PLAYPATTERN, OnTrackerPlaypattern)
-	ON_COMMAND(ID_TRACKER_STOP, OnTrackerStop)
-	ON_COMMAND(ID_TRACKER_EDIT, OnTrackerEdit)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_EDIT, OnUpdateTrackerEdit)
-	ON_COMMAND(ID_TRACKER_PAL, OnTrackerPal)
-	ON_COMMAND(ID_TRACKER_NTSC, OnTrackerNtsc)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_PAL, OnUpdateTrackerPal)
-	ON_UPDATE_COMMAND_UI(ID_TRACKER_NTSC, OnUpdateTrackerNtsc)
-	ON_UPDATE_COMMAND_UI(ID_SPEED_DEFALUT, OnUpdateSpeedDefalut)
-	ON_UPDATE_COMMAND_UI(ID_SPEED_CUSTOM, OnUpdateSpeedCustom)
-	ON_COMMAND(ID_SPEED_CUSTOM, OnSpeedCustom)
-	ON_COMMAND(ID_SPEED_DEFALUT, OnSpeedDefalut)
-	ON_WM_LBUTTONUP()
+	ON_COMMAND(ID_EDIT_SELECTALL, OnEditSelectall)
 	ON_COMMAND(ID_EDIT_PASTEOVERWRITE, OnEditPasteoverwrite)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTEOVERWRITE, OnUpdateEditPasteoverwrite)
+	ON_COMMAND(ID_EDIT_ENABLEMIDI, OnEditEnablemidi)
+	ON_COMMAND(ID_FRAME_INSERT, OnFrameInsert)
+	ON_COMMAND(ID_FRAME_REMOVE, OnFrameRemove)
 	ON_COMMAND(ID_TRANSPOSE_DECREASENOTE, OnTransposeDecreasenote)
 	ON_COMMAND(ID_TRANSPOSE_DECREASEOCTAVE, OnTransposeDecreaseoctave)
 	ON_COMMAND(ID_TRANSPOSE_INCREASENOTE, OnTransposeIncreasenote)
 	ON_COMMAND(ID_TRANSPOSE_INCREASEOCTAVE, OnTransposeIncreaseoctave)
-	ON_COMMAND(ID_EDIT_UNDO, OnEditUndo)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateEditUndo)
-	ON_COMMAND(ID_EDIT_REDO, OnEditRedo)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
-	ON_WM_LBUTTONDBLCLK()
-	ON_COMMAND(ID_EDIT_SELECTALL, OnEditSelectall)
-	ON_WM_KILLFOCUS()
-	ON_WM_SETFOCUS()
-	ON_WM_TIMER()
-	ON_WM_CREATE()
-	ON_COMMAND(ID_EDIT_ENABLEMIDI, OnEditEnablemidi)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_ENABLEMIDI, OnUpdateEditEnablemidi)
-	ON_COMMAND(ID_FRAME_INSERT, OnFrameInsert)
-	ON_COMMAND(ID_FRAME_REMOVE, OnFrameRemove)
+	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
 	ON_COMMAND(ID_TRACKER_PLAYROW, OnTrackerPlayrow)
+	ON_COMMAND(ID_TRACKER_PLAYPATTERN, OnTrackerPlaypattern)
+	ON_COMMAND(ID_TRACKER_STOP, OnTrackerStop)
+	ON_COMMAND(ID_TRACKER_EDIT, OnTrackerEdit)
+	ON_COMMAND(ID_TRACKER_PAL, OnTrackerPal)
+	ON_COMMAND(ID_TRACKER_NTSC, OnTrackerNtsc)
+	ON_COMMAND(ID_SPEED_CUSTOM, OnSpeedCustom)
+	ON_COMMAND(ID_SPEED_DEFALUT, OnSpeedDefalut)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_COPY, OnUpdateEditCopy)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_CUT, OnUpdateEditCut)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTE, OnUpdateEditPaste)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_DELETE, OnUpdateEditDelete)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_STOP, OnUpdateTrackerStop)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_PLAY, OnUpdateTrackerPlay)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_PLAYPATTERN, OnUpdateTrackerPlaypattern)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_EDIT, OnUpdateTrackerEdit)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_PAL, OnUpdateTrackerPal)
+	ON_UPDATE_COMMAND_UI(ID_TRACKER_NTSC, OnUpdateTrackerNtsc)
+	ON_UPDATE_COMMAND_UI(ID_SPEED_DEFALUT, OnUpdateSpeedDefalut)
+	ON_UPDATE_COMMAND_UI(ID_SPEED_CUSTOM, OnUpdateSpeedCustom)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_PASTEOVERWRITE, OnUpdateEditPasteoverwrite)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateEditUndo)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, OnUpdateEditRedo)
+	ON_UPDATE_COMMAND_UI(ID_EDIT_ENABLEMIDI, OnUpdateEditEnablemidi)
 	ON_UPDATE_COMMAND_UI(ID_FRAME_REMOVE, OnUpdateFrameRemove)
-	ON_WM_HSCROLL()
-	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
 
 struct stClipData {
-	int			Size;
-	bool		FirstColumn;
-	int			NumCols;
-	char		Notes[MAX_PATTERN_LENGTH];
-	char		Octaves[MAX_PATTERN_LENGTH];
-	int			ColumnData[COLUMNS + 3 * 4][MAX_PATTERN_LENGTH];
+	unsigned int		Size;
+	bool				FirstColumn;
+	unsigned int		NumCols;
+	char				Notes[MAX_PATTERN_LENGTH];
+	char				Octaves[MAX_PATTERN_LENGTH];
+	int					ColumnData[COLUMNS + 3 * 4][MAX_PATTERN_LENGTH];
 };
-
-bool IgnoreFirst;
-
-int m_iKeyboardNote;
-int m_iSoloChannel;
 
 bool IsColumnSelected(int Start, int End, int Column)
 {
@@ -259,7 +254,6 @@ CFamiTrackerView::CFamiTrackerView()
 	int i;
 
 	m_bInitialized		= false;
-	m_bRedrawed			= false;
 
 	m_iCurrentRow		= 0;
 	m_iCurrentFrame		= 0;
@@ -347,27 +341,15 @@ CFamiTrackerDoc* CFamiTrackerView::GetDocument() const // non-debug version is i
 }
 #endif //_DEBUG
 
-
 // CFamiTrackerView message handlers
 
-CDC		*dcBack;
-CDC		*dcFont;
-
-void CFamiTrackerView::OnDraw(CDC* pDC)
-{	
+void CFamiTrackerView::PrepareBackground(CDC *dc)
+{
+	const unsigned int EFF_COL_WIDTH = ((CHAR_WIDTH * 3) + COLUMN_SPACING);
+	const char *CHANNEL_NAMES[] = {"Square 1", "Square 2", "Triangle", "Noise", "DPCM"};
+	
 	CFamiTrackerDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
-
-	const int TextWidth = 150;
-	const int TextOffset = 60;
-
-	LOGFONT LogFont;
-	CBitmap Bmp, *OldBmp;
-	CFont	Font, *OldFont;
-	CPen	Pen, HiBgPen, BlackPen, SelectPen, CursorPen, *OldPen;
-	CBrush	Brush, HiBgBrush, SelectBrush, CursorBrush, *OldBrush;
-
-	int ColumnCount = 0, CurrentColumn = 0;
 
 	unsigned int ColBackground		= theApp.m_pSettings->Appearance.iColBackground;
 	unsigned int ColHiBackground	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
@@ -375,68 +357,16 @@ void CFamiTrackerView::OnDraw(CDC* pDC)
 	unsigned int ColHiText			= theApp.m_pSettings->Appearance.iColPatternTextHilite;
 	unsigned int ColSelection		= theApp.m_pSettings->Appearance.iColSelection;
 	unsigned int ColCursor			= theApp.m_pSettings->Appearance.iColCursor;
-	
-	unsigned int CurrentBgCol, TextColor;
 
-	int TrackerFieldRows = pDoc->m_iPatternLength;
-	int i, y;
-	
-	int c, Nr;
+	CBrush Brush, *OldBrush;
+	CPen Pen, *OldPen;
 
-	CString ChanName;
-	char	Text[256];
+	unsigned int AvailableChannels = pDoc->GetAvailableChannels();
+	unsigned int CurrentColumn = 0, ColumnCount = 0;
+	unsigned int i, Offset;
 
-	static DWORD LastTime;
-
-	LPCSTR FontName = theApp.m_pSettings->General.strFont;
-
-	if ((GetTickCount() - LastTime) < 30 && m_bPlaying)
-		return;
-
-	LastTime = GetTickCount();
-
-	if (!pDoc)
-		return;
-
-	if (!pDoc->m_bFileLoaded) {
-		pDC->Rectangle(0, 0, ViewAreaWidth, ViewAreaHeight);
-		pDC->TextOut(5, 5, "No document is loaded");
-		return;
-	}
-
-	if (!theApp.m_pSettings->General.bFreeCursorEdit)
-		m_iCursorRow = m_iCurrentRow;
-
-	if (m_iCurrentRow > (TrackerFieldRows - 1)) {
-		m_iCurrentRow = (TrackerFieldRows - 1);
-		m_iCursorRow = (TrackerFieldRows - 1);
-	}
-
-	dcBack = new CDC;
-
-	Bmp.CreateCompatibleBitmap(pDC, WindowWidth, WindowHeight);
-	dcBack->CreateCompatibleDC(pDC);
-	OldBmp = dcBack->SelectObject(&Bmp);
-
-	memset(&LogFont, 0, sizeof LOGFONT);
-	memcpy(LogFont.lfFaceName, FontName, strlen(FontName));
-
-	LogFont.lfHeight = -12;
-	LogFont.lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
-
-	Font.CreateFontIndirect(&LogFont);
-
-	// Create brushes
+	// Create colors
 	Brush.CreateSolidBrush(ColBackground);
-	HiBgBrush.CreateSolidBrush(ColHiBackground);
-	SelectBrush.CreateSolidBrush(ColSelection);
-	CursorBrush.CreateSolidBrush(ColCursor);
-
-	// Create pens
-	BlackPen.CreatePen(0, 5, 0xFF000000);
-	HiBgPen.CreatePen(0, 0, ColHiBackground);
-	SelectPen.CreatePen(0, 0, ColSelection);
-	CursorPen.CreatePen(0, 0, ColCursor);
 
 	if (m_bEditEnable) {
 		if (m_bHasFocus)
@@ -451,268 +381,341 @@ void CFamiTrackerView::OnDraw(CDC* pDC)
 			Pen.CreatePen(0, 5, COLOR_SCHEME.BORDER_NORMAL);
 	}
 
-	OldBrush	= dcBack->SelectObject(&Brush);
-	OldFont		= dcBack->SelectObject(&Font);
-	OldPen		= dcBack->SelectObject(&Pen);
+	OldPen = dc->SelectObject(&Pen);
+	OldBrush = dc->SelectObject(&Brush);
 
-	dcBack->Rectangle(0, 0, WindowWidth - 22, WindowHeight - 22);
+	// Clear background
+	dc->Rectangle(0, 0, m_iWindowWidth - 4, m_iWindowHeight - 4);
 
-	dcBack->FillSolidRect(4, 4, WindowWidth - 31, TOP_OFFSET - 6, ColHiBackground);
-
-	dcBack->SelectObject(&BlackPen);
-	dcBack->SetBkColor(ColHiBackground);
-	
-	if (m_iCurrentRow > (VisibleRows / 2))
-		Nr = m_iCurrentRow - VisibleRows / 2;
-	else
-		Nr = 0;
-
-	if (m_iCurrentFrame < 0)
-		m_iCurrentFrame = 0;
-
-	int Offset, ChanWidth;
+	// Draw the channel header background
+	dc->FillSolidRect(4, 4, m_iWindowWidth - 12, TOP_OFFSET - 6, ColHiBackground);
 
 	// Determine weither the view needs to be scrolled horizontally
 	Offset = CHANNEL_START + CHANNEL_SPACING;
 
+	m_iChannelsVisible = AvailableChannels;
+
+	// Don't begin after the cursor
 	if (m_iStartChan > m_iCursorChannel)
 		m_iStartChan = m_iCursorChannel;
 
-	for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-		ChanWidth = CHANNEL_WIDTH + pDoc->m_iEffectColumns[i] * ((CHAR_WIDTH * 3) + COLUMN_SPACING) + CHANNEL_SPACING * 2;		
-		
-		m_iChannelWidths[i]		= ChanWidth;
-		m_iChannelColumns[i]	= COLUMNS + pDoc->m_iEffectColumns[i] * 3;
-
-		Offset += ChanWidth;
+	// Calculate channel widths
+	for (i = 0; i < AvailableChannels; i++) {		
+		m_iChannelWidths[i] = CHANNEL_WIDTH + pDoc->GetEffColumns(i) * EFF_COL_WIDTH + CHANNEL_SPACING * 2;
+		m_iChannelColumns[i] = COLUMNS + pDoc->GetEffColumns(i) * 3;
 
 		if (m_iCursorChannel == i)
 			CurrentColumn = ColumnCount + m_iCursorColumn;
 
-		ColumnCount += COLUMNS + pDoc->m_iEffectColumns[i] * 3;
+		ColumnCount += COLUMNS + pDoc->GetEffColumns(i) * 3;
 	}
 
 	Offset = CHANNEL_START + CHANNEL_SPACING;
 
-	for (i = m_iStartChan; i < pDoc->m_iChannelsAvailable; i++) {
-		if (m_iCursorChannel == i) {
-			if ((Offset + ChanWidth) > ViewAreaWidth) {
-				m_iStartChan++;
-				Offset = CHANNEL_START + CHANNEL_SPACING;
-				i = m_iStartChan;
-				continue;
-			}
+	// Find out the first visible channel on screen
+	for (i = m_iStartChan; i < AvailableChannels; i++) {
+		if (m_iCursorChannel == i && (Offset + m_iChannelWidths[i]) > m_iWindowWidth) {
+			m_iStartChan++;
+			i = m_iStartChan;
+			Offset = CHANNEL_START + CHANNEL_SPACING;
+			continue;
 		}
 		Offset += m_iChannelWidths[i];
 	}
 
-
-	m_iChannelsVisible = pDoc->m_iChannelsAvailable;
-
-	int Width;
-
-	// Draw channel headers
 	Offset = CHANNEL_START + CHANNEL_SPACING;
 
-	if (m_iStartChan != 0) {
-		CString Text;
-		Text = "<<";
-		dcBack->SetTextColor(COLOR_SCHEME.TEXT_HILITE);
-		dcBack->SetBkColor(ColHiBackground);
-		dcBack->TextOut(10, TEXT_POSITION, Text);
-	}
+	// Print channel headers
+	for (i = m_iStartChan; i < AvailableChannels; i++) {
+		// Draw vertical line
+		dc->FillSolidRect(Offset - CHANNEL_SPACING - 3, 3, 1, m_iWindowHeight - 10, 0x808080);
 
-	for (i = m_iStartChan; i < pDoc->m_iChannelsAvailable; i++) {
-		switch (i) {
-			case 0: ChanName = "Square 1";		break;
-			case 1: ChanName = "Square 2";		break;
-			case 2: ChanName = "Triangle";		break;
-			case 3: ChanName = "Noise";			break;
-			case 4: ChanName = "DPCM";			break;
-			case 5: ChanName = "VRC6 Square 1"; break;
-			case 6: ChanName = "VRC6 Square 1"; break;
-			case 7: ChanName = "VRC6 Sawtooth"; break;
-		}
-
-		dcBack->FillSolidRect(Offset - CHANNEL_SPACING - 3, 3, 1, ViewAreaHeight - 24, 0x808080);
-
-		Width = CHANNEL_WIDTH + pDoc->m_iEffectColumns[i] * ((CHAR_WIDTH * 3) + COLUMN_SPACING) + CHANNEL_SPACING * 2;
-
-		if ((Offset + Width) > (ViewAreaWidth - 3)) {
+		// If channel will go outside the window, break
+		if (Offset + m_iChannelWidths[i] > m_iWindowWidth) {
 			m_iChannelsVisible = i;
 			break;
 		}
 
-		dcBack->SetTextColor(m_bMuteChannels[i] ? COLOR_SCHEME.TEXT_MUTED : COLOR_SCHEME.TEXT_HILITE);
-		dcBack->SetBkColor(ColHiBackground);
-		dcBack->TextOut(Offset, TEXT_POSITION, ChanName);
+		// Print the text
+		dc->SetTextColor(m_bMuteChannels[i] ? COLOR_SCHEME.TEXT_MUTED : COLOR_SCHEME.TEXT_HILITE);
+		dc->SetBkColor(ColHiBackground);
+		dc->TextOut(Offset, TEXT_POSITION, CHANNEL_NAMES[i]);
 
-		if (pDoc->m_iEffectColumns[i] > 0)
-			dcBack->DrawIcon(Offset + CHANNEL_WIDTH - 27, 9, theApp.LoadIcon(IDI_ARROW_LEFT));
-		if (pDoc->m_iEffectColumns[i] < (MAX_EFFECT_COLUMNS - 1))
-			dcBack->DrawIcon(Offset + CHANNEL_WIDTH - 16, 9, theApp.LoadIcon(IDI_ARROW_RIGHT));
+		// Display the fx columns with some flashy text
+		dc->SetTextColor(DIM(ColHiText, 30));
 
-		Offset += Width;
+		if (pDoc->GetEffColumns(i) > 0)
+			dc->TextOut(Offset + CHANNEL_WIDTH + 8, TEXT_POSITION + 12, "fx2");
+		if (pDoc->GetEffColumns(i) > 1)
+			dc->TextOut(Offset + CHANNEL_WIDTH + 48, TEXT_POSITION + 12, "fx3");
+		if (pDoc->GetEffColumns(i) > 2)
+			dc->TextOut(Offset + CHANNEL_WIDTH + 88, TEXT_POSITION + 12, "fx4");
+
+		// Arrows for expanding/removing fx columns
+		if (pDoc->GetEffColumns(i) > 0)
+			dc->DrawIcon(Offset + CHANNEL_WIDTH - 27, 9, theApp.LoadIcon(IDI_ARROW_LEFT));
+		if (pDoc->GetEffColumns(i) < (MAX_EFFECT_COLUMNS - 1))
+			dc->DrawIcon(Offset + CHANNEL_WIDTH - 16, 9, theApp.LoadIcon(IDI_ARROW_RIGHT));
+
+		Offset += m_iChannelWidths[i];
 	}
 
-	if (m_iChannelsVisible != pDoc->m_iChannelsAvailable && (ViewAreaWidth - Offset) > 20) {
-		CString Text;
-		Text = ">>";
-		dcBack->SetTextColor(COLOR_SCHEME.TEXT_HILITE);
-		dcBack->SetBkColor(ColHiBackground);
-		dcBack->TextOut(Offset, TEXT_POSITION, Text);
+	// Draw the last vertical channel line
+	dc->FillSolidRect(Offset - CHANNEL_SPACING - 3, 3, 1, m_iWindowHeight - 10, 0x808080);
+
+	// Display if there's channels outside the screen
+	dc->SetTextColor(COLOR_SCHEME.TEXT_HILITE);
+	dc->SetBkColor(ColHiBackground);
+
+	// Before
+	if (m_iStartChan != 0)
+		dc->TextOut(10, TEXT_POSITION, "<<", 2);
+
+	// After
+	if (m_iChannelsVisible != AvailableChannels && (m_iWindowWidth - Offset) > 24)
+		dc->TextOut(Offset, TEXT_POSITION, ">>", 2);
+
+	Offset -= 15;
+
+	if (Offset > (m_iWindowWidth - 2))
+		Offset = (m_iWindowWidth - 2);
+
+	// Draw the horizontal line between the channel names and tracker field
+	dc->FillSolidRect(3, TOP_OFFSET - 2, Offset, 1, 0x808080);
+
+	// Delete objects
+	dc->SelectObject(OldPen);
+	dc->SelectObject(OldBrush);
+
+	// Update horizontal scrollbars
+	SetScrollRange(SB_HORZ, 0, ColumnCount - 1);
+	SetScrollPos(SB_HORZ, CurrentColumn);
+}
+
+void CFamiTrackerView::DrawPatternField(CDC* dc)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stChanNote Note;
+	CString RowText;
+
+	unsigned int ColBackground		= theApp.m_pSettings->Appearance.iColBackground;
+	unsigned int ColHiBackground	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
+	unsigned int ColText			= theApp.m_pSettings->Appearance.iColPatternText;
+	unsigned int ColHiText			= theApp.m_pSettings->Appearance.iColPatternTextHilite;
+	unsigned int ColSelection		= theApp.m_pSettings->Appearance.iColSelection;
+	unsigned int ColCursor			= theApp.m_pSettings->Appearance.iColCursor;
+
+	unsigned int SelectStart		= GetSelectStart();
+	unsigned int SelectEnd			= GetSelectEnd();
+	unsigned int SelectColStart		= GetSelectColStart();
+	unsigned int SelectColEnd		= GetSelectColEnd();
+
+	unsigned int CurrentBgCol, CurrentTextCol;
+
+	unsigned int RowsInField = pDoc->GetPatternLength();
+	unsigned int i, x, c;
+
+	unsigned int Offset, ColOffset;
+	unsigned int Row;
+	unsigned int Width;
+	unsigned int ThisFrame = m_iCurrentFrame;
+
+	int CursorDifference = signed(m_iCursorRow - m_iCurrentRow);
+
+	// Adjust if cursor is locked or the tracker is playing
+	if (m_bPlaying || !theApp.m_pSettings->General.bFreeCursorEdit) {
+		m_iCurrentRow = m_iCursorRow;
+	}
+	else {
+		// Adjust if cursor is out of screen (if free cursor)
+		while (CursorDifference >= signed(m_iVisibleRows / 2) && CursorDifference > 0) {
+			m_iCurrentRow++;
+			CursorDifference = signed(m_iCursorRow - m_iCurrentRow);
+		}
+
+		while (-CursorDifference > signed(m_iVisibleRows / 2) && CursorDifference < 0) {
+			m_iCurrentRow--;
+			CursorDifference = signed(m_iCursorRow - m_iCurrentRow);
+		}
 	}
 
-	dcBack->FillSolidRect(Offset - CHANNEL_SPACING - 3, 3, 1, ViewAreaHeight - 24, 0x808080);
+	unsigned int RowCursor = m_iCursorRow;
+	unsigned int MiddleRow = m_iCurrentRow;
 
-	Width = Offset - 15;
+	// Decide start row
+	if (MiddleRow > (m_iVisibleRows / 2))
+		Row = MiddleRow - (m_iVisibleRows / 2);
+	else 
+		Row = 0;
 
-	if (Width > (ViewAreaWidth - 2))
-		Width = (ViewAreaWidth - 2);
+	// Draw all rows
+	for (i = 0; i < m_iVisibleRows; i++) {
+		if ((MiddleRow - (m_iVisibleRows / 2) + i) >= 0 && (MiddleRow - (m_iVisibleRows / 2) + i) < RowsInField) {
 
-	dcBack->FillSolidRect(3, TOP_OFFSET - 2, Width, 1, 0x808080);
-
-	dcBack->SetBkColor(ColBackground);
-
-	int SelStart	= m_iSelectStart;
-	int SelEnd		= m_iSelectEnd;
-
-	if (SelStart > SelEnd) {
-		SelStart	= m_iSelectEnd;
-		SelEnd		= m_iSelectStart;
-	}
-
-	int SelColStart = m_iSelectColStart;
-	int SelColEnd	= m_iSelectColEnd;
-
-	if (SelColStart > SelColEnd) {
-		SelColStart = m_iSelectColEnd; 
-		SelColEnd	= m_iSelectColStart;
-	}
-
-	for (y = 0; y < VisibleRows; y++) {
-		if ((m_iCurrentRow - (VisibleRows / 2) + y) >= 0 && 
-			(m_iCurrentRow - (VisibleRows / 2) + y) < TrackerFieldRows) {
-
-			if ((Nr & 3) == 0) {
-				int RectWidth = WindowWidth - 27;
-				if (RectWidth > 770)
-					RectWidth = 770;
-				dcBack->SetTextColor(ColHiText);
-				TextColor = ColHiText;
+			if ((Row & 3) == 0) {
+				// Highlight
+				CurrentTextCol = ColHiText;
 				CurrentBgCol = ColHiBackground;
-				dcBack->SelectObject(HiBgBrush);
-				dcBack->SelectObject(HiBgPen);
-				dcBack->FillSolidRect(3, TOP_OFFSET + (ROW_HEIGHT * y), CHANNEL_START - 6, ROW_HEIGHT - 2, ColHiBackground);
+				dc->FillSolidRect(3, TOP_OFFSET + (ROW_HEIGHT * i), CHANNEL_START - 6, ROW_HEIGHT - 2, ColHiBackground);
 			}
 			else {
-				dcBack->SetTextColor(ColText);
-				TextColor = ColText;
+				CurrentTextCol = ColText;
 				CurrentBgCol = ColBackground;
 			}
 
-			dcBack->SetBkColor(CurrentBgCol);
+			dc->SetTextColor(CurrentTextCol);
+			dc->SetBkColor(CurrentBgCol);
 
-			if (theApp.m_pSettings->General.bRowInHex)
-				sprintf(Text, "%02X", Nr);
-			else
-				sprintf(Text, "%03i", Nr);
+			if (theApp.m_pSettings->General.bRowInHex) {
+				RowText.Format("%02X", Row);
+				dc->TextOut(LEFT_OFFSET, TOP_OFFSET + i * ROW_HEIGHT, RowText);
+			}
+			else {
+				RowText.Format("%03i", Row);
+				dc->TextOut(LEFT_OFFSET - 3, TOP_OFFSET + i * ROW_HEIGHT, RowText);
+			}
 
-			dcBack->TextOut(LEFT_OFFSET, TOP_OFFSET + y * ROW_HEIGHT, Text, (int)strlen(Text));
+			Offset = CHANNEL_START + CHANNEL_SPACING;
 
-			int CursorColor = -1;
-			bool SelectionActive = false;
+			for (x = m_iStartChan; x < m_iChannelsVisible; x++) {
+				ColOffset = 0;
 
-			int Offset = CHANNEL_START + CHANNEL_SPACING;
-
-			for (i = m_iStartChan; i < m_iChannelsVisible; i++) {
-
-				// Highlight row
-				if (!(Nr & 3) &&  i < 5) {
-					int Width = CHAN_AREA_WIDTH + pDoc->m_iEffectColumns[i] * (CHAR_WIDTH * 3 + COLUMN_SPACING) - 1;
-					dcBack->FillSolidRect(Offset - 2 - CHANNEL_SPACING, TOP_OFFSET + (ROW_HEIGHT * y), Width, ROW_HEIGHT - 2, ColHiBackground);
+				// Highlighted row, draw bg
+				if (!(Row & 3) &&  x < 5) {
+					Width = CHAN_AREA_WIDTH + pDoc->GetEffColumns(x) * (CHAR_WIDTH * 3 + COLUMN_SPACING) - 1;
+					dc->FillSolidRect(Offset - 2 - CHANNEL_SPACING, TOP_OFFSET + (ROW_HEIGHT * i), Width, ROW_HEIGHT - 2, ColHiBackground);
 				}
 
 				// Selection
-				if (Nr >= SelStart && Nr <= SelEnd && i == m_iSelectChannel && m_iSelectStart != -1) {
-					int SelStart	= TOP_OFFSET + ROW_HEIGHT * (Nr + ((VisibleRows / 2) - m_iCurrentRow));
-					int SelChan			= Offset + COLUMN_SEL[SelColStart] - 4;
-					int SelChanEnd		= Offset + COLUMN_SEL[SelColEnd + 1] - SelChan - 4;
-					dcBack->FillSolidRect(SelChan, SelStart - 1, SelChanEnd, ROW_HEIGHT, ColSelection);
-					SelectionActive = true;
+				if (m_iSelectStart != -1 && x == m_iSelectChannel && Row >= SelectStart && Row <= SelectEnd) {
+					int SelStart	= TOP_OFFSET + ROW_HEIGHT * i /*(Row + ((m_iVisibleRows / 2) - RowCursor))*/;
+					int SelChan		= Offset + COLUMN_SEL[SelectColStart] - 4;
+					int SelChanEnd	= Offset + COLUMN_SEL[SelectColEnd + 1] - SelChan - 4;
+					dc->FillSolidRect(SelChan, SelStart - 1, SelChanEnd, ROW_HEIGHT, ColSelection);
 				}
 
-				int ColOffset = 0;
-
-				for (c = 0; c < signed(COLUMNS + pDoc->m_iEffectColumns[i] * 3); c++) {
+				// Draw all columns
+				for (c = 0; c < m_iChannelColumns[x]; c++) {
 
 					// Cursor box
-					if (Nr == m_iCursorRow && i == m_iCursorChannel && c == m_iCursorColumn) {
-						int BoxTop	= TOP_OFFSET + ROW_HEIGHT * y;
-						int SelChan = Offset + ColOffset - 2;
+					if (Row == RowCursor && x == m_iCursorChannel && c == m_iCursorColumn) {
+						unsigned int BoxTop	= TOP_OFFSET + ROW_HEIGHT * i;
+						unsigned int SelChan = Offset + ColOffset - 2;
 
-						dcBack->FillSolidRect(SelChan, BoxTop - 1, CURSOR_SPACE[m_iCursorColumn], ROW_HEIGHT, ColCursor);
-						dcBack->SetBkColor(ColCursor);
+						dc->FillSolidRect(SelChan, BoxTop - 1, CURSOR_SPACE[m_iCursorColumn], ROW_HEIGHT, ColCursor);
+						dc->SetBkColor(ColCursor);
 					}
 					else {
-						if (SelectionActive && i == m_iSelectChannel && c >= SelColStart && c <= SelColEnd)
-							dcBack->SetBkColor(ColSelection);
+						if (m_iSelectStart != -1 && x == m_iSelectChannel && c >= SelectColStart && c <= SelectColEnd && Row >= SelectStart && Row <= SelectEnd)
+							dc->SetBkColor(ColSelection);
 						else
-							dcBack->SetBkColor(CurrentBgCol);
+							dc->SetBkColor(CurrentBgCol);
 					}
 
-					DrawLine(Offset + ColOffset, pDoc->GetPatternData(m_iCurrentFrame, Nr, i), y, c, TextColor);
+					pDoc->GetNoteData(ThisFrame, x, Row, &Note);
+					DrawLine(Offset + ColOffset, &Note, i, c, x, CurrentTextCol, dc);
 
 					ColOffset += COLUMN_SPACE[c];
 				}
 
-				Offset += m_iChannelWidths[i];
+				Offset += m_iChannelWidths[x];
 			}
-			Nr++;
+			Row++;
 		}
 	}
 
-	int CursorCol1 = DIM(ColCursor, 100);
-	int CursorCol2 = DIM(ColCursor, 80);
-	int CursorCol3 = DIM(ColCursor, 60);
+	unsigned int CursorCol1 = DIM(ColCursor, 100);
+	unsigned int CursorCol2 = DIM(ColCursor, 80);
+	unsigned int CursorCol3 = DIM(ColCursor, 60);
 
 	// Selected row
-	dcBack->Draw3dRect(3, TOP_OFFSET + (VisibleRows / 2) * ROW_HEIGHT - 2, WindowWidth - 30, ROW_HEIGHT + 2, CursorCol3, CursorCol3);
-	dcBack->Draw3dRect(4, TOP_OFFSET + (VisibleRows / 2) * ROW_HEIGHT - 1, WindowWidth - 32, ROW_HEIGHT, CursorCol2, CursorCol2);
-	dcBack->Draw3dRect(5, TOP_OFFSET + (VisibleRows / 2) * ROW_HEIGHT, WindowWidth - 34, ROW_HEIGHT - 2, CursorCol1, CursorCol1);
+	dc->Draw3dRect(3, TOP_OFFSET + (m_iVisibleRows / 2) * ROW_HEIGHT - 2, m_iWindowWidth - 10, ROW_HEIGHT + 2, CursorCol3, CursorCol3);
+	dc->Draw3dRect(4, TOP_OFFSET + (m_iVisibleRows / 2) * ROW_HEIGHT - 1, m_iWindowWidth - 12, ROW_HEIGHT, CursorCol2, CursorCol2);
+	dc->Draw3dRect(5, TOP_OFFSET + (m_iVisibleRows / 2) * ROW_HEIGHT, m_iWindowWidth - 14, ROW_HEIGHT - 2, CursorCol1, CursorCol1);
 
-	DrawMeters(dcBack);
+	DrawMeters(dc);
 
-#ifdef WIP
-	dcBack->SetBkColor(COLOR_SCHEME.CURSOR);
-	dcBack->SetTextColor(COLOR_SCHEME.TEXT_HILITE);
-	dcBack->TextOut(WindowWidth - 66, WindowHeight - 41, "WIP 7");
-#endif
-
-	pDC->BitBlt(0, 0, WindowWidth, WindowHeight, dcBack, 0, 0, SRCCOPY);
-
-	dcBack->SelectObject(OldBmp);
-
-	dcBack->SelectObject(OldBrush);
-	dcBack->SelectObject(OldFont);
-	dcBack->SelectObject(OldPen);
-
-	if (TrackerFieldRows > 1)
-		SetScrollRange(SB_VERT, 0, TrackerFieldRows - 1);
+	// Update vertical scrollbar
+	if (RowsInField > 1)
+		SetScrollRange(SB_VERT, 0, RowsInField - 1);
 	else
 		SetScrollRange(SB_VERT, 0, 1);
 
 	SetScrollPos(SB_VERT, m_iCurrentRow);
 
-	SetScrollRange(SB_HORZ, 0, ColumnCount - 1);
-	SetScrollPos(SB_HORZ, CurrentColumn);
-
-	delete dcBack;
-
-	m_bRedrawed = true;
+#ifdef WIP
+	CString Wip;
+	Wip.Format("WIP %i", VERSION_WIP);
+	dc->SetBkColor(COLOR_SCHEME.CURSOR);
+	dc->SetTextColor(COLOR_SCHEME.TEXT_HILITE);
+	dc->TextOut(m_iWindowWidth - 47, m_iWindowHeight - 22, Wip);
+#endif
 }
 
-void CFamiTrackerView::DrawLine(int Offset, stChanNote *NoteData, int Line, int Column, int Color)
+void CFamiTrackerView::OnDraw(CDC* pDC)
+{	
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	static DWORD LastTime;
+
+	LOGFONT LogFont;
+	CBitmap Bmp, *OldBmp;
+	CFont	Font, *OldFont;
+	CDC		*BackDC;
+
+	LPCSTR	FontName = theApp.m_pSettings->General.strFont;
+
+	// Make sure this isn't flooded
+	if ((GetTickCount() - LastTime) < 30 && m_bPlaying)
+		return;
+
+	LastTime = GetTickCount();
+
+	// Check document
+	if (!pDoc->IsFileLoaded()) {
+		pDC->FillSolidRect(0, 0, m_iWindowWidth, m_iWindowHeight, 0x000000);
+		pDC->SetTextColor(0xFFFFFF);
+		pDC->TextOut(m_iWindowWidth / 2 - 84, m_iWindowHeight / 2 - 4, "No document is loaded");
+		return;
+	}
+
+	// Set up the drawing area
+	BackDC = new CDC;
+
+	// Create the font
+	memset(&LogFont, 0, sizeof LOGFONT);
+	memcpy(LogFont.lfFaceName, FontName, strlen(FontName));
+
+	LogFont.lfHeight = -12;
+	LogFont.lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
+
+	Font.CreateFontIndirect(&LogFont);
+
+	// Setup dc
+	Bmp.CreateCompatibleBitmap(pDC, m_iWindowWidth, m_iWindowHeight);
+	BackDC->CreateCompatibleDC(pDC);
+	OldBmp = BackDC->SelectObject(&Bmp);
+	OldFont = BackDC->SelectObject(&Font);
+
+	// Create the background
+	PrepareBackground(BackDC);
+
+	// Draw the field
+	DrawPatternField(BackDC);
+
+	// Display area and clean up
+	pDC->BitBlt(0, 0, m_iWindowWidth, m_iWindowHeight, BackDC, 0, 0, SRCCOPY);
+
+	BackDC->SelectObject(OldBmp);
+	BackDC->SelectObject(OldFont);
+
+	delete BackDC;
+}
+
+void CFamiTrackerView::DrawLine(int Offset, stChanNote *NoteData, int Line, int Column, int Channel, int Color, CDC *dc)
 {
 	const char NOTES_A[] = {'C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B'};
 	const char NOTES_B[] = {'-', '#', '-', '#', '-', '-', '#', '-', '#', '-', '#', '-'};
@@ -760,128 +763,75 @@ void CFamiTrackerView::DrawLine(int Offset, stChanNote *NoteData, int Line, int 
 				case 0:
 				case HALT:
 					if (Note == 0) {
-						DrawChar(OffsetX, LineY, '-', ShadedCol);
-						DrawChar(OffsetX + CHAR_WIDTH, LineY, '-', ShadedCol);
-						DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, '-', ShadedCol);
+						DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
+						DrawChar(OffsetX + CHAR_WIDTH, LineY, '-', ShadedCol, dc);
+						DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, '-', ShadedCol, dc);
 					}
 					else 
 					{
-						DrawChar(OffsetX, LineY, '*', Color);
-						DrawChar(OffsetX + CHAR_WIDTH, LineY, '*', Color);
-						DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, '*', Color);
+						DrawChar(OffsetX, LineY, '*', Color, dc);
+						DrawChar(OffsetX + CHAR_WIDTH, LineY, '*', Color, dc);
+						DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, '*', Color, dc);
 					}
 					break;
 				default:
-					DrawChar(OffsetX, LineY, NOTES_A[Note - 1], Color);
-					DrawChar(OffsetX + CHAR_WIDTH, LineY, NOTES_B[Note - 1], Color);
-					DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, NOTES_C[Octave], Color);
+					DrawChar(OffsetX, LineY, NOTES_A[Note - 1], Color, dc);
+					DrawChar(OffsetX + CHAR_WIDTH, LineY, NOTES_B[Note - 1], Color, dc);
+					DrawChar(OffsetX + CHAR_WIDTH * 2, LineY, NOTES_C[Octave], Color, dc);
 			}
 			break;
 		case 1:
 			// Instrument x0
 			if (Instrument == MAX_INSTRUMENTS || Note == HALT)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, HEX[Instrument >> 4], Color);
+				DrawChar(OffsetX, LineY, HEX[Instrument >> 4], Color, dc);
 			break;
 		case 2:
 			// Instrument 0x
 			if (Instrument == MAX_INSTRUMENTS || Note == HALT)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, HEX[Instrument & 0x0F], Color);
+				DrawChar(OffsetX, LineY, HEX[Instrument & 0x0F], Color, dc);
 			break;
 		case 3:
 			// Volume
-			if (Vol == 0x10)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+			if (Vol == 0x10 || Channel == 2 || Channel == 4)
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, HEX[Vol & 0x0F], Color);
+				DrawChar(OffsetX, LineY, HEX[Vol & 0x0F], Color, dc);
 			break;
 		case 4: case 7: case 10: case 13:
 			// Effect type
 			if (EffNumber == 0)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, EFF_CHAR[(EffNumber - 1) & 0x0F], Color);
+				DrawChar(OffsetX, LineY, EFF_CHAR[(EffNumber - 1) & 0x0F], Color, dc);
 			break;
 		case 5: case 8: case 11: case 14:
 			// Effect param x
 			if (EffNumber == 0)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, HEX[(EffParam >> 4) & 0x0F], Color);
+				DrawChar(OffsetX, LineY, HEX[(EffParam >> 4) & 0x0F], Color, dc);
 			break;
 		case 6: case 9: case 12: case 15:
 			// Effect param y
 			if (EffNumber == 0)
-				DrawChar(OffsetX, LineY, '-', ShadedCol);
+				DrawChar(OffsetX, LineY, '-', ShadedCol, dc);
 			else
-				DrawChar(OffsetX, LineY, HEX[EffParam & 0x0F], Color);
+				DrawChar(OffsetX, LineY, HEX[EffParam & 0x0F], Color, dc);
 			break;
 	}
 
 }
 
-void CFamiTrackerView::DrawChar(int x, int y, char c, int Color) {	
+void CFamiTrackerView::DrawChar(int x, int y, char c, int Color, CDC *dc) 
+{
 	static CString Text;
 	Text.Format("%c", c);
-	dcBack->SetTextColor(Color);
-	dcBack->TextOut(x, y, Text);
-	
-/*
-	int SrcX = 0, SrcY = 0;
-
-	if (c >= '0' && c <= '9') {
-		SrcX = (c - '0') * 16;
-		SrcY = 16;
-	}
-	else if (c >= 'A' && C <= 'O') {
-		SrcX = 16 + (c - 'A') * 16;
-		SrcY = 32;
-	}
-	else if (c == '#') {
-		SrcX = 42;
-	}
-
-	dcBack->BitBlt(x, y, 16, 16, dcFont, SrcX, SrcY, SRCCOPY);
-*/
-}
-
-BOOL CFamiTrackerView::OnEraseBkgnd(CDC* pDC)
-{
-	return FALSE; // CView::OnEraseBkgnd(pDC);
-}
-
-void CFamiTrackerView::CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType)
-{
-	WindowWidth		= lpClientRect->right - lpClientRect->left;
-	WindowHeight	= lpClientRect->bottom - lpClientRect->top;
-
-	VisibleRows		= (((WindowHeight - 23) + (ROW_HEIGHT / 2)) / ROW_HEIGHT) - 3;
-	ViewAreaHeight	= WindowHeight - 4;
-	ViewAreaWidth	= WindowWidth - 26;
-
-	CView::CalcWindowRect(lpClientRect, nAdjustType);
-}
-
-BOOL CFamiTrackerView::PreTranslateMessage(MSG* pMsg)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	switch (pMsg->message) {
-		case WM_USER + 1:
-			TranslateMidiMessage();
-			break;
-	}
-
-	return CView::PreTranslateMessage(pMsg);
-}
-
-void CFamiTrackerView::SetMessageText(LPCSTR lpszText)
-{
-	GetParentFrame()->SetMessageText(lpszText);
+	dc->SetTextColor(Color);
+	dc->TextOut(x, y, Text);	
 }
 
 void CFamiTrackerView::DrawMeters(CDC *pDC)
@@ -893,6 +843,7 @@ void CFamiTrackerView::DrawMeters(CDC *pDC)
 	CPen	*OldPen, Green;
 
 	CBrush	GreenBrush, HalfGreenBrush, GreyBrush;
+	CPoint	points[5];
 
 	const int BAR_TOP		= TEXT_POSITION + 21;
 	const int BAR_LEFT		= CHANNEL_START + CHANNEL_SPACING - 2;
@@ -900,11 +851,10 @@ void CFamiTrackerView::DrawMeters(CDC *pDC)
 	const int BAR_SPACE		= 1;
 	const int BAR_HEIGHT	= 5;
 
-	int i, c;
-
 	unsigned int Offset = BAR_LEFT;
+	unsigned int i, c;
 
-	if (!pDoc->m_bFileLoaded)
+	if (!pDoc->IsFileLoaded())
 		return;
 
 	Black.CreateSolidBrush(0xFF000000);
@@ -916,33 +866,72 @@ void CFamiTrackerView::DrawMeters(CDC *pDC)
 	OldBrush = pDC->SelectObject(&Black);
 	OldPen = pDC->SelectObject(&Green);
 
-	for (c = m_iStartChan; c < m_iChannelsVisible; c++) {	
+	for (c = m_iStartChan; c < m_iChannelsVisible; c++) {
+
+		points[0].x = Offset; points[0].y = BAR_TOP - 1;
+		points[1].x = Offset + (15 * BAR_SIZE) - 1; points[1].y = BAR_TOP - 1;
+		points[2].x = Offset + (15 * BAR_SIZE) - 1; points[2].y = BAR_TOP + BAR_HEIGHT;
+		points[3].x = Offset - 1; points[3].y = BAR_TOP + BAR_HEIGHT;
+		points[4].x = Offset - 1; points[4].y = BAR_TOP - 2;
+
+		pDC->Polyline(points, 5);
+
 		for (i = 0; i < 15; i++) {
-			if (i < signed(m_iVolLevels[c]))
+			if (i < m_iVolLevels[c])
 				pDC->FillRect(CRect(Offset + (i * BAR_SIZE), BAR_TOP, Offset + (i * BAR_SIZE) + (BAR_SIZE - BAR_SPACE), BAR_TOP + BAR_HEIGHT), &GreenBrush);
 			else
 				pDC->FillRect(CRect(Offset + (i * BAR_SIZE), BAR_TOP, Offset + (i * BAR_SIZE) + (BAR_SIZE - BAR_SPACE), BAR_TOP + BAR_HEIGHT), &GreyBrush);
 		}
-		Offset += CHANNEL_WIDTH + pDoc->m_iEffectColumns[c] * (CHAR_WIDTH * 3 + COLUMN_SPACING) + CHANNEL_SPACING * 2;
+		Offset += CHANNEL_WIDTH + pDoc->GetEffColumns(c) * (CHAR_WIDTH * 3 + COLUMN_SPACING) + CHANNEL_SPACING * 2;
 	}
 
 	pDC->SelectObject(OldBrush);
 	pDC->SelectObject(OldPen);
 }
 
+BOOL CFamiTrackerView::OnEraseBkgnd(CDC* pDC)
+{
+	return FALSE;
+}
+
+void CFamiTrackerView::CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType)
+{
+	m_iWindowWidth	= (lpClientRect->right - lpClientRect->left) - 17;
+	m_iWindowHeight	= (lpClientRect->bottom - lpClientRect->top) - 17;
+	m_iVisibleRows	= (((m_iWindowHeight - 8) + (ROW_HEIGHT / 2)) / ROW_HEIGHT) - 3;
+
+	CView::CalcWindowRect(lpClientRect, nAdjustType);
+}
+
+BOOL CFamiTrackerView::PreTranslateMessage(MSG* pMsg)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	switch (pMsg->message) {
+		case WM_USER + 1:
+			if (m_bInitialized)
+				TranslateMidiMessage();
+			break;
+	}
+
+	return CView::PreTranslateMessage(pMsg);
+}
+
+void CFamiTrackerView::SetMessageText(LPCSTR lpszText)
+{
+	GetParentFrame()->SetMessageText(lpszText);
+}
+
 void CFamiTrackerView::ForceRedraw()
 {
-	m_bForceRedraw = true;
+	GetDocument()->UpdateAllViews(NULL);
+	//m_bForceRedraw = true;
 }
 
 void CFamiTrackerView::SetSpeed(int Speed)
 {
 	m_iTickPeriod = Speed;
-}
-
-void CFamiTrackerView::SetInstrument(int Instrument)
-{
-	m_iInstrument = Instrument;
 }
 
 void CFamiTrackerView::TogglePlayback(void)
@@ -951,21 +940,6 @@ void CFamiTrackerView::TogglePlayback(void)
 		OnTrackerPlay();
 	else
 		OnTrackerStop();
-}
-
-void CFamiTrackerView::SetSongSpeed(int Speed)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	m_iTickPeriod = Speed;
-	
-	if (m_iTickPeriod > 20)
-		m_iTempo = m_iTickPeriod;
-	else
-		m_iSpeed = m_iTickPeriod;
-		
-	pDoc->SetSongSpeed(Speed);
 }
 
 void CFamiTrackerView::PlayPattern()
@@ -977,7 +951,7 @@ void CFamiTrackerView::PlayPattern()
 		m_bPlaying			= true;
 		m_bPlayLooped		= true;	
 		m_iPlayerSyncTick	= 0;
-		m_iTickPeriod		= pDoc->m_iSongSpeed;
+		m_iTickPeriod		= pDoc->GetSongSpeed();
 
 		theApp.SilentEverything();
 	}
@@ -1001,19 +975,15 @@ void CFamiTrackerView::PlaybackTick(CFamiTrackerDoc *pDoc)
 	static bool	Skip = false;
 	static int	JumpToPattern;
 	static int	SkipToRow;
-	int i;
 	int TicksPerSec;
 	stChanNote NoteData;
 
 	TicksPerSec = pDoc->GetFrameRate();
 
-	if (!m_bPlaying)
+	if (!m_bPlaying) {
 		GetStartSpeed();
-
-	m_iCurrentTempo = (m_iTempo * 6) / m_iSpeed;
-
-	if (!m_bPlaying)
 		return;
+	}
 
 	m_iPlayTime++;
 
@@ -1022,22 +992,20 @@ void CFamiTrackerView::PlaybackTick(CFamiTrackerDoc *pDoc)
 		Jump = false;
 		Skip = false;
 
-		for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			if (!m_bMuteChannels[i])
-				pDoc->GetNoteData(&NoteData, i, m_iCurrentRow, m_iCurrentFrame);
-			else {
-				NoteData.Note = HALT;
+		for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			if (!m_bMuteChannels[i]) {
+				pDoc->GetNoteData(m_iCurrentFrame, i, m_iCursorRow, &NoteData);
+				FeedNote(i, &NoteData);
 			}
-			FeedNote(i, &NoteData);
 		}
 
 		// Evaluate effects
-		for (int i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			for (unsigned int n = 0; n < pDoc->m_iEffectColumns[i] + 1; n++) {
-				switch (pDoc->GetNoteEffect(i, m_iCurrentRow, m_iCurrentFrame, n)) {
+		for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			for (unsigned int n = 0; n < pDoc->GetEffColumns(i) + 1; n++) {
+				switch (pDoc->GetNoteEffectType(m_iCurrentFrame, i, m_iCursorRow, n)) {
 					// Axx Sets speed ticks to xx
 					case EF_SPEED:
-						m_iTickPeriod = pDoc->GetNoteEffectValue(i, m_iCurrentRow, m_iCurrentFrame, n);
+						m_iTickPeriod = pDoc->GetNoteEffectParam(m_iCurrentFrame, i, m_iCursorRow, n);
 						if (!m_iTickPeriod)
 							m_iTickPeriod++;
 						if (m_iTickPeriod > 20)
@@ -1048,23 +1016,21 @@ void CFamiTrackerView::PlaybackTick(CFamiTrackerDoc *pDoc)
 					// Bxx Jump to pattern xx
 					case EF_JUMP:
 						Jump = true;
-						JumpToPattern = pDoc->GetNoteEffectValue(i, m_iCurrentRow, m_iCurrentFrame, n) - 1;
+						JumpToPattern = pDoc->GetNoteEffectParam(m_iCurrentFrame, i, m_iCursorRow, n) - 1;
 						if (m_bPlayLooped)
 							Jump = false;
 						break;
 					// Cxx Skip to next track and start at row xx
 					case EF_SKIP:
 						Skip = true;
-						SkipToRow = pDoc->GetNoteEffectValue(i, m_iCurrentRow, m_iCurrentFrame, n);
+						SkipToRow = pDoc->GetNoteEffectParam(m_iCurrentFrame, i, m_iCursorRow, n);
 						if (m_bPlayLooped)
 							Skip = false;
 						break;
 					// Dxx Halt playback
 					case EF_HALT:
-						//TogglePlayback();
 						m_bPlaying = false;
 						theApp.SilentEverything();
-						//SetMessageText("Halted");		// multithreading with mfc?, an enigma???
 						break;
 				}
 			}
@@ -1078,38 +1044,41 @@ void CFamiTrackerView::PlaybackTick(CFamiTrackerDoc *pDoc)
 
 		if (Jump) {
 			m_iCurrentFrame = JumpToPattern + 1;
-			m_iCurrentRow = -1;
-			if (m_iCurrentFrame > (pDoc->m_iFrameCount - 1))
+			m_iCursorRow = -1;
+			if (m_iCurrentFrame > signed(pDoc->GetFrameCount() - 1))
 				m_iCurrentFrame = 0;
 		}
 
 		if (Skip) {
 			m_iCurrentFrame++;
 			if (m_iCurrentFrame < 0) {
-				m_iCurrentFrame += pDoc->m_iFrameCount;
+				m_iCurrentFrame += pDoc->GetFrameCount();
 			}
-			else if (m_iCurrentFrame > (pDoc->m_iFrameCount - 1)) {
-				m_iCurrentFrame -= pDoc->m_iFrameCount;
+			else if (m_iCurrentFrame > signed(pDoc->GetFrameCount() - 1)) {
+				m_iCurrentFrame -= pDoc->GetFrameCount();
 			}
-			m_iCurrentRow = SkipToRow/* - 1*/;
+			m_iCursorRow = SkipToRow/* - 1*/;
 		}
 		else
-			m_iCurrentRow++;
+			m_iCursorRow++;
 
 		m_iPlayerSyncTick = 0;
 
-		if (m_iCurrentRow == pDoc->m_iPatternLength) {
-			ScrollToTop();
+		if (m_iCursorRow == pDoc->GetPatternLength()) {
+			m_iCursorRow = 0;
+			//ScrollToTop();
 			if (!m_bPlayLooped) {
 				m_iCurrentFrame++;
 				if (m_iCurrentFrame < 0) {
-					m_iCurrentFrame += pDoc->m_iFrameCount;
+					m_iCurrentFrame += pDoc->GetFrameCount();
 				}
-				else if (m_iCurrentFrame > (pDoc->m_iFrameCount - 1)) {
-					m_iCurrentFrame -= pDoc->m_iFrameCount;
+				else if (m_iCurrentFrame > signed(pDoc->GetFrameCount() - 1)) {
+					m_iCurrentFrame -= pDoc->GetFrameCount();
 				}
 			}
 		}
+
+		m_bForceRedraw = true;
 	}
 	else {
 		m_iPlayerSyncTick = 1;
@@ -1122,16 +1091,16 @@ void CFamiTrackerView::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 	ASSERT_VALID(pDoc);
 
 	switch (nSBCode) {
-		case SB_LINEDOWN:	ScrollRowDown();	break;
-		case SB_LINEUP:		ScrollRowUp();		break;
-		case SB_PAGEDOWN:	ScrollPageDown();	break;
-		case SB_PAGEUP:		ScrollPageUp();		break;
-		case SB_TOP:		ScrollToTop();		break;
-		case SB_BOTTOM:		ScrollToBottom();	break;
+		case SB_LINEDOWN:	MoveCursorDown();		break;
+		case SB_LINEUP:		MoveCursorUp();			break;
+		case SB_PAGEDOWN:	MoveCursorPageDown();	break;
+		case SB_PAGEUP:		MoveCursorPageUp();		break;
+		case SB_TOP:		MoveCursorToTop();		break;
+		case SB_BOTTOM:		MoveCursorToBottom();	break;
 
 		case SB_THUMBPOSITION:
 		case SB_THUMBTRACK:
-			m_iCurrentRow = nPos;
+			m_iCursorRow = nPos;
 			ForceRedraw();
 			break;
 		case SB_ENDSCROLL:
@@ -1146,7 +1115,7 @@ void CFamiTrackerView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 	CFamiTrackerDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 
-	int i, x, count = 0;
+	unsigned int i, x, count = 0;
 
 	switch (nSBCode) {
 		case SB_LINERIGHT:	MoveCursorRight();			break;
@@ -1157,8 +1126,8 @@ void CFamiTrackerView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 		case SB_LEFT:		MoveCursorLastChannel();	break;
 		case SB_THUMBPOSITION:
 		case SB_THUMBTRACK:
-			for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-				for (x = 0; x < signed(COLUMNS + pDoc->m_iEffectColumns[i] * 3); x++) {
+			for (i = 0; i < pDoc->GetAvailableChannels(); i++) {
+				for (x = 0; x < signed(COLUMNS + pDoc->GetEffColumns(i) * 3); x++) {
 					if (count++ == nPos) {
 						m_iCursorColumn = x;
 						m_iCursorChannel = i;
@@ -1174,422 +1143,6 @@ void CFamiTrackerView::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar
 	}
 
 	CView::OnHScroll(nSBCode, nPos, pScrollBar);
-}
-
-void CFamiTrackerView::WrapSelectedLine()		// or row
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (theApp.m_pSettings->General.bWrapCursor || m_bPlaying) {
-		if (m_iCurrentRow < 0) {
-			m_iCurrentRow += pDoc->m_iPatternLength;
-			m_iCursorRow += pDoc->m_iPatternLength;
-		}
-		else if (m_iCurrentRow > (pDoc->m_iPatternLength - 1)) {
-			m_iCurrentRow -= pDoc->m_iPatternLength;
-			m_iCursorRow -= pDoc->m_iPatternLength;
-		}
-	}
-
-	if (m_iCurrentRow < 0) {
-		m_iCursorRow = 0;
-		m_iCurrentRow = 0;
-	}
-	else if (m_iCurrentRow > (pDoc->m_iPatternLength - 1)) {
-		m_iCursorRow = (pDoc->m_iPatternLength - 1);
-		m_iCurrentRow = (pDoc->m_iPatternLength - 1);
-	}
-}
-
-void CFamiTrackerView::WrapSelectedPattern()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_iCurrentFrame < 0) {
-		m_iCurrentFrame += pDoc->m_iFrameCount;
-	}
-	else if (m_iCurrentFrame > (pDoc->m_iFrameCount - 1)) {
-		m_iCurrentFrame -= pDoc->m_iFrameCount;
-	}
-}
-
-void CFamiTrackerView::ScrollRowUp()
-{
-	if (theApp.m_pSettings->General.bFreeCursorEdit) {
-		if (m_iCursorRow > 0) {
-			m_iCursorRow--;
-			if (m_iCursorRow - m_iCurrentRow < -signed(VisibleRows / 2))
-				m_iCurrentRow--;
-		}
-	}
-	else
-		m_iCurrentRow--;
-
-	WrapSelectedLine();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::ScrollRowDown()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (theApp.m_pSettings->General.bFreeCursorEdit && !m_bPlaying) {
-		if (m_iCursorRow < (pDoc->m_iPatternLength - 1)) {
-			m_iCursorRow++;
-			if ((m_iCursorRow - m_iCurrentRow) > signed(VisibleRows / 2))
-				m_iCurrentRow++;
-		}
-	}
-	else
-		m_iCurrentRow++; 
-
-	WrapSelectedLine();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::StepDown()
-{
-	int i = 0;
-	while (i++ < m_iKeyStepping)
-		ScrollRowDown();
-}
-
-void CFamiTrackerView::ScrollPageUp()
-{
-	m_iCurrentRow -= 4; 
-	WrapSelectedLine();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::ScrollPageDown()
-{
-	m_iCurrentRow += 4; 
-	WrapSelectedLine();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::ScrollToTop()
-{
-	m_iCurrentRow = 0;
-	ForceRedraw();
-}
-
-void CFamiTrackerView::ScrollToBottom()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	m_iCurrentRow = pDoc->m_iPatternLength - 1;
-	ForceRedraw();
-}
-
-int CFamiTrackerView::GetCurrentColumnCount()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	return COLUMNS + pDoc->m_iEffectColumns[m_iCursorChannel] * 3;
-}
-
-void CFamiTrackerView::MoveCursorLeft()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int MaxColumns = GetCurrentColumnCount();
-
-	if (m_iCursorColumn > 0) {
-		m_iCursorColumn--;
-	}
-	else {
-		if (m_iCursorChannel > 0) {
-			m_iCursorColumn = MaxColumns - 1;
-			m_iCursorChannel--;
-		}
-		else {
-			if (theApp.m_pSettings->General.bWrapCursor) {
-				m_iCursorColumn = MaxColumns - 1;
-				m_iCursorChannel = pDoc->m_iChannelsAvailable - 1;
-			}
-		}
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::MoveCursorRight()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int MaxColumns = GetCurrentColumnCount();
-
-	if (m_iCursorColumn < (MaxColumns - 1)) {
-		m_iCursorColumn++;
-	}
-	else {
-		if (m_iCursorChannel < (pDoc->m_iChannelsAvailable - 1)) {
-			m_iCursorColumn = 0;
-			m_iCursorChannel++;
-		}
-		else {
-			if (theApp.m_pSettings->General.bWrapCursor) {
-				m_iCursorColumn	= 0;
-				m_iCursorChannel = 0;
-			}
-		}
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::MoveCursorNextChannel()
-{
-	m_iCursorChannel++;
-	m_iCursorColumn = 0;
-
-	if (m_iCursorChannel > (GetDocument()->m_iChannelsAvailable - 1)) {
-		m_iCursorChannel = 0;
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::MoveCursorPrevChannel()
-{
-	m_iCursorChannel--;
-	m_iCursorColumn = 0;
-
-	if (m_iCursorChannel < 0) {
-		m_iCursorChannel = GetDocument()->m_iChannelsAvailable - 1;
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::MoveCursorFirstChannel()
-{
-	m_iCursorChannel = 0;
-	m_iCursorColumn = 0;
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::MoveCursorLastChannel()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	m_iCursorChannel	= pDoc->m_iChannelsAvailable - 1;
-	m_iCursorColumn		= 0;
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectChannel(int Index)
-{
-	m_iCursorChannel	= Index;
-	m_iCursorColumn		= 0;
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectPattern(int Index)
-{
-	m_iCurrentFrame = Index;
-	WrapSelectedPattern();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectNextPattern()
-{
-	if (m_iSelectStart != -1 && theApp.m_pSettings->General.bKeySelect) {
-		// quick hack (as everything else)
-		if (m_iSelectColEnd < (m_iChannelColumns[m_iCursorChannel] - 1))
-			m_iSelectColEnd++;
-	}
-	else {
-		m_iCurrentFrame++;
-		WrapSelectedPattern();
-	}
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectPrevPattern()
-{
-	if (m_iSelectStart != -1 && theApp.m_pSettings->General.bKeySelect) {
-		if (m_iSelectColEnd > 0)
-			m_iSelectColEnd--;
-	}
-	else {
-		m_iCurrentFrame--;
-		WrapSelectedPattern();
-	}
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectFirstPattern()
-{
-	m_iCurrentFrame = 0;
-	ForceRedraw();
-}
-
-void CFamiTrackerView::SelectLastPattern()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	m_iCurrentFrame = pDoc->m_iFrameCount - 1;
-	ForceRedraw();
-}
-
-void CFamiTrackerView::IncreaseCurrentFrame()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_bChangeAllPattern) {
-		for (int i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			pDoc->IncreaseFrame(m_iCurrentFrame, i);
-		}
-	}
-	else
-		pDoc->IncreaseFrame(m_iCurrentFrame, m_iCursorChannel);
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::DecreaseCurrentFrame()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_bChangeAllPattern) {
-		for (int i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			pDoc->DecreaseFrame(m_iCurrentFrame, i);
-		}
-	}
-	else
-		pDoc->DecreaseFrame(m_iCurrentFrame, m_iCursorChannel);
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::StopNote(int Channel)
-{
-	stChanNote Note;
-
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	Note.Instrument		= 0;
-	Note.Octave			= 0;
-	Note.Note			= HALT;
-	Note.EffNumber[0]	= 0;
-	Note.EffParam[0]	= 0;
-	Note.Vol			= 0;
-
-	if (m_bEditEnable) {
-		AddUndo(Channel);
-		pDoc->ChannelData[Channel][pDoc->FrameList[m_iCurrentFrame][Channel]][m_iCursorRow] = Note;
-		pDoc->SetModifiedFlag();
-		ForceRedraw();
-	}
-
-	FeedNote(Channel, &Note);
-}
-
-void CFamiTrackerView::InsertNote(int Note, int Octave, int Channel, int Velocity)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	stChanNote Cell;
-
-	Cell = pDoc->ChannelData[Channel][pDoc->FrameList[m_iCurrentFrame][Channel]][m_iCursorRow];
-
-	Cell.Note		= Note;
-	Cell.Octave		= Octave;
-	Cell.Instrument = m_iInstrument;
-	
-	if (Velocity < 128)
-		Cell.Vol = (Velocity / 8);
-//	else
-//		Cell.Vol = 0;
-
-	if (m_bEditEnable) {
-		AddUndo(Channel);
-		pDoc->ChannelData[Channel][pDoc->FrameList[m_iCurrentFrame][Channel]][m_iCursorRow] = Cell;
-		pDoc->SetModifiedFlag();
-		//ForceRedraw();
-
-		if (m_iCursorColumn == 0 && m_bPlaying == false)
-			StepDown();
-	}
-
-	FeedNote(Channel, &Cell);
-}
-
-bool CFamiTrackerView::TranslateKey(int Key, stChanNote *Note)
-{
-	// Translate a keyboard key into a note and fill it in *Note
-
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int	Octave = m_iOctave;
-	int	KeyNote = 0, KeyOctave = 0;
-		
-	// Convert key into a note
-	switch (Key) {
-		case 50:	KeyNote = Cb;	KeyOctave = m_iOctave + 1;	break;	// 2
-		case 51:	KeyNote = Db;	KeyOctave = m_iOctave + 1;	break;	// 3
-		case 53:	KeyNote = Fb;	KeyOctave = m_iOctave + 1;	break;	// 5
-		case 54:	KeyNote = Gb;	KeyOctave = m_iOctave + 1;	break;	// 6
-		case 55:	KeyNote = Ab;	KeyOctave = m_iOctave + 1;	break;	// 7
-		case 57:	KeyNote = Cb;	KeyOctave = m_iOctave + 2;	break;	// 9
-		case 48:	KeyNote = Db;	KeyOctave = m_iOctave + 2;	break;	// 0
-		case 81:	KeyNote = C;	KeyOctave = m_iOctave + 1;	break;	// Q
-		case 87:	KeyNote = D;	KeyOctave = m_iOctave + 1;	break;	// W
-		case 69:	KeyNote = E;	KeyOctave = m_iOctave + 1;	break;	// E
-		case 82:	KeyNote = F;	KeyOctave = m_iOctave + 1;	break;	// R
-		case 84:	KeyNote = G;	KeyOctave = m_iOctave + 1;	break;	// T
-		case 89:	KeyNote = A;	KeyOctave = m_iOctave + 1;	break;	// Y
-		case 85:	KeyNote = B;	KeyOctave = m_iOctave + 1;	break;	// U
-		case 73:	KeyNote = C;	KeyOctave = m_iOctave + 2;	break;	// I
-		case 79:	KeyNote = D;	KeyOctave = m_iOctave + 2;	break;	// O
-		case 80:	KeyNote = E;	KeyOctave = m_iOctave + 2;	break;	// P
-		case 221:	KeyNote = F;	KeyOctave = m_iOctave + 2;	break;	// Å
-		case 219:	KeyNote = Fb;	KeyOctave = m_iOctave + 2;	break;	// ´
-		//case 186:	KeyNote = G;	KeyOctave = m_iOctave + 2;	break;	// ¨
-		case 83:	KeyNote = Cb;	KeyOctave = m_iOctave;		break;	// S
-		case 68:	KeyNote = Db;	KeyOctave = m_iOctave;		break;	// D
-		case 71:	KeyNote = Fb;	KeyOctave = m_iOctave;		break;	// G
-		case 72:	KeyNote = Gb;	KeyOctave = m_iOctave;		break;	// H
-		case 74:	KeyNote = Ab;	KeyOctave = m_iOctave;		break;	// J
-		case 76:	KeyNote = Cb;	KeyOctave = m_iOctave + 1;	break;	// L
-		case 192:	KeyNote = Db;	KeyOctave = m_iOctave + 1;	break;	// Ö
-		case 226:	KeyNote = HALT;	KeyOctave = 0;				break;	// < /stop
-		case 186:	KeyNote = HALT;	KeyOctave = 0;				break;	// ¨ /stop (for american keyboards)
-		case 49:	KeyNote = HALT;	KeyOctave = 0;				break;	// 1 /stop (again)
-		case 90:	KeyNote = C;	KeyOctave = m_iOctave;		break;	// Z
-		case 88:	KeyNote = D;	KeyOctave = m_iOctave;		break;	// X
-		case 67:	KeyNote = E;	KeyOctave = m_iOctave;		break;	// C
-		case 86:	KeyNote = F;	KeyOctave = m_iOctave;		break;	// V
-		case 66:	KeyNote = G;	KeyOctave = m_iOctave;		break;	// B
-		case 78:	KeyNote = A;	KeyOctave = m_iOctave;		break;	// N
-		case 77:	KeyNote = B;	KeyOctave = m_iOctave;		break;	// M
-		case 188:	KeyNote = C;	KeyOctave = m_iOctave + 1;	break;	// ,
-		case 190:	KeyNote = D;	KeyOctave = m_iOctave + 1;	break;	// .
-		case 189:	KeyNote = E;	KeyOctave = m_iOctave + 1;	break;	// -
-	}
-
-	if (KeyNote == 0)
-		return false;
-
-	InsertNote(KeyNote, KeyOctave, m_iCursorChannel, 128);
-
-	return true;
 }
 
 int ConvertKeyToHex(int Key) {
@@ -1624,6 +1177,2156 @@ int ConvertKeyToDec(int Key)
 	return -1;
 }
 
+void CFamiTrackerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{	
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	switch (nChar) {
+		case VK_UP:
+			MoveCursorUp();
+			if (m_bShiftPressed) {
+				if (m_iSelectStart == -1 || m_iSelectEnd != m_iCursorRow) {
+					m_iSelectStart		= m_iCursorRow;
+					m_iSelectChannel	= m_iCursorChannel;
+					m_iSelectColStart	= m_iCursorColumn;
+					m_iSelectColEnd		= m_iCursorColumn;
+				}
+				if (m_iCursorRow > 0)
+					m_iSelectEnd = m_iCursorRow - 1;
+				else
+					m_iSelectEnd = m_iCursorRow;
+			}
+			break;
+
+		case VK_DOWN:
+			MoveCursorDown();
+			if (m_bShiftPressed) {
+				if (m_iSelectStart == -1 || m_iSelectEnd != m_iCursorRow) {
+					m_iSelectStart		= m_iCursorRow;
+					m_iSelectChannel	= m_iCursorChannel;
+					m_iSelectColStart	= m_iCursorColumn;
+					m_iSelectColEnd		= m_iCursorColumn;
+				}
+				if (m_iCursorRow < signed(pDoc->GetPatternLength()))
+					m_iSelectEnd = m_iCursorRow + 1;
+				else
+					m_iSelectEnd = m_iCursorRow;
+
+			}
+			break;
+
+		case VK_HOME:	MoveCursorToTop();		break;
+		case VK_END:	MoveCursorToBottom();	break;
+		case VK_PRIOR:	MoveCursorPageUp();		break;
+		case VK_NEXT:	MoveCursorPageDown();	break;
+
+		case VK_SPACE:	OnTrackerEdit();	break;
+
+		case VK_ADD:
+			if (m_bEditEnable) {
+				AddUndo(m_iCursorChannel);
+				switch (m_iCursorColumn) {
+					case C_NOTE: 
+						IncreaseCurrentPattern(); 
+						break;
+					case C_INSTRUMENT1:
+					case C_INSTRUMENT2: 
+						pDoc->IncreaseInstrument(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow); 	
+						ForceRedraw(); 
+						break;
+					case C_VOLUME: 
+						pDoc->IncreaseVolume(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow);	
+						ForceRedraw(); 
+						break;
+					case C_EFF_NUM: case C_EFF_PARAM1: case C_EFF_PARAM2: 
+						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 0);
+						ForceRedraw(); 
+						break;
+					case C_EFF2_NUM: case C_EFF2_PARAM1: case C_EFF2_PARAM2: 
+						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 1);
+						ForceRedraw(); 
+						break;
+					case C_EFF3_NUM: case C_EFF3_PARAM1: case C_EFF3_PARAM2: 
+						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 2);
+						ForceRedraw(); 
+						break;
+					case C_EFF4_NUM: case C_EFF4_PARAM1: case C_EFF4_PARAM2: 
+						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 3);
+						ForceRedraw(); 
+						break;
+				}
+			}
+			break;
+
+		case VK_SUBTRACT:
+			if (m_bEditEnable) {
+				AddUndo(m_iCursorChannel);
+				switch (m_iCursorColumn) {
+					case C_NOTE: 
+						DecreaseCurrentPattern(); 
+						break;
+					case C_INSTRUMENT1:
+					case C_INSTRUMENT2:
+						pDoc->DecreaseInstrument(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow); 	
+						ForceRedraw(); 
+						break;
+					case C_VOLUME: 
+						pDoc->DecreaseVolume(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow);	
+						ForceRedraw(); 
+						break;
+					case C_EFF_NUM: case C_EFF_PARAM1: case C_EFF_PARAM2: 
+						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 0);
+						ForceRedraw(); 
+						break;
+					case C_EFF2_NUM: case C_EFF2_PARAM1: case C_EFF2_PARAM2: 
+						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 1);
+						ForceRedraw(); 
+						break;
+					case C_EFF3_NUM: case C_EFF3_PARAM1: case C_EFF3_PARAM2: 
+						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 2); 
+						ForceRedraw(); 
+						break;
+					case C_EFF4_NUM: case C_EFF4_PARAM1: case C_EFF4_PARAM2: 					
+						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 3); 
+						ForceRedraw(); 
+						break;
+				}
+			}
+			break;
+
+		case VK_LEFT:
+			if (!m_bShiftPressed) {
+				MoveCursorLeft();
+				ForceRedraw();
+			}
+			else {
+				if (m_iSelectStart != -1) {
+					if (m_iSelectColEnd > 0)
+						m_iSelectColEnd--;
+				}
+			}
+			break;
+
+		case VK_RIGHT:
+			if (!m_bShiftPressed) {
+				MoveCursorRight();
+				ForceRedraw();
+			}
+			else {
+				if (m_iSelectStart != -1) {
+					if (m_iSelectColEnd < signed(COLUMNS + pDoc->GetEffColumns(m_iCursorChannel) * 3))
+						m_iSelectColEnd++;
+				}
+			}
+			break;
+
+		case VK_SHIFT:
+			m_bShiftPressed = true;
+			break;
+
+		case VK_TAB:
+			if (m_bShiftPressed)
+				MoveCursorPrevChannel();
+			else
+				MoveCursorNextChannel();
+			ForceRedraw();
+			break;
+
+		case VK_DELETE:
+			if (m_iSelectStart != -1) {
+				if (PreventRepeat(VK_DELETE))
+					return;
+				OnEditDelete();
+			}
+			else {
+				if (PreventRepeat(VK_DELETE) || !m_bEditEnable)
+					return;
+				AddUndo(m_iCursorChannel);
+				if (pDoc->DeleteNote(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, m_iCursorColumn)) {
+					StepDown();
+					ForceRedraw();
+				}
+			}
+			break;
+
+		case VK_INSERT:
+			if (!m_bEditEnable || PreventRepeat(VK_INSERT))
+				return;
+			AddUndo(m_iCursorChannel);
+			pDoc->InsertNote(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow);
+			ForceRedraw();
+			break;
+
+		case VK_BACK:
+			if (m_iSelectStart != -1) {
+				RemoveWithoutDelete();
+			}
+			else {
+				if (m_iCursorRow == 0 || !m_bEditEnable || PreventRepeat(VK_BACK))
+					return;
+				AddUndo(m_iCursorChannel);
+				if (pDoc->RemoveNote(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow)) {
+					MoveCursorUp();
+					ForceRedraw();
+				}
+			}
+			break;
+
+		case VK_F2: m_iOctave = 0; break;
+		case VK_F3: m_iOctave = 1; break;
+		case VK_F4: m_iOctave = 2; break;
+		case VK_F5: m_iOctave = 3; break;
+		case VK_F6: m_iOctave = 4; break;
+		case VK_F7: m_iOctave = 5; break;
+		case VK_F8: m_iOctave = 6; break;
+		case VK_F9: m_iOctave = 7; break;
+
+		case VK_ESCAPE:
+			m_iSelectStart = -1;
+			ForceRedraw();
+			break;
+
+		case 255:
+			break;
+
+		default:
+			HandleKeyboardInput(nChar);
+	}
+
+	CView::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+void CFamiTrackerView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_SHIFT)
+		m_bShiftPressed = false;
+
+	KeyReleased(int(nChar));
+
+	CView::OnKeyUp(nChar, nRepCnt, nFlags);
+}
+
+BOOL CFamiTrackerView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	// FIX THIS!!!
+
+	if (zDelta > 0) {
+		m_iCursorRow -= zDelta / 28;
+		if (signed(m_iCursorRow) < 0) {
+			if (theApp.m_pSettings->General.bWrapCursor)
+				m_iCursorRow = (pDoc->GetPatternLength() - 1);
+			else
+				m_iCursorRow = 0;
+		}
+	}
+	else if (zDelta < 0) {
+		m_iCursorRow -= zDelta / 28;
+		if (m_iCursorRow > signed(pDoc->GetPatternLength() - 1)) {
+			if (theApp.m_pSettings->General.bWrapCursor)
+				m_iCursorRow = 0;
+			else
+				m_iCursorRow = (pDoc->GetPatternLength() - 1);
+		}
+	}
+
+	ForceRedraw();
+
+	return CView::OnMouseWheel(nFlags, zDelta, pt);
+}
+
+unsigned int CFamiTrackerView::GetChannelAtPoint(unsigned int PointX)
+{
+	unsigned int i, ChanSize, Offset = 0, Channel = -1;
+
+	for (i = m_iStartChan; i < /*GetDocument()->GetAvailableChannels()*/ m_iChannelsVisible; i++) {
+		ChanSize = m_iChannelWidths[i];
+		Offset += ChanSize;
+		if ((PointX - CHANNEL_START) < Offset) {
+			Channel = i;
+			break;
+		}
+	}
+
+	return Channel;
+}
+
+unsigned int CFamiTrackerView::GetColumnAtPoint(unsigned int PointX, unsigned int MaxColumns)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	unsigned int i, Offset;
+	int ColumnOffset = -1, Column = -1;
+	int ChanSize, Channel = -1;
+
+	Offset = CHANNEL_START + CHANNEL_SPACING;
+
+	if (PointX < Offset)
+		return -1;
+
+	for (i = m_iStartChan; i < pDoc->GetAvailableChannels(); i++) {
+		
+		ChanSize = CHANNEL_WIDTH + (pDoc->GetEffColumns(i) * (CHAR_WIDTH * 3 + COLUMN_SPACING));
+		Offset += ChanSize;
+		if (PointX < Offset) {
+			ColumnOffset = ChanSize - (Offset - PointX);
+			Channel = i;
+			break;
+		}
+		Offset += CHANNEL_SPACING * 2;
+	}
+
+	if (ColumnOffset < 0)
+		return -1;
+
+	if (Channel == -1)
+		return -1;
+
+	Offset = 0;
+
+	for (i = 0; i < MaxColumns; i++) {
+		Offset += COLUMN_SPACE[i];
+		if (ColumnOffset < signed(Offset)) {
+			Column = i;
+			break;
+		}
+	}
+
+	return Column;
+}
+
+void CFamiTrackerView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int Channel = 0, Column = 0;
+	int	DeltaY, DeltaRow;
+
+	IgnoreFirst = true;
+
+	Channel = GetChannelAtPoint(point.x);
+
+	if (Channel == -1)
+		return;
+
+	DeltaY = point.y - (m_iWindowHeight / 2);
+
+	if (DeltaY < 0)
+		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
+	else
+		DeltaRow = DeltaY / signed(ROW_HEIGHT);
+
+	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->GetEffColumns(Channel) * 3);
+
+	if (Column == -1)
+		return;
+	
+	m_iSelectColStart = Column;
+	m_iSelectColEnd = Column;
+
+	// The top row (channel name and meters)
+	if (point.y < signed(ROW_HEIGHT * 2) && Channel < signed(pDoc->GetAvailableChannels())) {
+		// Silence channel
+		if (Column < 5) {
+			m_bMuteChannels[Channel] = !m_bMuteChannels[Channel];
+			if (m_iSoloChannel != -1 && m_iSoloChannel == Channel)
+				m_iSoloChannel = -2;
+			if (m_bMuteChannels[Channel]) {
+				stChanNote NoteData;
+				NoteData.Note = HALT;
+				FeedNote(Channel, &NoteData);
+			}
+			ForceRedraw();
+			return;
+		}
+		// Remove one track effect column
+		else if (Column == 5) {
+			if (pDoc->GetEffColumns(Channel) > 0)
+				pDoc->SetEffColumns(Channel, pDoc->GetEffColumns(Channel) - 1);
+		}
+		// Add one track effect column
+		else if (Column == 6) {
+			if (pDoc->GetEffColumns(Channel) < (MAX_EFFECT_COLUMNS - 1))
+				pDoc->SetEffColumns(Channel, pDoc->GetEffColumns(Channel) + 1);
+		}
+		ForceRedraw();
+	}
+
+	int Sel = signed(m_iCurrentRow) + DeltaRow;
+
+	if (m_iSelectStart != -1) {
+		if (m_bShiftPressed) {
+			m_iSelectEnd = Sel;
+			ForceRedraw();
+		}
+		else {
+			m_iSelectStart = -1;
+			ForceRedraw();
+		}
+	}
+
+	CView::OnLButtonDown(nFlags, point);
+}
+
+void CFamiTrackerView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int Channel, Column;
+	int DeltaY, DeltaRow;
+
+	DeltaY = point.y - signed(m_iWindowHeight / 2) - (ROW_HEIGHT / 2) - 4;
+
+	if (DeltaY < 0)
+		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
+	else
+		DeltaRow = DeltaY / signed(ROW_HEIGHT);
+
+	Channel = GetChannelAtPoint(point.x);
+
+	if (Channel == -1) {
+		if (((DeltaRow + signed(m_iCurrentRow)) >= 0 && (DeltaRow + signed(m_iCurrentRow)) < signed(pDoc->GetPatternLength())) && point.y > ROW_HEIGHT * 2) {
+			m_iCursorRow = m_iCurrentRow + DeltaRow;
+			if (!theApp.m_pSettings->General.bFreeCursorEdit)
+				m_iCurrentRow = m_iCursorRow;
+			ForceRedraw();
+		}
+		return;
+	}
+
+	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->GetEffColumns(Channel) * 3);
+
+	if (Column == -1)
+		return;
+
+	if (m_iSelectStart == -1) {
+		if (((DeltaRow + signed(m_iCurrentRow)) >= 0 && (DeltaRow + signed(m_iCurrentRow)) < signed(pDoc->GetPatternLength())) && point.y > ROW_HEIGHT * 2) {
+			m_iCursorRow = m_iCurrentRow + DeltaRow;
+			if (!theApp.m_pSettings->General.bFreeCursorEdit)
+				m_iCurrentRow = m_iCursorRow;
+
+			if (Channel < signed(pDoc->GetAvailableChannels()) && point.y > ROW_HEIGHT * 2) {
+				m_iCursorChannel = Channel;
+				m_iCursorColumn	= Column;
+			}
+
+			ForceRedraw();
+		}
+	}
+
+	CView::OnLButtonUp(nFlags, point);
+}
+
+void CFamiTrackerView::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int Channel, Column;
+
+	IgnoreFirst = true;
+
+	Channel = GetChannelAtPoint(point.x);
+	
+	if (Channel == -1)
+		return;
+
+	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->GetEffColumns(Channel) * 3);
+
+	if (Column == -1)
+		return;
+
+	if (point.y < ROW_HEIGHT * 2 && Channel < signed(pDoc->GetAvailableChannels())) {
+		if (Column < 5) {
+			if (m_iSoloChannel == -2) {
+				for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++)
+					m_bMuteChannels[i] = false;
+				m_iSoloChannel = -1;
+			}
+			else {
+				m_bMuteChannels[Channel] = false;
+				for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+					if (i != Channel) {
+						m_bMuteChannels[i] = true;
+						MuteNote(i);
+					}
+				}
+				m_iSoloChannel = Channel;
+			}
+			ForceRedraw();
+		}
+		// Remove one track effect column
+		else if (Column == 5) {
+			if (pDoc->GetEffColumns(Channel) > 0)
+				pDoc->SetEffColumns(Channel, pDoc->GetEffColumns(Channel) - 1);
+		}
+		// Add one track effect column
+		else if (Column == 6) {
+			if (pDoc->GetEffColumns(Channel) < (MAX_EFFECT_COLUMNS - 1))
+				pDoc->SetEffColumns(Channel, pDoc->GetEffColumns(Channel) + 1);
+		}
+		ForceRedraw();
+	}
+	else
+		SelectWholePattern(Channel);
+
+	ForceRedraw();
+
+	CView::OnLButtonDblClk(nFlags, point);
+}
+
+void CFamiTrackerView::OnMouseMove(UINT nFlags, CPoint point)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	CString String;
+	int DeltaRow, DeltaY = point.y - (m_iWindowHeight / 2) - 10;
+	int Channel, Column;
+
+	static int LastX, LastY;
+
+	if (!(nFlags & MK_LBUTTON))
+		return;
+
+	if (IgnoreFirst) {
+		IgnoreFirst = false;
+		LastX = point.x;
+		LastY = point.y;
+		return;
+	}
+
+	if (point.y < ROW_HEIGHT * 2)
+		return;
+
+	if ((LastX == point.x) && (LastY == point.y))
+		return;
+
+	if ((Channel = GetChannelAtPoint(point.x)) == -1)
+		return;
+
+	if ((Column = GetColumnAtPoint(point.x, COLUMNS + pDoc->GetEffColumns(Channel) * 3)) == -1)
+		return;
+
+	if (Channel == m_iSelectChannel)
+		m_iSelectColEnd = Column;
+
+	if (DeltaY < 0)
+		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
+	else
+		DeltaRow = DeltaY / signed(ROW_HEIGHT);
+	
+	int Sel = m_iCurrentRow + DeltaRow;
+
+	if (((DeltaRow + m_iCurrentRow) >= 0 && (DeltaRow + m_iCurrentRow) < signed(pDoc->GetPatternLength())) && Channel >= 0) {
+		
+		if (m_iSelectStart != -1) {
+			m_iSelectEnd = Sel;
+			ForceRedraw();
+		}
+		else {
+			m_iSelectStart = Sel;
+			m_iSelectChannel = Channel;
+		}
+		
+		if (DeltaRow >= signed((m_iWindowHeight / ROW_HEIGHT) / 2) - 2)
+			MoveCursorDown();
+		else if (DeltaRow <= (-signed((m_iWindowHeight / ROW_HEIGHT) / 2) + 2))
+			MoveCursorUp();
+	}
+
+	if (m_iSelectStart != -1) {
+		String.Format("Selection {%i; %i}", m_iSelectStart, m_iSelectEnd);
+		SetMessageText(String);
+	}
+
+	CView::OnMouseMove(nFlags, point);
+}
+
+void CFamiTrackerView::OnEditCopy()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stClipData	*ClipData;
+	stChanNote	Note;
+	HGLOBAL		hMem;
+	int			Ptr = 0;
+	int			i;
+	int			SelStart, SelEnd, Columns = 0;
+	int			SelColStart, SelColEnd;
+
+	if (m_iSelectStart == -1)
+		return;
+
+	SelStart	= GetMin(m_iSelectStart, m_iSelectEnd);
+	SelEnd		= GetMax(m_iSelectStart, m_iSelectEnd);
+	SelColStart	= GetMin(m_iSelectColStart, m_iSelectColEnd);
+	SelColEnd	= GetMax(m_iSelectColStart, m_iSelectColEnd);
+
+	if (!OpenClipboard()) {
+		AfxMessageBox("Cannot open the clipboard");
+		return;
+	}
+
+	EmptyClipboard();
+
+	hMem = GlobalAlloc(GMEM_MOVEABLE, sizeof(stClipData) * 2);
+
+	if (hMem == NULL)
+		return;
+
+	ClipData				= (stClipData*)GlobalLock(hMem);
+	ClipData->Size			= SelEnd - SelStart + 1;
+	ClipData->NumCols		= 0;
+	ClipData->FirstColumn	= false;
+
+	if (SelColStart == 0)
+		ClipData->FirstColumn = true;
+
+	int ColPtr = 0;
+
+	for (i = SelStart; i < SelEnd + 1; i++) {
+		pDoc->GetNoteData(m_iCurrentFrame, m_iSelectChannel, i, &Note);
+
+		if (SelColStart == 0) {
+			ClipData->Notes[Ptr]	= Note.Note;
+			ClipData->Octaves[Ptr]	= Note.Octave;
+		}
+
+		ColPtr = 0;
+		for (int n = 1; n < COLUMNS + MAX_EFFECT_COLUMNS * 3; n++) {
+			if (n >= SelColStart && n <= SelColEnd) {
+				switch (n - 1) {
+					case 0: ClipData->ColumnData[ColPtr][Ptr] = Note.Instrument >> 4;		break;		// Instrument
+					case 1: ClipData->ColumnData[ColPtr][Ptr] = Note.Instrument & 0x0F;		break;
+					case 2: ClipData->ColumnData[ColPtr][Ptr] = Note.Vol;					break;		// Volume
+					case 3: ClipData->ColumnData[ColPtr][Ptr] = Note.EffNumber[0];			break;		// Effect column 1
+					case 4: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[0] >> 4;		break;
+					case 5: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[0] & 0x0F;	break;
+					case 6: ClipData->ColumnData[ColPtr][Ptr] = Note.EffNumber[1];			break;		// Effect column 2
+					case 7: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[1] >> 4;		break;
+					case 8: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[1] & 0x0F;	break;
+					case 9: ClipData->ColumnData[ColPtr][Ptr] = Note.EffNumber[2];			break;		// Effect column 3
+					case 10: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[2] >> 4;		break;
+					case 11: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[2] & 0x0F;	break;
+					case 12: ClipData->ColumnData[ColPtr][Ptr] = Note.EffNumber[3];			break;		// Effect column 4
+					case 13: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[3] >> 4;		break;
+					case 14: ClipData->ColumnData[ColPtr][Ptr] = Note.EffParam[3] & 0x0F;	break;
+				}
+				ColPtr++;
+				ClipData->NumCols = ColPtr;
+			}
+		}
+		
+		Ptr++;
+	}
+
+	GlobalUnlock(hMem);
+	SetClipboardData(m_iClipBoard, hMem);
+	CloseClipboard();
+}
+
+void CFamiTrackerView::OnEditCut()
+{
+	if (m_iSelectStart == -1)
+		return;
+
+	AddUndo(m_iSelectChannel);
+	OnEditCopy();
+	OnEditDelete();
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnEditPaste()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	HGLOBAL			hMem;
+	stChanNote		ChanNote;
+	stClipData		*ClipData;
+	unsigned int	i;
+
+	if (m_bEditEnable == false)
+		return;
+
+	OpenClipboard();
+
+	if (!IsClipboardFormatAvailable(m_iClipBoard)) {
+		MessageBox("Clipboard format is not avaliable");
+	}
+
+	hMem = GetClipboardData(m_iClipBoard);
+
+	if (hMem == NULL)
+		return;
+
+	AddUndo(m_iCursorChannel);
+
+	ClipData = (stClipData*)GlobalLock(hMem);
+/*
+	if (m_bPasteOverwrite) {
+		for (i = 0; i < ClipData->Size; i++) {
+			pDoc->RemoveNote((m_iCursorRow + 1), m_iCurrentFrame, m_iCursorChannel);
+		}
+	}
+*/
+	for (i = 0; i < ClipData->Size; i++) {
+		if ((m_iCursorRow + i) < pDoc->GetPatternLength()) {
+
+			if (!m_bPasteOverwrite)
+				pDoc->InsertNote(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow + i);
+
+			pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow + i, &ChanNote);
+
+			if (ClipData->FirstColumn) {
+				ChanNote.Octave	= ClipData->Octaves[i];
+				ChanNote.Note		= ClipData->Notes[i];
+			}
+
+			unsigned int ColPtr = 0;
+
+			for (int n = m_iCursorColumn; n < (COLUMNS + MAX_EFFECT_COLUMNS * 3); n++) {
+				if (ColPtr < ClipData->NumCols && n > 0) {
+					switch (n - 1) {
+						case 0: 		// Instrument
+							ChanNote.Instrument = (ChanNote.Instrument & 0x0F) | ClipData->ColumnData[ColPtr][i] << 4;
+							if (ChanNote.Instrument != 64)
+								ChanNote.Instrument &= 0x3F;
+							break;
+						case 1: 
+							ChanNote.Instrument = (ChanNote.Instrument & 0xF0) | ClipData->ColumnData[ColPtr][i]; 
+							if (ChanNote.Instrument != 64)
+								ChanNote.Instrument &= 0x3F; 
+							break;
+						case 2:			// Volume
+							ChanNote.Vol = ClipData->ColumnData[ColPtr][i]; 
+							if (ChanNote.Vol != 0x10)
+								ChanNote.Vol &= 0x0F;
+							break;
+						case 3: ChanNote.EffNumber[0]	= ClipData->ColumnData[ColPtr][i]; break;											// First effect column
+						case 4: ChanNote.EffParam[0]	= (ChanNote.EffParam[0] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
+						case 5: ChanNote.EffParam[0]	= (ChanNote.EffParam[0] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
+						case 6: ChanNote.EffNumber[1]	= ClipData->ColumnData[ColPtr][i]; break;											// Second effect column
+						case 7: ChanNote.EffParam[1]	= (ChanNote.EffParam[1] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
+						case 8: ChanNote.EffParam[1]	= (ChanNote.EffParam[1] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
+						case 9: ChanNote.EffNumber[2]	= ClipData->ColumnData[ColPtr][i]; break;											// Third effect column
+						case 10: ChanNote.EffParam[2]	= (ChanNote.EffParam[2] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
+						case 11: ChanNote.EffParam[2]	= (ChanNote.EffParam[2] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
+						case 12: ChanNote.EffNumber[3]	= ClipData->ColumnData[ColPtr][i]; break;											// Fourth effect column
+						case 13: ChanNote.EffParam[3]	= (ChanNote.EffParam[3] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
+						case 14: ChanNote.EffParam[3]	= (ChanNote.EffParam[3] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
+					}
+					ColPtr++;
+				}
+			}
+
+			pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow + i, &ChanNote);
+		}
+	}
+
+	GlobalUnlock(hMem);
+	CloseClipboard();
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnEditDelete()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int	i;
+	int	SelStart, SelEnd;
+	int SelColStart, SelColEnd;
+
+	if (m_iSelectStart == -1 || m_bEditEnable == false)
+		return;
+
+	if (m_iSelectStart > m_iSelectEnd) {
+		SelStart	= m_iSelectEnd;
+		SelEnd		= m_iSelectStart;
+	}
+	else {
+		SelStart	= m_iSelectStart;
+		SelEnd		= m_iSelectEnd;
+	}
+
+	if (m_iSelectColStart > m_iSelectColEnd) {
+		SelColStart = m_iSelectColEnd;
+		SelColEnd	= m_iSelectColStart;
+	}
+	else {
+		SelColStart = m_iSelectColStart;
+		SelColEnd	= m_iSelectColEnd;
+	}
+
+	AddUndo(m_iSelectChannel);
+
+	stChanNote NoteData;
+
+	for (i = SelStart; i < SelEnd + 1; i++) {
+		pDoc->GetNoteData(m_iCurrentFrame, m_iSelectChannel, i, &NoteData);
+		if (IsColumnSelected(SelColStart, SelColEnd, 0)) {
+			NoteData.Note = 0; NoteData.Octave = 0;
+		}
+		if (IsColumnSelected(SelColStart, SelColEnd, 1))
+			NoteData.Instrument = MAX_INSTRUMENTS;
+		if (IsColumnSelected(SelColStart, SelColEnd, 2))
+			NoteData.Vol = 0x10;
+		if (IsColumnSelected(SelColStart, SelColEnd, 3)) {
+			NoteData.EffNumber[0]	= EF_NONE;
+			NoteData.EffParam[0]	= 0;
+		}
+		if (IsColumnSelected(SelColStart, SelColEnd, 4)) {
+			NoteData.EffNumber[1]	= EF_NONE;
+			NoteData.EffParam[1]	= 0;
+		}
+		if (IsColumnSelected(SelColStart, SelColEnd, 5)) {
+			NoteData.EffNumber[2]	= EF_NONE;
+			NoteData.EffParam[2]	= 0;
+		}
+		if (IsColumnSelected(SelColStart, SelColEnd, 6)) {
+			NoteData.EffNumber[3]	= EF_NONE;
+			NoteData.EffParam[3]	= 0;
+		}
+
+		pDoc->SetNoteData(m_iCurrentFrame, m_iSelectChannel, i, &NoteData);
+	}
+
+	m_iSelectStart = -1;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnUpdateEditCopy(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_iSelectStart == -1 ? 0 : 1);
+}
+
+void CFamiTrackerView::OnUpdateEditCut(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_iSelectStart == -1 ? 0 : 1);
+}
+
+void CFamiTrackerView::OnUpdateEditPaste(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(IsClipboardFormatAvailable(m_iClipBoard) ? 1 : 0);
+}
+
+void CFamiTrackerView::OnUpdateEditDelete(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_iSelectStart == -1 ? 0 : 1);
+}
+
+void CFamiTrackerView::OnUpdateTrackerStop(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_bPlaying ? 1 : 0);
+}
+
+void CFamiTrackerView::OnUpdateTrackerPlay(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bPlaying && GetDocument()->IsFileLoaded() ? 1 : 0);
+}
+
+void CFamiTrackerView::OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bPlaying && GetDocument()->IsFileLoaded() ? 1 : 0);
+}
+
+void CFamiTrackerView::OnTrackerPlay()
+{
+	CMainFrame *pMainFrm = (CMainFrame*)GetParentFrame();
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_bPlaying || !pDoc->IsFileLoaded())
+		return;
+
+	m_bPlaying			= true;
+	m_bPlayLooped		= false;
+	m_bFirstTick		= true;
+	m_iPlayTime			= 0;
+	m_iPlayerSyncTick	= 0;
+
+	GetStartSpeed();
+
+	theApp.SilentEverything();
+
+	MoveCursorToTop();
+	ForceRedraw();
+
+	SetMessageText("Playing");
+
+	theApp.SetMachineType(pDoc->GetMachine(), pDoc->GetEngineSpeed());
+}
+
+void CFamiTrackerView::OnTrackerPlaypattern()
+{
+	CMainFrame *pMainFrm = (CMainFrame*)GetParentFrame();
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_bPlaying || !pDoc->IsFileLoaded())
+		return;
+
+	m_bPlaying			= true;
+	m_bPlayLooped		= true;	
+	m_iPlayTime			= 0;
+	m_iPlayerSyncTick	= 0;
+
+	GetStartSpeed();
+
+	SetMessageText("Playing pattern");
+
+	theApp.SilentEverything();
+}
+
+void CFamiTrackerView::OnTrackerStop()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	theApp.SilentEverything();
+
+	SetMessageText("Stopped");
+
+	m_bPlaying		= false;
+	m_iTickPeriod	= pDoc->GetSongSpeed();
+}
+
+void CFamiTrackerView::OnTrackerEdit()
+{
+	m_bEditEnable = !m_bEditEnable;
+
+	if (m_bEditEnable)
+		SetMessageText("Edit mode");
+	else
+		SetMessageText("Normal mode");
+	
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnUpdateTrackerEdit(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bEditEnable ? 1 : 0);
+}
+
+void CFamiTrackerView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/)
+{
+	// Document has changed, redraw the view
+	m_bForceRedraw = true;
+}
+
+void CFamiTrackerView::OnTrackerPal()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	CMainFrame*	pMainFrm = static_cast<CMainFrame*>(GetParentFrame());
+
+	int Speed = (pDoc->GetEngineSpeed() == 0) ? 50 : pDoc->GetEngineSpeed();
+
+	pDoc->SetMachine(PAL);
+
+	theApp.SetMachineType(pDoc->GetMachine(), Speed);
+}
+
+void CFamiTrackerView::OnTrackerNtsc()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	CMainFrame*	pMainFrm = static_cast<CMainFrame*>(GetParentFrame());
+
+	int Speed = (pDoc->GetEngineSpeed() == 0) ? 60 : pDoc->GetEngineSpeed();
+
+	pDoc->SetMachine(NTSC);
+
+	theApp.SetMachineType(pDoc->GetMachine(), Speed);
+}
+
+void CFamiTrackerView::OnUpdateTrackerPal(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	pCmdUI->SetCheck(pDoc->GetMachine() == PAL);
+}
+
+void CFamiTrackerView::OnUpdateTrackerNtsc(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	pCmdUI->SetCheck(pDoc->GetMachine() == NTSC);
+}
+
+void CFamiTrackerView::OnUpdateSpeedDefalut(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	pCmdUI->SetCheck(pDoc->GetEngineSpeed() == 0);
+}
+
+void CFamiTrackerView::OnUpdateSpeedCustom(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	
+	pCmdUI->SetCheck(pDoc->GetEngineSpeed() != 0);
+}
+
+void CFamiTrackerView::OnSpeedCustom()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	CSpeedDlg SpeedDlg;
+	int Speed;
+
+	Speed = pDoc->GetEngineSpeed();
+
+	if (Speed == 0)
+		Speed = (pDoc->GetMachine() == NTSC ? 60 : 50);
+
+	Speed = SpeedDlg.GetSpeedFromDlg(Speed);
+
+	if (Speed == 0)
+		return;
+
+	pDoc->SetEngineSpeed(Speed);
+
+	theApp.SetMachineType(pDoc->GetMachine(), Speed);
+}
+
+void CFamiTrackerView::OnSpeedDefalut()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int Speed = (pDoc->GetMachine() == NTSC) ? 60 : 50;
+
+	pDoc->SetEngineSpeed(0);
+
+	theApp.SetMachineType(pDoc->GetMachine(), Speed);
+}
+
+void CFamiTrackerView::OnEditPasteoverwrite()
+{
+	m_bPasteOverwrite = !m_bPasteOverwrite;
+}
+
+void CFamiTrackerView::OnUpdateEditPasteoverwrite(CCmdUI *pCmdUI)
+{
+	pCmdUI->SetCheck(m_bPasteOverwrite);
+}
+
+void CFamiTrackerView::OnTransposeDecreasenote()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stChanNote Note;
+
+	if (!m_bEditEnable)
+		return;
+
+	if (m_iSelectStart == -1) {
+		AddUndo(m_iCursorChannel);
+		pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+		if (Note.Note > 0 && Note.Note != HALT) {
+			if (Note.Note > 1) 
+				Note.Note--;
+			else {
+				if (Note.Octave > 0) {
+					Note.Note = B;
+					Note.Octave--;
+				}
+			}
+		}
+		pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+	}
+	else {
+		unsigned int SelStart = GetSelectStart();
+		unsigned int SelEnd = GetSelectEnd();
+
+		AddUndo(m_iSelectChannel);
+		
+		for (unsigned int i = SelStart; i < SelEnd + 1; i++) {
+			pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+			if (Note.Note > 0 && Note.Note != HALT) {
+				if (Note.Note > 1)
+					Note.Note--;
+				else {
+					if (Note.Octave > 0) {
+						Note.Note = B;
+						Note.Octave--;
+					}
+				}
+			}
+			pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+		}
+	}
+
+//	ForceRedraw();
+}
+
+void CFamiTrackerView::OnTransposeDecreaseoctave()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stChanNote Note;
+
+	if (!m_bEditEnable)
+		return;
+
+	if (m_iSelectStart == -1) {
+		AddUndo(m_iCursorChannel);
+		pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+		if (Note.Octave > 0) 
+			Note.Octave--;
+		pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+	}
+	else {
+		unsigned int SelStart = GetSelectStart();
+		unsigned int SelEnd = GetSelectEnd();
+
+		AddUndo(m_iSelectChannel);
+
+		for (unsigned int i = SelStart; i < SelEnd + 1; i++) {
+			pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+			if (Note.Octave > 0)
+				Note.Octave--;
+			pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+		}
+	}
+}
+
+void CFamiTrackerView::OnTransposeIncreasenote()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stChanNote Note;
+
+	if (!m_bEditEnable)
+		return;
+
+	if (m_iSelectStart == -1) {
+		AddUndo(m_iCursorChannel);
+		pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+		if (Note.Note > 0 && Note.Note != HALT) {
+			if (Note.Note < B)
+				Note.Note++;
+			else {
+				if (Note.Octave < 8) {
+					Note.Note = C;
+					Note.Octave++;
+				}
+			}
+		}
+		pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+	}
+	else {
+		unsigned int SelStart = GetSelectStart();
+		unsigned int SelEnd = GetSelectEnd();
+
+		AddUndo(m_iSelectChannel);
+
+		for (unsigned int i = SelStart; i < SelEnd + 1; i++) {
+			pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+			if (Note.Note > 0 && Note.Note != HALT) {
+				if (Note.Note < B)
+					Note.Note++;
+				else {
+					if (Note.Octave < 8) {
+						Note.Note = C;
+						Note.Octave++;
+					}
+				}
+			}
+			pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+		}
+	}
+}
+
+void CFamiTrackerView::OnTransposeIncreaseoctave()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	stChanNote Note;
+
+	if (!m_bEditEnable)
+		return;
+
+	if (m_iSelectStart == -1) {
+		AddUndo(m_iCursorChannel);
+		pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+		if (Note.Octave < 8) 
+			Note.Octave++;
+		pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+	}
+	else {
+		unsigned int SelStart = GetSelectStart();
+		unsigned int SelEnd = GetSelectEnd();
+
+		AddUndo(m_iSelectChannel);
+
+		for (unsigned int i = SelStart; i < SelEnd + 1; i++) {
+			pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+			if (Note.Octave < 8)
+				Note.Octave++;
+			pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, i, &Note);
+		}
+	}
+}
+
+void CFamiTrackerView::OnEditUndo()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int Channel, Pattern, x;
+	CString Text;
+
+	if (!m_iUndoLevel)
+		return;
+
+	if (!m_iRedoLevel) {
+		int Channel = m_UndoStack[m_iUndoLevel - 1].Channel;
+		int Pattern = pDoc->GetPatternAtFrame(m_iCurrentFrame, m_iCursorChannel);
+		int x;
+
+		m_UndoStack[m_iUndoLevel].Channel	= Channel;
+		m_UndoStack[m_iUndoLevel].Pattern	= Pattern;
+		m_UndoStack[m_iUndoLevel].Row		= m_iCursorRow;
+		m_UndoStack[m_iUndoLevel].Column	= m_iCursorColumn;
+		m_UndoStack[m_iUndoLevel].Frame		= m_iCurrentFrame;
+
+		for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
+			pDoc->GetDataAtPattern(Pattern, Channel, x, &m_UndoStack[m_iUndoLevel].ChannelData[x]);
+		}
+	}
+
+	m_iRedoLevel++;
+	m_iUndoLevel--;
+
+	Channel = m_UndoStack[m_iUndoLevel].Channel;
+	Pattern = m_UndoStack[m_iUndoLevel].Pattern;
+
+	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
+		pDoc->SetDataAtPattern(Pattern, Channel, x, &m_UndoStack[m_iUndoLevel].ChannelData[x]);
+	}
+
+	m_iCursorChannel	= m_UndoStack[m_iUndoLevel].Channel;
+	m_iCursorRow		= m_UndoStack[m_iUndoLevel].Row;
+	m_iCursorColumn		= m_UndoStack[m_iUndoLevel].Column;
+	m_iCurrentFrame		= m_UndoStack[m_iUndoLevel].Frame;
+
+	pDoc->SetPatternAtFrame(m_iCurrentFrame, m_iCursorChannel, Pattern);
+
+	m_iCurrentRow = m_iCursorRow;
+
+	Text.Format("Undo (%i / %i)", m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
+	SetMessageText(Text);
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnUpdateEditUndo(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_iUndoLevel > 0 ? 1 : 0);
+}
+
+void CFamiTrackerView::OnEditRedo()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (!m_iRedoLevel)
+		return;
+
+	m_iUndoLevel++;
+	m_iRedoLevel--;
+
+	int Channel, Pattern, x;
+
+	Channel = m_UndoStack[m_iUndoLevel].Channel;
+	Pattern = m_UndoStack[m_iUndoLevel].Pattern;
+
+	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
+		pDoc->SetDataAtPattern(Pattern, Channel, x, &m_UndoStack[m_iUndoLevel].ChannelData[x]);
+	}
+
+	m_iCursorChannel	= Channel;
+	m_iCursorRow		= m_UndoStack[m_iUndoLevel].Row;
+	m_iCursorColumn		= m_UndoStack[m_iUndoLevel].Column;
+	m_iCurrentFrame		= m_UndoStack[m_iUndoLevel].Frame;
+
+	pDoc->SetPatternAtFrame(m_iCurrentFrame, m_iCursorChannel, Pattern);
+
+	m_iCurrentRow = m_iCursorRow;
+
+	CString Text;
+	Text.Format("Redo (%i / %i)", m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
+	SetMessageText(Text);
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnUpdateEditRedo(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(m_iRedoLevel > 0 ? 1 : 0);
+}
+
+void CFamiTrackerView::OnInitialUpdate()
+{
+	// Called when a new document is loaded
+	//
+
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	CMainFrame	*MainFrame = static_cast<CMainFrame*>(GetParentFrame());
+
+	unsigned int i;
+	char Text[256];
+
+	CView::OnInitialUpdate();
+
+	if (m_bPlaying) {
+		OnTrackerStop();
+	}
+
+	m_iLastCursorColumn = 0;
+	m_iLastRowState		= 0;
+	m_bInitialized		= true;
+	m_bForceRedraw		= true;
+	m_iInstrument		= 0;
+	m_iUndoLevel		= 0;
+	m_iRedoLevel		= 0;
+
+	m_iCurrentFrame		= 0;
+	m_iCurrentRow		= 0;
+	m_iCursorChannel	= 0;
+	m_iCursorColumn		= 0;
+	m_iCursorRow		= 0;
+
+	for (i = 0; i < MAX_INSTRUMENTS; i++) {
+		if (pDoc->IsInstrumentUsed(i)) {
+			pDoc->GetInstrumentName(i, Text);
+			MainFrame->AddInstrument(i, Text);
+		}
+	}
+
+	if (pDoc->GetEngineSpeed() == 0) {
+		if (pDoc->GetMachine() == NTSC)
+			theApp.SetMachineType(pDoc->GetMachine(), 60);
+		else
+			theApp.SetMachineType(pDoc->GetMachine(), 50);
+	}
+	else
+		theApp.SetMachineType(pDoc->GetMachine(), pDoc->GetEngineSpeed());
+
+	MainFrame->SetSongInfo(pDoc->GetSongName(), pDoc->GetSongArtist(), pDoc->GetSongCopyright());
+}
+
+void CFamiTrackerView::RemoveWithoutDelete()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	stChanNote	Note;
+
+	int	i;
+	int	SelStart, SelEnd;
+
+	if (m_iSelectStart == -1 || m_bEditEnable == false)
+		return;
+
+	if (m_iSelectStart > m_iSelectEnd) {
+		SelStart = m_iSelectEnd;
+		SelEnd = m_iSelectStart;
+	}
+	else {
+		SelStart = m_iSelectStart;
+		SelEnd = m_iSelectEnd;
+	}
+
+	AddUndo(m_iSelectChannel);
+
+	Note.Note = 0;
+	Note.Octave = 0;
+	Note.Instrument = 0;
+	Note.EffNumber[0] = 0;
+	Note.EffParam[0] = 0;
+
+	for (i = SelStart; i < SelEnd + 1; i++) {
+		pDoc->SetNoteData(m_iCurrentFrame, m_iSelectChannel, i, &Note);
+	}
+
+	m_iSelectStart = -1;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnEditSelectall()
+{
+	SelectWholePattern(m_iCursorChannel);
+}
+
+void CFamiTrackerView::SelectWholePattern(unsigned int Channel)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_iSelectStart == -1) {
+		m_iSelectChannel	= Channel;
+		m_iSelectStart		= 0;
+		m_iSelectEnd		= pDoc->GetPatternLength() - 1;
+		m_iSelectColStart	= 0;
+		m_iSelectColEnd		= COLUMNS - 1 + (pDoc->GetEffColumns(Channel) * 3);
+	}
+	else
+		m_iSelectStart = -1;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnKillFocus(CWnd* pNewWnd)
+{
+	CView::OnKillFocus(pNewWnd);
+	m_bHasFocus = false;
+	Invalidate(TRUE);
+	ForceRedraw();
+}
+
+void CFamiTrackerView::OnSetFocus(CWnd* pOldWnd)
+{
+	CView::OnSetFocus(pOldWnd);
+	m_bHasFocus = true;
+	Invalidate(TRUE);
+	ForceRedraw();
+}
+
+void CFamiTrackerView::TranslateMidiMessage()
+{
+	unsigned char Message, Channel, Note, Octave, Velocity;
+	static unsigned char LastNote, LastOctave;
+	CString Status;
+
+	CMIDI *pMIDI = theApp.GetMIDI();
+
+	if (!m_bInitialized)
+		return;
+
+	while (pMIDI->ReadMessage(Message, Channel, Note, Octave, Velocity)) {
+	
+		if (!theApp.m_pSettings->Midi.bMidiChannelMap)
+			Channel = m_iCursorChannel;
+
+		switch (Message) {
+			case MIDI_MSG_NOTE_ON:
+				if (Channel > 4)
+					return;
+				Status.Format("MIDI message: Note on (note = %02i, octave = %02i, velocity = %02X)", Note, Octave, Velocity);
+				SetMessageText(Status);
+				if (Velocity == 0) {
+					if (LastNote == Note && LastOctave == Octave) {
+						// Cut note
+						stChanNote Note;
+						memset(&Note, 0, sizeof(stChanNote));
+						Note.Note	= HALT;
+						LastOctave	= 0;
+						LastNote	= 0;
+						FeedNote(Channel, &Note);
+					}
+				}
+				else {
+					if (!theApp.m_pSettings->Midi.bMidiVelocity)
+						Velocity = 127;
+					InsertNote(Note, Octave, Channel, Velocity + 1);
+					LastNote	= Note;
+					LastOctave	= Octave;
+				}
+				break;
+
+			case MIDI_MSG_NOTE_OFF:
+				if (Channel > 4)
+					return;
+				Status.Format("MIDI message: Note off");
+				SetMessageText(Status);
+				StopNote(Channel);
+				break;
+			
+			case 0x0F:
+				if (Channel == 0x08) {
+					StepDown();
+				}
+				break;
+		}
+	}
+}
+
+void CFamiTrackerView::PostNcDestroy()
+{
+	// Called at exit
+	m_bInitialized = false;
+	CView::PostNcDestroy();
+}
+
+void CFamiTrackerView::OnTimer(UINT nIDEvent)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	CMainFrame *pMainFrm;
+	static int LastNoteState;
+
+	int TicksPerSec = pDoc->GetFrameRate();
+
+	if (nIDEvent == 0) {
+
+		pMainFrm = (CMainFrame*)GetParentFrame();
+
+		// Fetch channel levels
+
+		m_iVolLevels[0] = theApp.GetOutput(0);
+		m_iVolLevels[1] = theApp.GetOutput(1);
+		m_iVolLevels[2] = theApp.GetOutput(2);
+		m_iVolLevels[3] = theApp.GetOutput(3);
+		m_iVolLevels[4] = theApp.GetOutput(4) / 8;
+
+		// Redraw screen
+//		if (m_iCurrentRow != m_iLastRowState || m_iCurrentFrame != m_iLastFrameState || m_bForceRedraw) {
+
+		if (m_bForceRedraw) {
+
+			if (m_iCurrentRow != m_iLastRowState || m_iCurrentFrame != m_iLastFrameState || m_iCursorColumn != m_iLastCursorColumn)
+				RefreshStatusMessage();
+
+			m_iLastRowState		= m_iCurrentRow;
+			m_iLastFrameState	= m_iCurrentFrame;
+			m_iLastCursorColumn	= m_iCursorColumn;
+			m_bForceRedraw		= false;
+
+			Invalidate(FALSE);
+			PostMessage(WM_PAINT);
+
+			((CMainFrame*)GetParent())->RefreshPattern();
+		}
+		else {
+			CDC *pDC = this->GetDC();
+			DrawMeters(pDC);
+			ReleaseDC(pDC);
+		}
+
+		if (LastNoteState != m_iKeyboardNote)
+			pMainFrm->ChangeNoteState(m_iKeyboardNote);
+
+		if (m_bPlaying) {
+			//if ((m_iPlayTime & 0x01) == 0x01)
+			pMainFrm->SetIndicatorTime((m_iPlayTime / TicksPerSec) / 60, (m_iPlayTime / TicksPerSec) % 60, ((m_iPlayTime * 10) / TicksPerSec) % 10);
+		}
+
+		LastNoteState	= m_iKeyboardNote;
+	}
+
+	CView::OnTimer(nIDEvent);
+}
+
+int CFamiTrackerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CView::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	// Install a timer for screen updates
+	SetTimer(0, 20, NULL);
+
+	return 0;
+}
+
+void CFamiTrackerView::OnEditEnablemidi()
+{
+	theApp.GetMIDI()->Toggle();
+}
+
+void CFamiTrackerView::OnUpdateEditEnablemidi(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(theApp.GetMIDI()->IsAvailable());
+	pCmdUI->SetCheck(theApp.GetMIDI()->IsOpened());
+}
+
+void CFamiTrackerView::OnFrameInsert()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	unsigned int i, x;
+
+	if (pDoc->GetFrameCount() == MAX_FRAMES) {
+		return;
+	}
+
+	pDoc->SetFrameCount(pDoc->GetFrameCount() + 1);
+
+	for (x = pDoc->GetFrameCount(); x > unsigned(m_iCurrentFrame - 1); x--) {
+		for (i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			pDoc->SetPatternAtFrame(x + 1, i, pDoc->GetPatternAtFrame(x, i));
+		}
+	}
+
+	for (i = 0; i < pDoc->GetAvailableChannels(); i++) {
+		pDoc->SetPatternAtFrame(m_iCurrentFrame, i, 0);
+	}
+}
+
+void CFamiTrackerView::OnFrameRemove()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	unsigned int i, x;
+
+	if (pDoc->GetFrameCount() == 1) {
+		return;
+	}
+
+	for (i = 0; i < pDoc->GetAvailableChannels(); i++) {
+		pDoc->SetPatternAtFrame(m_iCurrentFrame, i, 0);
+	}
+
+	for (x = m_iCurrentFrame; x < pDoc->GetFrameCount(); x++) {
+		for (i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			pDoc->SetPatternAtFrame(x, i, pDoc->GetPatternAtFrame(x + 1, i));
+		}
+	}
+
+	pDoc->SetFrameCount(pDoc->GetFrameCount() - 1);
+
+	if (m_iCurrentFrame > (pDoc->GetFrameCount() - 1))
+		m_iCurrentFrame = (pDoc->GetFrameCount() - 1);
+}
+
+void CFamiTrackerView::RegisterKeyState(int Channel, int Note)
+{
+	if (Channel == m_iCursorChannel)
+		m_iKeyboardNote	= Note;
+}
+
+void CFamiTrackerView::OnTrackerPlayrow()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	stChanNote Note;
+
+	ASSERT_VALID(pDoc);
+
+	for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+		pDoc->GetNoteData(m_iCurrentFrame, i, m_iCursorRow, &Note);
+		if (!m_bMuteChannels[i])
+			FeedNote(i, &Note);
+	
+	}
+	MoveCursorDown();
+}
+
+void CFamiTrackerView::OnUpdateFrameRemove(CCmdUI *pCmdUI)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->GetFrameCount() > 1);
+}
+
+void CFamiTrackerView::RefreshStatusMessage()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	int Effect, Param;
+	stChanNote Note;
+	CString Text;
+	bool IsEffect = false;
+
+	if (m_iSelectStart != -1 || m_bPlaying)
+		return;
+
+	pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+
+	switch (m_iCursorColumn) {
+		case 0:
+			Text = "Note column";
+			break;
+		case 1:
+		case 2:
+			if (Note.Instrument == 0x40) {
+				Text = "Instrument column";
+			}
+			else if (pDoc->IsInstrumentUsed(Note.Instrument)) {
+				char InstName[256];
+				pDoc->GetInstrumentName(Note.Instrument, InstName);
+				Text.Format("Instrument column: %02X - %s", Note.Instrument, InstName);
+			}
+			else
+				Text = "Instrument column (instrument doesn't exist)";
+
+			break;
+		case 3:
+			Text = "Volume column";
+			break;
+		case 4:		// First
+		case 5:
+		case 6:
+			Effect		= Note.EffNumber[0];
+			Param		= Note.EffParam[0];
+			IsEffect	= true;
+			break;
+		case 7:		// Second
+		case 8:
+		case 9:
+			Effect		= Note.EffNumber[1];
+			Param		= Note.EffParam[1];
+			IsEffect	= true;
+			break;
+		case 10:	// Third
+		case 11:
+		case 12:
+			Effect		= Note.EffNumber[2];
+			Param		= Note.EffParam[2];
+			IsEffect	= true;
+			break;
+		case 13:	// Fourth
+		case 14:
+		case 15:
+			Effect		= Note.EffNumber[3];
+			Param		= Note.EffParam[3];
+			IsEffect	= true;
+			break;
+	}
+
+	if (IsEffect) {
+		switch (Effect) {
+			case EF_ARPEGGIO:	Text.Format("Effect: Arpeggio, %02X (%i)", Param, Param); break;
+			case EF_VIBRATO:	Text.Format("Effect: Vibrato, %02X (%i)", Param, Param); break;
+			case EF_TREMOLO:	Text.Format("Effect: Tremolo, %02X (%i)", Param, Param); break;
+			case EF_SPEED:		Text.Format("Effect: Speed, %02X (%i)", Param, Param); break;
+			case EF_JUMP:		Text.Format("Effect: Jump, %02X (%i)", Param, Param); break;
+			case EF_SKIP:		Text.Format("Effect: Skip, %02X (%i)", Param, Param); break;
+			case EF_HALT:		Text.Format("Effect: Halt"); break;
+			case EF_VOLUME:		Text.Format("Effect: Volume, %02X (%i)", Param, Param); break;
+			case EF_PORTAON:	Text.Format("Effect: Portamento on, %02X (%i)", Param, Param); break;
+			case EF_PORTAOFF:	Text.Format("Effect: Portamento off"); break;
+			case EF_SWEEPUP:	Text.Format("Effect: Hardware sweep up, %02X (%i)", Param, Param); break;
+			case EF_SWEEPDOWN:	Text.Format("Effect: Hardware sweep down, %02X (%i)", Param, Param); break;
+			case EF_PITCH:		Text.Format("Effect: Fine pitch setting"); break;
+			default:
+				Text = "Effect column";
+		}
+	}
+
+	SetMessageText(Text);
+}
+
+void CFamiTrackerView::FeedNote(int Channel, stChanNote *NoteData)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+
+	//if (NoteData->Note > 0) {
+		CurrentNotes[Channel] = *NoteData;
+		NewNoteData[Channel] = true;
+	//}
+}
+
+void CFamiTrackerView::GetStartSpeed()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+
+	m_iTempoAccum	= 60 * pDoc->GetFrameRate();		// 60 as in 60 seconds per minute
+	m_iTickPeriod	= pDoc->GetSongSpeed();
+	m_iSpeed		= DEFAULT_SPEED;
+	
+	m_iTempo = m_iTempoAccum / 24;
+
+	if (m_iTickPeriod > 20)
+		m_iTempo = m_iTickPeriod;
+	else
+		m_iSpeed = m_iTickPeriod;
+}
+
+void CFamiTrackerView::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	CRect WinRect;
+	CMenu *PopupMenu, PopupMenuBar;
+	int Item = 0;
+
+	GetWindowRect(WinRect);
+	PopupMenuBar.LoadMenu(IDR_POPUP);
+
+	PopupMenu = PopupMenuBar.GetSubMenu(0);
+	PopupMenu->TrackPopupMenu(TPM_RIGHTBUTTON, point.x + WinRect.left, point.y + WinRect.top, this);
+
+	CView::OnRButtonUp(nFlags, point);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CFamiTrackerView::SelectFrame(unsigned int Frame)
+{
+	ASSERT(Frame < MAX_FRAMES);
+	ASSERT(Frame < GetDocument()->GetFrameCount());
+
+	m_iCurrentFrame = Frame;
+	ForceRedraw();
+}
+
+void CFamiTrackerView::SelectNextFrame()
+{
+	if (m_iSelectStart != -1 && theApp.m_pSettings->General.bKeySelect) {
+		// quick hack (as everything else)
+		if (m_iSelectColEnd < (m_iChannelColumns[m_iCursorChannel] - 1))
+			m_iSelectColEnd++;
+	}
+	else {
+		if (m_iCurrentFrame < (GetDocument()->GetFrameCount() - 1))
+			m_iCurrentFrame++;
+		else
+			m_iCurrentFrame = 0;
+	}
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::SelectPrevFrame()
+{
+	if (m_iSelectStart != -1 && theApp.m_pSettings->General.bKeySelect) {
+		if (m_iSelectColEnd > 0)
+			m_iSelectColEnd--;
+	}
+	else {
+		if (m_iCurrentFrame > 0)
+			m_iCurrentFrame--;
+		else
+			m_iCurrentFrame = GetDocument()->GetFrameCount() - 1;
+	}
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::SelectFirstFrame()
+{
+	m_iCurrentFrame = 0;
+	ForceRedraw();
+}
+
+void CFamiTrackerView::SelectLastFrame()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	m_iCurrentFrame = pDoc->GetFrameCount() - 1;
+	ForceRedraw();
+}
+
+void CFamiTrackerView::SelectChannel(unsigned int Channel)
+{
+	ASSERT(Channel < MAX_CHANNELS);
+	m_iCursorChannel = Channel;
+	m_iCursorColumn = 0;
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorLeft()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	int MaxColumns = GetCurrentColumnCount();
+
+	if (m_iCursorColumn > 0) {
+		m_iCursorColumn--;
+	}
+	else {
+		if (m_iCursorChannel > 0) {
+			m_iCursorColumn = MaxColumns - 1;
+			m_iCursorChannel--;
+		}
+		else {
+			if (theApp.m_pSettings->General.bWrapCursor) {
+				m_iCursorColumn = MaxColumns - 1;
+				m_iCursorChannel = pDoc->GetAvailableChannels() - 1;
+			}
+		}
+	}
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorRight()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	unsigned int MaxColumns = GetCurrentColumnCount();
+
+	if (m_iCursorColumn < (MaxColumns - 1)) {
+		m_iCursorColumn++;
+	}
+	else {
+		if (m_iCursorChannel < (pDoc->GetAvailableChannels() - 1)) {
+			m_iCursorColumn = 0;
+			m_iCursorChannel++;
+		}
+		else {
+			if (theApp.m_pSettings->General.bWrapCursor) {
+				m_iCursorColumn	= 0;
+				m_iCursorChannel = 0;
+			}
+		}
+	}
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorNextChannel()
+{
+	m_iCursorColumn = 0;
+
+	if (m_iCursorChannel < GetDocument()->GetAvailableChannels() - 1)
+		m_iCursorChannel++;
+	else
+		m_iCursorChannel = 0;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorPrevChannel()
+{
+	m_iCursorColumn = 0;
+
+	if (m_iCursorChannel > 0)
+		m_iCursorChannel--;
+	else
+		m_iCursorChannel = GetDocument()->GetAvailableChannels() - 1;
+	
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorFirstChannel()
+{
+	m_iCursorChannel = 0;
+	m_iCursorColumn = 0;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorLastChannel()
+{
+	m_iCursorChannel = GetDocument()->GetAvailableChannels() - 1;
+	m_iCursorColumn	= 0;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MuteNote(int Channel)
+{
+	stChanNote NoteData;
+	memset(&NoteData, 0, sizeof(stChanNote));
+	NoteData.Note = HALT;
+	FeedNote(Channel, &NoteData);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Revised things
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CFamiTrackerView::SetInstrument(int Instrument)
+{
+	m_iInstrument = Instrument;
+}
+
+void CFamiTrackerView::MoveCursorUp()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_iCursorRow > 0)
+		m_iCursorRow--;
+	else if (theApp.m_pSettings->General.bWrapCursor)
+		m_iCursorRow = pDoc->GetPatternLength() - 1;
+
+	//m_iCursorRow = m_iCurrentRow;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorDown()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_iCursorRow < (pDoc->GetPatternLength() - 1))
+		m_iCursorRow++; 
+	else if (theApp.m_pSettings->General.bWrapCursor)
+		m_iCursorRow = 0;
+
+	//m_iCursorRow = m_iCurrentRow;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorPageUp()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_iCursorRow > (PAGE_SIZE - 1))
+		m_iCursorRow -= PAGE_SIZE;
+	else if (theApp.m_pSettings->General.bWrapCursor)
+		m_iCursorRow += pDoc->GetPatternLength() - PAGE_SIZE;
+	else
+		m_iCursorRow = 0;
+
+//	m_iCursorRow = m_iCurrentRow;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorPageDown()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_iCursorRow < pDoc->GetPatternLength() - PAGE_SIZE)
+		m_iCursorRow += PAGE_SIZE; 
+	else if (theApp.m_pSettings->General.bWrapCursor)
+		m_iCursorRow -= pDoc->GetPatternLength() - PAGE_SIZE;
+	else 
+		m_iCursorRow = pDoc->GetPatternLength() - 1;
+
+//	m_iCursorRow = m_iCurrentRow;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorToTop()
+{
+	m_iCursorRow = 0;
+//	m_iCursorRow = m_iCurrentRow;
+	ForceRedraw();
+}
+
+void CFamiTrackerView::MoveCursorToBottom()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	m_iCursorRow = pDoc->GetPatternLength() - 1;
+//	m_iCursorRow = m_iCurrentRow;
+
+	ForceRedraw();
+}
+
+void CFamiTrackerView::IncreaseCurrentPattern()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_bChangeAllPattern) {
+		for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			pDoc->IncreasePattern(m_iCurrentFrame, i);
+		}
+	}
+	else
+		pDoc->IncreasePattern(m_iCurrentFrame, m_iCursorChannel);
+}
+
+void CFamiTrackerView::DecreaseCurrentPattern()
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	if (m_bChangeAllPattern) {
+		for (unsigned int i = 0; i < pDoc->GetAvailableChannels(); i++) {
+			pDoc->DecreasePattern(m_iCurrentFrame, i);
+		}
+	}
+	else
+		pDoc->DecreasePattern(m_iCurrentFrame, m_iCursorChannel);
+}
+
+void CFamiTrackerView::SetSongSpeed(unsigned int Speed)
+{
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	ASSERT(Speed <= MAX_TEMPO);
+
+	m_iTickPeriod = Speed;
+	
+	if (m_iTickPeriod > 20)
+		m_iTempo = m_iTickPeriod;
+	else
+		m_iSpeed = m_iTickPeriod;
+		
+	pDoc->SetSongSpeed(Speed);
+}
+
+void CFamiTrackerView::StepDown()
+{
+	unsigned int i = 0;
+
+	while (i++ < m_iKeyStepping)
+		MoveCursorDown();
+}
+
+void CFamiTrackerView::AddUndo(unsigned int Channel)
+{
+	// Channel - Channel that contains the pattern that should be added ontop of undo stack
+	//
+
+	CFamiTrackerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+
+	unsigned int Pattern = pDoc->GetPatternAtFrame(m_iCurrentFrame, Channel);
+	int x;
+
+	stUndoBlock UndoBlock;
+	
+	UndoBlock.Channel	= Channel;
+	UndoBlock.Pattern	= Pattern;
+	UndoBlock.Row		= m_iCursorRow;
+	UndoBlock.Column	= m_iCursorColumn;
+	UndoBlock.Frame		= m_iCurrentFrame;
+
+	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
+		pDoc->GetDataAtPattern(Pattern, Channel, x, &UndoBlock.ChannelData[x]);
+	}
+
+	if (m_iUndoLevel < UNDO_LEVELS)
+		m_iUndoLevel++;
+	else {
+		if (m_iUndoLevel == (UNDO_LEVELS - 0)) {
+			for (x = 1; x < (UNDO_LEVELS+1); x++) {
+				m_UndoStack[x - 1] = m_UndoStack[x];
+			}
+		}
+	}
+
+	m_UndoStack[m_iUndoLevel - 1] = UndoBlock;
+
+	m_iRedoLevel = 0;
+}
+
+void CFamiTrackerView::HandleKeyboardInput(int Char)
+{
+	InterpretKey(Char);
+}
+
 void CFamiTrackerView::InterpretKey(int Key)
 {
 	CFamiTrackerDoc* pDoc = GetDocument();
@@ -1636,7 +3339,7 @@ void CFamiTrackerView::InterpretKey(int Key)
 
 	stChanNote	Note;
 
-	Note = pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow];
+	pDoc->GetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
 
 	if (PreventRepeat(Key))
 		return;
@@ -1660,7 +3363,9 @@ void CFamiTrackerView::InterpretKey(int Key)
 
 	switch (EditedColumn) {
 		case C_NOTE:
-			TranslateKey(Key, &Note);
+			Note = TranslateKey(Key);
+			if (Note.Note > 0)
+				InsertNote(Note.Note, Note.Octave, m_iCursorChannel, 0x80);
 			return;
 		case C_INSTRUMENT1:
 			Value = ConvertKeyToHex(Key);
@@ -1716,26 +3421,14 @@ void CFamiTrackerView::InterpretKey(int Key)
 					case '2': Note.EffNumber[Index] = EF_PORTAOFF;	break;
 					case '4': Note.EffNumber[Index] = EF_VIBRATO;	break;
 					case '7': Note.EffNumber[Index] = EF_TREMOLO;	break;
-
 					case 'B': Note.EffNumber[Index] = EF_JUMP;		break;
 					case 'C': Note.EffNumber[Index] = EF_HALT;		break;
 					case 'D': Note.EffNumber[Index] = EF_SKIP;		break;
 					case 'E': Note.EffNumber[Index] = EF_VOLUME;	break;
 					case 'F': Note.EffNumber[Index] = EF_SPEED;		break;
-
 					case 'H': Note.EffNumber[Index] = EF_SWEEPUP;	break;
 					case 'I': Note.EffNumber[Index] = EF_SWEEPDOWN;	break;
-/*
-					case 'A': Note.ExtraStuff1 = EF_SPEED;		break;		// A
-					case 'B': Note.ExtraStuff1 = EF_JUMP;		break;		// B
-					case 'C': Note.ExtraStuff1 = EF_SKIP;		break;		// C
-					case 'D': Note.ExtraStuff1 = EF_HALT;		break;		// D
-					case 'E': Note.ExtraStuff1 = EF_VOLUME;		break;		// E
-					case 'F': Note.ExtraStuff1 = EF_PORTAON;	break;		// F
-					case 'G': Note.ExtraStuff1 = EF_PORTAOFF;	break;		// G
-					case 'H': Note.ExtraStuff1 = EF_SWEEPUP;	break;		// H
-					case 'I': Note.ExtraStuff1 = EF_SWEEPDOWN;	break;		// I
-*/
+					case 'P': Note.EffNumber[Index] = EF_PITCH;		break;
 					default:
 						return;
 				}
@@ -1771,9 +3464,8 @@ void CFamiTrackerView::InterpretKey(int Key)
 
 	if (m_bEditEnable) {
 		AddUndo(m_iCursorChannel);
-		pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow] = Note;
-		pDoc->SetModifiedFlag();
-
+		pDoc->SetNoteData(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, &Note);
+		
 		if (theApp.m_pSettings->General.iEditStyle == EDIT_STYLE1)
 			StepDown();
 
@@ -1819,206 +3511,65 @@ void CFamiTrackerView::KeyReleased(int Key)
 	}
 }
 
-void CFamiTrackerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-{	
+void CFamiTrackerView::StopNote(int Channel)
+{
 	CFamiTrackerDoc* pDoc = GetDocument();
-	int i;
-
 	ASSERT_VALID(pDoc);
 
-	switch (nChar) {
-		case VK_UP:
-			ScrollRowUp();
-			if (m_bShiftPressed) {
-				if (m_iSelectStart == -1 || m_iSelectEnd != m_iCursorRow) {
-					m_iSelectStart		= m_iCursorRow;
-					m_iSelectChannel	= m_iCursorChannel;
-					m_iSelectColStart	= m_iCursorColumn;
-					m_iSelectColEnd		= m_iCursorColumn;
-				}
-				if (m_iCursorRow > 0)
-					m_iSelectEnd = m_iCursorRow - 1;
-				else
-					m_iSelectEnd = m_iCursorRow;
-			}
-			break;
+	stChanNote Note;
+	
+	memset(&Note, 0, sizeof(stChanNote));
 
-		case VK_DOWN:
-			ScrollRowDown();
-			if (m_bShiftPressed) {
-				if (m_iSelectStart == -1 || m_iSelectEnd != m_iCursorRow) {
-					m_iSelectStart		= m_iCursorRow;
-					m_iSelectChannel	= m_iCursorChannel;
-					m_iSelectColStart	= m_iCursorColumn;
-					m_iSelectColEnd		= m_iCursorColumn;
-				}
-				if (m_iCursorRow < pDoc->m_iPatternLength)
-					m_iSelectEnd = m_iCursorRow + 1;
-				else
-					m_iSelectEnd = m_iCursorRow;
+	AfxMessageBox("stop");
 
-			}
-			break;
+	Note.Note = HALT;
 
-		case VK_HOME:	ScrollToTop();		break;
-		case VK_END:	ScrollToBottom();	break;
-		case VK_PRIOR:	ScrollPageUp();		break;
-		case VK_NEXT:	ScrollPageDown();	break;
+	if (m_bEditEnable) {
+		AddUndo(Channel);
+		pDoc->SetNoteData(m_iCurrentFrame, Channel, m_iCursorRow, &Note);
+		pDoc->SetModifiedFlag();
+		ForceRedraw();
+	}
 
-		case VK_SPACE:	OnTrackerEdit();	break;
+	FeedNote(Channel, &Note);
+}
 
-		case VK_ADD:
-			if (m_bEditEnable) {
-				AddUndo(m_iCursorChannel);
-				switch (m_iCursorColumn) {
-					case C_NOTE: 
-						IncreaseCurrentFrame(); 
-						break;
-					case C_INSTRUMENT1:
-					case C_INSTRUMENT2: 
-						pDoc->IncreaseInstrument(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow); 	
-						ForceRedraw(); 
-						break;
-					case C_VOLUME: 
-						pDoc->IncreaseVolume(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow);	
-						ForceRedraw(); 
-						break;
-					case C_EFF_NUM: case C_EFF_PARAM1: case C_EFF_PARAM2: 
-						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 0);
-						ForceRedraw(); 
-						break;
-					case C_EFF2_NUM: case C_EFF2_PARAM1: case C_EFF2_PARAM2: 
-						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 1);
-						ForceRedraw(); 
-						break;
-					case C_EFF3_NUM: case C_EFF3_PARAM1: case C_EFF3_PARAM2: 
-						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 2);
-						ForceRedraw(); 
-						break;
-					case C_EFF4_NUM: case C_EFF4_PARAM1: case C_EFF4_PARAM2: 
-						pDoc->IncreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 3);
-						ForceRedraw(); 
-						break;
-				}
-			}
-			break;
+void CFamiTrackerView::InsertNote(int Note, int Octave, int Channel, int Velocity)
+{
+	stChanNote Cell;
 
-		case VK_SUBTRACT:
-			if (m_bEditEnable) {
-				AddUndo(m_iCursorChannel);
-				switch (m_iCursorColumn) {
-					case C_NOTE: 
-						DecreaseCurrentFrame(); 
-						break;
-					case C_INSTRUMENT1:
-					case C_INSTRUMENT2:
-						pDoc->DecreaseInstrument(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow); 	
-						ForceRedraw(); 
-						break;
-					case C_VOLUME: 
-						pDoc->DecreaseVolume(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow);	
-						ForceRedraw(); 
-						break;
-					case C_EFF_NUM: case C_EFF_PARAM1: case C_EFF_PARAM2: 
-						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 0);
-						ForceRedraw(); 
-						break;
-					case C_EFF2_NUM: case C_EFF2_PARAM1: case C_EFF2_PARAM2: 
-						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 1);
-						ForceRedraw(); 
-						break;
-					case C_EFF3_NUM: case C_EFF3_PARAM1: case C_EFF3_PARAM2: 
-						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 2); 
-						ForceRedraw(); 
-						break;
-					case C_EFF4_NUM: case C_EFF4_PARAM1: case C_EFF4_PARAM2: 					
-						pDoc->DecreaseEffect(m_iCurrentFrame, m_iCursorChannel, m_iCursorRow, 3); 
-						ForceRedraw(); 
-						break;
-				}
-			}
-			break;
+	if (m_bMuteChannels[Channel]) {
+		memset(&Cell, 0, sizeof(stChanNote));
+		Cell.Vol = 0x0F;
+	}
+	else
+		GetDocument()->GetNoteData(m_iCurrentFrame, Channel, m_iCursorRow, &Cell);
 
-		case VK_LEFT:
-			if (!m_bShiftPressed) {
-				MoveCursorLeft();
-				ForceRedraw();
-			}
-			else {
-				if (m_iSelectStart != -1) {
-					if (m_iSelectColEnd > 0)
-						m_iSelectColEnd--;
-				}
-			}
-			break;
+	Cell.Note		= Note;
+	Cell.Octave		= Octave;
+	Cell.Instrument = m_iInstrument;
+	
+	if (Velocity < 128)
+		Cell.Vol = (Velocity / 8);
 
-		case VK_RIGHT:
-			if (!m_bShiftPressed) {
-				MoveCursorRight();
-				ForceRedraw();
-			}
-			else {
-				if (m_iSelectStart != -1) {
-					if (m_iSelectColEnd < signed(COLUMNS + pDoc->m_iEffectColumns[m_iCursorChannel] * 3))
-						m_iSelectColEnd++;
-				}
-			}
-			break;
+	if (m_bEditEnable) {
+		AddUndo(Channel);
+		GetDocument()->SetNoteData(m_iCurrentFrame, Channel, m_iCursorRow, &Cell);
+		if (m_iCursorColumn == 0 && m_bPlaying == false)
+			StepDown();
+	}
 
-		case VK_SHIFT:
-			m_bShiftPressed = true;
-			break;
+	FeedNote(Channel, &Cell);
+}
 
-		case VK_TAB:
-			if (m_bShiftPressed)
-				MoveCursorPrevChannel();
-			else
-				MoveCursorNextChannel();
-			ForceRedraw();
-			break;
+void CFamiTrackerView::PlayNote(int Key)
+{
+	// Quick hack, fix this sometime
 
-		case VK_DELETE:
-			if (m_iSelectStart != -1) {
-				if (PreventRepeat(VK_DELETE))
-					return;
-				OnEditDelete();
-			}
-			else {
-				if (PreventRepeat(VK_DELETE) || !m_bEditEnable)
-					return;
-				AddUndo(m_iCursorChannel);
-				if (pDoc->DeleteNote(m_iCursorRow, m_iCurrentFrame, m_iCursorChannel, m_iCursorColumn)) {
-					i = 0;
-					while (i++ < m_iKeyStepping)
-						ScrollRowDown();
-					ForceRedraw();
-				}
-			}
-			break;
+	if (PreventRepeat(Key))
+		return;
 
-		case VK_INSERT:
-			if (!m_bEditEnable || PreventRepeat(VK_INSERT))
-				return;
-			AddUndo(m_iCursorChannel);
-			pDoc->InsertNote(m_iCursorRow, m_iCurrentFrame, m_iCursorChannel);
-			ForceRedraw();
-			break;
-
-		case VK_BACK:
-			if (m_iSelectStart != -1) {
-				RemoveWithoutDelete();
-			}
-			else {
-				if (m_iCursorRow == 0 || !m_bEditEnable || PreventRepeat(VK_BACK))
-					return;
-				AddUndo(m_iCursorChannel);
-				if (pDoc->RemoveNote(m_iCursorRow, m_iCurrentFrame, m_iCursorChannel)) {
-					ScrollRowUp();
-					ForceRedraw();
-				}
-			}
-			break;
-
+	switch (Key) {
 		case VK_F2: m_iOctave = 0; break;
 		case VK_F3: m_iOctave = 1; break;
 		case VK_F4: m_iOctave = 2; break;
@@ -2027,1662 +3578,72 @@ void CFamiTrackerView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		case VK_F7: m_iOctave = 5; break;
 		case VK_F8: m_iOctave = 6; break;
 		case VK_F9: m_iOctave = 7; break;
-
-		case VK_ESCAPE:
-			m_iSelectStart = -1;
-			ForceRedraw();
-			break;
-
-		case 255:
-			break;
-
-		default:
-			InterpretKey(nChar);
 	}
 
-	CView::OnKeyDown(nChar, nRepCnt, nFlags);
+	stChanNote Cell = TranslateKey(Key);
+
+	Cell.Instrument = m_iInstrument;
+	Cell.Vol		= 15;
+
+	m_cKeyList[Key] = 1;
+
+	FeedNote(m_iCursorChannel, &Cell);
 }
 
-void CFamiTrackerView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
+// Translates a keyboard character into a note
+stChanNote CFamiTrackerView::TranslateKey(int Key)
 {
-	if (nChar == VK_SHIFT)
-		m_bShiftPressed = false;
-
-	KeyReleased(int(nChar));
-
-	CView::OnKeyUp(nChar, nRepCnt, nFlags);
-}
-
-BOOL CFamiTrackerView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (zDelta > 0) {
-		m_iCurrentRow -= zDelta / 28;
-		if (signed(m_iCurrentRow) < 0) {
-			if (theApp.m_pSettings->General.bWrapCursor)
-				m_iCurrentRow = (pDoc->m_iPatternLength - 1);
-			else
-				m_iCurrentRow = 0;
-		}
-	}
-	else if (zDelta < 0) {
-		m_iCurrentRow -= zDelta / 28;
-		if (m_iCurrentRow > (pDoc->m_iPatternLength - 1)) {
-			if (theApp.m_pSettings->General.bWrapCursor)
-				m_iCurrentRow = 0;
-			else
-				m_iCurrentRow = (pDoc->m_iPatternLength - 1);
-		}
-	}
-
-	ForceRedraw();
-
-	return CView::OnMouseWheel(nFlags, zDelta, pt);
-}
-
-int CFamiTrackerView::GetChannelAtPoint(int PointX)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int i, ChanSize, Offset = 0, Channel = -1;
-
-	for (i = m_iStartChan; i < pDoc->m_iChannelsAvailable; i++) {
-		ChanSize = m_iChannelWidths[i];
-		Offset += ChanSize;
-		if ((PointX - signed(CHANNEL_START)) < Offset) {
-			Channel = i;
-			break;
-		}
-	}
-
-	return Channel;
-}
-
-int CFamiTrackerView::GetColumnAtPoint(int PointX, int MaxColumns)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int ColumnOffset = -1;
-	int i;
-	int Column = -1;
-
-	int ChanSize, Offset = 0, Channel = -1;
-
-	Offset = CHANNEL_START + CHANNEL_SPACING;
-
-	for (i = m_iStartChan; i < pDoc->m_iChannelsAvailable; i++) {
-		
-		ChanSize = CHANNEL_WIDTH + (pDoc->m_iEffectColumns[i] * (CHAR_WIDTH * 3 + COLUMN_SPACING));
-		Offset += ChanSize;
-		if (PointX < Offset) {
-			ColumnOffset = ChanSize - (Offset - PointX);
-			Channel = i;
-			break;
-		}
-		Offset += CHANNEL_SPACING * 2;
-	}
-
-	if (ColumnOffset < 0)
-		return -1;
-
-	if (Channel == -1)
-		return -1;
-
-	Offset = 0;
-
-	for (i = 0; i < MaxColumns; i++) {
-		Offset += COLUMN_SPACE[i];
-		if (ColumnOffset < Offset) {
-			Column = i;
-			break;
-		}
-	}
-
-	return Column;
-}
-
-
-void CFamiTrackerView::OnLButtonDown(UINT nFlags, CPoint point)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Channel = 0, Column = 0;
-	int	DeltaY, DeltaRow;
-
-	IgnoreFirst = true;
-
-	Channel = GetChannelAtPoint(point.x);
-
-	if (Channel == -1)
-		return;
-
-	DeltaY = point.y - (ViewAreaHeight / 2);
-
-	if (DeltaY < 0)
-		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
-	else
-		DeltaRow = DeltaY / signed(ROW_HEIGHT);
-
-	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->m_iEffectColumns[Channel] * 3);
-
-	if (Column == -1)
-		return;
-	
-	m_iSelectColStart = Column;
-	m_iSelectColEnd = Column;
-
-	// The top row (channel name and meters)
-	if (point.y < signed(ROW_HEIGHT * 2) && Channel < pDoc->m_iChannelsAvailable) {
-		// Silence channel
-		if (Column < 5) {
-			m_bMuteChannels[Channel] = !m_bMuteChannels[Channel];
-			if (m_iSoloChannel != -1 && m_iSoloChannel == Channel)
-				m_iSoloChannel = -2;
-			ForceRedraw();
-			return;
-		}
-		// Remove one track effect column
-		else if (Column == 5) {
-			if (pDoc->m_iEffectColumns[Channel] > 0)
-				pDoc->m_iEffectColumns[Channel]--;
-		}
-		// Add one track effect column
-		else if (Column == 6) {
-			if (pDoc->m_iEffectColumns[Channel] < (MAX_EFFECT_COLUMNS - 1))
-				pDoc->m_iEffectColumns[Channel]++;
-		}
-		ForceRedraw();
-	}
-
-	int Sel = signed(m_iCurrentRow) + DeltaRow;
-
-	if (m_iSelectStart != -1) {
-		if (m_bShiftPressed) {
-			m_iSelectEnd = Sel;
-			ForceRedraw();
-		}
-		else {
-			m_iSelectStart = -1;
-			ForceRedraw();
-		}
-	}
-
-	CView::OnLButtonDown(nFlags, point);
-}
-
-void CFamiTrackerView::OnLButtonUp(UINT nFlags, CPoint point)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Channel, Column;
-	int DeltaY, DeltaRow;
-
-	Channel = GetChannelAtPoint(point.x);
-	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->m_iEffectColumns[Channel] * 3);
-
-	if (Channel == -1 || Column == -1)
-		return;
-
-	DeltaY = point.y - signed(ViewAreaHeight / 2) - 5;
-
-	if (DeltaY < 0)
-		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
-	else
-		DeltaRow = DeltaY / signed(ROW_HEIGHT);
-
-	if (m_iSelectStart == -1) {
-		if (((DeltaRow + m_iCurrentRow) >= 0 && (DeltaRow + m_iCurrentRow) < signed(pDoc->m_iPatternLength)) && point.y > ROW_HEIGHT * 2) {
-			m_iCursorRow = m_iCurrentRow + DeltaRow;
-			if (!theApp.m_pSettings->General.bFreeCursorEdit)
-				m_iCurrentRow = m_iCursorRow;
-
-			if (Channel < pDoc->m_iChannelsAvailable && point.y > ROW_HEIGHT * 2) {
-				m_iCursorChannel = Channel;
-				m_iCursorColumn	= Column;
-			}
-
-			ForceRedraw();
-		}
-	}
-
-	CView::OnLButtonUp(nFlags, point);
-}
-
-void CFamiTrackerView::OnLButtonDblClk(UINT nFlags, CPoint point)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Channel, Column;
-
-	IgnoreFirst = true;
-
-	Channel = GetChannelAtPoint(point.x);
-	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->m_iEffectColumns[Channel] * 3);
-
-	if (Channel == -1 || Column == -1)
-		return;
-
-	if (point.y < ROW_HEIGHT * 2 && Channel < pDoc->m_iChannelsAvailable) {
-		if (Column < 5) {
-			if (m_iSoloChannel == -2) {
-				for (int i = 0; i < pDoc->m_iChannelsAvailable; i++)
-					m_bMuteChannels[i] = false;
-				m_iSoloChannel = -1;
-			}
-			else {
-				m_bMuteChannels[Channel] = false;
-				for (int i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-					if (i != Channel)
-						m_bMuteChannels[i] = true;
-				}
-				m_iSoloChannel = Channel;
-			}
-			ForceRedraw();
-		}
-	}
-	else
-		SelectWholePattern(Channel);
-
-	ForceRedraw();
-
-	CView::OnLButtonDblClk(nFlags, point);
-}
-
-void CFamiTrackerView::OnMouseMove(UINT nFlags, CPoint point)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	
-	CString String;
-	int DeltaRow, DeltaY = point.y - (ViewAreaHeight / 2) - 10;
-	int Channel, Column;
-
-	if (!(nFlags & MK_LBUTTON))
-		return;
-
-	if (IgnoreFirst) {
-		IgnoreFirst = false;
-		return;
-	}
-
-	if (point.y < ROW_HEIGHT * 2)
-		return;
-
-	Channel = GetChannelAtPoint(point.x);
-	Column	= GetColumnAtPoint(point.x, COLUMNS + pDoc->m_iEffectColumns[Channel] * 3);
-
-	if (Channel == -1 || Column == -1)
-		return;
-
-	if (Channel == m_iSelectChannel)
-		m_iSelectColEnd = Column;
-
-	if (DeltaY < 0)
-		DeltaRow = DeltaY / signed(ROW_HEIGHT) - 1;
-	else
-		DeltaRow = DeltaY / signed(ROW_HEIGHT);
-	
-	int Sel = m_iCurrentRow + DeltaRow;
-
-	if (((DeltaRow + m_iCurrentRow) >= 0 && (DeltaRow + m_iCurrentRow) < signed(pDoc->m_iPatternLength)) && Channel >= 0) {
-		
-		if (m_iSelectStart != -1) {
-			m_iSelectEnd = Sel;
-			ForceRedraw();
-		}
-		else {
-			m_iSelectStart = Sel;
-			m_iSelectChannel = Channel;
-		}
-		
-		if (DeltaRow >= signed((ViewAreaHeight / ROW_HEIGHT) / 2) - 2)
-			ScrollRowDown();
-		else if (DeltaRow <= (-signed((ViewAreaHeight / ROW_HEIGHT) / 2) + 2))
-			ScrollRowUp();
-	}
-
-	if (m_iSelectStart != -1) {
-		String.Format("Selection {%i; %i}", m_iSelectStart, m_iSelectEnd);
-		SetMessageText(String);
-	}
-
-	CView::OnMouseMove(nFlags, point);
-}
-
-void CFamiTrackerView::OnEditCopy()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	stClipData	*ClipData;
-	stChanNote	*Note;
-	HGLOBAL		hMem;
-	int			Ptr = 0;
-	int			i;
-	int			SelStart, SelEnd, Columns = 0;
-	int			SelColStart, SelColEnd;
-
-	if (m_iSelectStart == -1)
-		return;
-
-	SelStart	= GetMin(m_iSelectStart, m_iSelectEnd);
-	SelEnd		= GetMax(m_iSelectStart, m_iSelectEnd);
-	SelColStart	= GetMin(m_iSelectColStart, m_iSelectColEnd);
-	SelColEnd	= GetMax(m_iSelectColStart, m_iSelectColEnd);
-
-	if (!OpenClipboard()) {
-		AfxMessageBox("Cannot open the clipboard");
-		return;
-	}
-
-	EmptyClipboard();
-
-	hMem = GlobalAlloc(GMEM_MOVEABLE, sizeof(stClipData) * 2);
-
-	if (hMem == NULL)
-		return;
-
-	ClipData				= (stClipData*)GlobalLock(hMem);
-	ClipData->Size			= SelEnd - SelStart + 1;
-	ClipData->NumCols		= 0;
-	ClipData->FirstColumn	= false;
-
-	if (SelColStart == 0)
-		ClipData->FirstColumn = true;
-
-	int ColPtr = 0;
-
-	for (i = SelStart; i < SelEnd + 1; i++) {
-		Note = pDoc->GetNoteData(m_iSelectChannel, i, m_iCurrentFrame);
-
-		if (SelColStart == 0) {
-			ClipData->Notes[Ptr]	= Note->Note;
-			ClipData->Octaves[Ptr]	= Note->Octave;
-		}
-
-		ColPtr = 0;
-		for (int n = 1; n < COLUMNS + MAX_EFFECT_COLUMNS * 3; n++) {
-			if (n >= SelColStart && n <= SelColEnd) {
-				switch (n - 1) {
-					case 0: ClipData->ColumnData[ColPtr][Ptr] = Note->Instrument >> 4;		break;		// Instrument
-					case 1: ClipData->ColumnData[ColPtr][Ptr] = Note->Instrument & 0x0F;	break;
-					case 2: ClipData->ColumnData[ColPtr][Ptr] = Note->Vol;					break;		// Volume
-					case 3: ClipData->ColumnData[ColPtr][Ptr] = Note->EffNumber[0];			break;		// Effect column 1
-					case 4: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[0] >> 4;		break;
-					case 5: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[0] & 0x0F;	break;
-					case 6: ClipData->ColumnData[ColPtr][Ptr] = Note->EffNumber[1];			break;		// Effect column 2
-					case 7: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[1] >> 4;		break;
-					case 8: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[1] & 0x0F;	break;
-					case 9: ClipData->ColumnData[ColPtr][Ptr] = Note->EffNumber[2];			break;		// Effect column 3
-					case 10: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[2] >> 4;	break;
-					case 11: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[2] & 0x0F;	break;
-					case 12: ClipData->ColumnData[ColPtr][Ptr] = Note->EffNumber[3];		break;		// Effect column 4
-					case 13: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[3] >> 4;	break;
-					case 14: ClipData->ColumnData[ColPtr][Ptr] = Note->EffParam[3] & 0x0F;	break;
-				}
-				ColPtr++;
-				ClipData->NumCols = ColPtr;
-			}
-		}
-		
-		Ptr++;
-	}
-
-	GlobalUnlock(hMem);
-	SetClipboardData(m_iClipBoard, hMem);
-	CloseClipboard();
-}
-
-void CFamiTrackerView::OnEditCut()
-{
-	if (m_iSelectStart == -1)
-		return;
-
-	AddUndo(m_iSelectChannel);
-	OnEditCopy();
-	OnEditDelete();
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnEditPaste()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	HGLOBAL		hMem;
-	stChanNote	*ChanNote;
-	stClipData	*ClipData;
-	int			i;
-
-	if (m_bEditEnable == false)
-		return;
-
-	OpenClipboard();
-
-	if (!IsClipboardFormatAvailable(m_iClipBoard)) {
-		MessageBox("Clipboard format is not avaliable");
-	}
-
-	hMem = GetClipboardData(m_iClipBoard);
-
-	if (hMem == NULL)
-		return;
-
-	AddUndo(m_iCursorChannel);
-
-	ClipData = (stClipData*)GlobalLock(hMem);
-/*
-	if (m_bPasteOverwrite) {
-		for (i = 0; i < ClipData->Size; i++) {
-			pDoc->RemoveNote((m_iCursorRow + 1), m_iCurrentFrame, m_iCursorChannel);
-		}
-	}
-*/
-	for (i = 0; i < ClipData->Size; i++) {
-		if ((m_iCursorRow + i) < pDoc->m_iPatternLength) {
-
-			if (!m_bPasteOverwrite)
-				pDoc->InsertNote(m_iCursorRow + i, m_iCurrentFrame, m_iCursorChannel);
-
-			//pDoc->GetNoteData(&ChanNote, m_iCursorChannel, m_iCursorRow + i, m_iCurrentFrame);
-			ChanNote = pDoc->GetNoteData(m_iCursorChannel, m_iCursorRow + i, m_iCurrentFrame);
-
-			if (ClipData->FirstColumn) {
-				ChanNote->Octave	= ClipData->Octaves[i];
-				ChanNote->Note		= ClipData->Notes[i];
-			}
-
-			int ColPtr = 0;
-
-			for (int n = m_iCursorColumn; n < (COLUMNS + MAX_EFFECT_COLUMNS * 3); n++) {
-				if (ColPtr < ClipData->NumCols && n > 0) {
-					switch (n - 1) {
-						case 0: 		// Instrument
-							ChanNote->Instrument = (ChanNote->Instrument & 0x0F) | ClipData->ColumnData[ColPtr][i] << 4;
-							if (ChanNote->Instrument != 64)
-								ChanNote->Instrument &= 0x3F;
-							break;
-						case 1: 
-							ChanNote->Instrument = (ChanNote->Instrument & 0xF0) | ClipData->ColumnData[ColPtr][i]; 
-							if (ChanNote->Instrument != 64)
-								ChanNote->Instrument &= 0x3F; 
-							break;
-						case 2:			// Volume
-							ChanNote->Vol = ClipData->ColumnData[ColPtr][i]; 
-							if (ChanNote->Vol != 0x10)
-								ChanNote->Vol &= 0x0F;
-							break;
-						case 3: ChanNote->EffNumber[0]	= ClipData->ColumnData[ColPtr][i]; break;											// First effect column
-						case 4: ChanNote->EffParam[0]	= (ChanNote->EffParam[0] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
-						case 5: ChanNote->EffParam[0]	= (ChanNote->EffParam[0] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
-						case 6: ChanNote->EffNumber[1]	= ClipData->ColumnData[ColPtr][i]; break;											// Second effect column
-						case 7: ChanNote->EffParam[1]	= (ChanNote->EffParam[1] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
-						case 8: ChanNote->EffParam[1]	= (ChanNote->EffParam[1] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
-						case 9: ChanNote->EffNumber[2]	= ClipData->ColumnData[ColPtr][i]; break;											// Third effect column
-						case 10: ChanNote->EffParam[2]	= (ChanNote->EffParam[2] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
-						case 11: ChanNote->EffParam[2]	= (ChanNote->EffParam[2] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
-						case 12: ChanNote->EffNumber[3]	= ClipData->ColumnData[ColPtr][i]; break;											// Fourth effect column
-						case 13: ChanNote->EffParam[3]	= (ChanNote->EffParam[3] & 0x0F) | (ClipData->ColumnData[ColPtr][i] << 4);	break;
-						case 14: ChanNote->EffParam[3]	= (ChanNote->EffParam[3] & 0xF0) | (ClipData->ColumnData[ColPtr][i] & 0x0F); break;
-					}
-					ColPtr++;
-				}
-			}
-
-			//pDoc->SetNoteData(m_iCursorChannel, m_iCursorRow + i, m_iCurrentFrame, ChanNote);
-		}
-	}
-
-	GlobalUnlock(hMem);
-	CloseClipboard();
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnEditDelete()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int	i;
-	int	SelStart, SelEnd;
-	int SelColStart, SelColEnd;
-
-	if (m_iSelectStart == -1 || m_bEditEnable == false)
-		return;
-
-	if (m_iSelectStart > m_iSelectEnd) {
-		SelStart	= m_iSelectEnd;
-		SelEnd		= m_iSelectStart;
-	}
-	else {
-		SelStart	= m_iSelectStart;
-		SelEnd		= m_iSelectEnd;
-	}
-
-	if (m_iSelectColStart > m_iSelectColEnd) {
-		SelColStart = m_iSelectColEnd;
-		SelColEnd	= m_iSelectColStart;
-	}
-	else {
-		SelColStart = m_iSelectColStart;
-		SelColEnd	= m_iSelectColEnd;
-	}
-
-	AddUndo(m_iSelectChannel);
-
-	stChanNote NoteData;
-
-	for (i = SelStart; i < SelEnd + 1; i++) {
-		pDoc->GetNoteData(&NoteData, m_iSelectChannel, i, m_iCurrentFrame);
-		if (IsColumnSelected(SelColStart, SelColEnd, 0)) {
-			NoteData.Note = 0; NoteData.Octave = 0;
-		}
-		if (IsColumnSelected(SelColStart, SelColEnd, 1))
-			NoteData.Instrument = MAX_INSTRUMENTS;
-		if (IsColumnSelected(SelColStart, SelColEnd, 2))
-			NoteData.Vol = 0x10;
-		if (IsColumnSelected(SelColStart, SelColEnd, 3)) {
-			NoteData.EffNumber[0]	= EF_NONE;
-			NoteData.EffParam[0]	= 0;
-		}
-		if (IsColumnSelected(SelColStart, SelColEnd, 4)) {
-			NoteData.EffNumber[1]	= EF_NONE;
-			NoteData.EffParam[1]	= 0;
-		}
-		if (IsColumnSelected(SelColStart, SelColEnd, 5)) {
-			NoteData.EffNumber[2]	= EF_NONE;
-			NoteData.EffParam[2]	= 0;
-		}
-		if (IsColumnSelected(SelColStart, SelColEnd, 6)) {
-			NoteData.EffNumber[3]	= EF_NONE;
-			NoteData.EffParam[3]	= 0;
-		}
-
-		pDoc->SetNoteData(m_iSelectChannel, i, m_iCurrentFrame, &NoteData);
-
-		/*
-		IsColumnSelected(SelColStart, SelColEnd, 0);
-		pDoc->RemoveNote(SelStart + 1, m_iCurrentFrame, m_iSelectChannel);
-		*/
-	}
-
-	m_iSelectStart = -1;
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnUpdateEditCopy(CCmdUI *pCmdUI)
-{
-	if (m_iSelectStart == -1)
-		pCmdUI->Enable(0);
-	else
-		pCmdUI->Enable(1);
-}
-
-void CFamiTrackerView::OnUpdateEditCut(CCmdUI *pCmdUI)
-{
-	if (m_iSelectStart == -1)
-		pCmdUI->Enable(0);
-	else
-		pCmdUI->Enable(1);
-}
-
-void CFamiTrackerView::OnUpdateEditPaste(CCmdUI *pCmdUI)
-{
-	if (IsClipboardFormatAvailable(m_iClipBoard))
-		pCmdUI->Enable(1);
-	else
-		pCmdUI->Enable(0);
-}
-
-void CFamiTrackerView::OnUpdateEditDelete(CCmdUI *pCmdUI)
-{
-	if (m_iSelectStart == -1)
-		pCmdUI->Enable(0);
-	else
-		pCmdUI->Enable(1);
-}
-
-void CFamiTrackerView::ResetView()
-{
-	m_iCurrentFrame	= 0;
-	m_iCurrentRow	= 0;
-	m_iCursorRow	= 0;
-}
-
-void CFamiTrackerView::OnUpdateTrackerStop(CCmdUI *pCmdUI)
-{
-	if (m_bPlaying)
-		pCmdUI->Enable(1);
-	else
-		pCmdUI->Enable(0);
-}
-
-void CFamiTrackerView::OnUpdateTrackerPlay(CCmdUI *pCmdUI)
-{
-	if (m_bPlaying)
-		pCmdUI->Enable(0);
-	else
-		pCmdUI->Enable(1);
-}
-
-void CFamiTrackerView::OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI)
-{
-	if (m_bPlaying)
-		pCmdUI->Enable(0);
-	else
-		pCmdUI->Enable(1);
-}
-
-void CFamiTrackerView::OnTrackerPlay()
-{
-	CMainFrame *pMainFrm = (CMainFrame*)GetParentFrame();
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_bPlaying)
-		return;
-
-	m_bPlaying			= true;
-	m_bPlayLooped		= false;
-	m_bFirstTick		= true;
-	m_iPlayTime			= 0;
-	m_iPlayerSyncTick	= 0;
-
-	GetStartSpeed();
-
-	theApp.SilentEverything();
-
-	ScrollToTop();
-	ForceRedraw();
-
-	SetMessageText("Playing");
-
-	theApp.SetMachineType(pDoc->m_iMachine, pDoc->m_iEngineSpeed);
-}
-
-void CFamiTrackerView::OnTrackerPlaypattern()
-{
-	CMainFrame *pMainFrm = (CMainFrame*)GetParentFrame();
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_bPlaying)
-		return;
-
-	m_bPlaying			= true;
-	m_bPlayLooped		= true;	
-	m_iPlayTime			= 0;
-	m_iPlayerSyncTick	= 0;
-
-	GetStartSpeed();
-
-	SetMessageText("Playing pattern");
-
-	theApp.SilentEverything();
-}
-
-void CFamiTrackerView::OnTrackerStop()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	theApp.SilentEverything();
-
-	SetMessageText("Stopped");
-
-	m_bPlaying		= false;
-	m_iTickPeriod	= pDoc->m_iSongSpeed;
-}
-
-void CFamiTrackerView::OnTrackerEdit()
-{
-	m_bEditEnable = !m_bEditEnable;
-
-	if (m_bEditEnable)
-		SetMessageText("Edit mode");
-	else
-		SetMessageText("Normal mode");
-	
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnUpdateTrackerEdit(CCmdUI *pCmdUI)
-{
-	if (m_bEditEnable)
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int i;
-
-	CMainFrame	*MainFrame = (CMainFrame*)GetParentFrame();
-
-	m_iCurrentFrame		= 0;
-	m_iCurrentRow		= 0;
-	m_iCursorChannel	= 0;
-	m_iCursorColumn		= 0;
-
-	for (i = 0; i < MAX_INSTRUMENTS; i++) {
-		if (!pDoc->Instruments[i].Free)
-			MainFrame->AddInstrument(i, pDoc->Instruments[i].Name);
-	}
-
-	if (pDoc->m_iEngineSpeed == 0) {
-		if (pDoc->m_iMachine == NTSC)
-			theApp.SetMachineType(pDoc->m_iMachine, 60);
-		else
-			theApp.SetMachineType(pDoc->m_iMachine, 50);
-	}
-	else
-		theApp.SetMachineType(pDoc->m_iMachine, pDoc->m_iEngineSpeed);
-
-	MainFrame->SetSongInfo(pDoc->m_strName, pDoc->m_strArtist, pDoc->m_strCopyright);
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnTrackerPal()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	CMainFrame*	pMainFrm = (CMainFrame*)GetParentFrame();
-
-	int Speed = (pDoc->m_iEngineSpeed == 0) ? 50 : pDoc->m_iEngineSpeed;
-
-	pDoc->m_iMachine = PAL;
-
-	theApp.SetMachineType(pDoc->m_iMachine, Speed);
-}
-
-void CFamiTrackerView::OnTrackerNtsc()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	CMainFrame*	pMainFrm = (CMainFrame*)GetParentFrame();
-
-	int Speed = (pDoc->m_iEngineSpeed == 0) ? 60 : pDoc->m_iEngineSpeed;
-
-	pDoc->m_iMachine = NTSC;
-
-	theApp.SetMachineType(pDoc->m_iMachine, Speed);
-}
-
-void CFamiTrackerView::OnUpdateTrackerPal(CCmdUI *pCmdUI)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	
-	if (pDoc->m_iMachine == PAL)
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnUpdateTrackerNtsc(CCmdUI *pCmdUI)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	
-	if (pDoc->m_iMachine == NTSC)
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnUpdateSpeedDefalut(CCmdUI *pCmdUI)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	
-	if (pDoc->m_iEngineSpeed == 0)
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnUpdateSpeedCustom(CCmdUI *pCmdUI)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	
-	if (pDoc->m_iEngineSpeed != 0)
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnSpeedCustom()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	CSpeedDlg SpeedDlg;
-	int Speed;
-
-	Speed = pDoc->m_iEngineSpeed;
-
-	if (Speed == 0)
-		Speed = (pDoc->m_iMachine == NTSC ? 60 : 50);
-
-	Speed = SpeedDlg.GetSpeedFromDlg(Speed);
-
-	if (Speed == 0)
-		return;
-
-	pDoc->m_iEngineSpeed = Speed;
-
-	theApp.SetMachineType(pDoc->m_iMachine, Speed);
-}
-
-void CFamiTrackerView::OnSpeedDefalut()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Speed = (pDoc->m_iMachine == NTSC) ? 60 : 50;
-
-	pDoc->m_iEngineSpeed = 0;
-
-	theApp.SetMachineType(pDoc->m_iMachine, Speed);
-}
-
-void CFamiTrackerView::OnEditPasteoverwrite()
-{
-	m_bPasteOverwrite = !m_bPasteOverwrite;
-}
-
-void CFamiTrackerView::OnUpdateEditPasteoverwrite(CCmdUI *pCmdUI)
-{
-	pCmdUI->SetCheck(m_bPasteOverwrite);
-}
-
-void CFamiTrackerView::OnTransposeDecreasenote()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (!m_bEditEnable)
-		return;
-
-	if (m_iSelectStart == -1) {
-		AddUndo(m_iCursorChannel);
-		if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note > 0 &&
-			pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note != HALT) {
-			if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note > 1) 
-				pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note--;
-			else {
-				if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave > 0) {
-					pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note = B;
-					pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave--;
-				}
-			}
-		}
-	}
-	else {
-		int SelStart;
-		int SelEnd;
-
-		AddUndo(m_iSelectChannel);
-
-		if (m_iSelectStart > m_iSelectEnd) {
-			SelStart = m_iSelectEnd;
-			SelEnd = m_iSelectStart;
-		}
-		else {
-			SelStart = m_iSelectStart;
-			SelEnd = m_iSelectEnd;
-		}
-		
-		for (int i = SelStart; i < SelEnd + 1; i++) {
-			if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note > 0 && 
-				pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][i].Note != HALT) {
-				if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note > 1)
-					pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note--;
-				else {
-					if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave > 0) {
-						pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note = B;
-						pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave--;
-					}
-				}
-			}
-		}
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnTransposeDecreaseoctave()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (!m_bEditEnable)
-		return;
-
-	if (m_iSelectStart == -1) {
-		AddUndo(m_iCursorChannel);
-		if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave > 0) 
-			pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave--;
-	}
-	else {
-		int SelStart;
-		int SelEnd;
-
-		AddUndo(m_iSelectChannel);
-
-		if (m_iSelectStart > m_iSelectEnd) {
-			SelStart = m_iSelectEnd;
-			SelEnd = m_iSelectStart;
-		}
-		else {
-			SelStart = m_iSelectStart;
-			SelEnd = m_iSelectEnd;
-		}
-
-		for (int i = SelStart; i < SelEnd + 1; i++) {
-			if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave > 0)
-				pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave--;
-		}
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnTransposeIncreasenote()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (!m_bEditEnable)
-		return;
-
-	if (m_iSelectStart == -1) {
-		AddUndo(m_iCursorChannel);
-		if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note > 0 &&
-			pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note != HALT) {
-
-			if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note < B)
-				pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note++;
-			else {
-				if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave < 8) {
-					pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Note = C;
-					pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave++;
-				}
-			}
-		}
-	}
-	else {
-		int SelStart;
-		int SelEnd;
-
-		AddUndo(m_iSelectChannel);
-
-		if (m_iSelectStart > m_iSelectEnd) {
-			SelStart = m_iSelectEnd;
-			SelEnd = m_iSelectStart;
-		}
-		else {
-			SelStart = m_iSelectStart;
-			SelEnd = m_iSelectEnd;
-		}
-
-		for (int i = SelStart; i < SelEnd + 1; i++) {
-			if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note > 0 &&
-				pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][i].Note != HALT) {
-				if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note < B)
-					pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note++;
-				else {
-					if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave < 8) {
-						pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Note = C;
-						pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave++;
-					}
-				}
-			}
-		}
-	}
-
-	ForceRedraw();
-
-}
-
-void CFamiTrackerView::OnTransposeIncreaseoctave()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (!m_bEditEnable)
-		return;
-
-	if (m_iSelectStart == -1) {
-		AddUndo(m_iCursorChannel);
-		if (pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave < 8) 
-			pDoc->ChannelData[m_iCursorChannel][pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel]][m_iCursorRow].Octave++;
-	}
-	else {
-		int SelStart;
-		int SelEnd;
-
-		AddUndo(m_iSelectChannel);
-
-		if (m_iSelectStart > m_iSelectEnd) {
-			SelStart = m_iSelectEnd;
-			SelEnd = m_iSelectStart;
-		}
-		else {
-			SelStart = m_iSelectStart;
-			SelEnd = m_iSelectEnd;
-		}
-
-		for (int i = SelStart; i < SelEnd + 1; i++) {
-			if (pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave < 8)
-				pDoc->ChannelData[m_iSelectChannel][pDoc->FrameList[m_iCurrentFrame][m_iSelectChannel]][i].Octave++;
-		}
-	}
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnEditUndo()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Channel, Pattern, x;
-	CString Text;
-
-	if (!m_iUndoLevel)
-		return;
-
-	if (!m_iRedoLevel) {
-		int Channel = m_UndoStack[m_iUndoLevel - 1].Channel;
-		int Pattern = pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel];
-		int x;
-
-		m_UndoStack[m_iUndoLevel].Channel	= Channel;
-		m_UndoStack[m_iUndoLevel].Pattern	= Pattern;
-		m_UndoStack[m_iUndoLevel].Row		= m_iCursorRow;
-		m_UndoStack[m_iUndoLevel].Column	= m_iCursorColumn;
-		m_UndoStack[m_iUndoLevel].Frame		= m_iCurrentFrame;
-
-		for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
-			m_UndoStack[m_iUndoLevel].ChannelData[x] = pDoc->ChannelData[Channel][Pattern][x];
-		}
-	}
-
-	m_iRedoLevel++;
-	m_iUndoLevel--;
-
-	Channel = m_UndoStack[m_iUndoLevel].Channel;
-	Pattern = m_UndoStack[m_iUndoLevel].Pattern;
-
-	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
-		pDoc->ChannelData[Channel][Pattern][x] = m_UndoStack[m_iUndoLevel].ChannelData[x];
-	}
-
-	m_iCursorChannel	= m_UndoStack[m_iUndoLevel].Channel;
-	m_iCursorRow		= m_UndoStack[m_iUndoLevel].Row;
-	m_iCursorColumn		= m_UndoStack[m_iUndoLevel].Column;
-	m_iCurrentFrame		= m_UndoStack[m_iUndoLevel].Frame;
-
-	pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel] = Pattern;
-
-	m_iCurrentRow = m_iCursorRow;
-
-	Text.Format("Undo (%i / %i)", m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
-	SetMessageText(Text);
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnUpdateEditUndo(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(m_iUndoLevel > 0 ? 1 : 0);
-}
-
-void CFamiTrackerView::AddUndo(int Channel)
-{
-	// Channel - Channel that contains the pattern that should be added ontop of undo stack
-	//
-
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int Pattern = pDoc->FrameList[m_iCurrentFrame][Channel];
-	int x;
-
-	stUndoBlock UndoBlock;
-	
-	UndoBlock.Channel	= Channel;
-	UndoBlock.Pattern	= Pattern;
-	UndoBlock.Row		= m_iCursorRow;
-	UndoBlock.Column	= m_iCursorColumn;
-	UndoBlock.Frame		= m_iCurrentFrame;
-
-	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
-		UndoBlock.ChannelData[x] = pDoc->ChannelData[Channel][Pattern][x];
-	}
-
-	if (m_iUndoLevel < UNDO_LEVELS)
-		m_iUndoLevel++;
-	else {
-		if (m_iUndoLevel == (UNDO_LEVELS - 0)) {
-			for (x = 1; x < (UNDO_LEVELS+1); x++) {
-				m_UndoStack[x - 1] = m_UndoStack[x];
-			}
-		}
-	}
-
-	m_UndoStack[m_iUndoLevel - 1] = UndoBlock;
-
-	m_iRedoLevel = 0;
-}
-
-void CFamiTrackerView::OnEditRedo()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (!m_iRedoLevel)
-		return;
-
-	m_iUndoLevel++;
-	m_iRedoLevel--;
-
-	int Channel, Pattern, x;
-
-	Channel = m_UndoStack[m_iUndoLevel].Channel;
-	Pattern = m_UndoStack[m_iUndoLevel].Pattern;
-
-	for (x = 0; x < MAX_PATTERN_LENGTH; x++) {
-		pDoc->ChannelData[Channel][Pattern][x] = m_UndoStack[m_iUndoLevel].ChannelData[x];
-	}
-
-	m_iCursorChannel	= Channel;
-	m_iCursorRow		= m_UndoStack[m_iUndoLevel].Row;
-	m_iCursorColumn		= m_UndoStack[m_iUndoLevel].Column;
-	m_iCurrentFrame		= m_UndoStack[m_iUndoLevel].Frame;
-
-	pDoc->FrameList[m_iCurrentFrame][m_iCursorChannel] = Pattern;
-
-	m_iCurrentRow = m_iCursorRow;
-
-	CString Text;
-	Text.Format("Redo (%i / %i)", m_iUndoLevel, m_iUndoLevel + m_iRedoLevel);
-	SetMessageText(Text);
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnUpdateEditRedo(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(m_iRedoLevel > 0 ? 1 : 0);
-}
-
-void CFamiTrackerView::OnInitialUpdate()
-{
-	// Called when a new document is loaded
-	//
-
-	CView::OnInitialUpdate();
-
-	if (m_bPlaying) {
-		OnTrackerStop();
-	}
-
-	m_iLastCursorColumn = 0;
-	m_iLastRowState		= 0;
-	m_bInitialized		= true;
-	m_bForceRedraw		= true;
-	m_iInstrument		= 0;
-	m_iUndoLevel		= 0;
-	m_iRedoLevel		= 0;
-}
-
-void CFamiTrackerView::RemoveWithoutDelete()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	stChanNote	Note;
-
-	int	i;
-	int	SelStart, SelEnd;
-
-	if (m_iSelectStart == -1 || m_bEditEnable == false)
-		return;
-
-	if (m_iSelectStart > m_iSelectEnd) {
-		SelStart = m_iSelectEnd;
-		SelEnd = m_iSelectStart;
-	}
-	else {
-		SelStart = m_iSelectStart;
-		SelEnd = m_iSelectEnd;
-	}
-
-	AddUndo(m_iSelectChannel);
-
-	Note.Note = 0;
-	Note.Octave = 0;
-	Note.Instrument = 0;
-	Note.EffNumber[0] = 0;
-	Note.EffParam[0] = 0;
-
-	for (i = SelStart; i < SelEnd + 1; i++) {
-		pDoc->SetNoteData(m_iSelectChannel, i, m_iCurrentFrame, &Note);
-	}
-
-	m_iSelectStart = -1;
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnEditSelectall()
-{
-	SelectWholePattern(m_iCursorChannel);
-}
-
-void CFamiTrackerView::SelectWholePattern(int Channel)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	if (m_iSelectStart == -1) {
-		m_iSelectChannel	= Channel;
-		m_iSelectStart		= 0;
-		m_iSelectEnd		= pDoc->m_iPatternLength - 1;
-		m_iSelectColStart	= 0;
-		m_iSelectColEnd		= COLUMNS - 1 + (pDoc->m_iEffectColumns[Channel] * 3);
-	}
-	else
-		m_iSelectStart = -1;
-
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnKillFocus(CWnd* pNewWnd)
-{
-	CView::OnKillFocus(pNewWnd);
-
-	m_bHasFocus = false;
-
-	Invalidate(TRUE);
-	ForceRedraw();
-}
-
-void CFamiTrackerView::OnSetFocus(CWnd* pOldWnd)
-{
-	CView::OnSetFocus(pOldWnd);
-
-	m_bHasFocus = true;
-
-	Invalidate(TRUE);
-	ForceRedraw();
-}
-
-void CFamiTrackerView::TranslateMidiMessage()
-{
-	unsigned char Message, Channel, Note, Octave, Velocity;
-	static unsigned char LastNote, LastOctave;
-	CString Status;
-
-	CMIDI *pMIDI = theApp.GetMIDI();
-
-	if (!m_bInitialized)
-		return;
-
-	while (pMIDI->ReadMessage(Message, Channel, Note, Octave, Velocity)) {
-	
-		if (!theApp.m_pSettings->Midi.bMidiChannelMap)
-			Channel = m_iCursorChannel;
-
-		switch (Message) {
-			case MIDI_MSG_NOTE_ON:
-				if (Channel > 4)
-					return;
-				Status.Format("MIDI message: Note on (note = %02i, octave = %02i, vel = %03i)", Note, Octave, Velocity);
-				SetMessageText(Status);
-				if (Velocity == 0) {
-					if (LastNote == Note && LastOctave == Octave) {
-						// Cut note
-						stChanNote Note;
-						memset(&Note, 0, sizeof(stChanNote));
-						Note.Note	= HALT;
-						LastOctave	= 0;
-						LastNote	= 0;
-						FeedNote(Channel, &Note);
-					}
-				}
-				else {
-					if (!theApp.m_pSettings->Midi.bMidiVelocity)
-						Velocity = 127;
-					InsertNote(Note, Octave, Channel, Velocity + 1);
-					LastNote	= Note;
-					LastOctave	= Octave;
-				}
-				break;
-
-			case MIDI_MSG_NOTE_OFF:
-				if (Channel > 4)
-					return;
-				Status.Format("MIDI message: Note off");
-				SetMessageText(Status);
-				StopNote(Channel);
-				break;
-			
-			case 0x0F:
-				if (Channel == 0x08) {
-					int i = 0;
-					while (i++ < m_iKeyStepping)
-						ScrollRowDown();
-				}
-				break;
-		}
-	}
-}
-
-void CFamiTrackerView::PostNcDestroy()
-{
-	// Called at exit
-	m_bInitialized = false;
-	CView::PostNcDestroy();
-}
-
-void CFamiTrackerView::OnTimer(UINT nIDEvent)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	CMainFrame *pMainFrm;
-	static int LastNoteState;
-
-	int TicksPerSec = pDoc->GetFrameRate();
-
-	if (nIDEvent == 0) {
-
-		pMainFrm = (CMainFrame*)GetParentFrame();
-
-		// Fetch channel levels
-
-		m_iVolLevels[0] = theApp.GetOutput(0);
-		m_iVolLevels[1] = theApp.GetOutput(1);
-		m_iVolLevels[2] = theApp.GetOutput(2);
-		m_iVolLevels[3] = theApp.GetOutput(3);
-		m_iVolLevels[4] = theApp.GetOutput(4) / 8;
-
-		// Redraw screen
-		if (m_iCurrentRow != m_iLastRowState || m_iCurrentFrame != m_iLastFrameState || m_bForceRedraw) {
-
-			if (m_iCurrentRow != m_iLastRowState || m_iCurrentFrame != m_iLastFrameState || m_iCursorColumn != m_iLastCursorColumn)
-				RefreshStatusMessage();
-
-			m_iLastRowState		= m_iCurrentRow;
-			m_iLastFrameState	= m_iCurrentFrame;
-			m_iLastCursorColumn	= m_iCursorColumn;
-			m_bForceRedraw		= false;
-
-			Invalidate(FALSE);
-			PostMessage(WM_PAINT);
-
-			((CMainFrame*)GetParent())->RefreshPattern();
-		}
-		else {
-			CDC *pDC = this->GetDC();
-			DrawMeters(pDC);
-			ReleaseDC(pDC);
-		}
-
-		if (LastNoteState != m_iKeyboardNote)
-			pMainFrm->ChangeNoteState(m_iKeyboardNote);
-
-		if (m_bPlaying) {
-			//if ((m_iPlayTime & 0x01) == 0x01)
-			pMainFrm->SetIndicatorTime((m_iPlayTime / TicksPerSec) / 60, (m_iPlayTime / TicksPerSec) % 60, ((m_iPlayTime * 10) / TicksPerSec) % 10);
-		}
-
-		LastNoteState	= m_iKeyboardNote;
-	}
-
-	CView::OnTimer(nIDEvent);
-}
-
-int CFamiTrackerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
-{
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-
-	// Install a timer for screen updates
-	SetTimer(0, 20, NULL);
-
-	return 0;
-}
-
-void CFamiTrackerView::OnEditEnablemidi()
-{
-	theApp.GetMIDI()->Toggle();
-	//MIDI.Toggle();
-}
-
-void CFamiTrackerView::OnUpdateEditEnablemidi(CCmdUI *pCmdUI)
-{
-	if (theApp.GetMIDI()->IsAvailable())
-		pCmdUI->Enable(1);
-	else
-		pCmdUI->Enable(0);
-
-	if (theApp.GetMIDI()->IsOpened())
-		pCmdUI->SetCheck(1);
-	else
-		pCmdUI->SetCheck(0);
-}
-
-void CFamiTrackerView::OnFrameInsert()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int i, x;
-
-	if (pDoc->m_iFrameCount == MAX_FRAMES) {
-		return;
-	}
-
-	pDoc->m_iFrameCount++;
-
-	for (x = signed(pDoc->m_iFrameCount); x > (m_iCurrentFrame - 1); x--) {
-		for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			pDoc->FrameList[x + 1][i] = pDoc->FrameList[x][i];
-		}
-	}
-
-	for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-		pDoc->FrameList[m_iCurrentFrame][i] = 0;
-	}
-}
-
-void CFamiTrackerView::OnFrameRemove()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-
-	int i, x;
-
-	if (pDoc->m_iFrameCount == 1) {
-		return;
-	}
-
-	for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-		pDoc->FrameList[m_iCurrentFrame][i] = 0;
-	}
-
-	for (x = m_iCurrentFrame; x < pDoc->m_iFrameCount; x++) {
-		for (i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-			pDoc->FrameList[x][i] = pDoc->FrameList[x + 1][i];
-		}
-	}
-
-	pDoc->m_iFrameCount--;
-
-	if (m_iCurrentFrame > (signed(pDoc->m_iFrameCount) - 1))
-		m_iCurrentFrame = (pDoc->m_iFrameCount - 1);
-}
-
-void CFamiTrackerView::RegisterKeyState(int Channel, int Note)
-{
-	if (Channel == m_iCursorChannel)
-		m_iKeyboardNote	= Note;
-}
-
-void CFamiTrackerView::OnTrackerPlayrow()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
+	int	KeyNote = 0, KeyOctave = 0;
 	stChanNote Note;
-
-	ASSERT_VALID(pDoc);
-
-	for (int i = 0; i < pDoc->m_iChannelsAvailable; i++) {
-		pDoc->GetNoteData(&Note, i, m_iCurrentRow, m_iCurrentFrame);
-		if (!m_bMuteChannels[i])
-			FeedNote(i, &Note);
 	
-	}
-	ScrollRowDown();
-}
+	memset(&Note, 0, sizeof(stChanNote));
 
-void CFamiTrackerView::OnUpdateFrameRemove(CCmdUI *pCmdUI)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	pCmdUI->Enable(pDoc->m_iFrameCount > 1);
-}
-
-void CFamiTrackerView::RefreshStatusMessage()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-	int Effect, Param;
-	CString Text;
-	bool IsEffect = false;
-
-	if (m_iSelectStart != -1 || m_bPlaying)
-		return;
-
-	switch (m_iCursorColumn) {
-		case 0:
-			Text = "Note column";
-			break;
-		case 1:
-		case 2:
-			Text = "Instrument column";
-			break;
-		case 3:
-			Text = "Volume column";
-			break;
-		case 4:		// First
-		case 5:
-		case 6:
-			Effect		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffNumber[0];
-			Param		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffParam[0];
-			IsEffect	= true;
-			break;
-		case 7:		// Second
-		case 8:
-		case 9:
-			Effect		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffNumber[1];
-			Param		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffParam[1];
-			IsEffect	= true;
-			break;
-		case 10:	// Third
-		case 11:
-		case 12:
-			Effect		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffNumber[2];
-			Param		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffParam[2];
-			IsEffect	= true;
-			break;
-		case 13:	// Fourth
-		case 14:
-		case 15:
-			Effect		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffNumber[3];
-			Param		= pDoc->GetNoteData(m_iCursorChannel, m_iCurrentRow, m_iCurrentFrame)->EffParam[3];
-			IsEffect	= true;
-			break;
+	// Convert key to a note
+	switch (Key) {
+		case 50:	KeyNote = Cb;	KeyOctave = m_iOctave + 1;	break;	// 2
+		case 51:	KeyNote = Db;	KeyOctave = m_iOctave + 1;	break;	// 3
+		case 53:	KeyNote = Fb;	KeyOctave = m_iOctave + 1;	break;	// 5
+		case 54:	KeyNote = Gb;	KeyOctave = m_iOctave + 1;	break;	// 6
+		case 55:	KeyNote = Ab;	KeyOctave = m_iOctave + 1;	break;	// 7
+		case 57:	KeyNote = Cb;	KeyOctave = m_iOctave + 2;	break;	// 9
+		case 48:	KeyNote = Db;	KeyOctave = m_iOctave + 2;	break;	// 0
+		case 81:	KeyNote = C;	KeyOctave = m_iOctave + 1;	break;	// Q
+		case 87:	KeyNote = D;	KeyOctave = m_iOctave + 1;	break;	// W
+		case 69:	KeyNote = E;	KeyOctave = m_iOctave + 1;	break;	// E
+		case 82:	KeyNote = F;	KeyOctave = m_iOctave + 1;	break;	// R
+		case 84:	KeyNote = G;	KeyOctave = m_iOctave + 1;	break;	// T
+		case 89:	KeyNote = A;	KeyOctave = m_iOctave + 1;	break;	// Y
+		case 85:	KeyNote = B;	KeyOctave = m_iOctave + 1;	break;	// U
+		case 73:	KeyNote = C;	KeyOctave = m_iOctave + 2;	break;	// I
+		case 79:	KeyNote = D;	KeyOctave = m_iOctave + 2;	break;	// O
+		case 80:	KeyNote = E;	KeyOctave = m_iOctave + 2;	break;	// P
+		case 221:	KeyNote = F;	KeyOctave = m_iOctave + 2;	break;	// Å
+		case 219:	KeyNote = Fb;	KeyOctave = m_iOctave + 2;	break;	// ´
+		//case 186:	KeyNote = G;	KeyOctave = m_iOctave + 2;	break;	// ¨
+		case 83:	KeyNote = Cb;	KeyOctave = m_iOctave;		break;	// S
+		case 68:	KeyNote = Db;	KeyOctave = m_iOctave;		break;	// D
+		case 71:	KeyNote = Fb;	KeyOctave = m_iOctave;		break;	// G
+		case 72:	KeyNote = Gb;	KeyOctave = m_iOctave;		break;	// H
+		case 74:	KeyNote = Ab;	KeyOctave = m_iOctave;		break;	// J
+		case 76:	KeyNote = Cb;	KeyOctave = m_iOctave + 1;	break;	// L
+		case 192:	KeyNote = Db;	KeyOctave = m_iOctave + 1;	break;	// Ö
+		case 226:	KeyNote = HALT;	KeyOctave = 0;				break;	// < /stop
+		case 186:	KeyNote = HALT;	KeyOctave = 0;				break;	// ¨ /stop (for american keyboards)
+		case 49:	KeyNote = HALT;	KeyOctave = 0;				break;	// 1 /stop (again)
+		case 90:	KeyNote = C;	KeyOctave = m_iOctave;		break;	// Z
+		case 88:	KeyNote = D;	KeyOctave = m_iOctave;		break;	// X
+		case 67:	KeyNote = E;	KeyOctave = m_iOctave;		break;	// C
+		case 86:	KeyNote = F;	KeyOctave = m_iOctave;		break;	// V
+		case 66:	KeyNote = G;	KeyOctave = m_iOctave;		break;	// B
+		case 78:	KeyNote = A;	KeyOctave = m_iOctave;		break;	// N
+		case 77:	KeyNote = B;	KeyOctave = m_iOctave;		break;	// M
+		case 188:	KeyNote = C;	KeyOctave = m_iOctave + 1;	break;	// ,
+		case 190:	KeyNote = D;	KeyOctave = m_iOctave + 1;	break;	// .
+		case 189:	KeyNote = E;	KeyOctave = m_iOctave + 1;	break;	// -
 	}
 
-	if (IsEffect) {
-		switch (Effect) {
-			case EF_ARPEGGIO:	Text.Format("Effect: Arpeggio, %02X (%i)", Param, Param); break;
-			case EF_VIBRATO:	Text.Format("Effect: Vibrato, %02X (%i)", Param, Param); break;
-			case EF_TREMOLO:	Text.Format("Effect: Tremolo, %02X (%i)", Param, Param); break;
-			case EF_SPEED:		Text.Format("Effect: Speed, %02X (%i)", Param, Param); break;
-			case EF_JUMP:		Text.Format("Effect: Jump, %02X (%i)", Param, Param); break;
-			case EF_SKIP:		Text.Format("Effect: Skip, %02X (%i)", Param, Param); break;
-			case EF_HALT:		Text.Format("Effect: Halt"); break;
-			case EF_VOLUME:		Text.Format("Effect: Volume, %02X (%i)", Param, Param); break;
-			case EF_PORTAON:	Text.Format("Effect: Portamento on, %02X (%i)", Param, Param); break;
-			case EF_PORTAOFF:	Text.Format("Effect: Portamento off"); break;
-			case EF_SWEEPUP:	Text.Format("Effect: Hardware sweep up, %02X (%i)", Param, Param); break;
-			case EF_SWEEPDOWN:	Text.Format("Effect: Hardware sweep down, %02X (%i)", Param, Param); break;
-			default:
-				Text = "Effect column";
-		}
-	}
+	Note.Note = KeyNote;
+	Note.Octave = KeyOctave;
 
-	SetMessageText(Text);
-}
-
-void CFamiTrackerView::FeedNote(int Channel, stChanNote *NoteData)
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-
-	CurrentNotes[Channel]	= *NoteData;
-	NewNoteData[Channel]	= true;
-	EffectColumns[Channel]	= pDoc->m_iEffectColumns[Channel] + 1;
-}
-
-void CFamiTrackerView::GetStartSpeed()
-{
-	CFamiTrackerDoc* pDoc = GetDocument();
-
-	m_iTempoAccum	= 60 * pDoc->GetFrameRate();		// 60 as in 60 seconds per minute
-	m_iTickPeriod	= pDoc->m_iSongSpeed;
-	m_iSpeed		= DEFAULT_SPEED;
-	
-	m_iTempo = m_iTempoAccum / 24;
-
-	if (m_iTickPeriod > 20)
-		m_iTempo = m_iTickPeriod;
-	else
-		m_iSpeed = m_iTickPeriod;
-}
-
-void CFamiTrackerView::OnRButtonUp(UINT nFlags, CPoint point)
-{
-	CRect WinRect;
-	CMenu *PopupMenu, PopupMenuBar;
-	int Item = 0;
-
-	GetWindowRect(WinRect);
-
-	PopupMenuBar.LoadMenu(IDR_POPUP);
-
-	PopupMenu = PopupMenuBar.GetSubMenu(0);
-
-	PopupMenu->TrackPopupMenu(TPM_RIGHTBUTTON, point.x + WinRect.left, point.y + WinRect.top, this);
-
-	CView::OnRButtonUp(nFlags, point);
+	return Note;
 }

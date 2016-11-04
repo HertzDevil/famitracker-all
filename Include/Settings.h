@@ -25,6 +25,11 @@
 const int EDIT_STYLE1	= 0;
 const int EDIT_STYLE2	= 1;
 
+enum WIN_STATES {
+	STATE_NORMAL,
+	STATE_MAXIMIZED
+};
+
 class CSettings : public CObject
 {
 public:
@@ -34,6 +39,7 @@ public:
 	void LoadSettings();
 	void SaveSettings();
 	void DefaultSettings();
+	void SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
 
 	struct {
 		bool	bWrapCursor;
@@ -45,6 +51,8 @@ public:
 		int		iEditStyle;
 		CString	strFont;
 	} General;
+
+	CString	strDevice;
 
 	struct {
 		int		iSampleRate;
@@ -71,6 +79,14 @@ public:
 		int		iColSelection;
 		int		iColCursor;
 	} Appearance;
+
+	struct {
+		int		iLeft;
+		int		iTop;
+		int		iRight;
+		int		iBottom;
+		int		iState;
+	} WindowPos;
 };
 
 

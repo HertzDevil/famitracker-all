@@ -24,7 +24,7 @@
 
 static const char			*FILE_HEADER	= "FamiTracker Module";
 static const char			*FILE_ENDER		= "END";
-static const int			FILE_VER		= 0x0201;				// Current file version (2.00)
+static const int			FILE_VER		= 0x0203;				// Current file version (2.00)
 static const int			COMPATIBLE_VER	= 0x0100;				// Compatible file version (1.0)
 
 static const unsigned int	MAX_BLOCK_SIZE	= 0x80000;				// 256 kB for now (should be enough)
@@ -195,6 +195,9 @@ char CDocumentFile::GetBlockChar()
 
 void CDocumentFile::GetBlock(void *Buffer, int Size)
 {
+	ASSERT(Size > 0 && Size < MAX_BLOCK_SIZE);
+	ASSERT(Buffer != NULL);
+
 	memcpy(Buffer, m_pBlockData + m_iBlockPointer, Size);
 	m_iBlockPointer += Size;
 }

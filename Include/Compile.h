@@ -52,31 +52,40 @@ public:
 	void	Clean();
 
 	void	CreateNSF(CString FileName, CFamiTrackerDoc *pDoc, bool BankSwitch, bool ForcePAL);
-	void	CreateBIN(CString FileName, CFamiTrackerDoc *pDoc);
+	void	CreateBIN(CString FileName, CString SampleFile, CFamiTrackerDoc *pDoc);
+	void	CreatePRG(CString FileName, CFamiTrackerDoc *pDoc, bool ForcePAL);
 
 	void	BuildMusicData(int StartAddress, CFamiTrackerDoc *pDoc);
-
-	void	WriteToBank(unsigned char Value);
-	void	StoreBankPosition(int Number, int Increase);
-	void	WriteBankOffset(int Number, int Offset);
 
 	void	SetSongInfo(char *Name, char *Artist, char *Copyright, int Speed, int Machine, bool ForcePAL);
 
 	CString	GetLogOutput();
 
 private:
-	void	AddLog(CString Text);
+	void			AddLog(CString Text);
+	void			AccumulateZero();
+	void			DispatchZeroes();
+
+	void			WriteToBank(unsigned char Value);
+	void			StoreBankPosition(int Number, int Increase);
+	void			WriteBankOffset(int Number, int Offset);
+
+	unsigned int	m_iMusicDataEnd, m_iDPCMStart;
 
 	unsigned char	*m_pBank;
 	unsigned int	m_iBankPointer;
 	unsigned short	m_iMusicDataAddr, m_iMusicDataSize;
 
+	unsigned short	m_iRawMusicSize, m_iRawSampleSize;
+
 	unsigned int	m_iPointerOffsets[OFFSET_COUNT];
 	bool			m_bPageDirty[8];
 
+	unsigned int	m_iZeroes;
+
 	CString			LogText;
 
-	stNSFHeader Header;
+	stNSFHeader		Header;
 
 };
 

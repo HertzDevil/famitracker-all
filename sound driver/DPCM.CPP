@@ -156,8 +156,6 @@ void CDPCM::Process(int Time)
 			//SampleBuf		= CPU->GetByte((DMA_LoadRegCnt++) | 0x8000);
 //			CPU->AddCycles(4);
 
-			DMA_LengthCounter--;
-
 			if (!DMA_LengthCounter) {
 				switch (PlayMode) {
 					case 0x00:	// Stop
@@ -169,44 +167,46 @@ void CDPCM::Process(int Time)
 						Reload();
 						break;
 					case 0x80:	// Stop and do IRQ (not when an NSF is playing)
+						
 						Enabled = 0;
-						SilenceFlag = true;
+//						SilenceFlag = true;
 						TriggeredIRQ = true;
+						
+						//DeltaCounter = 0x10;
+						//Reload();
+
 						break;
 				}
 			}
+
+			DMA_LengthCounter--;
+
 		}
 
 		// Output unit
 		if (!Divider) {
-			Divider			= 8;
-			ShiftReg		= SampleBuf;
-			SampleFilled	= false;
+			Divider = 8;
+			ShiftReg = SampleBuf;
+			SampleFilled = false;
 		}
 
 		if (!SilenceFlag) {
 			if (ShiftReg & 0x01) {
-//				if (LastDelta == 1 || !DMC_Filter) {		// This doesn't exist on a real NES
-					if (DeltaCounter < 126)
-						DeltaCounter += 2;
-					else if (DeltaCounter == 126)
-						DeltaCounter++;
-//				}
-//				LastDelta = 1;
+				if (DeltaCounter < 126)
+					DeltaCounter += 2;
+				else if (DeltaCounter == 126)
+					DeltaCounter++;
 			}
 			else {
-//				if (LastDelta == 2 || !DMC_Filter) {
-					if (DeltaCounter > 1)
-						DeltaCounter -= 2;
-					else if (DeltaCounter == 2)
-						DeltaCounter--;
-//				}
-//				LastDelta = 2;
+				if (DeltaCounter > 1)
+					DeltaCounter -= 2;
+				else if (DeltaCounter == 2)
+					DeltaCounter--;
 			}
 		}
 
 		ShiftReg >>= 1;
-		Divider--;		
+		Divider--;
 
 		AddMixer(DeltaCounter);
 	}

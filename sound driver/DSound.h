@@ -88,19 +88,34 @@ class CDSoundChannel
 class CDSound
 {
 	public:
-		bool Init(HWND hWnd, HANDLE hNotification);
+		CDSound();
 
-		CDSoundChannel *OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
-//		CDSoundChannel *OpenChannel(stSoundSettings *Settings);
+		bool Init(HWND hWnd, HANDLE hNotification, int Device);
+		void Close();
+
+		CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
 		void			CloseChannel(CDSoundChannel *Channel);
 
+		void			EnumerateDevices();
+		void			ClearEnumeration();
+		void			EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+		unsigned int	GetDeviceCount();
+		char			*GetDeviceName(int iDevice);
+		int				MatchDeviceID(char *Name);
+
 	private:
+
+		const static unsigned int MAX_DEVICES = 256;
 
 		static const int MAX_BLOCKS;
 
 		HWND			hWndTarget;
 		HANDLE			hNotificationHandle;
 		LPDIRECTSOUND	lpDirectSound;
+
+		unsigned int	m_iDevices;
+		char			*m_pcDevice[MAX_DEVICES];
+		GUID			*m_pGUIDs[MAX_DEVICES];
 
 };
 

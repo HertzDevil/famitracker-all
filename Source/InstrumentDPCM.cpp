@@ -22,10 +22,9 @@
 #include "FamiTracker.h"
 #include "InstrumentDPCM.h"
 #include "PCMImport.h"
-#include ".\instrumentdpcm.h"
+#include "..\include\instrumentdpcm.h"
 
-int m_iOctave, m_iSelectedKey;
-
+const char *KEY_NAMES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
 // CInstrumentDPCM dialog
 
@@ -52,19 +51,11 @@ BEGIN_MESSAGE_MAP(CInstrumentDPCM, CDialog)
 	ON_BN_CLICKED(IDC_IMPORT, OnBnClickedImport)
 	ON_CBN_SELCHANGE(IDC_OCTAVE, OnCbnSelchangeOctave)
 	ON_CBN_SELCHANGE(IDC_PITCH, OnCbnSelchangePitch)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, OnLvnItemchangedTable)
 	ON_NOTIFY(NM_CLICK, IDC_TABLE, OnNMClickTable)
 	ON_CBN_SELCHANGE(IDC_SAMPLES, OnCbnSelchangeSamples)
 	ON_BN_CLICKED(IDC_SAVE, OnBnClickedSave)
+	ON_BN_CLICKED(IDC_LOOP, OnBnClickedLoop)
 END_MESSAGE_MAP()
-
-CListCtrl *m_pTableListCtrl;
-CListCtrl *m_pSampleListCtrl;
-
-CFamiTrackerDoc		*pDoc;
-CFamiTrackerView	*pView;
-
-int m_iSelectedSample;
 
 // CInstrumentDPCM message handlers
 
@@ -72,72 +63,58 @@ BOOL CInstrumentDPCM::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	CComboBox	*pPitch, *pOctave;
+	CComboBox *pPitch, *pOctave;
+	CString Text;
+	int i;
 
 	m_iOctave = 3;
 	m_iSelectedKey = 0;
 
-	pDoc	= (CFamiTrackerDoc*)theApp.pDocument;
-	pView	= (CFamiTrackerView*)theApp.pView;
+	pDoc	= reinterpret_cast<CFamiTrackerDoc*>(theApp.pDocument);
+	pView	= reinterpret_cast<CFamiTrackerView*>(theApp.pView);
 
-	pPitch	= (CComboBox*)GetDlgItem(IDC_PITCH);
-	pOctave = (CComboBox*)GetDlgItem(IDC_OCTAVE);
+	pPitch	= reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
+	pOctave = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_OCTAVE));
 
-	m_pTableListCtrl = (CListCtrl*)GetDlgItem(IDC_TABLE);
+	m_pTableListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 	m_pTableListCtrl->DeleteAllItems();
 	m_pTableListCtrl->InsertColumn(0, "Key", LVCFMT_LEFT, 34);
 	m_pTableListCtrl->InsertColumn(1, "Pitch", LVCFMT_LEFT, 38);
-	m_pTableListCtrl->InsertColumn(2, "Sample", LVCFMT_LEFT, 74);
+	m_pTableListCtrl->InsertColumn(2, "Sample", LVCFMT_LEFT, 91);
 	m_pTableListCtrl->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
-	m_pSampleListCtrl = (CListCtrl*)GetDlgItem(IDC_SAMPLE_LIST);
+	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 	m_pSampleListCtrl->DeleteAllItems();
-	m_pSampleListCtrl->InsertColumn(0, "Name", LVCFMT_LEFT, 130);
+	m_pSampleListCtrl->InsertColumn(0, "#", LVCFMT_LEFT, 22);
+	m_pSampleListCtrl->InsertColumn(1, "Name", LVCFMT_LEFT, 88);
+	m_pSampleListCtrl->InsertColumn(2, "Size", LVCFMT_LEFT, 39);
 	m_pSampleListCtrl->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
-	pPitch->AddString("0");
-	pPitch->AddString("1");
-	pPitch->AddString("2");
-	pPitch->AddString("3");
-	pPitch->AddString("4");
-	pPitch->AddString("5");
-	pPitch->AddString("6");
-	pPitch->AddString("7");
-	pPitch->AddString("8");
-	pPitch->AddString("9");
-	pPitch->AddString("10");
-	pPitch->AddString("11");
-	pPitch->AddString("12");
-	pPitch->AddString("13");
-	pPitch->AddString("14");
-	pPitch->AddString("15");
+	for (i = 0; i < 16; i++) {
+		Text.Format("%i", i);
+		pPitch->AddString(Text);
+	}
+
 	pPitch->SetCurSel(15);
 
-	pOctave->AddString("0");
-	pOctave->AddString("1");
-	pOctave->AddString("2");
-	pOctave->AddString("3");
-	pOctave->AddString("4");
-	pOctave->AddString("5");
+	for (i = 0; i < OCTAVE_RANGE; i++) {
+		Text.Format("%i", i);
+		pOctave->AddString(Text);
+	}
+
 	pOctave->SetCurSel(3);
+
+	CheckDlgButton(IDC_LOOP, 0);
 
 	m_pTableListCtrl->DeleteAllItems();
 
-	m_pTableListCtrl->InsertItem(0, "C", 0);
-	m_pTableListCtrl->InsertItem(1, "C#", 0);
-	m_pTableListCtrl->InsertItem(2, "D", 0);
-	m_pTableListCtrl->InsertItem(3, "D#", 0);
-	m_pTableListCtrl->InsertItem(4, "E", 0);
-	m_pTableListCtrl->InsertItem(5, "F", 0);
-	m_pTableListCtrl->InsertItem(6, "F#", 0);
-	m_pTableListCtrl->InsertItem(7, "G", 0);
-	m_pTableListCtrl->InsertItem(8, "G#", 0);
-	m_pTableListCtrl->InsertItem(9, "A", 0);
-	m_pTableListCtrl->InsertItem(10, "A#", 0);
-	m_pTableListCtrl->InsertItem(11, "B", 0);
+	for (i = 0; i < 12; i++) {
+		m_pTableListCtrl->InsertItem(i, KEY_NAMES[i], 0);
+	}
 
-	BuildKeyList();
 	BuildSampleList();
+
+	SetCurrentInstrument(pView->GetInstrument());
 
 	m_iSelectedSample = 0;
 
@@ -157,12 +134,14 @@ void CInstrumentDPCM::UpdateKey(int Index)
 	int Pitch, Item;
 	char Name[256];
 
-	if (pDoc->Instruments[pView->m_iInstrument].Samples[m_iOctave][Index] > 0) {
-		Item	= pDoc->Instruments[pView->m_iInstrument].Samples[m_iOctave][Index] - 1;
-		Pitch	= pDoc->Instruments[pView->m_iInstrument].SamplePitch[m_iOctave][Index];
+	m_pTableListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
+
+	if (pDoc->GetInstDPCM(pView->GetInstrument(), Index, m_iOctave) > 0) {
+		Item = pDoc->GetInstDPCM(pView->GetInstrument(), Index, m_iOctave) - 1;
+		Pitch = pDoc->GetInstDPCMPitch(pView->GetInstrument(), Index, m_iOctave);
 		pDoc->GetSampleName(Item, Name);
 		m_pTableListCtrl->SetItemText(Index, 2, Name);
-		sprintf(Name, "%i", Pitch);
+		sprintf(Name, "%i", Pitch & 0x0F);
 		m_pTableListCtrl->SetItemText(Index, 1, Name);
 	}
 	else {
@@ -175,35 +154,34 @@ void CInstrumentDPCM::UpdateKey(int Index)
 
 void CInstrumentDPCM::BuildSampleList()
 {
-	stDSample	*pDSample;
-	int			Size;
-	CString		Text;
+	CComboBox		*m_pSampleBox;
+	stDSample		*pDSample;
+	unsigned int	Size, i, Index = 0;
+	CString			Text;
 
-	CComboBox *m_pSampleBox;
+	m_pSampleBox		= reinterpret_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
+	m_pSampleListCtrl	= reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
-	m_pSampleBox = (CComboBox*)GetDlgItem(IDC_SAMPLES);
-
-	m_pSampleListCtrl = (CListCtrl*)GetDlgItem(IDC_SAMPLE_LIST);
 	m_pSampleListCtrl->DeleteAllItems();
-
 	m_pSampleBox->ResetContent();
 
 	Size = 0;
 
 	m_pSampleBox->AddString("(no sample)");
 
-	for (int i = 0; i < MAX_DSAMPLES; i++) {
+	for (i = 0; i < MAX_DSAMPLES; i++) {
 		pDSample = pDoc->GetDSample(i);
 		if (pDSample->SampleSize > 0) {
-			Text.Format("%i - %s (%i)", i, pDSample->Name, pDSample->SampleSize);
-			m_pSampleListCtrl->InsertItem(i, Text);
-			Text.Format("%02i - %s", i, pDSample->Name);
-			m_pSampleBox->AddString(Text);
+			Text.Format("%i", i);							m_pSampleListCtrl->InsertItem(Index, Text);
+			Text.Format("%s", pDSample->Name);				m_pSampleListCtrl->SetItemText(Index, 1, Text);
+			Text.Format("%i", pDSample->SampleSize);		m_pSampleListCtrl->SetItemText(Index, 2, Text);
+			Text.Format("%02i - %s", i, pDSample->Name);	m_pSampleBox->AddString(Text);
 			Size += pDSample->SampleSize;
+			Index++;
 		}
 	}
 
-	Text.Format("Space left %i kb (of 16 kb)", (0x4000 - Size) / 1024);
+	Text.Format("Space used %i kB, left %i kB (16 kB available)", Size / 0x400, (0x4000 - Size) / 0x400);
 	SetDlgItemText(IDC_SPACE, Text);
 }
 
@@ -266,7 +244,7 @@ void CInstrumentDPCM::OnNMClickSampleList(NMHDR *pNMHDR, LRESULT *pResult)
 	char ItemName[256];
 	int Index;
 
-	m_pSampleListCtrl = (CListCtrl*)GetDlgItem(IDC_SAMPLE_LIST);
+	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
 	if (m_pSampleListCtrl->GetItemCount() == 0)
 		return;
@@ -317,103 +295,103 @@ void CInstrumentDPCM::OnBnClickedImport()
 
 void CInstrumentDPCM::OnCbnSelchangeOctave()
 {
-	CComboBox *m_OctaveBox;
-
-	m_OctaveBox	= (CComboBox*)GetDlgItem(IDC_OCTAVE);
-	m_iOctave	= m_OctaveBox->GetCurSel();	
-
+	CComboBox *m_OctaveBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_OCTAVE));
+	m_iOctave = m_OctaveBox->GetCurSel();
 	BuildKeyList();
 }
 
 void CInstrumentDPCM::OnCbnSelchangePitch()
 {
+	CComboBox *m_pPitchBox	= reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
 	int Pitch;
-
-	CComboBox *m_pPitchBox;
-
-	m_pPitchBox	= (CComboBox*)GetDlgItem(IDC_PITCH);
 
 	if (m_iSelectedKey == -1)
 		return;
 
 	Pitch = m_pPitchBox->GetCurSel();
 
-	pDoc->Instruments[pView->m_iInstrument].SamplePitch[m_iOctave][m_iSelectedKey] = Pitch;
+	if (IsDlgButtonChecked(IDC_LOOP))
+		Pitch |= 0x80;
+
+	pDoc->SetInstDPCMPitch(pView->GetInstrument(), m_iSelectedKey, m_iOctave, Pitch);
 
 	UpdateKey(m_iSelectedKey);
-}
-
-void CInstrumentDPCM::OnLvnItemchangedTable(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = 0;
 }
 
 void CInstrumentDPCM::OnNMClickTable(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	CComboBox *pSampleBox, *pPitchBox;
+	CString Text;
 	int Sample, Pitch;
 
-	m_pTableListCtrl	= (CListCtrl*)GetDlgItem(IDC_TABLE);
+	m_pTableListCtrl	= reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 	m_iSelectedKey		= m_pTableListCtrl->GetSelectionMark();
 
-	Sample	= pDoc->Instruments[pView->m_iInstrument].Samples[m_iOctave][m_iSelectedKey] - 1;
-	Pitch	= pDoc->Instruments[pView->m_iInstrument].SamplePitch[m_iOctave][m_iSelectedKey];
+	Sample				= pDoc->GetInstDPCM(pView->GetInstrument(), m_iSelectedKey, m_iOctave) - 1;
+	Pitch				= pDoc->GetInstDPCMPitch(pView->GetInstrument(), m_iSelectedKey, m_iOctave);
 
-	m_pTableListCtrl	= (CListCtrl*)GetDlgItem(IDC_TABLE);
-	pSampleBox			= (CComboBox*)GetDlgItem(IDC_SAMPLES);
-	pPitchBox			= (CComboBox*)GetDlgItem(IDC_PITCH);
+	m_pTableListCtrl	= static_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
+	pSampleBox			= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
+	pPitchBox			= static_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
 
-	CString Text;
 	Text.Format("%02i - %s", Sample, m_pTableListCtrl->GetItemText(m_pTableListCtrl->GetSelectionMark(), 2));
 
 	if (Sample != -1)
 		pSampleBox->SelectString(0, Text);
 	else
 		pSampleBox->SetCurSel(0);
-
-	//if (Sample > 0)
-		//pSampleBox->SelectString(0, m_pTableListCtrl->GetItemText(m_pTableListCtrl->GetSelectionMark(), 0));
-	//pSampleBox->SetCurSel(Sample + 1);
 	
 	if (Sample > 0)
-		pPitchBox->SetCurSel(Pitch);
+		pPitchBox->SetCurSel(Pitch & 0x0F);
+
+	if (Pitch & 0x80)
+		CheckDlgButton(IDC_LOOP, 1);
+	else
+		CheckDlgButton(IDC_LOOP, 0);
 
 	*pResult = 0;
 }
 
 void CInstrumentDPCM::OnCbnSelchangeSamples()
 {
-	CComboBox *m_pSampleBox = (CComboBox*)GetDlgItem(IDC_SAMPLES);
-	CComboBox *pPitchBox = (CComboBox*)GetDlgItem(IDC_PITCH);
+	CComboBox *m_pSampleBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
+	CComboBox *pPitchBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
 	
 	int Sample, PrevSample;
 	char Name[256];
 
-	PrevSample = pDoc->Instruments[pView->m_iInstrument].Samples[m_iOctave][m_iSelectedKey];
+	PrevSample = pDoc->GetInstDPCM(pView->GetInstrument(), m_iSelectedKey, m_iOctave);
 
 	Sample = m_pSampleBox->GetCurSel();
 
 	if (Sample > 0) {
 		m_pSampleBox->GetLBText(Sample, Name);
+		
+		Name[2] = 0;
+		if (Name[0] == '0') {
+			Name[0] = Name[1];
+			Name[1] = 0;
+		}
+
 		sscanf(Name, "%i", &Sample);
 		Sample++;
 
 		if (PrevSample == 0) {
 			int Pitch = pPitchBox->GetCurSel();
-			pDoc->Instruments[pView->m_iInstrument].SamplePitch[m_iOctave][m_iSelectedKey] = Pitch;
+			pDoc->SetInstDPCMPitch(pView->GetInstrument(), m_iSelectedKey, m_iOctave, Pitch);
 		}
 	}
 
-	pDoc->Instruments[pView->m_iInstrument].Samples[m_iOctave][m_iSelectedKey] = Sample;
+//	m_iSelectedSample = Sample;
+
+	pDoc->SetInstDPCM(pView->GetInstrument(), m_iSelectedKey, m_iOctave, Sample);
 
 	UpdateKey(m_iSelectedKey);
 }
 
 void CInstrumentDPCM::OnBnClickedSave()
 {
-	CListCtrl	*List = (CListCtrl*)GetDlgItem(IDC_LIST);
+	CListCtrl	*List = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_LIST));
 	CString		Path;
 	CFile		SampleFile;
 
@@ -449,3 +427,41 @@ void CInstrumentDPCM::OnBnClickedSave()
 	SampleFile.Write(DSample->SampleData, DSample->SampleSize);
 	SampleFile.Close();
 }
+
+void CInstrumentDPCM::OnBnClickedLoop()
+{
+	int Pitch;
+
+	Pitch = pDoc->GetInstDPCMPitch(pView->GetInstrument(), m_iSelectedKey, m_iOctave) & 0x0F;
+
+	if (IsDlgButtonChecked(IDC_LOOP))
+		Pitch |= 0x80;
+
+	pDoc->SetInstDPCMPitch(pView->GetInstrument(), m_iSelectedKey, m_iOctave, Pitch);
+}
+
+void CInstrumentDPCM::SetCurrentInstrument(int Index)
+{
+	BuildKeyList();
+}
+
+BOOL CInstrumentDPCM::PreTranslateMessage(MSG* pMsg)
+{
+	switch (pMsg->message) {
+		case WM_KEYDOWN:
+			switch (pMsg->wParam) {
+				case 27:	// Esc
+					pMsg->wParam = 0;
+					return TRUE;
+				default:
+					static_cast<CFamiTrackerView*>(theApp.pView)->PlayNote(int(pMsg->wParam));
+			}
+			break;
+		case WM_KEYUP:
+			static_cast<CFamiTrackerView*>(theApp.pView)->KeyReleased(int(pMsg->wParam));
+			return TRUE;
+	}
+
+	return CDialog::PreTranslateMessage(pMsg);
+}
+

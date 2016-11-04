@@ -34,6 +34,9 @@ public:
 	virtual ~CInstrumentEditDlg();
 
 	void ChangeNoteState(int Note);
+	void SetCurrentInstrument(int Index);
+
+	bool m_bOpened;
 
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT };
@@ -62,4 +65,8 @@ public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 //	virtual BOOL DestroyWindow();
+	virtual BOOL DestroyWindow();
+protected:
+	virtual void OnOK();
+	virtual void OnCancel();
 };

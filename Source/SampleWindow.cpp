@@ -21,8 +21,10 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "SampleWindow.h"
+#include "..\fft\fft.h"
 #include "resource.h"
 
+enum {GRAPH, GRAPH_BLUR, FFT, LOGO};
 
 // CSampleWindow
 
@@ -44,13 +46,22 @@ END_MESSAGE_MAP()
 
 int *WndBuf;
 int WndBufPtr;
+bool FFT_Active = true;
+
+int m_iStyle = GRAPH;
+
+const int FFT_POINTS = 256;
+
+Fft FftObject(FFT_POINTS, 44100);
+
+int FftPoint[FFT_POINTS];
 
 // CSampleWinProc message handlers
 
 BOOL CSampleWinProc::InitInstance()
 {
-	// TODO: Add your specialized code here and/or call the base class
-
+	for (int i = 0; i < FFT_POINTS; i++)
+		FftPoint[i] = 0;
 	//return CWinThread::InitInstance();
 	return TRUE;
 }
@@ -88,23 +99,92 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 		return;
 
 	CDC *pDC = GetDC();
-	
-	int i = 0;
+
+	switch (m_iStyle) {
+		case GRAPH:
+			DrawGraph(Samples, Count, pDC);
+			break;
+		case GRAPH_BLUR:
+			DrawGraph(Samples, Count, pDC);
+			break;
+		case FFT:
+			DrawFFT(Samples, Count, pDC);
+			break;
+		case LOGO:
+			break;
+	}
+
+	ReleaseDC(pDC);
+
+	delete [] Samples;
+}
+
+void CSampleWindow::DrawFFT(int *Samples, int Count, CDC *pDC)
+{
+	int i = 0, y, bar;
+
+	while (i < Count) {
+		if ((Count - i) > FFT_POINTS) {
+			FftObject.CopyIn(FFT_POINTS, Samples);
+			FftObject.Transform();
+			i += FFT_POINTS;
+		}
+		else {
+			FftObject.CopyIn((Count - i), Samples);
+			FftObject.Transform();
+			i = Count;
+		}
+	}
+
+	float Stepping = (float)(FFT_POINTS - (FFT_POINTS / 2) - 40) / (float)WIN_WIDTH;
+	float Step = 0;
+
+	for (i = 0; i < WIN_WIDTH; i++) {
+		// skip the first 20 Hzs
+		bar = (int)FftObject.GetIntensity(int(Step) + 20) / 80;
+
+		if (bar > WIN_HEIGHT)
+			bar = WIN_HEIGHT;
+
+		if (bar > FftPoint[(int)Step]) {
+			FftPoint[(int)Step] = bar;
+		}
+		else {
+			FftPoint[(int)Step] -= 1;
+		}
+
+		bar = FftPoint[(int)Step];
+
+		for (y = 0; y < WIN_HEIGHT; y++) {
+			if (y < bar)
+				BlitBuffer[(WIN_HEIGHT - y) * WIN_WIDTH + i] = 0xF0F0F0 - (DIM(0xFFFF80, (y * 100) / bar) + 0x80) + 0x282888;
+			else
+				BlitBuffer[(WIN_HEIGHT - y) * WIN_WIDTH + i] = 0x000000;
+		}
+
+		Step += Stepping;
+	}
+
+	StretchDIBits(*pDC, 0, 0, WIN_WIDTH, WIN_HEIGHT, 0, 0, WIN_WIDTH, WIN_HEIGHT, BlitBuffer, &bmi, DIB_RGB_COLORS, SRCCOPY);
+}
+
+void CSampleWindow::DrawGraph(int *Samples, int Count, CDC *pDC)
+{
+//	CDC *pDC = GetDC();
 	
 	int GraphColor		= theApp.m_pSettings->Appearance.iColPatternText;
 	int GraphColor2		= DIM(theApp.m_pSettings->Appearance.iColPatternText, 50);
 	int GraphBgColor	= theApp.m_pSettings->Appearance.iColBackground;
 
-	GraphBgColor = ((GraphBgColor & 0xFF) << 16) | (GraphBgColor & 0xFF00) | ((GraphBgColor & 0xFF0000) >> 16);
+	int i = 0;
 
-	i = 0;
+	GraphBgColor = ((GraphBgColor & 0xFF) << 16) | (GraphBgColor & 0xFF00) | ((GraphBgColor & 0xFF0000) >> 16);
 
 	while (i < Count) {
 		WndBuf[WndBufPtr / 7] = Samples[i++];
 		WndBufPtr++;
-		
+
 		if ((WndBufPtr / 7) > WIN_WIDTH) {
-			
 			WndBufPtr = 0;
 			int x = 0;
 			int y = 0;
@@ -120,7 +200,7 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 				for (y = 0; y < WIN_HEIGHT; y++) {
 					
 					if ((y == s) || ((y > s && y <= l) || (y >= l && y < s))) {
-						if (Blur) {
+						if (m_iStyle == GRAPH_BLUR) {
 							BlitBuffer[(y + 0) * WIN_WIDTH + x] = 0xFFFFFF;
 						}
 						else {
@@ -132,7 +212,7 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 						}
 					}
 					else {
-						if (Blur) {
+						if (m_iStyle == GRAPH_BLUR) {
 							if (y > 1 && y < (WIN_HEIGHT - 1) && x > 0 && x < (WIN_WIDTH - 1)) {
 								const int BLUR_DECAY = 13;
 								int Col1 = BlitBuffer[(y + 1) * WIN_WIDTH + x];
@@ -181,15 +261,11 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 			StretchDIBits(*pDC, 0, 0, WIN_WIDTH, WIN_HEIGHT, 0, 0, WIN_WIDTH, WIN_HEIGHT, BlitBuffer, &bmi, DIB_RGB_COLORS, SRCCOPY);
 		}
 	}
-
-	delete [] Samples;
-
-	ReleaseDC(pDC);
 }
 
 BOOL CSampleWindow::OnEraseBkgnd(CDC* pDC)
 {
-	if (!Active) {
+	if (m_iStyle == LOGO) {
 		CBitmap Bmp, *OldBmp;
 		CDC		BitmapDC;
 
@@ -202,13 +278,11 @@ BOOL CSampleWindow::OnEraseBkgnd(CDC* pDC)
 		BitmapDC.SelectObject(OldBmp);
 	}
 
-	return NULL;
+	return FALSE;
 }
 
 BOOL CSampleWindow::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext)
 {
-	// TODO: Add your specialized code here and/or call the base class
-
 	memset(&bmi, 0, sizeof(BITMAPINFO));
 	bmi.bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
 	bmi.bmiHeader.biBitCount	= 32;
@@ -231,19 +305,21 @@ BOOL CSampleWindow::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lps
 
 void CSampleWindow::OnLButtonDown(UINT nFlags, CPoint point)
 {
-	if (Active) {
-		if (Blur) {
-			Blur = false;
-			Active = !Active;
-		}
-		else
-			Blur = true;
+	switch (m_iStyle) {
+		case GRAPH: 
+			m_iStyle = GRAPH_BLUR;
+			break;
+		case GRAPH_BLUR: 
+			m_iStyle = FFT;
+			break;
+		case FFT: 
+			m_iStyle = LOGO;
+			RedrawWindow();
+			break;
+		case LOGO: 
+			m_iStyle = GRAPH;
+			break;
 	}
-	else
-		Active = true;
-
-	if (!Active)
-		RedrawWindow();
 
 	CWnd::OnLButtonDown(nFlags, point);
 }
@@ -252,7 +328,7 @@ void CSampleWindow::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 	
-	if (!Active) {
+	if (m_iStyle == LOGO) {
 		CBitmap Bmp, *OldBmp;
 		CDC		BitmapDC;
 

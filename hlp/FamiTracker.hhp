@@ -14,9 +14,9 @@ main_index.htm
 instruments.htm
 tracker_field.htm
 import_dpcm.htm
-midi_settings.htm
 shortcuts.htm
 nsf_export.htm
+configuration.htm
 
 [ALIAS]
 HIDR_MAINFRAME = main_index.htm
@@ -24,7 +24,7 @@ HIDR_MAINFRAME = main_index.htm
 instruments		= instruments.htm
 tracker_field	= tracker_field.htm
 main_index		= main_index.htm
-midi_config		= midi_settings.htm
+configuration	= configuration.htm
 nsf_export		= nsf_export.htm
 
 [MAP]
