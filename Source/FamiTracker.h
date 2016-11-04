@@ -27,32 +27,24 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 3;
-const int VERSION_REV = 6;
+const int VERSION_REV = 7;
 
-const int VERSION_WIP = 4;
+const int VERSION_WIP = 0;
 
-#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
-
-// Color macros
-
-#define RED(x)	 ((x >> 16) & 0xFF)
-#define GREEN(x) ((x >> 8) & 0xFF)
-#define BLUE(x)	 (x & 0xFF)
-
-#define COMBINE(r, g, b) (((r) << 16) | ((g) << 8) | b)
-
-//#define DIM(c, l) ( (((c & 0xFF) * l) / 100) + (((((c >> 8) & 0xFF) * l) / 100) << 8) + (((((c >> 16) & 0xFF) * l) / 100) << 16))
-#define DIM(c, l) (COMBINE((RED(c) * l) / 100, (GREEN(c) * l) / 100, (BLUE(c) * l) / 100))
-
-#define DIM_TO(c1, c2, level) (COMBINE((RED(c1) * level) / 100 + (RED(c2) * (100 - level)) / 100, \
-									   (GREEN(c1) * level) / 100 + (GREEN(c2) * (100 - level)) / 100, \
-									   (BLUE(c1) * level) / 100 + (BLUE(c2) * (100 - level)) / 100)) \
+//#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
+#define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));//  if (v > max) v = max; else if (v < min) v = min;
 
 #ifndef __AFXWIN_H__
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 
 #include "resource.h"       // main symbols
+
+// Inter-process commands
+enum {
+	IPC_LOAD = 1,	
+	IPC_LOAD_PLAY
+};
 
 // Custom command line reader
 class CFTCommandLineInfo : public CCommandLineInfo
@@ -74,6 +66,8 @@ class CSettings;
 class CAccelerator;
 class CChannelMap;
 class CCustomExporters;
+
+class CMutex;
 
 // CFamiTrackerApp:
 // See FamiTracker.cpp for the implementation of this class
@@ -98,7 +92,7 @@ public:
 	// Tracker player functions
 	void			RegisterKeyState(int Channel, int Note);
 	void			StopPlayer();
-	bool			IsPlaying();
+	bool			IsPlaying() const;
 	void			ResetPlayer();
 	void			SilentEverything();
 
@@ -121,6 +115,10 @@ public:
 private:
 	void CheckAppThemed();
 	void ShutDownSynth();
+	bool CheckSingleInstance();
+	void RegisterSingleInstance();
+	void UnregisterSingleInstance();
+	void CheckNewVersion();
 
 protected:
 	BOOL DoPromptFileName(CString& fileName, CString& filePath, UINT nIDSTitle, DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate);
@@ -135,6 +133,10 @@ private:
 	CChannelMap		*m_pChannelMap;
 
 	CCustomExporters *m_customExporters;
+
+	// Single instance stuff
+	CMutex			*m_pInstanceMutex;
+	HANDLE			m_hWndMapFile;
 
 	// Windows handles
 	HANDLE			m_hAliveCheck;

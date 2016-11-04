@@ -31,17 +31,25 @@ class CFrameBoxWnd : public CWnd
 public:
 	CFrameBoxWnd(CMainFrame *pMainFrm);
 	virtual ~CFrameBoxWnd();
-	static const int FRAME_ITEM_WIDTH = 20;
+
 	void AssignDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
 	void EnableInput();
 	bool InputEnabled() const;
 	void CreateGdiObjects();
+
+public:
+	static const int FRAME_ITEM_WIDTH = 20;
+
+	static const int ROW_HEIGHT = 15;
+	static const int TOP_OFFSET = 3;
+
+	static const TCHAR DEFAULT_FONT[];
+	
 private:
-	CFont m_Font;
-	CBrush m_Brush;
-	CPen m_Pen;
+	// GDI objects
+	CFont	m_Font;
 	CBitmap m_bmpBack;
-	CDC	m_dcBack;
+	CDC		m_dcBack;
 
 	HACCEL m_hAccel;
 	CMainFrame *m_pMainFrame;
@@ -55,6 +63,7 @@ private:
 	int m_iCopiedValues[MAX_CHANNELS];
 	CFamiTrackerDoc *m_pDocument;
 	CFamiTrackerView *m_pView;
+
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

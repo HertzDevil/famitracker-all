@@ -26,10 +26,22 @@
 
 class CChannelHandlerN106 : public CChannelHandler {
 public:
-	CChannelHandlerN106() : CChannelHandler(5) {};
+	CChannelHandlerN106();
 	virtual void ProcessChannel();
 	virtual void RefreshChannel();
 protected:
-	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
+	virtual void PlayChannelNote(stChanNote *pNoteData, int EffColumns);
 	virtual void ClearRegisters();
+private:
+	void WriteReg(int Reg, int Value);
+	void SetAddress(char Addr, bool AutoInc);
+	void WriteData(char Data);
+	void LoadWave();
+private:
+	inline int GetIndex() const { return m_iChannelID - CHANID_N106_CHAN1; }
+private:
+	bool m_bLoadWave;
+	int m_iWaveLen;
+	int m_iWavePos;
+	CInstrumentN106 *m_pInstrument;
 };

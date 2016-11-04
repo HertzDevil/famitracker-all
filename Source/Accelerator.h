@@ -21,29 +21,44 @@
 
 #define MOD_NONE 0
 
+struct stAccelEntry {
+	LPCTSTR name;
+	int	mod;
+	int	key;
+	int	id;
+};
+
 class CAccelerator {
 public:
 	CAccelerator();
 	~CAccelerator();
 
-	int				GetItemCount() const;
-	char			*GetItemName(int Item) const;
-	unsigned short	GetAction(unsigned char nChar);
-	void			KeyReleased(unsigned char nChar);
-	LPCTSTR			GetModName(int Item) const;
-	LPCTSTR			GetKeyName(int Item) const;
-	LPCTSTR			EnumKeyNames(int Index) const;
-	int				GetItem(CString Name) const;
-	void			SelectMod(int Item, int Mod);
-	void			SelectKey(int Item, CString Key);
-	void			SaveShortcuts(CSettings *pSettings) const;
-	void			LoadShortcuts(CSettings *pSettings);
-	void			LoadDefaults();
-	void			LostFocus();
+	LPCTSTR			GetItemName(int Item) const;					// Name of shortcut
+	int				GetItemKey(int Item) const;						// Key for shortcut
+	int				GetItemMod(int Item) const;						// Modifier for shortcut
+	int				GetDefaultKey(int Item) const;					// Default key for shortcut
+	int				GetDefaultMod(int Item) const;					// Default modifier for shortcut
+	LPCTSTR			GetItemModName(int Item) const;					// Key string for shortcut
+	LPCTSTR			GetItemKeyName(int Item) const;					// Modifier string for shortcut
+	LPCTSTR			GetVKeyName(int virtualKey) const;				// Translates virtual key to a string
+	void			StoreShortcut(int Item, int Key, int Mod);		// Store key and modifier for shortcut
+
+	void			SaveShortcuts(CSettings *pSettings) const;		// Save to registry
+	void			LoadShortcuts(CSettings *pSettings);			// Load from registry
+	void			LoadDefaults();									// Load defaults
+
+	unsigned short	GetAction(unsigned char nChar);					// Translate key -> ID
+	void			KeyReleased(unsigned char nChar);				// Keys are released
+	void			LostFocus();									// Window lost focus
 
 public:
-	static LPCTSTR  MOD_NAMES[];
+	// Class member constants
+	static LPCTSTR			  MOD_NAMES[];							// Strings for modifiers
+	static const stAccelEntry DEFAULT_TABLE[];						// List of default shortcuts
+	static const int		  ACCEL_COUNT;							// Number of shortcuts
+	static LPCTSTR			  SHORTCUTS_SECTION;					// Registry section
 
 private:
-	unsigned int	m_iModifier;
+	unsigned int	m_iModifier;									// Keep the modifier state
+
 };

@@ -121,28 +121,3 @@ void CSequence::Copy(const CSequence *pSeq)
 
 	memcpy(m_cValues, pSeq->m_cValues, MAX_SEQUENCE_ITEMS);
 }
-/*
-void CSequence::Store(CDocumentFile *pDocFile, int Index, int Type)
-{
-	int Count = GetItemCount();
-
-	if (Count > 0) {
-		// Store index
-		pDocFile->WriteBlockInt(Index);
-		// Store type of sequence
-		pDocFile->WriteBlockInt(Type);
-		// Store number of items in this sequence
-		pDocFile->WriteBlockChar(Count);
-		// Store loop point
-		pDocFile->WriteBlockInt(GetLoopPoint());
-		// Store release point (v4)
-		pDocFile->WriteBlockInt(GetReleasePoint());
-		// Store setting (v4)
-		pDocFile->WriteBlockInt(GetSetting());
-		// Store items
-		for (int j = 0; j < Count; j++) {
-			pDocFile->WriteBlockChar(GetItem(j));
-		}
-	}
-}
-*/

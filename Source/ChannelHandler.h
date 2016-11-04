@@ -27,44 +27,18 @@ const int VOL_SHIFT = 3;
 
 class CAPU;
 
-// Todo: A lot of cleanup is needed in these files!
+// TODO: A lot of cleanup is needed in these files!
 
 //
 // Base class for channel renderers
 //
 class CChannelHandler {
 public:
-	CChannelHandler(int ChanID);
+	CChannelHandler();
 
 	void PlayNote(stChanNote *NoteData, int EffColumns);		// Plays a note, calls the derived classes
 
-	// Virtual functions
-	virtual void ProcessChannel() = 0;							// Run the instrument and effects
-	virtual void RefreshChannel() = 0;							// Update channel registers
-	virtual void ResetChannel();								// Resets all default state variables
-
-	virtual void SetNoteTable(unsigned int *NoteLookupTable);
-	virtual void UpdateSequencePlayPos() {};
-	virtual void SetPitch(int Pitch);
-
-protected:
-	// Protected virtual functions
-	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns) = 0; // Plays a note
-	virtual void ClearRegisters() = 0;										// Clear channel registers
-	virtual	unsigned int TriggerNote(int Note);
-
-	// For sequence
-	virtual void RunSequence(int Index, CSequence *pSequence);		// Default sequence handler
-	virtual CSequence *GetSequence(int Index, int Type);
-
-	virtual int GetPitch() const;
-
-	virtual int LimitFreq(int Freq);
-
-	int CalculateVolume(int Limit) const;
-
-public:
-	// Todo: use these eventually
+	// TODO: use these eventually
 	void CutNote();													// Called on note cut commands
 	void ReleaseNote();												// Called on note release commands
 
@@ -76,6 +50,46 @@ public:
 
 	void SetVibratoStyle(int Style);
 
+	//
+	// Public virtual functions
+	//
+public:
+	virtual void ProcessChannel() = 0;							// Run the instrument and effects
+	virtual void RefreshChannel() = 0;							// Update channel registers
+	virtual void ResetChannel();								// Resets all default state variables
+
+	virtual void SetNoteTable(unsigned int *NoteLookupTable);
+	virtual void UpdateSequencePlayPos() {};
+	virtual void SetPitch(int Pitch);
+
+	virtual void SetChannelID(int ID) { m_iChannelID = ID; }
+
+	// 
+	// Internal virtual functions
+	//
+protected:
+	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns) = 0; // Plays a note
+	virtual void ClearRegisters() = 0;										// Clear channel registers
+	virtual	unsigned int TriggerNote(int Note);
+
+	// For sequence
+	virtual void RunSequence(int Index, CSequence *pSequence);		// Default sequence handler
+	virtual CSequence *GetSequence(int Index, int Type);
+
+	virtual int GetPitch() const;
+
+	int LimitPeriod(int Period) const;
+	int LimitVolume(int Volume) const;
+	void SetMaxPeriod(int Period);
+
+	void ReleaseSequences(int Chip);
+
+	int CalculatePeriod() const;
+	int CalculateVolume(int Limit) const;
+
+	//
+	// Internal functions
+	//
 protected:
 	int RunNote(int Octave, int Note);
 
@@ -90,6 +104,9 @@ protected:
 	int GetTremolo() const;
 	int GetFinePitch() const;
 
+	void AddCycles(int count);
+
+	// Shared variables
 protected:
 	// Channel variables
 	int					m_iChannelID;				// Channel ID
@@ -98,9 +115,9 @@ protected:
 	// General
 	bool				m_bEnabled;
 	bool				m_bRelease;							// Note released
-	unsigned int		m_iLastInstrument, m_iInstrument;	// Instrument
+	unsigned int		m_iInstrument, m_iLastInstrument;	// Instrument
 	unsigned int		m_iNote;							// Active note
-	int					m_iFrequency, m_iLastFrequency;		// Channel period
+	int					m_iPeriod, m_iLastPeriod;			// Channel period
 	char				m_iVolume;							// Volume
 	char				m_iDutyPeriod;
 
@@ -108,7 +125,7 @@ protected:
 	bool				m_bDelayEnabled;
 	unsigned char		m_cDelayCounter;
 	unsigned int		m_iDelayEffColumns;		
-	stChanNote			*m_pDelayedNote;
+	stChanNote			m_cnDelayed;
 
 	// Vibrato & tremolo
 	unsigned int		m_iVibratoDepth, m_iVibratoSpeed, m_iVibratoPhase;
@@ -128,6 +145,7 @@ protected:
 	int					m_iSeqPointer[SEQ_COUNT];
 	int					m_iSeqIndex[SEQ_COUNT];
 
+	unsigned int		m_iSeqVolume;				// Current sequence volume
 
 	// Misc 
 	CAPU				*m_pAPU;
@@ -138,7 +156,12 @@ protected:
 
 	int					m_iPitch;					// Used by the pitch wheel
 
-	// todo: sort and rename
-	unsigned int		m_iOutVol, InitVol;
+	// TODO: sort and rename
+	unsigned int		InitVol;
 	unsigned int		Length;
+
+	// Private variables
+private:
+	int m_iMaxPeriod;				// Used to limit period register
+
 };

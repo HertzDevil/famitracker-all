@@ -21,12 +21,17 @@
 #include "apu.h"
 #include "noise.h"
 
-const uint16 CNoise::NOISE_FREQ[] = 
-	{0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 
-	 0xCA, 0xFE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4};
+const uint16 CNoise::NOISE_PERIODS_NTSC[] = {
+	4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
+};
+
+const uint16 CNoise::NOISE_PERIODS_PAL[] = {
+	4, 7, 14, 30, 60, 88, 118, 148, 188, 236, 354, 472, 708,  944, 1890, 3778
+};
 
 CNoise::CNoise(CMixer *pMixer, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE)
 {
+	PERIOD_TABLE = NOISE_PERIODS_NTSC;
 }
 
 CNoise::~CNoise()
@@ -40,6 +45,8 @@ void CNoise::Reset()
 	
 	m_iShiftReg = 1;
 
+	m_iEnvelopeCounter = m_iEnvelopeSpeed = 1;
+
 	Write(0, 0);
 	Write(1, 0);
 	Write(2, 0);
@@ -52,19 +59,19 @@ void CNoise::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 	case 0x00:
-		m_iLooping = (Value & 0x20);
-		m_iEnvelopeFix = (Value & 0x10);
-		m_iFixedVolume = (Value & 0x0F);
+		m_iLooping = Value & 0x20;
+		m_iEnvelopeFix = Value & 0x10;
+		m_iFixedVolume = Value & 0x0F;
 		m_iEnvelopeSpeed = (Value & 0x0F) + 1;
 		break;
 	case 0x01:
 		break;
 	case 0x02:
-		m_iFrequency = NOISE_FREQ[Value & 0x0F];
+		m_iPeriod = PERIOD_TABLE[Value & 0x0F];
 		m_iSampleRate = (Value & 0x80) ? 8 : 13;
 		break;
 	case 0x03:
-		m_iLengthCounter = CAPU::LENGTH_TABLE[((Value & 0xF8) >> 3)] + 1;
+		m_iLengthCounter = CAPU::LENGTH_TABLE[(Value >> 3) & 0x1F];
 		m_iEnvelopeVolume = 0x0F;
 		if (m_iControlReg)
 			m_iEnabled = 1;
@@ -90,32 +97,28 @@ void CNoise::Process(uint32 Time)
 	bool Valid = m_iEnabled && (m_iLengthCounter > 0);
 
 	while (Time >= m_iCounter) {
-		Time			-= m_iCounter;
-		m_iFrameCycles	+= m_iCounter;
-		m_iCounter		= m_iFrequency;
-		
+		Time	  -= m_iCounter;
+		m_iTime	  += m_iCounter;
+		m_iCounter = m_iPeriod;
 		uint8 Volume = m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume;
-
-		if (Valid && Volume > 0)
-			Mix((m_iShiftReg & 1) ? Volume : 0);
-
+		Mix(Valid && (m_iShiftReg & 1) ? Volume : 0);
 		m_iShiftReg = (((m_iShiftReg << 14) ^ (m_iShiftReg << m_iSampleRate)) & 0x4000) | (m_iShiftReg >> 1);
 	}
 
 	m_iCounter -= Time;
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }
 
 void CNoise::LengthCounterUpdate()
 {
 	if ((m_iLooping == 0) && (m_iLengthCounter > 0)) 
-		m_iLengthCounter--;
+		--m_iLengthCounter;
 }
 
 void CNoise::EnvelopeUpdate()
 {
-	if (--m_iEnvelopeCounter < 1) {
-		m_iEnvelopeCounter += m_iEnvelopeSpeed;
+	if (--m_iEnvelopeCounter == 0) {
+		m_iEnvelopeCounter = m_iEnvelopeSpeed;
 		if (!m_iEnvelopeFix) {
 			if (m_iLooping)
 				m_iEnvelopeVolume = (m_iEnvelopeVolume - 1) & 0x0F;

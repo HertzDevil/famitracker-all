@@ -18,12 +18,8 @@ Other code that is not mine:
  blip_buffer 0.4.0 by blargg (LGPL)
  FFT code by Reliable Software (this is not GPL and cannot actually be spread with this, so please remove it if you republish this source package)
  YM2413 emulator by Mitsutaka Okazaki (doesn't seem to be GPL either)
-
-
-Note:
- Assert errors in blip-buffer is most likely caused by thread synchronization failure
- between the main thread and the sound player. (todo)
-
+ YM2149 emulator by Mitsutaka Okazaki (same)
+ FDS sound emulator from nezplug
 
 A quick file guide for beginners:
  - FamiTracker.cpp:			contains the main app class and is responsible for initializing and shutting down the app
@@ -46,15 +42,3 @@ A quick file guide for beginners:
 
 -----------------------------------
 
-Bugs:
- - Release parts being skipped in saved files? (dunno if solved)
-
-Todo:
- - VRC7 vibrato & pitch in NSF (probably fixed?)
- - FDS modulation reset on note triggers in NSF
- - Remove the FFT code 
- 
-Feature requests:
- - (on hold until existing bugs are fixed)
- 
- 

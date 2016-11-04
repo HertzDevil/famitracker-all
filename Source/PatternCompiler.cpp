@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "FamiTrackerDoc.h"
 #include "PatternCompiler.h"
+#include "TrackerChannel.h"
 
 //
 // CPatternCompiler - Compress patterns to strings for the NSF code
@@ -44,34 +45,41 @@
 #define DEF_CMD(x) ((x << 1) | 0x80)
 
 // Command table
-const unsigned char CMD_INSTRUMENT		= DEF_CMD(0);	// 80h
-const unsigned char CMD_EFF_SPEED		= DEF_CMD(1);	// 82h
-const unsigned char CMD_EFF_JUMP		= DEF_CMD(2);	// ...
-const unsigned char CMD_EFF_SKIP		= DEF_CMD(3);
-const unsigned char CMD_EFF_HALT		= DEF_CMD(4);
-const unsigned char CMD_EFF_VOLUME		= DEF_CMD(5);
-const unsigned char CMD_EFF_PORTAMENTO	= DEF_CMD(6);
-const unsigned char CMD_EFF_PORTAUP		= DEF_CMD(7);
-const unsigned char CMD_EFF_PORTADOWN	= DEF_CMD(8);
-const unsigned char CMD_EFF_SWEEP		= DEF_CMD(9);
-const unsigned char CMD_EFF_ARPEGGIO	= DEF_CMD(10);
-const unsigned char CMD_EFF_VIBRATO		= DEF_CMD(11);
-const unsigned char CMD_EFF_TREMOLO		= DEF_CMD(12);
-const unsigned char CMD_EFF_PITCH		= DEF_CMD(13);
-const unsigned char CMD_EFF_DELAY		= DEF_CMD(14);
-const unsigned char CMD_EFF_DAC			= DEF_CMD(15);
-const unsigned char CMD_EFF_DUTY		= DEF_CMD(16);
-const unsigned char CMD_EFF_OFFSET		= DEF_CMD(17);
-const unsigned char CMD_EFF_SLIDE_UP	= DEF_CMD(18);
-const unsigned char CMD_EFF_SLIDE_DOWN	= DEF_CMD(19);
-const unsigned char CMD_EFF_VOL_SLIDE	= DEF_CMD(20);
-const unsigned char CMD_EFF_NOTE_CUT	= DEF_CMD(21);
-const unsigned char CMD_EFF_RETRIGGER	= DEF_CMD(22);
+const unsigned char CMD_INSTRUMENT			= DEF_CMD(0);	// 80h
+const unsigned char CMD_EFF_SPEED			= DEF_CMD(1);	// 82h
+const unsigned char CMD_EFF_JUMP			= DEF_CMD(2);	// ...
+const unsigned char CMD_EFF_SKIP			= DEF_CMD(3);
+const unsigned char CMD_EFF_HALT			= DEF_CMD(4);
+const unsigned char CMD_EFF_VOLUME			= DEF_CMD(5);
+const unsigned char CMD_EFF_PORTAMENTO		= DEF_CMD(6);
+const unsigned char CMD_EFF_PORTAUP			= DEF_CMD(7);
+const unsigned char CMD_EFF_PORTADOWN		= DEF_CMD(8);
+const unsigned char CMD_EFF_SWEEP			= DEF_CMD(9);
+const unsigned char CMD_EFF_ARPEGGIO		= DEF_CMD(10);
+const unsigned char CMD_EFF_VIBRATO			= DEF_CMD(11);
+const unsigned char CMD_EFF_TREMOLO			= DEF_CMD(12);
+const unsigned char CMD_EFF_PITCH			= DEF_CMD(13);
+const unsigned char CMD_EFF_DELAY			= DEF_CMD(14);
+const unsigned char CMD_EFF_DAC				= DEF_CMD(15);
+const unsigned char CMD_EFF_DUTY			= DEF_CMD(16);
+const unsigned char CMD_EFF_OFFSET			= DEF_CMD(17);
+const unsigned char CMD_EFF_SLIDE_UP		= DEF_CMD(18);
+const unsigned char CMD_EFF_SLIDE_DOWN		= DEF_CMD(19);
+const unsigned char CMD_EFF_VOL_SLIDE		= DEF_CMD(20);
+const unsigned char CMD_EFF_NOTE_CUT		= DEF_CMD(21);
+const unsigned char CMD_EFF_RETRIGGER		= DEF_CMD(22);
+const unsigned char CMD_EFF_DPCM_PITCH		= DEF_CMD(23);
 
-const unsigned char CMD_SET_DURATION	= DEF_CMD(23);	// AEh
-const unsigned char CMD_RESET_DURATION	= DEF_CMD(24);	// B0h
+const unsigned char CMD_SET_DURATION		= DEF_CMD(24);	// AEh
+const unsigned char CMD_RESET_DURATION		= DEF_CMD(25);	// B0h
 
-const unsigned char CMD_LOOP_POINT		= DEF_CMD(25);	// Currently not in use
+const unsigned char CMD_EFF_FDS_MOD_DEPTH	= DEF_CMD(26);
+const unsigned char CMD_EFF_FDS_MOD_RATE_HI = DEF_CMD(27);
+const unsigned char CMD_EFF_FDS_MOD_RATE_LO = DEF_CMD(28);
+
+const unsigned char CMD_EFF_VRC7_PATCH		= CMD_EFF_FDS_MOD_DEPTH;	// TODO: hack, fix this
+
+const unsigned char CMD_LOOP_POINT			= DEF_CMD(26);	// Currently not in use
 
 
 #define OPTIMIZE_DURATIONS		// Remove note durations when possible
@@ -106,12 +114,14 @@ void CPatternCompiler::CleanUp()
 
 void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel, unsigned char (*DPCM_LookUp)[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE], unsigned int *iAssignedInstruments)
 {
-	unsigned int i, iPatternLen;
+	unsigned int iPatternLen;
 	unsigned char NESNote, Note, Octave, Instrument, LastInstrument, Volume;
 	unsigned char Effect, EffParam;
 	unsigned int DPCMInst = 0;
 	bool Action;
 	stSpacingInfo SpaceInfo;
+
+	int EffColumns = pDoc->GetEffColumns(Track, Channel) + 1;
 
 	stChanNote ChanNote;
 
@@ -147,7 +157,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 			break;
 	}
 */
-	for (i = 0; i < iPatternLen; i++) {
+	for (unsigned int i = 0; i < iPatternLen; ++i) {
 		pDoc->GetDataAtPattern(Track, Pattern, Channel, i, &ChanNote);
 
 		Note		= ChanNote.Note;
@@ -156,10 +166,14 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 		Volume		= ChanNote.Vol;
 		Action		= false;
 
+		CTrackerChannel *pTrackerChannel = pDoc->GetChannel(Channel);
+		int ChanID = pTrackerChannel->GetID();
+		int ChipID = pTrackerChannel->GetChip();
+
 		// Check for delays, must come first
-		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Track, Channel) + 1); n++) {
-			Effect		= ChanNote.EffNumber[n];
-			EffParam	= ChanNote.EffParam[n];
+		for (int j = 0; j < EffColumns; ++j) {
+			Effect	 = ChanNote.EffNumber[j];
+			EffParam = ChanNote.EffParam[j];
 			if (Effect == EF_DELAY && EffParam > 0) {
 				DispatchZeroes();
 				Action = true;
@@ -175,6 +189,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 
 		if (SpaceInfo.SpaceCount > 2) {
 			if (SpaceInfo.SpaceSize != m_iCurrentDefaultDuration && SpaceInfo.SpaceCount != 0xFF) {
+				// Enable compressed durations
 				DispatchZeroes();
 				m_iCurrentDefaultDuration = SpaceInfo.SpaceSize;
 				WriteData(CMD_SET_DURATION);
@@ -183,11 +198,10 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 		}
 		else {
 			if (m_iCurrentDefaultDuration != 0xFF && m_iCurrentDefaultDuration != SpaceInfo.SpaceSize) {
-				// Disable this
+				// Disable compressed durations
 				DispatchZeroes();
 				m_iCurrentDefaultDuration = 0xFF;
 				WriteData(CMD_RESET_DURATION);
-//				WriteData(m_iCurrentDefaultDuration);
 			}
 		}
 		
@@ -202,12 +216,12 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 		}
 		else 
 */
-		if (Instrument != LastInstrument && Instrument < 0x40 && Note != HALT) {
+		if (Instrument != LastInstrument && Instrument < 0x40 && Note != HALT && Note != RELEASE) {
 
 			LastInstrument = Instrument;
 			// Write instrument change command
 			//if (Channel < InstrChannels) {
-			if (Channel != 4) {		// Skip DPCM
+			if (ChanID != CHANID_DPCM) {		// Skip DPCM
 				DispatchZeroes();
 #ifdef QUICK_INST
 				if (Instrument < 0x10) {
@@ -227,6 +241,14 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 				DPCMInst = ChanNote.Instrument;
 			}
 		}
+#ifdef OPTIMIZE_DURATIONS
+		else if (Instrument == LastInstrument && Instrument < 0x40) {
+			if (ChanID != CHANID_DPCM) {
+				DispatchZeroes();
+				Action = true;
+			}
+		}
+#endif
 
 		if (Note == 0) {
 			NESNote = 0xFF;
@@ -238,7 +260,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 			NESNote = 0x7F - 2;
 		}
 		else {
-			if (Channel == 4) {
+			if (ChanID == CHANID_DPCM) {
 				// 2A03 DPCM
 				int LookUp = (*DPCM_LookUp)[DPCMInst][Octave][Note - 1];
 				if (LookUp > 0) {
@@ -249,7 +271,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 				else
 					NESNote = 0;
 			}
-			else if (Channel == 3) {
+			else if (ChanID == CHANID_NOISE) {
 				// 2A03 Noise
 				NESNote = (Note - 1) + (Octave * 12);
 				if (NESNote == 0)
@@ -260,25 +282,22 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 				NESNote = (Note - 1) + (Octave * 12);
 		}
 
-		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Track, Channel) + 1); n++) {
-			Effect		= ChanNote.EffNumber[n];
-			EffParam	= ChanNote.EffParam[n];
+		for (unsigned int j = 0; j < (pDoc->GetEffColumns(Track, Channel) + 1); ++j) {
+			Effect	 = ChanNote.EffNumber[j];
+			EffParam = ChanNote.EffParam[j];
 			
 			if (Effect > 0) {
 				DispatchZeroes();
 				Action = true;
 			}
-/*
-				case EF_DELAY:
-					WriteData(CMD_EFF_DELAY);
-					WriteData(EffParam);
-					break;
-*/
 
 			switch (Effect) {
 				case EF_SPEED:
 					WriteData(CMD_EFF_SPEED);
-					WriteData(EffParam);
+					if (EffParam == 0)
+						WriteData(1);			// NSF halts if 0 is exported
+					else
+						WriteData(EffParam);
 					break;
 				case EF_JUMP:
 					WriteData(CMD_EFF_JUMP);
@@ -293,26 +312,26 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 					WriteData(EffParam);
 					break;
 				case EF_VOLUME:
+					// TODO: remove this
 					if (Channel < 5) {
 						WriteData(CMD_EFF_VOLUME);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_PORTAMENTO:
-					//if (Channel < 5) {
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_PORTAMENTO);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_PORTA_UP:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_PORTAUP);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_PORTA_DOWN:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_PORTADOWN);
 						WriteData(EffParam);
 					}
@@ -325,79 +344,85 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 					}
 					break;*/
 				case EF_SWEEPUP:
-					if (Channel < 2) {
+					if (ChanID < CHANID_TRIANGLE) {
 						WriteData(CMD_EFF_SWEEP);
-						WriteData(0x88 | (EffParam & 0x07) | (EffParam & 0x70));	// Calculate sweep
+						WriteData(0x88 | (EffParam & 0x77));	// Calculate sweep
 					}
 					break;
 				case EF_SWEEPDOWN:
-					if (Channel < 2) {
+					if (ChanID < CHANID_TRIANGLE) {
 						WriteData(CMD_EFF_SWEEP);
-						WriteData(0x80 | (EffParam & 0x07) | (EffParam & 0x70));	// Calculate sweep
+						WriteData(0x80 | (EffParam & 0x77));	// Calculate sweep
 					}
 					break;
 				case EF_ARPEGGIO:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_ARPEGGIO);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_VIBRATO:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_VIBRATO);
 						//WriteData(EffParam);
 						WriteData((EffParam & 0xF) << 4 | (EffParam >> 4));
 					}
 					break;
 				case EF_TREMOLO:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_TREMOLO);
 //						WriteData(EffParam & 0xF7);
 						WriteData((EffParam & 0xF) << 4 | (EffParam >> 4));
 					}
 					break;
 				case EF_PITCH:
-					if (Channel != 4) {
-						if (Chip & SNDCHIP_VRC7 && Channel > 4)
+					if (ChanID != CHANID_DPCM) {
+						//if (Chip & SNDCHIP_VRC7 && ChanID >= CHANID_VRC7_CH1)
+						if (ChipID == SNDCHIP_VRC7)
 							EffParam = (char)(256 - (int)EffParam);
-						else if (Chip & SNDCHIP_FDS && Channel == 5)
+						//else if (Chip & SNDCHIP_FDS && Channel == 5)
+						else if (ChipID == SNDCHIP_FDS)
 							EffParam = (char)(256 - (int)EffParam);
 						WriteData(CMD_EFF_PITCH);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_DAC:
-					if (Channel == 4) {
+					if (ChanID == CHANID_DPCM) {
 						WriteData(CMD_EFF_DAC);
 						WriteData(EffParam & 0x7F);
 					}
 					break;
 				case EF_DUTY_CYCLE:
-					if (Channel != 2 && Channel != 4) {	// Not triangle and dpcm
+					if (ChipID == SNDCHIP_VRC7) {
+						WriteData(CMD_EFF_VRC7_PATCH);
+						WriteData(EffParam << 4);
+					}
+					else if (ChanID != CHANID_TRIANGLE && ChanID != CHANID_DPCM) {	// Not triangle and dpcm
 						WriteData(CMD_EFF_DUTY);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_SAMPLE_OFFSET:
-					if (Channel == 4) {	// DPCM
+					if (ChanID == CHANID_DPCM) {	// DPCM
 						WriteData(CMD_EFF_OFFSET);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_SLIDE_UP:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_SLIDE_UP);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_SLIDE_DOWN:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_SLIDE_DOWN);
 						WriteData(EffParam);
 					}
 					break;
 				case EF_VOLUME_SLIDE:
-					if (Channel != 4) {
+					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_VOL_SLIDE);
 						WriteData(EffParam);
 					}
@@ -407,33 +432,62 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 					WriteData(EffParam + 1);
 					break;
 				case EF_RETRIGGER:
-					if (Channel == 4) {
+					if (ChanID == CHANID_DPCM) {
 						WriteData(CMD_EFF_RETRIGGER);
+						WriteData(EffParam);
+					}
+					break;
+				case EF_DPCM_PITCH:
+					if (ChanID == CHANID_DPCM) {
+						WriteData(CMD_EFF_DPCM_PITCH);
+						WriteData(EffParam);
+					}
+					break;
+				// FDS
+				case EF_FDS_MOD_DEPTH:
+					if (ChanID == CHANID_FDS) {
+						WriteData(CMD_EFF_FDS_MOD_DEPTH);
+						WriteData(EffParam);
+					}
+					break;
+				case EF_FDS_MOD_SPEED_HI:
+					if (ChanID == CHANID_FDS) {
+						WriteData(CMD_EFF_FDS_MOD_RATE_HI);
+						WriteData(EffParam & 0x0F);
+					}
+					break;
+				case EF_FDS_MOD_SPEED_LO:
+					if (ChanID == CHANID_FDS) {
+						WriteData(CMD_EFF_FDS_MOD_RATE_LO);
 						WriteData(EffParam);
 					}
 					break;
 			}
 		}
 
+		// Volume command
 		if (Volume < 0x10) {
 			unsigned char Vol = Volume;
-			if (pDoc->GetChannelType(Channel) == SNDCHIP_VRC7) {
+			//if (pDoc->GetChannelType(Channel) == SNDCHIP_VRC7) {
+			//if (pTrackerChannel->GetChip() == SNDCHIP_VRC7) {
 				// VRC7 volumes are inverted
-				Vol ^= 0x0F;
-			}
+				//Vol ^= 0x0F;
+			//}
 			DispatchZeroes();
 			WriteData(0xF0 | Vol);
 			Action = true;			// Terminate command
 		} 
 
-		if (NESNote == /*0*/ 0xFF) {
+		if (NESNote == 0xFF) {
 			if (Action) {
-				WriteData(/*NESNote*/ 0);
+				// A instrument/effect command was issued but no new note, write rest command
+				WriteData(0);
 				m_bEmpty = true;
 			}
 			AccumulateZero();
 		}
 		else {
+			// Write note command
 			DispatchZeroes();
 			WriteData(NESNote + 1);
 			AccumulateZero();
@@ -459,7 +513,6 @@ unsigned int CPatternCompiler::FindInstrument(int Instrument, unsigned int *pIns
 
 stSpacingInfo CPatternCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track, unsigned int StartRow, int Pattern, int Channel)
 {
-	unsigned int i;
 	stChanNote NoteData;
 	bool NoteUsed;
 	int StartSpace = -1, Space = 0, SpaceCount = 0;
@@ -468,7 +521,7 @@ stSpacingInfo CPatternCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track
 	Info.SpaceCount = 0;
 	Info.SpaceSize = 0;
 
-	for (i = StartRow; i < pDoc->GetPatternLength(Track); i++) {
+	for (unsigned i = StartRow; i < pDoc->GetPatternLength(Track); ++i) {
 		pDoc->GetDataAtPattern(Track, Pattern, Channel, i, &NoteData);
 		NoteUsed = false;
 
@@ -478,7 +531,7 @@ stSpacingInfo CPatternCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track
 			NoteUsed = true;
 		if (NoteData.Vol < 0x10)
 			NoteUsed = true;
-		for (unsigned int j = 0; j < (pDoc->GetEffColumns(Track, Channel) + 1); j++) {
+		for (unsigned j = 0; j < (pDoc->GetEffColumns(Track, Channel) + 1); ++j) {
 			if (NoteData.EffNumber[j] != EF_NONE)
 				NoteUsed = true;
 		}
@@ -551,7 +604,7 @@ int CPatternCompiler::GetBlockSize(int Position)
 	int iDuration = 1;
 
 	// Find if note duration optimization is on
-	for (i = 0; i < unsigned(Position); i++) {
+	for (i = 0; i < unsigned(Position); ++i) {
 		if (m_pData[i] == CMD_SET_DURATION)
 			iDuration = 0;
 		else if (m_pData[i] == CMD_RESET_DURATION)

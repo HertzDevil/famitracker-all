@@ -27,6 +27,13 @@
 #include "ChannelHandler.h"
 #include "ChannelsMMC5.h"
 
+const int CChannelHandlerMMC5::SEQ_TYPES[] = {SEQ_VOLUME, SEQ_ARPEGGIO, SEQ_PITCH, SEQ_HIPITCH, SEQ_DUTYCYCLE};
+
+CChannelHandlerMMC5::CChannelHandlerMMC5() : CChannelHandler()
+{
+	SetMaxPeriod(0x7FF);	// same as 2A03
+}
+
 void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 {
 	CInstrument2A03 *Inst;
@@ -67,7 +74,7 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 				case EF_VOLUME:
 					InitVolume = EffParam;
 					if (Note == 0)
-						m_iOutVol = InitVolume;
+						m_iSeqVolume = InitVolume;
 					break;
 				case EF_DUTY_CYCLE:
 					m_iDefaultDuty = m_iDutyPeriod = EffParam;
@@ -95,7 +102,7 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 		if (Inst->GetType() != INST_2A03)
 			return;
 
-		for (int i = 0; i < SEQ_COUNT; i++) {
+		for (int i = 0; i < SEQUENCES; i++) {
 			if (m_iSeqIndex[i] != Inst->GetSeqIndex(i)) {
 				m_iSeqEnabled[i] = Inst->GetSeqEnable(i);
 				m_iSeqIndex[i]	 = Inst->GetSeqIndex(i);
@@ -117,8 +124,9 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 			return;
 	}
 
-	if (Volume < 0x10)
+	if (Volume < 0x10) {
 		m_iVolume = Volume << VOL_SHIFT;
+	}
 
 	if (Note == 0) {
 		return;
@@ -132,7 +140,7 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 	if (!m_bRelease) {
 
 		// Trigger instrument
-		for (int i = 0; i < SEQ_COUNT; i++) {
+		for (int i = 0; i < SEQUENCES; i++) {
 			m_iSeqEnabled[i]	= Inst->GetSeqEnable(i);
 			m_iSeqIndex[i]		= Inst->GetSeqIndex(i);
 			m_iSeqPointer[i]	= 0;
@@ -140,7 +148,7 @@ void CChannelHandlerMMC5::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 
 		m_iNote			= RunNote(Octave, Note);
 		m_iDutyPeriod	= m_iDefaultDuty;
-		m_iOutVol		= InitVolume;
+		m_iSeqVolume	= InitVolume;
 		m_bEnabled		= true;
 	}
 	else {
@@ -163,22 +171,13 @@ void CChannelHandlerMMC5::ProcessChannel()
 		return;
 
 	// Sequences
-	for (int i = 0; i < SEQ_COUNT; i++)
-		RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], i));
+	for (int i = 0; i < SEQUENCES; ++i)
+		RunSequence(i, m_pDocument->GetSequence(m_iSeqIndex[i], SEQ_TYPES[i]));
 }
 
 void CChannelHandlerMMC5::ResetChannel()
 {
 	CChannelHandler::ResetChannel();
-}
-
-int CChannelHandlerMMC5::LimitFreq(int Freq)
-{
-	if (Freq > 0x7FF)
-		Freq = 0x7FF;
-	if (Freq < 0)
-		Freq = 0;
-	return Freq;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,35 +186,18 @@ int CChannelHandlerMMC5::LimitFreq(int Freq)
 
 void CMMC5Square1Chan::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq;
+	if (!m_bEnabled)
+		return;
 
-	char DutyCycle;
-	int Volume, Freq, TremVol;
-	int VibFreq;
+	int Period = CalculatePeriod();
+	int Volume = CalculateVolume(15);
+	char DutyCycle = (m_iDutyPeriod & 0x03);
 
-	VibFreq = GetVibrato();
-	TremVol = GetTremolo();
+	unsigned char HiFreq		= (Period & 0xFF);
+	unsigned char LoFreq		= (Period >> 8);
+	unsigned char LastLoFreq	= (m_iLastPeriod >> 8);
 
-	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
-	Freq = LimitFreq(Freq);
-
-	HiFreq		= (Freq & 0xFF);
-	LoFreq		= (Freq >> 8);
-	LastLoFreq	= (m_iLastFrequency >> 8);
-
-	DutyCycle	= (m_iDutyPeriod & 0x03);
-	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-	if (Volume < 0)
-		Volume = 0;
-	if (Volume > 15)
-		Volume = 15;
-
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
-
-	m_iLastFrequency = Freq;
+	m_iLastPeriod = Period;
 
 	m_pAPU->ExternalWrite(0x5015, 0x03);
 
@@ -239,34 +221,18 @@ void CMMC5Square1Chan::ClearRegisters()
 
 void CMMC5Square2Chan::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	unsigned char LastLoFreq;
+	if (!m_bEnabled)
+		return;
 
-	char DutyCycle;
-	int Volume, Freq, TremVol;
-	int VibFreq;
+	int Period = CalculatePeriod();
+	int Volume = CalculateVolume(15);
+	char DutyCycle = (m_iDutyPeriod & 0x03);
 
-	VibFreq = GetVibrato();
-	TremVol = GetTremolo();
+	unsigned char HiFreq		= (Period & 0xFF);
+	unsigned char LoFreq		= (Period >> 8);
+	unsigned char LastLoFreq	= (m_iLastPeriod >> 8);
 
-	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
-
-	HiFreq		= (Freq & 0xFF);
-	LoFreq		= (Freq >> 8);
-	LastLoFreq	= (m_iLastFrequency >> 8);
-
-	DutyCycle	= (m_iDutyPeriod & 0x03);
-	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-	if (Volume < 0)
-		Volume = 0;
-	if (Volume > 15)
-		Volume = 15;
-
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
-
-	m_iLastFrequency = Freq;
+	m_iLastPeriod = Period;
 
 	m_pAPU->ExternalWrite(0x5015, 0x03);
 

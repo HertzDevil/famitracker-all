@@ -32,12 +32,12 @@
             <td class="style1">
                 Wrap cursor</td>
             <td>
-                Cursor wraps when it has reached the end or beginning of the pattern.</td>
+                Cursor wraps when <span lang="sv">reaching</span> <span lang="sv">the </span>end or 
+                <span lang="sv">top                 </span>oof pattern.</td>
         </tr>
         <tr>
             <td class="style1">
-                Wrap across frames</td>
-            <td>
+                Wrap across frames<td>
                 The cursor in the pattern window can move across frames.</td>
         </tr>
         <tr>
@@ -50,12 +50,12 @@
             <td class="style1">
                 Preview wave files</td>
             <td>
-                Preview wave files when importing to DPCM.</td>
+                Preview wave<span lang="sv"> and DPCM</span> files<span lang="sv"> when 
+                loading samples</span>.</td>
         </tr>
         <tr>
             <td class="style1">
-                Key repeat</td>
-            <td>
+                Key repeat<td>
                 Enable key repetition. The same setting as in the control panel.</td>
         </tr>
         <tr>
@@ -74,55 +74,54 @@
             <td class="style1">
                 Don't reset DPCM on note stop</td>
             <td>
-                Don&#39;t reset the DPCM channel when stopping the channel. Can remove 
-                annoying popping 
-                sounds when editing.</td>
+                Don&#39;t reset the DPCM channel when stopping the channel<span lang="sv">, used to 
+                remove pops when editing.</span></td>
         </tr>
         <tr>
             <td class="style1">
-                Ignore step when moving</td>
-            <td>
-                Ignore the step setting when moving the cursor, only use it when inserting 
+                Ignore step when moving<td>
+                Ignore the step setting when moving the cursor<span lang="sv"> and</span> only use it when inserting 
                 notes.</td>
-        </tr>
-        <tr>
-            <td class="style1">
-                Pattern colors</td>
-            <td>
-                Display the pattern columns in different colors.</td>
         </tr>
         <tr>
             <td class="style1">
                 Delete-key will pull up rows</td>
             <td>
-                Delete key is pulling up rows.</td>
+                Delete key is pulling up rows<span lang="sv"> below the cursor</span>.</td>
         </tr>
         <tr>
             <td class="style1">
-                Backup files</td>
+                Backup files<td>
+                Creates backups when opening files<span lang="sv">. Note that backups will 
+                still be created when loading files created in an older version of Famitracker.</span></td>
+        </tr>
+        <tr>
+            <td class="style1">
+                <span lang="sv">Single instance</td>
             <td>
-                Creates backups when opening files</td>
+                <span lang="sv">Prevents opening multiple instances of famitracker. You must restart the 
+                program for this setting to take effect.</span></td>
         </tr>
     </table>
     <br />
     <table cellpadding="3" cellspacing="0" id="TABLE1" border="1" class="table">
-    <caption><b>Track edit style<tr>
-            <td class="style1">
+    <caption><b>Track edit style<td class="style1">
                 FastTracker II</td>
             <td>
-                Step down after inserting instrument / effect number</td>
+                Step down after inserting instrument / effect number<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Modplug</td>
             <td>
-                Stays on the same line after inserting instrument / effect number</td>
+                Stays on the same line after inserting instrument / effect number<span 
+                    lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Impulse Tracker</td>
             <td>
-                Like impulse tracker</td>
+                Like impulse tracker<span lang="sv">.</span></td>
         </tr>
     </table>
     <b>
@@ -134,25 +133,25 @@
             <td class="style1">
                 Note cut</td>
             <td>
-                Inserts a note cut command in the pattern editor</td>
+                Inserts a note cut command in the pattern editor<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Clear field</td>
             <td>
-                Clears a pattern field (note, volume, instrument or effect)</td>
+                Clears a pattern field (note, volume, instrument or effect)<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Repeat</td>
             <td>
-                Repeats last action in the pattern editor</td>
+                Repeats last action in the pattern editor<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Note release</td>
             <td>
-                Inserts a note release command in the pattern editor</td>
+                Inserts a note release command in the pattern editor<span lang="sv">.</span></td>
         </tr>
     </table>
     
@@ -160,7 +159,12 @@
     <br />
     <h1>
     <b class="heading"><span class="heading"><a name="Appearance">2. Appearance</a></span></h1>
-    </b><span class="text">These settings are used to configure the visual appearance of the pattern editor.</span><br />
+    </b><span class="text">These settings are used to configure the visual appearance of the pattern editor.<span 
+        lang="sv">
+    <br />
+    Uncheck pattern colors to use the same color on all pattern columns. Also be 
+    aware that some fonts require more CPU power to draw. The default font 
+    (Fixedsys) is fast.</span></span><br />
     <h1>
     <strong class="heading"><a name="MIDI">3. MIDI</a></strong></h1>
     <table cellpadding="3" cellspacing="0" id="TABLE1" border="1" class="table">
@@ -177,9 +181,12 @@
         </tr>
         <tr>
             <td class="style1">
-                Master sync</td>
+                <span lang="sv">Receive sync ticks</span></td>
             <td>
-                Generates ticks.</td>
+                <span lang="sv">Receives sync tick messages from the input device, the cursor 
+                steps on each 6&#39;th tick (4 times / quarter note according to the MIDI 
+                standard). The cursor will not move down on new notes when this option is 
+                enabled.</span></td>
         </tr>
         <tr>
             <td class="style1">
@@ -198,7 +205,8 @@
             <td class="style1">
                 Record velocities</td>
             <td>
-                Translate MIDI note velocities to a volume value.</td>
+                Translate MIDI note velocities to volume <span lang="sv">column </span>value<span 
+                    lang="sv">s</span>.</td>
         </tr>
         <tr>
             <td class="style1">
@@ -215,7 +223,8 @@
             <td class="style1">
                 Device</td>
             <td>
-                The DirectSound device for audio output</td>
+                The DirectSound device <span lang="sv">used </span>for audio output<span 
+                    lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
@@ -233,19 +242,20 @@
             <td class="style1">
                 Buffer length</td>
             <td>
-                Audio buffer length. Keep as short as possible for lowest delay. (Default: 40 ms)</td>
+                Audio buffer length. Keep as short as possible for lowest delay<span 
+                    lang="sv">, but too low will result in audio stuttering</span>. (Default: 40 ms)</td>
         </tr>
         <tr>
             <td class="style1">
                 Bass filtering</td>
             <td>
-                Bass filtering</td>
+                <span lang="sv">Blip-buffer&#39;s b</span>ass filtering<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
                 Treble filtering</td>
             <td>
-                Treble filtering</td>
+                <span lang="sv">Blip-buffer&#39;s t</span>reble filtering<span lang="sv">.</span></td>
         </tr>
         <tr>
             <td class="style1">
@@ -257,8 +267,9 @@
     <strong class="heading">
     <h1>
         <span class="heading"><a name="Shortcuts">5. Shortcuts</a></span></h1>
-    </strong><span class="text">This section allows you to customize the key shortcuts in the program. Note 
-    that the menus will still display the default settings.</span>
+    </strong><span class="text">This section allows you to customize the key shortcuts in the program. 
+    <span lang="sv">(</span>Note 
+    that the menus will still display the default settings.</span><span lang="sv">)</span>
     
 </BODY>
 </HTML>

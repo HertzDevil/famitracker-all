@@ -50,19 +50,20 @@ class CSampleMem
 {
 	public:
 		uint8 Read(uint16 Address) {
-			if (!pMem)
+			if (!m_pMemory)
 				return 0;
-			int Addr = ((Address & 0xFFFF) - 0xC000) % MemSize;
-			if (Addr > MemSize)
+			uint16 Addr = (Address - 0xC000);// % m_iMemSize;
+			if (Addr >= m_iMemSize)
 				return 0;
-			return pMem[Addr];
+			return m_pMemory[Addr];
 		};
 
 		void SetMem(char *Ptr, int Size) {
-			pMem = (uint8*)Ptr;
-			MemSize = Size;
+			m_pMemory = (uint8*)Ptr;
+			m_iMemSize = Size;
 		};
+
 	private:
-		uint8	*pMem;
-		uint16	MemSize;
+		uint8  *m_pMemory;
+		uint16	m_iMemSize;
 };

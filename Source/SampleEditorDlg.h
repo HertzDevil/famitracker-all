@@ -34,6 +34,7 @@ public:
 	void	DrawStartCursor();
 	void	CalculateSample(CDSample *pSample, int Start);
 	void	UpdateInfo();
+	void	OnHome();
 
 	int		GetStartOffset() const { return m_iStartCursor; };
 	int		GetSelStart() const { return (m_iSelStart < m_iSelEnd) ? m_iSelStart : m_iSelEnd; };

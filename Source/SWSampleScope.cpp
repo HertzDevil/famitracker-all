@@ -22,6 +22,7 @@
 #include <cmath>
 #include "FamiTracker.h"
 #include "SWSampleScope.h"
+#include "Graphics.h"
 
 CSWSampleScope::CSWSampleScope(bool bBlur) :
 	m_pBlitBuffer(NULL),
@@ -63,6 +64,10 @@ void CSWSampleScope::Deactivate()
 	SAFE_RELEASE_ARRAY(m_pWindowBuf);
 }
 
+void CSWSampleScope::SetSampleRate(int SampleRate)
+{
+}
+
 void CSWSampleScope::SetSampleData(int *pSamples, unsigned int iCount)
 {
 	m_iCount = iCount;
@@ -83,9 +88,17 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 	static int _max = 0;
 #endif
 
-	int GraphColor		= 0xFFFFFF;
-	int GraphColor2		= DIM(GraphColor, 50);
-	int GraphBgColor	= 0x000000;
+	COLORREF GraphColor	  = 0xFFFFFF;
+	COLORREF GraphColor2  = DIM(GraphColor, 50);
+	COLORREF GraphBgColor = 0x000000;
+
+	static COLORREF BackColors[WIN_HEIGHT];
+
+	if (BackColors[0] == 0) {
+		for (int y = 0; y < WIN_HEIGHT; y++) {
+			BackColors[y] = DIM(GraphColor, (int)(sinf( (((y * 100) / WIN_HEIGHT) * 2 * 3.14f) / 100 + 1.8f) * 10 + 10));
+		}
+	}
 
 	unsigned int i = 0;
 
@@ -174,7 +187,8 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 						}
 						else {
 							//BlitBuffer[y * WIN_WIDTH + x] = GraphBgColor;
-							m_pBlitBuffer[y * WIN_WIDTH + x] = DIM(GraphColor, (int)(sinf( (((y * 100) / WIN_HEIGHT) * 2 * 3.14f) / 100 + 1.8f) * 15 + 15));
+							//m_pBlitBuffer[y * WIN_WIDTH + x] = DIM(GraphColor, (int)(sinf( (((y * 100) / WIN_HEIGHT) * 2 * 3.14f) / 100 + 1.8f) * 15 + 15));
+							m_pBlitBuffer[y * WIN_WIDTH + x] = BackColors[y];
 						}
 					}
 				}

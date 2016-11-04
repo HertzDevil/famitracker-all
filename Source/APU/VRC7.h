@@ -33,6 +33,7 @@ public:
 	void SetSampleSpeed(uint32 SampleRate, double ClockRate, uint32 FrameRate);
 	void SetVolume(int Volume);
 	void Write(uint16 Address, uint8 Value);
+	uint8 Read(uint16 Address, bool &Mapped);
 	void EndFrame();
 	void Process(uint32 Time);
 
@@ -42,7 +43,7 @@ protected:
 
 private:
 	OPLL	*m_pOPLLInt;
-	uint32	m_iFrameCycles;
+	uint32	m_iTime;
 	uint32	m_iMaxSamples;
 
 	int16	*m_pBuffer;

@@ -53,9 +53,7 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	CFrameWnd *pFrameWnd = static_cast<CFrameWnd*>(GetParent());
 	m_pDocument = static_cast<CFamiTrackerDoc*>(pFrameWnd->GetActiveDocument());
 
-	CComboBox *ChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
 	m_pSongList = (CListCtrl*)GetDlgItem(IDC_SONGLIST);
-
 	m_pSongList->InsertColumn(0, _T("Songs"), 0, 150);
 	m_pSongList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
@@ -63,7 +61,8 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	
 	// Song editor
 	int Songs = m_pDocument->GetTrackCount();
-	for (int i = 0; i < Songs; i++) {
+
+	for (int i = 0; i < Songs; ++i) {
 		Text.Format(TRACK_FORMAT, i + 1, m_pDocument->GetTrackTitle(i));	// start counting songs from 1
 		m_pSongList->InsertItem(i, Text);
 	}
@@ -71,14 +70,17 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 	// Select first song when dialog is displayed
 	SelectSong(0);
 
-	// Expansion chip
+	// Expansion chips
+	CComboBox *pChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
 	int ExpChip = m_pDocument->GetExpansionChip();
+	CChannelMap *pChannelMap = theApp.GetChannelMap();
 
-	for (int i = 0; i < theApp.GetChannelMap()->GetChipCount(); i++)
-		ChipBox->AddString(theApp.GetChannelMap()->GetChipName(i));
+	for (int i = 0; i < pChannelMap->GetChipCount(); ++i)
+		pChipBox->AddString(pChannelMap->GetChipName(i));
 
-	ChipBox->SetCurSel(theApp.GetChannelMap()->GetChipIndex(ExpChip));
+	pChipBox->SetCurSel(pChannelMap->GetChipIndex(ExpChip));
 
+	// Vibrato 
 	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
 	pVibratoBox->SetCurSel((m_pDocument->GetVibratoStyle() == VIBRATO_NEW) ? 0 : 1);
 
@@ -88,9 +90,15 @@ BOOL CModulePropertiesDlg::OnInitDialog()
 
 void CModulePropertiesDlg::OnBnClickedOk()
 {
-	CComboBox *ExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
-	unsigned int iExpansionChip = theApp.GetChannelMap()->GetChipIdent(ExpansionChipBox->GetCurSel());
-	m_pDocument->SelectExpansionChip(iExpansionChip);
+	CComboBox *pExpansionChipBox = (CComboBox*)GetDlgItem(IDC_EXPANSION);
+	
+	// Expansion chip
+	unsigned int iExpansionChip = theApp.GetChannelMap()->GetChipIdent(pExpansionChipBox->GetCurSel());
+
+	if (m_pDocument->GetExpansionChip() != iExpansionChip)
+		m_pDocument->SelectExpansionChip(iExpansionChip);
+
+	// Vibrato 
 	CComboBox *pVibratoBox = (CComboBox*)GetDlgItem(IDC_VIBRATO);
 	m_pDocument->SetVibratoStyle((pVibratoBox->GetCurSel() == 0) ? VIBRATO_NEW : VIBRATO_OLD);
 
@@ -103,21 +111,30 @@ void CModulePropertiesDlg::OnBnClickedOk()
 void CModulePropertiesDlg::OnBnClickedSongAdd()
 {
 	CString TrackTitle;
+
 	// Try to add a track
 	if (!m_pDocument->AddTrack())
 		return;
+	
+	// New track is always the last one
 	int NewTrack = m_pDocument->GetTrackCount() - 1;
+	
 	TrackTitle.Format(TRACK_FORMAT, NewTrack, m_pDocument->GetTrackTitle(NewTrack));
 	m_pSongList->InsertItem(NewTrack, TrackTitle);
+
 	SelectSong(NewTrack);
 }
 
 void CModulePropertiesDlg::OnBnClickedSongRemove()
 {
+	ASSERT(m_iSelectedSong != -1);
+
 	CString TrackTitle;
 
-	if (m_iSelectedSong == -1 || m_pDocument->GetTrackCount() == 1)
-		return;
+	unsigned Count = m_pDocument->GetTrackCount();
+
+	if (Count == 1)
+		return; // Single track
 
 	// Display warning first
 	if (AfxMessageBox(IDS_SONG_DELETE, MB_OKCANCEL | MB_ICONWARNING) == IDCANCEL)
@@ -126,13 +143,18 @@ void CModulePropertiesDlg::OnBnClickedSongRemove()
 	m_pSongList->DeleteItem(m_iSelectedSong);
 	m_pDocument->RemoveTrack(m_iSelectedSong);
 
+	Count = m_pDocument->GetTrackCount();	// Get new track count
+
 	// Redraw track list
-	for (unsigned int i = 0; i < m_pDocument->GetTrackCount(); ++i) {
+	for (unsigned int i = 0; i < Count; ++i) {
 		TrackTitle.Format(_T("#%02i %s"), i + 1, m_pDocument->GetTrackTitle(i));
 		m_pSongList->SetItemText(i, 0, TrackTitle);
 	}
 
-	SelectSong(m_iSelectedSong - 1);
+	if (m_iSelectedSong == Count)
+		SelectSong(m_iSelectedSong - 1);
+	else
+		SelectSong(m_iSelectedSong);
 }
 
 void CModulePropertiesDlg::OnBnClickedSongUp()
@@ -147,6 +169,7 @@ void CModulePropertiesDlg::OnBnClickedSongUp()
 	Text.Format(TRACK_FORMAT, m_iSelectedSong, m_pDocument->GetTrackTitle(m_iSelectedSong));
 	m_pSongList->SetItemText(m_iSelectedSong - 1, 0, Text);
 	m_pSongList->SetItemState(m_iSelectedSong - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+	m_pSongList->EnsureVisible(m_iSelectedSong - 1, FALSE);
 
 	m_pDocument->MoveTrackUp(m_iSelectedSong);
 
@@ -165,7 +188,8 @@ void CModulePropertiesDlg::OnBnClickedSongDown()
 	Text.Format(TRACK_FORMAT, m_iSelectedSong + 2, m_pDocument->GetTrackTitle(m_iSelectedSong));
 	m_pSongList->SetItemText(m_iSelectedSong + 1, 0, Text);
 	m_pSongList->SetItemState(m_iSelectedSong + 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-
+	m_pSongList->EnsureVisible(m_iSelectedSong + 1, FALSE);
+	
 	m_pDocument->MoveTrackDown(m_iSelectedSong);
 
 	m_iSelectedSong++;
@@ -197,34 +221,24 @@ void CModulePropertiesDlg::OnClickSongList(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CModulePropertiesDlg::SelectSong(int Song)
 {
-	if (Song == -1)
-		return;
+	ASSERT(Song >= 0);
 
 	m_iSelectedSong = Song;
+
 	m_pSongList->SetItemState(Song, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 	m_pSongList->EnsureVisible(Song, FALSE);
+
 	CEdit *pName = (CEdit*)GetDlgItem(IDC_SONGNAME);
 	pName->SetWindowText(m_pDocument->GetTrackTitle(Song));
 
-	if (m_pDocument->GetTrackCount() == 1) {
-		GetDlgItem(IDC_SONG_REMOVE)->EnableWindow(FALSE);
-	}
-	else {
-		GetDlgItem(IDC_SONG_REMOVE)->EnableWindow(TRUE);
-	}
+	unsigned TrackCount = m_pDocument->GetTrackCount() == MAX_TRACKS;
 
-	if (m_pDocument->GetTrackCount() == MAX_TRACKS) {
-		GetDlgItem(IDC_SONG_ADD)->EnableWindow(FALSE);
-	}
-	else {
-		GetDlgItem(IDC_SONG_ADD)->EnableWindow(TRUE);
-	}
+	GetDlgItem(IDC_SONG_REMOVE)->EnableWindow(TrackCount == 1 ? FALSE : TRUE);
+	GetDlgItem(IDC_SONG_ADD)->EnableWindow(TrackCount == MAX_TRACKS ? FALSE : TRUE);
 }
 
 void CModulePropertiesDlg::OnBnClickedSongImport()
 {
-	CString TrackTitle;
-
 	CFileDialog OpenFileDlg(TRUE, _T("ftm"), 0, OFN_HIDEREADONLY, _T("FamiTracker files (*.ftm)|*.ftm|All files (*.*)|*.*||"), theApp.GetMainWnd(), 0);
 
 	if (OpenFileDlg.DoModal() == IDCANCEL)
@@ -233,6 +247,8 @@ void CModulePropertiesDlg::OnBnClickedSongImport()
 	bool bIncludeInstrument = AfxMessageBox(_T("Do you want to include instruments?"), MB_YESNO | MB_ICONQUESTION) == IDYES;
 
 	if (m_pDocument->ImportFile(OpenFileDlg.GetPathName(), bIncludeInstrument)) {
+		// Import succeeded, add to list
+		CString TrackTitle;
 		int Tracks = m_pDocument->GetTrackCount();
 		TrackTitle.Format(TRACK_FORMAT, Tracks, m_pDocument->GetTrackTitle(Tracks));
 		m_pSongList->InsertItem(Tracks, TrackTitle);

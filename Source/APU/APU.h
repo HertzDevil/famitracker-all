@@ -32,7 +32,7 @@ const uint8 SNDCHIP_VRC7  = 2;			// Konami VRCVII
 const uint8 SNDCHIP_FDS	  = 4;			// Famicom Disk Sound
 const uint8 SNDCHIP_MMC5  = 8;			// Nintendo MMC5
 const uint8 SNDCHIP_N106  = 16;			// Namco N-106
-const uint8 SNDCHIP_5B	  = 32;			// Sunsoft 5B
+const uint8 SNDCHIP_S5B	  = 32;			// Sunsoft 5B
 
 enum {MACHINE_NTSC, MACHINE_PAL};
 
@@ -47,6 +47,9 @@ class CVRC7;
 class CFDS;
 class CMMC5;
 class CN106;
+class CS5B;
+
+class CExternal;
 
 class CAPU {
 public:
@@ -55,7 +58,7 @@ public:
 
 	void	Reset();
 	void	Process();
-	void	AddTime(uint32 Cycles);
+	void	AddTime(int32 Cycles);
 
 	uint8	Read4015();
 	void	Write4017(uint8 Value);
@@ -74,6 +77,8 @@ public:
 	uint8	GetSamplePos() const;
 	uint8	GetDeltaCounter() const;
 	bool	DPCMPlaying() const;
+	uint8	GetReg(int Reg) const { return m_iRegs[Reg & 0x1F]; };
+
 #ifdef LOGGING
 	void	Log();
 #endif
@@ -113,6 +118,7 @@ private:
 	CFDS		*m_pFDS;
 	CN106		*m_pN106;
 	CVRC7		*m_pVRC7;
+	CS5B		*m_pS5B;
 
 	uint8		m_iExternalSoundChip;				// External sound chip, if used
 
@@ -133,6 +139,8 @@ private:
 	uint32		m_iSoundBufferSize;					// Size of buffer, in samples
 	uint32		m_iBufferPointer;					// Fill pos in buffer
 	int16		*m_pSoundBuffer;					// Sound transfer buffer
+
+	uint8		m_iRegs[0x20];
 
 #ifdef LOGGING
 	CFile		  *m_pLog;

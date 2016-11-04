@@ -51,6 +51,7 @@ public:
 	virtual void Load() = 0;
 	virtual void Save() = 0;
 	virtual void Default() = 0;
+	LPCTSTR GetSection() const { return m_pSection; };
 protected:
 	LPCTSTR m_pSection;
 	LPCTSTR m_pEntry;
@@ -100,10 +101,11 @@ public:
 	void	LoadSettings();
 	void	SaveSettings();
 	void	DefaultSettings();
+	void	DeleteSettings();
 	void	SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
 
 	void	StoreSetting(CString Section, CString Name, int Value) const;
-	int		LoadSetting(CString Section, CString Name) const;
+	int		LoadSetting(CString Section, CString Name, int Default) const;
 
 	CString GetPath(unsigned int PathType) const;
 	void	SetPath(CString PathName, unsigned int PathType);
@@ -127,6 +129,8 @@ public:
 		bool	bPatternColor;
 		bool	bPullUpDelete;
 		bool	bBackups;
+		int		iFontSize;
+		bool	bSingleInstance;
 	} General;
 
 	struct {

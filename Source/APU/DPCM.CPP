@@ -21,11 +21,17 @@
 #include "apu.h"
 #include "dpcm.h"
 
-const uint16 CDPCM::DMC_FREQ_NTSC[] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54};
-const uint16 CDPCM::DMC_FREQ_PAL[]	= {398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50};
+const uint16 CDPCM::DMC_PERIODS_NTSC[] = {
+	428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54
+};
+
+const uint16 CDPCM::DMC_PERIODS_PAL[]  = {
+	398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50
+};
 
 CDPCM::CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE), m_pSampleMem(pSampleMem)
 {
+	PERIOD_TABLE = DMC_PERIODS_NTSC;
 }
 
 CDPCM::~CDPCM()
@@ -34,12 +40,13 @@ CDPCM::~CDPCM()
 
 void CDPCM::Reset()
 {
-	m_iEnabled = 0;
-	m_iCounter = m_iFrequency = 0;
+	m_iCounter = m_iPeriod = DMC_PERIODS_NTSC[0];
 
 	m_iBitDivider = m_iShiftReg = 0;
-	m_iDMA_LoadReg = m_iDMA_Address = 0;
-	m_iDMA_Length = m_iDMA_LengthCounter = 0;
+	m_iDMA_LoadReg = 0;
+	m_iDMA_LengthReg = 0;
+	m_iDMA_Address = 0;
+	m_iDMA_BytesRemaining = 0;
 	
 	m_bTriggeredIRQ = m_bSampleFilled = false;
 
@@ -49,18 +56,12 @@ void CDPCM::Reset()
 	EndFrame();
 }
 
-void CDPCM::SetSpeed(int Speed)
-{
-	for (int i = 0; i < 16; ++i)
-		m_iDMC_FreqTable[i] = (Speed == MACHINE_NTSC) ? DMC_FREQ_NTSC[i] : DMC_FREQ_PAL[i];
-}
-
 void CDPCM::Write(uint16 Address, uint8 Value)
 {
 	switch (Address) {
 		case 0x00:
-			m_iPlayMode = (Value & 0xC0);
-			m_iFrequency = m_iDMC_FreqTable[(Value & 0x0F)];
+			m_iPlayMode = Value & 0xC0;
+			m_iPeriod = PERIOD_TABLE[Value & 0x0F];
 			if ((Value & 0x80) == 0x00) 
 				m_bTriggeredIRQ = false;
 			break;
@@ -72,78 +73,60 @@ void CDPCM::Write(uint16 Address, uint8 Value)
 			m_iDMA_LoadReg = Value;
 			break;
 		case 0x03:
-			m_iDMA_Length = Value;
+			m_iDMA_LengthReg = Value;
 			break;
 	}
 }
 
 void CDPCM::WriteControl(uint8 Value)
 {
-	if ((Value & 1) == 0) {
-		m_iEnabled = 0;
-		m_iDMA_LengthCounter = 0;
+	if ((Value & 1) == 1) {
+		if (m_iDMA_BytesRemaining == 0)
+			Reload();
 	}
 	else {
-		if (m_iEnabled == 0)
-			Reload();
-
-		m_iEnabled = 1;
+		m_iDMA_BytesRemaining = 0;
 	}
 
 	m_bTriggeredIRQ = false;
 }
 
-uint8 CDPCM::ReadControl()
+uint8 CDPCM::ReadControl() const
 {
-	return m_iEnabled ? 1 : 0;
+	return (m_iDMA_BytesRemaining > 0) ? 1 : 0;
 }
 
-uint8 CDPCM::DidIRQ()
+uint8 CDPCM::DidIRQ() const
 {
 	return m_bTriggeredIRQ ? 1 : 0;
 }
 
 void CDPCM::Reload()
 {
-    m_iDMA_Address		 = m_iDMA_LoadReg << 6 | 0x4000;
-    m_iDMA_LengthCounter = (m_iDMA_Length << 4) + 1;
-	m_iBitDivider		 = 8;
-	m_iCounter			 = m_iFrequency;
-
-	m_bSampleFilled		 = false;
-	m_bSilenceFlag		 = false;
-
-//	CheckSample(DMA_LoadRegCnt | 0x8000, DMA_LengthCounter, Frequency);
+    m_iDMA_Address = (m_iDMA_LoadReg << 6) | 0x4000;
+    m_iDMA_BytesRemaining = (m_iDMA_LengthReg << 4) + 1;
 }
 
 void CDPCM::Process(uint32 Time)
 {
-	if (!m_iEnabled || m_bSilenceFlag) {
-		m_iFrameCycles += Time;
-		return;
-	}
-
-	while (Time > m_iCounter) {
-		Time		   -= m_iCounter;
-		m_iFrameCycles += m_iCounter;
-		m_iCounter	   = m_iFrequency;
+	while (Time >= m_iCounter) {
+		Time	  -= m_iCounter;
+		m_iTime	  += m_iCounter;
+		m_iCounter = m_iPeriod;
 
 		// DMA reader
 		// Check if a new byte should be fetched
-		if (!m_bSampleFilled && m_iDMA_LengthCounter > 0) {
+		if (!m_bSampleFilled && (m_iDMA_BytesRemaining > 0)) {
 
-//			m_iSampleBuffer	= m_pEmulator->ReadMemory(m_iDMA_Address | 0x8000);
 			m_iSampleBuffer = m_pSampleMem->Read(m_iDMA_Address | 0x8000);
-			m_bSampleFilled = true;
 //			m_pEmulator->ConsumeCycles(4);
-
 			m_iDMA_Address = (m_iDMA_Address + 1) & 0x7FFF;
-			m_iDMA_LengthCounter--;
+			--m_iDMA_BytesRemaining;
+			m_bSampleFilled = true;
 
-			if (!m_iDMA_LengthCounter) {
+			if (!m_iDMA_BytesRemaining) {
 				switch (m_iPlayMode) {
 					case 0x00:	// Stop
-						m_iEnabled = 0;
 						break;
 					case 0x40:	// Loop
 					case 0xC0:
@@ -151,7 +134,6 @@ void CDPCM::Process(uint32 Time)
 						break;
 					case 0x80:	// Stop and do IRQ (not when an NSF is playing)
 						m_bTriggeredIRQ = true;
-						m_iEnabled = 0;
 						break;
 				}
 			}
@@ -159,10 +141,12 @@ void CDPCM::Process(uint32 Time)
 
 		// Output unit
 		if (!m_iBitDivider) {
+			// Begin new output cycle
+			m_iBitDivider = 8;
 			if (m_bSampleFilled) {
-				m_iBitDivider = 8;
-				m_iShiftReg = m_iSampleBuffer;
-				m_bSampleFilled  = false;
+				m_iShiftReg		= m_iSampleBuffer;
+				m_bSampleFilled = false;
+				m_bSilenceFlag	= false;
 			}
 			else {
 				m_bSilenceFlag = true;
@@ -178,14 +162,14 @@ void CDPCM::Process(uint32 Time)
 				if (m_iDeltaCounter > 1)
 					m_iDeltaCounter -= 2;
 			}
-
-			m_iShiftReg >>= 1;
-			m_iBitDivider--;
 		}
+
+		m_iShiftReg >>= 1;
+		--m_iBitDivider;
 
 		Mix(m_iDeltaCounter);
 	}
 
 	m_iCounter -= Time;
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }

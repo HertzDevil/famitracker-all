@@ -33,6 +33,7 @@ public:
 
 	void Activate();
 	void Deactivate();
+	void SetSampleRate(int SampleRate);
 	void SetSampleData(int *iSamples, unsigned int iCount);
 	void Draw(CDC *pDC, bool bMessage);
 
@@ -42,8 +43,15 @@ private:
 	int	*m_pSamples;
 	int	*m_pBlitBuffer;
 	int	m_iWindowBufPtr, *m_pWindowBuf;
+
+	int	m_iLogTable[WIN_HEIGHT];
+
+	int m_iFillPos;
+
 	BITMAPINFO bmi;
 
 	Fft	*m_pFftObject;
 	int	m_iFftPoint[FFT_POINTS];
+
+	int m_pSampleBuffer[FFT_POINTS];
 };

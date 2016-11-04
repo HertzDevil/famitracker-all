@@ -16,6 +16,10 @@
             color: black;
             font-style: italic;
         }
+        .style3
+        {
+            font-style: normal;
+        }
     </style>
 </HEAD>
 <BODY>
@@ -148,6 +152,10 @@
             <td>Inserts a copy of selected frame</td>
         </tr>
         <tr>
+            <td class="style1"><span lang="sv">Module properties</span></td>
+            <td><span lang="sv">Open module properties dialog</span></td>
+        </tr>
+        <tr>
             <td class="style1">Play</td>
             <td>Play the module</td>
         </tr>
@@ -165,11 +173,11 @@
         </tr>
         <tr>
             <td class="style1">Previous song</td>
-            <td>Moves to previous song in list</td>
+            <td><span lang="sv">Switch</span> to previous song in list</td>
         </tr>
         <tr>
             <td class="style1">Next song</td>
-            <td>Moves to next song in list</td>
+            <td><span lang="sv">Switch</span> to next song in list</td>
         </tr>
         <tr>
             <td class="style1">Setting</td>
@@ -226,15 +234,18 @@
         tempo is calculated by<span lang="sv"> using</span> the formula 
     </p>
 <p class="style2">
-        <span lang="sv">BPM = </span>(6 * Tempo) / Speed</p>
+        <span lang="sv" class="style3">BPM = </span><span class="style3">(6 * Tempo) / Speed</span></p>
 <p class="text">
         which means the
-        tempo box is correct at speed of 6. The time base for the song is 60 or
-        50 frames per second (when using default NTSC/PAL settings), and this is used to 
+        tempo box is correct at speed of 6.    </p>
+    <p class="text">
+        The time base for the song is 60 or
+        50 <span lang="sv">updates</span> per second (when using default NTSC/PAL settings), and this is used to 
         calculate the average tempo of the song. This means that some rows may play 
-        slightly longer than others and may be noticeable. To avoid this, leave the 
-        tempo setting at 150 (125 for PAL) and use only the speed setting to change BPM 
-        to ensure all rows get the same duration.    </p>
+        slightly longer<span lang="sv"> or shorter</span> than others<span lang="sv">, 
+        and this might be noticable</span>. To avoid this, leave the 
+        tempo setting at 150 (125 for PAL<span lang="sv">!</span>) and use only the speed setting to change BPM 
+        to ensure <span lang="sv">that </span>all rows get the same duration.    </p>
 <p class="text">
         The step setting changes the step behaviour when moving the cursor in the 
         pattern editor. Key repetition enables key repeat behaviour.<h2 class="bold">Song information &amp; instrument list</h2>

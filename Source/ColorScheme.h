@@ -22,7 +22,8 @@
 
 
 // Default font
-const static char *FONT_FACE = "Fixedsys";	// fixedsys is good because it is fast
+const static char *FONT_FACE = "Verdana";
+const static int FONT_SIZE	 = 12;
 
 // Default colors
 const struct {

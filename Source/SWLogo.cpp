@@ -30,6 +30,10 @@ void CSWLogo::Deactivate()
 {
 }
 
+void CSWLogo::SetSampleRate(int SampleRate)
+{
+}
+
 void CSWLogo::SetSampleData(int *pSamples, unsigned int iCount)
 {
 }

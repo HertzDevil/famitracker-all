@@ -32,8 +32,8 @@
 // Range for the pitch wheel command in notes
 int PITCH_RANGE = 6;
 
-CChannelHandler::CChannelHandler(int ChanID) : 
-	m_iChannelID(ChanID), 
+CChannelHandler::CChannelHandler() : 
+	m_iChannelID(0), 
 	m_bEnabled(false), 
 	m_iInstrument(0), 
 	m_iLastInstrument(MAX_INSTRUMENTS),
@@ -42,7 +42,9 @@ CChannelHandler::CChannelHandler(int ChanID) :
 	m_pDocument(NULL),
 	m_pAPU(NULL),
 	m_iPitch(0),
-	m_iNote(0)
+	m_iNote(0),
+	m_iDefaultDuty(0),
+	m_iMaxPeriod(0x7FF)		// Default for 2A03 regs
 { 
 }
 
@@ -54,7 +56,7 @@ void CChannelHandler::InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *p
 	m_pVibratoTable = pVibTable;
 	m_pDocument = pDoc;
 
-	m_pDelayedNote = NULL;
+//	m_pDelayedNote = NULL;
 	m_bDelayEnabled = false;
 
 	m_iEffect = 0;
@@ -64,16 +66,31 @@ void CChannelHandler::InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *p
 	m_iVibratoStyle = VIBRATO_NEW;
 }
 
-// todo: make this pure virtual
-int CChannelHandler::LimitFreq(int Freq)
+int CChannelHandler::LimitPeriod(int Period) const
 {
-	if (Freq > 0x7FF)
-		Freq = 0x7FF;
+	if (Period > m_iMaxPeriod)
+		Period = m_iMaxPeriod;
 
-	if (Freq < 0)
-		Freq = 0;
+	if (Period < 0)
+		Period = 0;
 
-	return Freq;
+	return Period;
+}
+
+int CChannelHandler::LimitVolume(int Volume) const
+{
+	if (Volume > 15)
+		Volume = 15;
+
+	if (Volume < 0)
+		Volume = 0;
+
+	return Volume;
+}
+
+void CChannelHandler::SetMaxPeriod(int Period)
+{
+	m_iMaxPeriod = Period;
 }
 
 void CChannelHandler::SetPitch(int Pitch)
@@ -119,10 +136,10 @@ void CChannelHandler::SetVibratoStyle(int Style)
 
 void CChannelHandler::Arpeggiate(unsigned int Note)
 {
-	m_iFrequency = TriggerNote(Note);
+	m_iPeriod = TriggerNote(Note);
 }
 
-// Todo: document this
+// TODO: document this
 void CChannelHandler::MakeSilent()
 {
 	m_iVolume			= MAX_VOL;
@@ -133,9 +150,9 @@ void CChannelHandler::MakeSilent()
 	m_iVibratoPhase		= (m_iVibratoStyle == VIBRATO_OLD) ? 48 : 0;
 	m_iTremoloSpeed		= m_iTremoloPhase = 0;
 	m_iFinePitch		= 0x80;
-	m_iFrequency		= 0;
+	m_iPeriod			= 0;
 	m_iVolSlide			= 0;
-//	m_iLastFrequency	= 0xFFFF;
+//	m_iLastPeriod		= 0xFFFF;
 	m_bDelayEnabled		= false;
 
 	m_iDefaultDuty		= 0;
@@ -148,13 +165,13 @@ void CChannelHandler::MakeSilent()
 	KillChannel();
 }
 
-// Todo: remove this and use note cut instead. Should not clear channel registers
+// TODO: remove this and use note cut instead. Should not clear channel registers
 void CChannelHandler::KillChannel()
 {
-	m_bEnabled			= false;
-	m_iLastFrequency	= 0xFFFF;
-	m_iOutVol			= 0x00;
-	m_iPortaTo			= 0;
+	m_bEnabled		= false;
+	m_iLastPeriod	= 0xFFFF;
+	m_iSeqVolume	= 0x00;
+	m_iPortaTo		= 0;
 
 	for (int i = 0; i < SEQ_COUNT; ++i)
 		m_iSeqEnabled[i] = 0;
@@ -202,6 +219,11 @@ void CChannelHandler::SetNoteTable(unsigned int *pNoteLookupTable)
 
 unsigned int CChannelHandler::TriggerNote(int Note)
 {
+	if (Note < 0)
+		Note = 0;
+	if (Note > NOTE_COUNT - 1)
+		Note = NOTE_COUNT - 1;
+
 	// Trigger a note, return note period
 	theApp.RegisterKeyState(m_iChannelID, Note);
 
@@ -228,19 +250,16 @@ void CChannelHandler::ReleaseNote()
 int CChannelHandler::RunNote(int Octave, int Note)
 {
 	// Run the note and handle portamento
-	int NewNote, NesFreq;
-
-	// And note
-	NewNote = MIDI_NOTE(Octave, Note);
-	NesFreq = TriggerNote(NewNote);
+	int NewNote = MIDI_NOTE(Octave, Note);
+	int NesFreq = TriggerNote(NewNote);
 
 	if (m_iPortaSpeed > 0 && m_iEffect == EF_PORTAMENTO) {
-		if (m_iFrequency == 0)
-			m_iFrequency = NesFreq;
+		if (m_iPeriod == 0)
+			m_iPeriod = NesFreq;
 		m_iPortaTo = NesFreq;
 	}
 	else
-		m_iFrequency = NesFreq;
+		m_iPeriod = NesFreq;
 
 	return NewNote;
 }
@@ -313,27 +332,30 @@ bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char Eff
 	return true;
 }
 
-bool CChannelHandler::HandleDelay(stChanNote *NoteData, int EffColumns)
+bool CChannelHandler::HandleDelay(stChanNote *pNoteData, int EffColumns)
 {
 	// Handle note delay, Gxx
 
 	if (m_bDelayEnabled) {
 		m_bDelayEnabled = false;
-		PlayChannelNote(m_pDelayedNote, m_iDelayEffColumns);
-		delete m_pDelayedNote;
-		m_pDelayedNote = NULL;
+		PlayChannelNote(&m_cnDelayed, m_iDelayEffColumns);
 	}
 	
 	// Check delay
-	for (int n = 0; n < EffColumns; n++) {
-		if (NoteData->EffNumber[n] == EF_DELAY) {
+	for (int i = 0; i < EffColumns; ++i) {
+		if (pNoteData->EffNumber[i] == EF_DELAY && pNoteData->EffParam[i] > 0) {
 			m_bDelayEnabled = true;
-			m_cDelayCounter = NoteData->EffParam[n];
-			m_pDelayedNote = new stChanNote;
+			m_cDelayCounter = pNoteData->EffParam[i];
 			m_iDelayEffColumns = EffColumns;
-			memcpy(m_pDelayedNote, NoteData, sizeof(stChanNote));
-			m_pDelayedNote->EffNumber[n] = EF_NONE;
-			m_pDelayedNote->EffParam[n] = 0;
+			memcpy(&m_cnDelayed, pNoteData, sizeof(stChanNote));
+
+			// Only one delay/row is allowed
+			for (int j = 0; j < EffColumns; ++j) {
+				if (m_cnDelayed.EffNumber[j] == EF_DELAY) {
+					m_cnDelayed.EffNumber[j] = EF_NONE;
+					m_cnDelayed.EffParam[j] = 0;
+				}
+			}
 			return true;
 		}
 	}
@@ -359,8 +381,7 @@ void CChannelHandler::ProcessChannel()
 	if (m_bDelayEnabled) {
 		if (!m_cDelayCounter) {
 			m_bDelayEnabled = false;
-			PlayNote(m_pDelayedNote, m_iDelayEffColumns);
-			delete m_pDelayedNote;
+			PlayNote(&m_cnDelayed, m_iDelayEffColumns);
 		}
 		else
 			m_cDelayCounter--;
@@ -388,15 +409,15 @@ void CChannelHandler::ProcessChannel()
 			if (m_cArpeggio != 0 && m_iNote != 0) {
 				switch (m_cArpVar) {
 					case 0:
-						m_iFrequency = TriggerNote(m_iNote);
+						m_iPeriod = TriggerNote(m_iNote);
 						break;
 					case 1:
-						m_iFrequency = TriggerNote(m_iNote + (m_cArpeggio >> 4));
+						m_iPeriod = TriggerNote(m_iNote + (m_cArpeggio >> 4));
 						if ((m_cArpeggio & 0x0F) == 0)
 							m_cArpVar = 2;
 						break;
 					case 2:
-						m_iFrequency = TriggerNote(m_iNote + (m_cArpeggio & 0x0F));
+						m_iPeriod = TriggerNote(m_iNote + (m_cArpeggio & 0x0F));
 						break;
 				}
 				if (++m_cArpVar > 2)
@@ -408,36 +429,38 @@ void CChannelHandler::ProcessChannel()
 		case EF_SLIDE_DOWN:
 			// Automatic portamento
 			if (m_iPortaSpeed > 0 && m_iPortaTo > 0) {
-				if (m_iFrequency > m_iPortaTo) {
-					m_iFrequency -= m_iPortaSpeed;
-					// todo: check this
-//					if (m_iFrequency > 0x1000)	// it was negative
-//						m_iFrequency = 0x00;
-					if (m_iFrequency < m_iPortaTo)
-						m_iFrequency = m_iPortaTo;
+				if (m_iPeriod > m_iPortaTo) {
+					m_iPeriod -= m_iPortaSpeed;
+					// TODO: check this
+//					if (m_iPeriod > 0x1000)	// it was negative
+//						m_iPeriod = 0x00;
+					if (m_iPeriod < m_iPortaTo)
+						m_iPeriod = m_iPortaTo;
 				}
-				else if (m_iFrequency < m_iPortaTo) {
-					m_iFrequency += m_iPortaSpeed;
-					if (m_iFrequency > m_iPortaTo)
-						m_iFrequency = m_iPortaTo;
+				else if (m_iPeriod < m_iPortaTo) {
+					m_iPeriod += m_iPortaSpeed;
+					if (m_iPeriod > m_iPortaTo)
+						m_iPeriod = m_iPortaTo;
 				}
 			}
 			break;
 		case EF_PORTA_DOWN:
-			m_iFrequency += m_iPortaSpeed;
-			m_iFrequency = LimitFreq(m_iFrequency);
+			m_iPeriod += m_iPortaSpeed;
+			m_iPeriod = LimitPeriod(m_iPeriod);
 			break;
 		case EF_PORTA_UP:
-			m_iFrequency -= m_iPortaSpeed;
-			m_iFrequency = LimitFreq(m_iFrequency);
+			m_iPeriod -= m_iPortaSpeed;
+			m_iPeriod = LimitPeriod(m_iPeriod);
 			break;
 	}
 }
 
-// Used to see that everything is ok right before playing a note
 bool CChannelHandler::CheckNote(stChanNote *pNoteData, int InstrumentType)
 {
-	CInstrument	*pInstrument;
+	// Check that note data is valid and instrument is existing and valid
+	//
+	// Returns true if note data is valid or false if invalid.
+	//
 
 	// No note data
 	if (!pNoteData)
@@ -449,7 +472,7 @@ bool CChannelHandler::CheckNote(stChanNote *pNoteData, int InstrumentType)
 //		m_iInstrument = m_iLastInstrument;
 
 	// Halt and release
-	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE) {
+	if (pNoteData->Note == HALT || pNoteData->Note == RELEASE || pNoteData->Note == NONE) {
 //		m_iVolume = 0x10;
 //		KillChannel();
 		// Allow incorrect instruments for note off
@@ -457,11 +480,10 @@ bool CChannelHandler::CheckNote(stChanNote *pNoteData, int InstrumentType)
 	}
 
 	// Save instrument index
-
 	if (Instrument != MAX_INSTRUMENTS)
 		m_iInstrument = pNoteData->Instrument;
 
-	pInstrument = m_pDocument->GetInstrument(m_iInstrument);
+	CInstrument *pInstrument = m_pDocument->GetInstrument(m_iInstrument);
 
 	// No instrument
 	if (!pInstrument)
@@ -529,24 +551,24 @@ void CChannelHandler::RunSequence(int Index, CSequence *pSequence)
 		switch (Index) {
 			// Volume modifier
 			case SEQ_VOLUME:
-				m_iOutVol = Value;
+				m_iSeqVolume = Value;
 				break;
 			// Arpeggiator
 			case SEQ_ARPEGGIO:
 				if (pSequence->GetSetting() == 0)
-					m_iFrequency = TriggerNote(m_iNote + Value);
+					m_iPeriod = TriggerNote(m_iNote + Value);
 				else
-					m_iFrequency = TriggerNote(Value);
+					m_iPeriod = TriggerNote(Value);
 				break;
 			// Pitch
 			case SEQ_PITCH:
-				m_iFrequency += Value;
-				m_iFrequency = LimitFreq(m_iFrequency);
+				m_iPeriod += Value;
+				m_iPeriod = LimitPeriod(m_iPeriod);
 				break;
 			// Hi-pitch
 			case SEQ_HIPITCH:
-				m_iFrequency += Value << 4;
-				m_iFrequency = LimitFreq(m_iFrequency);
+				m_iPeriod += Value << 4;
+				m_iPeriod = LimitPeriod(m_iPeriod);
 				break;
 			// Duty cycling
 			case SEQ_DUTYCYCLE:
@@ -597,7 +619,7 @@ void CChannelHandler::RunSequence(int Index, CSequence *pSequence)
 			// Absolute arpeggio notes
 			m_bArpEffDone = false;
 			if (m_bArpEffDone == false) {
-				m_iFrequency = TriggerNote(m_iNote);
+				m_iPeriod = TriggerNote(m_iNote);
 				m_bArpEffDone = true;
 			}
 		}
@@ -612,21 +634,44 @@ CSequence *CChannelHandler::GetSequence(int Index, int Type)
 	return NULL;
 }
 
+void CChannelHandler::ReleaseSequences(int Chip)
+{
+	for (int i = 0; i < SEQ_COUNT; ++i) {
+		if (m_iSeqEnabled[i] == 1) {
+			CSequence *pSeq = m_pDocument->GetSequence(Chip, m_iSeqIndex[i], i);
+			int ReleasePoint = pSeq->GetReleasePoint();
+			if (ReleasePoint != -1) {
+				m_iSeqPointer[i] = ReleasePoint;
+			}
+		}
+	}
+}
+
+int CChannelHandler::CalculatePeriod() const 
+{
+	return LimitPeriod(m_iPeriod - GetVibrato() + GetFinePitch() + GetPitch());
+}
+
 int CChannelHandler::CalculateVolume(int Limit) const
 {
 	// Default volume calculation
 	int Volume;
 
 	Volume = m_iVolume >> VOL_SHIFT;
-	Volume = (m_iOutVol * Volume) / 15 - GetTremolo();
+	Volume = (m_iSeqVolume * Volume) / 15 - GetTremolo();
 
 	if (Volume < 0)
 		Volume = 0;
 	if (Volume > Limit)
 		Volume = Limit;
 
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
+	if (m_iSeqVolume > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;
 
 	return Volume;
+}
+
+void CChannelHandler::AddCycles(int count)
+{
+	theApp.GetSoundGenerator()->AddCycles(count);
 }

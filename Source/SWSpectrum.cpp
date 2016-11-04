@@ -21,11 +21,17 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "SWSpectrum.h"
+#include "Graphics.h"
 
 CSWSpectrum::CSWSpectrum() :
 	m_pBlitBuffer(NULL),
 	m_pFftObject(NULL)
 {
+	m_iLogTable[0] = 0;
+	for (int i = 1; i < WIN_HEIGHT; ++i) {
+		m_iLogTable[WIN_HEIGHT - i] = -int(20.0f * log10f(float(i) / float(WIN_HEIGHT)));
+	}
+	m_iLogTable[WIN_HEIGHT] = WIN_HEIGHT;
 }
 
 CSWSpectrum::~CSWSpectrum()
@@ -50,12 +56,10 @@ void CSWSpectrum::Activate()
 
 	SAFE_RELEASE(m_pFftObject);
 
-	m_pFftObject = new Fft(FFT_POINTS, 44100);
+//	m_pFftObject = new Fft(FFT_POINTS, 44100);
 
-	for (int i = 0; i < FFT_POINTS; i++)
-		m_iFftPoint[i] = 0;
-
-	m_iCount = 0;
+	// Set default sample-rate
+	SetSampleRate(44100);
 }
 
 void CSWSpectrum::Deactivate()
@@ -64,19 +68,45 @@ void CSWSpectrum::Deactivate()
 	SAFE_RELEASE(m_pFftObject);
 }
 
+void CSWSpectrum::SetSampleRate(int SampleRate)
+{
+	SAFE_RELEASE(m_pFftObject);
+
+	m_pFftObject = new Fft(FFT_POINTS, SampleRate);
+
+	memset(m_iFftPoint, 0, sizeof(int) * FFT_POINTS);
+
+	m_iCount = 0;
+	m_iFillPos = 0;
+}
+
 void CSWSpectrum::SetSampleData(int *pSamples, unsigned int iCount)
 {
 	m_iCount = iCount;
 	m_pSamples = pSamples;
 
-	int i = 0;
+	int size, offset = 0;
+
+	if (m_iFillPos > 0) {
+		size = FFT_POINTS - m_iFillPos;
+		memcpy(m_pSampleBuffer + m_iFillPos, pSamples, size*4);
+		m_pFftObject->CopyIn(FFT_POINTS, m_pSampleBuffer);
+		m_pFftObject->Transform();
+		offset += size;
+		iCount -= size;
+	}
 
 	while (iCount >= FFT_POINTS) {
-		m_pFftObject->CopyIn(FFT_POINTS, m_pSamples + i);
+		m_pFftObject->CopyIn(FFT_POINTS, pSamples + offset);
 		m_pFftObject->Transform();
-		i += FFT_POINTS;
+		offset += FFT_POINTS;
 		iCount -= FFT_POINTS;
 	}
+
+	// Copy rest
+	size = iCount;
+	memcpy(m_pSampleBuffer, pSamples + offset, size*4);
+	m_iFillPos = size;
 }
 
 void CSWSpectrum::Draw(CDC *pDC, bool bMessage)
@@ -86,22 +116,21 @@ void CSWSpectrum::Draw(CDC *pDC, bool bMessage)
 	if (bMessage)
 		return;
 
-	float Stepping = (float)(FFT_POINTS - (float(FFT_POINTS) / 1.5f)) / (float)WIN_WIDTH; //(float)(FFT_POINTS - (FFT_POINTS / 2) - 40) / (float)WIN_WIDTH;
+	float Stepping = (float)(FFT_POINTS) / (float(WIN_WIDTH) * 4.0f);
 	float Step = 0;
 
 	for (i = 0; i < WIN_WIDTH; i++) {
-		// skip the first 20 Hzs
-		bar = (int)m_pFftObject->GetIntensity(int(Step)/* + 20*/) / 80;
+		bar = (int)m_pFftObject->GetIntensity(int(Step)) / 400;
 
+		if (bar < 0)
+			bar = 0;
 		if (bar > WIN_HEIGHT)
 			bar = WIN_HEIGHT;
 
-		if (bar > m_iFftPoint[(int)Step]) {
+		if (bar > m_iFftPoint[(int)Step])
 			m_iFftPoint[(int)Step] = bar;
-		}
-		else {
+		else
 			m_iFftPoint[(int)Step] -= 2;
-		}
 
 		bar = m_iFftPoint[(int)Step];
 

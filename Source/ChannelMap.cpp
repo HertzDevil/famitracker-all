@@ -47,51 +47,57 @@ void CChannelMap::SetupSoundChips()
 	// Add available chips
 #ifdef _DEBUG
 	// Under development
-	AddChip(_T("Internal only (2A03/2A07)"), SNDCHIP_NONE, new CInstrument2A03());
-	AddChip(_T("Konami VRC6"), SNDCHIP_VRC6, new CInstrumentVRC6());
-	AddChip(_T("Konami VRC7"), SNDCHIP_VRC7, new CInstrumentVRC7());
-	AddChip(_T("Nintendo FDS sound"), SNDCHIP_FDS, new CInstrumentFDS());
-	AddChip(_T("Nintendo MMC5"), SNDCHIP_MMC5, new CInstrument2A03());
-	AddChip(_T("Namco N106"), SNDCHIP_N106, new CInstrumentN106());
-	AddChip(_T("Sunsoft 5B"), SNDCHIP_5B, new CInstrument5B());
-#else
+	AddChip(SNDCHIP_NONE, new CInstrument2A03(), _T("Internal only (2A03/2A07)"));
+	AddChip(SNDCHIP_VRC6, new CInstrumentVRC6(), _T("Konami VRC6"));
+	AddChip(SNDCHIP_VRC7, new CInstrumentVRC7(), _T("Konami VRC7"));
+	AddChip(SNDCHIP_FDS,  new CInstrumentFDS(),  _T("Nintendo FDS sound"));
+	AddChip(SNDCHIP_MMC5, new CInstrument2A03(), _T("Nintendo MMC5"));
+	AddChip(SNDCHIP_N106, new CInstrumentN106(), _T("Namco 106"));
+	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
+#else /* _DEBUG */
 	// Ready for use
-	AddChip(_T("Internal only (2A03/2A07)"), SNDCHIP_NONE, new CInstrument2A03());
-	AddChip(_T("Konami VRC6"), SNDCHIP_VRC6, new CInstrumentVRC6());
-	AddChip(_T("Konami VRC7"), SNDCHIP_VRC7, new CInstrumentVRC7());
-	AddChip(_T("Nintendo FDS sound"), SNDCHIP_FDS, new CInstrumentFDS());
-	AddChip(_T("Nintendo MMC5"), SNDCHIP_MMC5, new CInstrument2A03());
-#endif
+	AddChip(SNDCHIP_NONE, new CInstrument2A03(), _T("Internal only (2A03/2A07)"));
+	AddChip(SNDCHIP_VRC6, new CInstrumentVRC6(), _T("Konami VRC6"));
+	AddChip(SNDCHIP_VRC7, new CInstrumentVRC7(), _T("Konami VRC7"));
+	AddChip(SNDCHIP_FDS,  new CInstrumentFDS(),  _T("Nintendo FDS sound"));
+	AddChip(SNDCHIP_MMC5, new CInstrument2A03(), _T("Nintendo MMC5"));
+//	AddChip(SNDCHIP_N106, new CInstrumentN106(), _T("Namco 106/163"));
+//	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
+#endif /* _DEBUG */
 }
 
-void CChannelMap::AddChip(LPCTSTR pName, int Ident, CInstrument *pInst)
+void CChannelMap::AddChip(int Ident, CInstrument *pInst, LPCTSTR pName)
 {
 	ASSERT(m_iAddedChips < CHIP_COUNT);
 
 	m_pChipNames[m_iAddedChips] = pName;
 	m_iChipIdents[m_iAddedChips] = Ident;
 	m_pChipInst[m_iAddedChips] = pInst;
-	m_iAddedChips++;
+	++m_iAddedChips;
 }
 
 int CChannelMap::GetChipCount() const
 {
+	// Return number of available chips
 	return m_iAddedChips;
 }
 
 LPCTSTR CChannelMap::GetChipName(int Index) const
 {
+	// Get chip name from index
 	return m_pChipNames[Index];
 }
 
 int CChannelMap::GetChipIdent(int Index) const
 {
+	// Get chip ID from index
 	return m_iChipIdents[Index];
 }
 
 int	CChannelMap::GetChipIndex(int Ident) const
 {
-	for (int i = 0; i < m_iAddedChips; i++) {
+	// Get index from chip ID
+	for (int i = 0; i < m_iAddedChips; ++i) {
 		if (Ident == m_iChipIdents[i])
 			return i;
 	}
@@ -100,6 +106,7 @@ int	CChannelMap::GetChipIndex(int Ident) const
 
 CInstrument* CChannelMap::GetChipInstrument(int Chip) const
 {
+	// Get instrument from chip ID
 	int Index = GetChipIndex(Chip);
 
 	if (m_pChipInst[Index] == NULL)
@@ -107,6 +114,7 @@ CInstrument* CChannelMap::GetChipInstrument(int Chip) const
 
 	return m_pChipInst[Index]->CreateNew();
 }
+
 /*
 int CChannelMap::GetChannelType(int Channel) const
 {

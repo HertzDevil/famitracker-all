@@ -26,17 +26,16 @@
 
 class CChannelHandlerVRC6 : public CChannelHandler {
 public:
-	CChannelHandlerVRC6(int ChanID) : CChannelHandler(ChanID) {};
+	CChannelHandlerVRC6();
 	virtual void ProcessChannel();
 	virtual void ResetChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
-	virtual int LimitFreq(int Freq);
 };
 
 class CVRC6Square1 : public CChannelHandlerVRC6 {
 public:
-	CVRC6Square1() : CChannelHandlerVRC6(5) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CVRC6Square1() : CChannelHandlerVRC6() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
@@ -45,7 +44,7 @@ private:
 
 class CVRC6Square2 : public CChannelHandlerVRC6 {
 public:
-	CVRC6Square2() : CChannelHandlerVRC6(6) { m_iDefaultDuty = 0;  m_bEnabled = false; };
+	CVRC6Square2() : CChannelHandlerVRC6() { m_iDefaultDuty = 0;  m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
@@ -54,7 +53,7 @@ private:
 
 class CVRC6Sawtooth : public CChannelHandlerVRC6 {
 public:
-	CVRC6Sawtooth() : CChannelHandlerVRC6(7) { m_iDefaultDuty = 0;  m_bEnabled = false; };
+	CVRC6Sawtooth() : CChannelHandlerVRC6() { m_iDefaultDuty = 0;  m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();

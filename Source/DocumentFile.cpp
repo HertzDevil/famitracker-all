@@ -56,15 +56,31 @@ bool CDocumentFile::Finished() const
 	return m_bFileDone;
 }
 
-void CDocumentFile::BeginDocument()
+bool CDocumentFile::BeginDocument()
 {
-	Write(FILE_HEADER_ID, int(strlen(FILE_HEADER_ID)));
-	Write(&FILE_VER, sizeof(int));
+	try {
+		Write(FILE_HEADER_ID, int(strlen(FILE_HEADER_ID)));
+		Write(&FILE_VER, sizeof(int));
+	}
+	catch (CFileException *e) {
+		e->Delete();
+		return false;
+	}
+
+	return true;
 }
 
-void CDocumentFile::EndDocument()
+bool CDocumentFile::EndDocument()
 {
-	Write(FILE_END_ID, int(strlen(FILE_END_ID)));
+	try {
+		Write(FILE_END_ID, int(strlen(FILE_END_ID)));
+	}
+	catch (CFileException *e) {
+		e->Delete();
+		return false;
+	}
+	
+	return true;
 }
 
 void CDocumentFile::CreateBlock(const char *ID, int Version)
@@ -139,18 +155,25 @@ void CDocumentFile::WriteString(CString String)
 	WriteBlockChar(0);
 }
 
-void CDocumentFile::FlushBlock()
+bool CDocumentFile::FlushBlock()
 {
 	if (!m_pBlockData)
-		return;
+		return false;
 
-	Write(m_cBlockID, 16);
-	Write(&m_iBlockVersion, sizeof(int));
-	Write(&m_iBlockPointer, sizeof(int));
-	Write(m_pBlockData, m_iBlockPointer);
+	try {
+		Write(m_cBlockID, 16);
+		Write(&m_iBlockVersion, sizeof(int));
+		Write(&m_iBlockPointer, sizeof(int));
+		Write(m_pBlockData, m_iBlockPointer);
+	}
+	catch (CFileException *e) {
+		e->Delete();
+		return false;
+	}
 
-	delete [] m_pBlockData;
-	m_pBlockData = NULL;
+	SAFE_RELEASE_ARRAY(m_pBlockData);
+
+	return true;
 }
 
 bool CDocumentFile::CheckValidity()
@@ -170,6 +193,7 @@ bool CDocumentFile::CheckValidity()
 	m_iFileVersion = (Buffer[3] << 24) | (Buffer[2] << 16) | (Buffer[1] << 8) | Buffer[0];
 
 	m_bFileDone = false;
+	m_bIncomplete = false;
 
 	return true;
 }
@@ -191,7 +215,8 @@ bool CDocumentFile::ReadBlock()
 	Read(&m_iBlockVersion, sizeof(int));
 	Read(&m_iBlockSize, sizeof(int));
 
-	if (m_iBlockSize > 1000000) {
+	if (m_iBlockSize > 50000000) {
+		// File is probably corrupt
 		memset(m_cBlockID, 0, 16);
 		return true;
 	}
@@ -206,7 +231,14 @@ bool CDocumentFile::ReadBlock()
 
 	if (BytesRead == 0)
 		m_bFileDone = true;
-
+/*
+	if (GetPosition() == GetLength() && !m_bFileDone) {
+		// Parts of file is missing
+		m_bIncomplete = true;
+		memset(m_cBlockID, 0, 16);
+		return true;
+	}
+*/
 	return false;
 }
 
@@ -276,4 +308,9 @@ int CDocumentFile::GetBlockPos() const
 int CDocumentFile::GetBlockSize() const
 {
 	return m_iBlockSize;
+}
+
+bool CDocumentFile::IsFileIncomplete() const
+{
+	return m_bIncomplete;
 }

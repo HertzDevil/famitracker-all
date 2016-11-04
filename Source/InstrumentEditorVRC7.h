@@ -27,8 +27,8 @@ class CInstrumentEditorVRC7 : public CInstrumentEditPanel
 public:
 	CInstrumentEditorVRC7(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorVRC7();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("Konami VRC7"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("Konami VRC7"); };
 
 	virtual void SelectInstrument(int Instrument);
 
@@ -40,6 +40,7 @@ protected:
 
 	void LoadCustomPatch();
 	void SaveCustomPatch();
+	void LoadInternalPatch(int Num);
 
 	void SetupSlider(int Slider, int Max);
 	int GetSliderVal(int Slider);
@@ -59,5 +60,7 @@ public:
 	afx_msg void OnBnClickedCheckbox();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnBnClickedHold();
+	afx_msg void OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/);
+	afx_msg void OnCopy();
+	afx_msg void OnPaste();
 };

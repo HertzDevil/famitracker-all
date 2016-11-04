@@ -12,13 +12,19 @@
 #define IDC_SAVE                        6
 #define IDS_FILE_VERSION_TOO_NEW        6
 #define IDCANCEL2                       6
+#define IDC_MOVE_UP                     6
 #define IDS_REMOVE_INSTRUMENTS          7
 #define IDCANCEL3                       7
+#define IDC_MOVE_DOWN                   7
 #define IDS_INVALID_INST_FILE           8
 #define IDCANCEL4                       8
 #define IDS_REMOVE_PATTERNS             9
 #define IDS_SOUND_FAIL                  10
 #define IDS_UNDERRUN_MESSAGE            11
+#define IDS_MIDI_ERR_INPUT              12
+#define IDS_MIDI_ERR_OUTPUT             13
+#define IDS_WELCOME_VER                 14
+#define IDS_NEW_SOUND_CONFIG            15
 #define IDD_ABOUTBOX                    100
 #define ID_NEXT_FRAME                   125
 #define ID_PREV_FRAME                   126
@@ -64,8 +70,15 @@
 #define ID_BLOCK_END                    145
 #define IDD_SPEED                       146
 #define IDS_OUT_OF_SLOTS                146
+#define ID_INSTRUMENT_ADD_2A03          146
 #define IDD_PCMIMPORT                   147
 #define IDS_OUT_OF_SAMPLEMEM            147
+#define ID_INSTRUMENT_ADD_VRC6          147
+#define ID_INSTRUMENT_ADD_VRC7          148
+#define ID_INSTRUMENT_ADD_FDS           149
+#define ID_INSTRUMENT_ADD_MMC5          150
+#define ID_INSTRUMENT_ADD_N106          151
+#define ID_INSTRUMENT_ADD_S5B           152
 #define IDD_INSTRUMENT_INTERNAL         158
 #define IDD_INSTRUMENT_DPCM             159
 #define IDD_INSTRUMENT                  160
@@ -114,6 +127,11 @@
 #define IDR_SAMPLE_WND_POPUP            279
 #define IDR_INSTRUMENT_TOOLBAR          280
 #define IDD_CHANNELS                    282
+#define IDD_HEADER                      283
+#define IDD_INSTRUMENT_S5B              284
+#define IDR_MENU1                       285
+#define IDR_PATTERN_HEADER_POPUP        285
+#define IDD_INSTRUMENT_N106_WAVE        286
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_MODIFIERS                   1003
@@ -184,10 +202,12 @@
 #define IDC_OPT_PATTENRCOLORS           1071
 #define IDC_ABOUT                       1072
 #define IDC_OPT_PULLUPDELETE            1072
+#define IDC_PATTERNCOLORS               1072
 #define IDC_RESTORE                     1073
 #define IDC_OPT_BACKUPS                 1073
 #define IDC_CLIP                        1074
 #define IDC_SHORTCUTS                   1074
+#define IDC_OPT_SINGLEINSTANCE          1074
 #define IDC_OCTAVE                      1075
 #define IDC_SAMPLES                     1076
 #define IDC_INST_TAB                    1077
@@ -280,6 +300,7 @@
 #define IDC_PRESET_TRIANGLE             1186
 #define IDC_M_DR                        1187
 #define IDC_PRESET_SQUARE               1187
+#define IDC_PRESET_PULSE_50             1187
 #define IDC_M_SR                        1188
 #define IDC_PRESET_SAWTOOTH             1188
 #define IDC_M_SL                        1188
@@ -307,6 +328,7 @@
 #define IDC_C_DM                        1197
 #define IDC_DELETE                      1197
 #define IDC_C_DC                        1197
+#define IDC_PRESET_PULSE_25             1197
 #define IDC_C_AR                        1198
 #define IDC_INFO                        1198
 #define IDC_C_DR                        1199
@@ -325,6 +347,19 @@
 #define IDC_SCROLLBAR2                  1212
 #define IDC_SAMPLESCROLL                1212
 #define IDC_LIST1                       1216
+#define IDC_ADDED_LIST                  1217
+#define IDC_FONT_SIZE                   1219
+#define IDC_COPY_WAVE                   1220
+#define IDC_PASTE_WAVE                  1221
+#define IDC_COPY_TABLE                  1222
+#define IDC_AVAILABLE_TREE              1222
+#define IDC_PASTE_TABLE                 1223
+#define IDC_COPY                        1225
+#define IDC_PASTE                       1226
+#define IDC_WAVE_SIZE                   1227
+#define IDC_WAVE_POS                    1228
+#define IDC_KEY                         1230
+#define IDC_CLEAR                       1231
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -430,6 +465,23 @@
 #define ID_POPUP_SAMPLEGRAPH1           33029
 #define ID_POPUP_PICKUPINSTRUMENT       33031
 #define ID_POPUP_PICKUPROW              33032
+#define ID_POPUP_REPLACEINSTRUMENT      33034
+#define ID_POPUP_TOGGLECHANNEL33035     33035
+#define ID_POPUP_SOLOCHANNEL33036       33036
+#define ID_POPUP_UNMUTEALLCHANNELS      33037
+#define ID_MODULE_CHANNELS              33038
+#define ID_INSTRUMENT_                  33039
+#define ID_HELP_CHECKFORNEWVERSIONS     33040
+#define ID_EDIT_EXPANDPATTERN           33041
+#define ID_EDIT_SHRINKPATTERN           33042
+#define ID_EDIT_EXPANDPATTERN33043      33043
+#define ID_EDIT_SHRINKPATTERN33044      33044
+#define ID_Menu33045                    33045
+#define ID_FILE_IMPORT                  33046
+#define ID_MODULE_FRAME_INSERT          33047
+#define ID_MODULE_FRAME_REMOVE          33048
+#define ID_MODULE_HEJ                   33049
+#define ID_MODULE_REMOVEFRAME           33050
 #define ID_INDICATOR_INSTRUMENT         61204
 #define ID_INDICATOR_TEMPO              61205
 
@@ -437,9 +489,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        283
-#define _APS_NEXT_COMMAND_VALUE         33033
-#define _APS_NEXT_CONTROL_VALUE         1218
-#define _APS_NEXT_SYMED_VALUE           146
+#define _APS_NEXT_RESOURCE_VALUE        288
+#define _APS_NEXT_COMMAND_VALUE         33051
+#define _APS_NEXT_CONTROL_VALUE         1232
+#define _APS_NEXT_SYMED_VALUE           153
 #endif
 #endif

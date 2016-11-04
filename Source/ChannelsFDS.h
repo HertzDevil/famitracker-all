@@ -22,24 +22,25 @@
 
 class CChannelHandlerFDS : public CChannelHandler {
 public:
-	CChannelHandlerFDS() : CChannelHandler(5) {};
+	CChannelHandlerFDS();
 	virtual void ProcessChannel();
 	virtual void RefreshChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
 	virtual void ClearRegisters();
-	virtual int LimitFreq(int Freq);
 protected:
 	// FDS functions
 	void FillWaveRAM(CInstrumentFDS *pInst);
 	void FillModulationTable(CInstrumentFDS *pInst);
 protected:
 	// FDS control variables
-	int m_iModulationFreq;
+	int m_iModulationSpeed;
 	int m_iModulationDepth;
 	int m_iModulationDelay;
 	// FDS sequences
 	CSequence *m_pVolumeSeq;
 	CSequence *m_pArpeggioSeq;
 	CSequence *m_pPitchSeq;
+	// Modulation table
+	char m_iModTable[32];
 };

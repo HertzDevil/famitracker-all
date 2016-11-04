@@ -31,6 +31,8 @@
 // Constants, types and enums
 #include "FamiTrackerTypes.h"
 
+//#define TRANSPOSE_FDS
+
 // Default song settings
 const unsigned int DEFAULT_TEMPO_NTSC   = 150;
 const unsigned int DEFAULT_TEMPO_PAL    = 125;
@@ -131,7 +133,7 @@ protected: // create from serialization only
 
 	int m_iVersion;
 public:
-	static const int CLASS_VERSION = 2;
+	static const int CLASS_VERSION = 3;
 	const int GetVersion() const { return m_iVersion; };
 
 // Attributes
@@ -199,8 +201,8 @@ public:
 	void			ClearPatterns();
 
 	// Pattern editing
-	void			IncreasePattern(unsigned int PatternPos, unsigned int Channel, int Count);
-	void			DecreasePattern(unsigned int PatternPos, unsigned int Channel, int Count);
+	void			IncreasePattern(unsigned int Frame, unsigned int Channel, int Count);
+	void			DecreasePattern(unsigned int Frame, unsigned int Channel, int Count);
 	void			IncreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	void			DecreaseInstrument(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	void			IncreaseVolume(unsigned int Frame, unsigned int Channel, unsigned int Row);
@@ -245,7 +247,7 @@ public:
 
 	// Track management functions
 	void			SelectTrack(unsigned int Track);
-//	void			SelectTrackFast(unsigned int Track);	//	Todo: should be removed
+//	void			SelectTrackFast(unsigned int Track);	//	TODO: should be removed
 	unsigned int	GetTrackCount() const;
 	unsigned int	GetSelectedTrack() const;
 	char			*GetTrackTitle(unsigned int Track) const;
@@ -278,6 +280,7 @@ public:
 
 
 	// Sequences functions
+	CSequence		*GetSequence(int Chip, int Index, int Type);
 	CSequence		*GetSequence(int Index, int Type);
 	int				GetSequenceItemCount(int Index, int Type) const;
 	int				GetFreeSequence(int Type) const;
@@ -287,6 +290,11 @@ public:
 	CSequence		*GetSequenceVRC6(int Index, int Type) const;
 	int				GetSequenceItemCountVRC6(int Index, int Type) const;
 	int				GetFreeSequenceVRC6(int Type) const;
+
+	CSequence		*GetSequenceN106(int Index, int Type);
+	CSequence		*GetSequenceN106(int Index, int Type) const;
+	int				GetSequenceItemCountN106(int Index, int Type) const;
+	int				GetFreeSequenceN106(int Type) const;
 
 	// Read only getter for exporter plugins
 	CSequenceInterface const *GetSequence(int Index, int Type) const;
@@ -300,6 +308,7 @@ public:
 	void			GetSampleName(unsigned int Index, char *Name) const;
 	int				GetSampleSize(unsigned int Sample);
 	char			GetSampleData(unsigned int Sample, unsigned int Offset);
+	int				GetTotalSampleSize() const;
 
 	// For file version compability
 	void			ConvertSequence(stSequence *OldSequence, CSequence *NewSequence, int Type);
@@ -327,13 +336,16 @@ protected:
 	BOOL			OpenDocumentOld(CFile *pOpenFile);
 	BOOL			OpenDocumentNew(CDocumentFile &DocumentFile);
 
-	void			WriteBlock_Header(CDocumentFile *pDocFile) const;
-	void			WriteBlock_Instruments(CDocumentFile *pDocFile) const;
-	void			WriteBlock_Sequences(CDocumentFile *pDocFile) const;
-	void			WriteBlock_Frames(CDocumentFile *pDocFile) const;
-	void			WriteBlock_Patterns(CDocumentFile *pDocFile) const;
-	void			WriteBlock_DSamples(CDocumentFile *pDocFile) const;
-	void			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
+	bool			WriteBlocks(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Parameters(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_SongInfo(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Header(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Instruments(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Sequences(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Frames(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Patterns(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_DSamples(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
 
 	bool			ReadBlock_Header(CDocumentFile *pDocFile);
 	bool			ReadBlock_Instruments(CDocumentFile *pDocFile);
@@ -358,7 +370,6 @@ protected:
 
 	void			AllocateSong(unsigned int Song);
 
-
 	//
 	// Private variables
 	//
@@ -368,7 +379,7 @@ private:
 	// Interface variables
 	//
 
-	// Channels (Todo: remove or move these?)
+	// Channels (TODO: remove or move these?)
 	CTrackerChannel	*m_pChannels[CHANNELS];
 	int				m_iRegisteredChannels;
 	int				m_iChannelTypes[CHANNELS];
@@ -406,6 +417,7 @@ private:
 	CDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample list
 	CSequence		*m_pSequences2A03[MAX_SEQUENCES][SEQ_COUNT];
 	CSequence		*m_pSequencesVRC6[MAX_SEQUENCES][SEQ_COUNT];
+	CSequence		*m_pSequencesN106[MAX_SEQUENCES][SEQ_COUNT];
 
 	// Module properties
 	unsigned char	m_iExpansionChip;							// Expansion chip

@@ -25,36 +25,39 @@
 #include "ConfigAppearance.h"
 #include "Settings.h"
 #include "ColorScheme.h"
+#include "Graphics.h"
 
-const char *COLOR_ITEMS[] = {
-	"Background", 
-	"Higlighed background",
-	"Higlighed background 2",
-	"Pattern text", 
-	"Highlighted pattern text",
-	"Highlighted pattern text 2",
-	"Instrument column",
-	"Volume column",
-	"Effect number column",
-	"Selection",
-	"Cursor"
+const TCHAR *CConfigAppearance::COLOR_ITEMS[] = {
+	_T("Background"), 
+	_T("Highlighted background"),
+	_T("Highlighted background 2"),
+	_T("Pattern text"), 
+	_T("Highlighted pattern text"),
+	_T("Highlighted pattern text 2"),
+	_T("Instrument column"),
+	_T("Volume column"),
+	_T("Effect number column"),
+	_T("Selection"),
+	_T("Cursor")
 };
 
-const char *COLOR_SCHEMES[] = {
-	"Default",
-	"Monochrome",
-	"Renoise",
-	"White"
+const TCHAR *CConfigAppearance::COLOR_SCHEMES[] = {
+	_T("Default"),
+	_T("Monochrome"),
+	_T("Renoise"),
+	_T("White")
 };
 
-const int NUM_COLOR_SCHEMES = 4;
+const int CConfigAppearance::NUM_COLOR_SCHEMES = 4;
 
-CConfigAppearance *pCallback;
+const int CConfigAppearance::FONT_SIZES[] = {10, 11, 12, 14, 16, 18, 20, 22};
+const int CConfigAppearance::FONT_SIZE_COUNT = sizeof(FONT_SIZES) / sizeof(int);
 
-int CALLBACK EnumFontFamExProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
+
+int CALLBACK CConfigAppearance::EnumFontFamExProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
 {
 	if (lpelfe->elfLogFont.lfCharSet == ANSI_CHARSET && lpelfe->elfFullName[0] != '@')
-		pCallback->AddFontName((char*)&lpelfe->elfFullName);
+		((CConfigAppearance*)lParam)->AddFontName((char*)&lpelfe->elfFullName);
 
 	return 1;
 }
@@ -83,6 +86,8 @@ BEGIN_MESSAGE_MAP(CConfigAppearance, CPropertyPage)
 	ON_BN_CLICKED(IDC_PICK_COL, OnBnClickedPickCol)
 	ON_CBN_SELCHANGE(IDC_COL_ITEM, OnCbnSelchangeColItem)
 	ON_CBN_SELCHANGE(IDC_SCHEME, OnCbnSelchangeScheme)
+	ON_CBN_SELCHANGE(IDC_FONT_SIZE, &CConfigAppearance::OnCbnSelchangeFontSize)
+	ON_BN_CLICKED(IDC_PATTERNCOLORS, &CConfigAppearance::OnBnClickedPatterncolors)
 END_MESSAGE_MAP()
 
 
@@ -93,7 +98,7 @@ void CConfigAppearance::OnPaint()
 	CPaintDC dc(this); // device context for painting
 	// Do not call CPropertyPage::OnPaint() for painting messages
 
-	const char PREV_LINE[] = "--- -- - ---";
+	const TCHAR PREV_LINE[] = _T("--- -- - ---");
 
 	CWnd *pWnd;
 	CRect Rect, ParentRect;
@@ -125,7 +130,7 @@ void CConfigAppearance::OnPaint()
 	pWnd->GetWindowRect(Rect);
 
 	Rect.top -= ParentRect.top;
-	Rect.bottom -= ParentRect.top;
+	Rect.bottom -= ParentRect.top-16;
 	Rect.left -= ParentRect.left;
 	Rect.right -= ParentRect.left;
 
@@ -135,73 +140,80 @@ void CConfigAppearance::OnPaint()
 	memset(&LogFont, 0, sizeof(LOGFONT));
 	memcpy(LogFont.lfFaceName, m_strFont, m_strFont.GetLength());
 
-	LogFont.lfHeight = -12;
+	LogFont.lfHeight = -m_iFontSize;
 	LogFont.lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
 
 	Font.CreateFontIndirect(&LogFont);
 
 	OldFont = dc.SelectObject(&Font);
 
+	// Background
 	dc.FillSolidRect(Rect, GetColor(COL_BACKGROUND));
 
 	ShadedCol = DIM(GetColor(COL_PATTERN_TEXT), 50);
 	ShadedHiCol = DIM(GetColor(COL_PATTERN_TEXT_HILITE), 50);
 
-	for (int j = 0; j < 3; j++) {
+	int iRowSize = m_iFontSize + 2;
 
-		for (int i = 0; i < 4; i++) {
-			int OffsetTop = Rect.top + i * 18 + (j * 54);
-			int OffsetLeft = Rect.left + 9;
+	for (int i = 0; i < 12; ++i) {
 
-			if (i == 0) {
-				if (j == 0)
-					dc.SetTextColor(GetColor(COL_PATTERN_TEXT_HILITE));
-				else
-					dc.SetTextColor(ShadedHiCol);
-				dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
-				dc.FillSolidRect(Rect.left, OffsetTop, Rect.right - Rect.left, 18, GetColor(COL_BACKGROUND_HILITE));
-				if (j == 0) {
-					dc.SetBkColor(GetColor(COL_CURSOR));
-					dc.FillSolidRect(Rect.left + 5, OffsetTop + 1, 40, 16, GetColor(COL_CURSOR));
-				}
-			}
-			else {
-				if (j == 0)
-					dc.SetTextColor(GetColor(COL_PATTERN_TEXT));
-				else
-					dc.SetTextColor(ShadedCol);
-				dc.SetBkColor(GetColor(COL_BACKGROUND));
-			}
+		int OffsetTop = Rect.top + (i * (iRowSize + 2));
+		int OffsetLeft = Rect.left + 9;
 
-			if (j == 0) {
-				dc.TextOut(OffsetLeft, OffsetTop, "C");
-				dc.TextOut(OffsetLeft + 12, OffsetTop, "-");
-				dc.TextOut(OffsetLeft + 24, OffsetTop, "4");
-			}
-			else {
-				dc.TextOut(OffsetLeft, OffsetTop, "-");
-				dc.TextOut(OffsetLeft + 12, OffsetTop, "-");
-				dc.TextOut(OffsetLeft + 24, OffsetTop, "-");
-			}
+		if (OffsetTop > (Rect.bottom - iRowSize))
+			break;
 
-			if (j == 0 && i == 0) {
-				dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
-			}
+		if ((i & 3) == 0) {
+
+			dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
+			dc.FillSolidRect(Rect.left, OffsetTop, Rect.right - Rect.left, iRowSize + 2, GetColor(COL_BACKGROUND_HILITE));
 
 			if (i == 0) {
+				dc.SetTextColor(GetColor(COL_PATTERN_TEXT_HILITE));
+				dc.SetBkColor(GetColor(COL_CURSOR));
+				dc.FillSolidRect(Rect.left + 5, OffsetTop, 40, iRowSize + 2, GetColor(COL_CURSOR));
+			}
+			else
 				dc.SetTextColor(ShadedHiCol);
-			}
-			else {
-				dc.SetTextColor(ShadedCol);
-			}
-
-			dc.TextOut(OffsetLeft + 40, OffsetTop, "-");
-			dc.TextOut(OffsetLeft + 52, OffsetTop, "-");
-			dc.TextOut(OffsetLeft + 68, OffsetTop, "-");
-			dc.TextOut(OffsetLeft + 84, OffsetTop, "-");
-			dc.TextOut(OffsetLeft + 96, OffsetTop, "-");
-			dc.TextOut(OffsetLeft + 108, OffsetTop, "-");
 		}
+		else {
+			if ((i & 3) == 0)
+				dc.SetTextColor(GetColor(COL_PATTERN_TEXT));
+			else
+				dc.SetTextColor(ShadedCol);
+
+			dc.SetBkColor(GetColor(COL_BACKGROUND));
+		}
+
+		if (i == 0) {
+			dc.TextOut(OffsetLeft, OffsetTop, _T("C"));
+			dc.TextOut(OffsetLeft + 12, OffsetTop, _T("-"));
+			dc.TextOut(OffsetLeft + 24, OffsetTop, _T("4"));
+		}
+		else {
+			dc.TextOut(OffsetLeft, OffsetTop, _T("-"));
+			dc.TextOut(OffsetLeft + 12, OffsetTop, _T("-"));
+			dc.TextOut(OffsetLeft + 24, OffsetTop, _T("-"));
+		}
+
+		if (i == 0) {
+			dc.SetBkColor(GetColor(COL_BACKGROUND_HILITE));
+		}
+
+		if ((i & 3) == 0) {
+			dc.SetTextColor(ShadedHiCol);
+		}
+		else {
+			dc.SetTextColor(ShadedCol);
+		}
+
+		dc.TextOut(OffsetLeft + 40, OffsetTop, _T("-"));
+		dc.TextOut(OffsetLeft + 52, OffsetTop, _T("-"));
+		dc.TextOut(OffsetLeft + 68, OffsetTop, _T("-"));
+		dc.TextOut(OffsetLeft + 84, OffsetTop, _T("-"));
+		dc.TextOut(OffsetLeft + 96, OffsetTop, _T("-"));
+		dc.TextOut(OffsetLeft + 108, OffsetTop, _T("-"));
+
 	}
 
 	dc.SelectObject(OldFont);
@@ -212,7 +224,6 @@ BOOL CConfigAppearance::OnInitDialog()
 	CPropertyPage::OnInitDialog();
 
 	CComboBox *ItemsBox;
-	int i;
 
 	CDC *pDC = GetDC();
 	LOGFONT LogFont;
@@ -223,15 +234,15 @@ BOOL CConfigAppearance::OnInitDialog()
 	LogFont.lfCharSet = DEFAULT_CHARSET;
 
 	m_pFontList = (CComboBox*)GetDlgItem(IDC_FONT);
-	pCallback = this;
+	m_pFontSizeList = (CComboBox*)GetDlgItem(IDC_FONT_SIZE);
 
-	EnumFontFamiliesEx(pDC->m_hDC, &LogFont, (FONTENUMPROC)EnumFontFamExProc, 0, 0);
+	EnumFontFamiliesEx(pDC->m_hDC, &LogFont, (FONTENUMPROC)EnumFontFamExProc, (LPARAM)this, 0);
 
 	ReleaseDC(pDC);
 
 	ItemsBox = (CComboBox*)GetDlgItem(IDC_COL_ITEM);
 
-	for (i = 0; i < COLOR_ITEM_COUNT; i++) {
+	for (int i = 0; i < COLOR_ITEM_COUNT; ++i) {
 		ItemsBox->AddString(COLOR_ITEMS[i]);
 	}
 
@@ -251,19 +262,22 @@ BOOL CConfigAppearance::OnInitDialog()
 	m_iColors[COL_SELECTION]			= theApp.GetSettings()->Appearance.iColSelection;
 	m_iColors[COL_CURSOR]				= theApp.GetSettings()->Appearance.iColCursor;
 
-		/*
-	m_iColBackground		= theApp.m_pSettings->Appearance.iColBackground;
-	m_iColBackgroundHilite	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
-	m_iColText				= theApp.m_pSettings->Appearance.iColPatternText;
-	m_iColTextHilite		= theApp.m_pSettings->Appearance.iColPatternTextHilite;
-	m_iColSelection			= theApp.m_pSettings->Appearance.iColSelection;
-	m_iColCursor			= theApp.m_pSettings->Appearance.iColCursor;
-	*/
+	m_iFontSize	= theApp.GetSettings()->General.iFontSize;
+
+	m_bPatternColors = theApp.GetSettings()->General.bPatternColor;
 
 	ItemsBox = (CComboBox*)GetDlgItem(IDC_SCHEME);
 
-	for (i = 0; i < NUM_COLOR_SCHEMES; i++) {
+	for (int i = 0; i < NUM_COLOR_SCHEMES; ++i) {
 		ItemsBox->AddString(COLOR_SCHEMES[i]);
+	}
+
+	for (int i = 0; i < FONT_SIZE_COUNT; ++i) {
+		CString str;
+		str.Format(_T("%i"), FONT_SIZES[i]);
+		m_pFontSizeList->AddString(str);
+		if (FONT_SIZES[i] == m_iFontSize)
+			m_pFontSizeList->SelectString(0, str);
 	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -280,27 +294,26 @@ void CConfigAppearance::AddFontName(char *Name)
 
 BOOL CConfigAppearance::OnApply()
 {
-	theApp.GetSettings()->General.strFont = m_strFont;
+	CSettings *pSettings = theApp.GetSettings();
 
-	theApp.GetSettings()->Appearance.iColBackground			= m_iColors[COL_BACKGROUND];
-	theApp.GetSettings()->Appearance.iColBackgroundHilite	= m_iColors[COL_BACKGROUND_HILITE];
-	theApp.GetSettings()->Appearance.iColBackgroundHilite2	= m_iColors[COL_BACKGROUND_HILITE2];
-	theApp.GetSettings()->Appearance.iColPatternText		= m_iColors[COL_PATTERN_TEXT];
-	theApp.GetSettings()->Appearance.iColPatternTextHilite	= m_iColors[COL_PATTERN_TEXT_HILITE];
-	theApp.GetSettings()->Appearance.iColPatternTextHilite2	= m_iColors[COL_PATTERN_TEXT_HILITE2];
-	theApp.GetSettings()->Appearance.iColPatternInstrument	= m_iColors[COL_PATTERN_INSTRUMENT];
-	theApp.GetSettings()->Appearance.iColPatternVolume		= m_iColors[COL_PATTERN_VOLUME];
-	theApp.GetSettings()->Appearance.iColPatternEffect		= m_iColors[COL_PATTERN_EFF_NUM];
-	theApp.GetSettings()->Appearance.iColSelection			= m_iColors[COL_SELECTION];
-	theApp.GetSettings()->Appearance.iColCursor				= m_iColors[COL_CURSOR];
-/*
-	theApp.m_pSettings->Appearance.iColBackground			= m_iColBackground;
-	theApp.m_pSettings->Appearance.iColBackgroundHilite		= m_iColBackgroundHilite;
-	theApp.m_pSettings->Appearance.iColPatternText			= m_iColText;
-	theApp.m_pSettings->Appearance.iColPatternTextHilite	= m_iColTextHilite;
-	theApp.m_pSettings->Appearance.iColSelection			= m_iColSelection;
-	theApp.m_pSettings->Appearance.iColCursor				= m_iColCursor;
-*/
+	pSettings->General.strFont = m_strFont;
+
+	pSettings->General.iFontSize = m_iFontSize;
+
+	pSettings->Appearance.iColBackground			= m_iColors[COL_BACKGROUND];
+	pSettings->Appearance.iColBackgroundHilite		= m_iColors[COL_BACKGROUND_HILITE];
+	pSettings->Appearance.iColBackgroundHilite2		= m_iColors[COL_BACKGROUND_HILITE2];
+	pSettings->Appearance.iColPatternText			= m_iColors[COL_PATTERN_TEXT];
+	pSettings->Appearance.iColPatternTextHilite		= m_iColors[COL_PATTERN_TEXT_HILITE];
+	pSettings->Appearance.iColPatternTextHilite2	= m_iColors[COL_PATTERN_TEXT_HILITE2];
+	pSettings->Appearance.iColPatternInstrument		= m_iColors[COL_PATTERN_INSTRUMENT];
+	pSettings->Appearance.iColPatternVolume			= m_iColors[COL_PATTERN_VOLUME];
+	pSettings->Appearance.iColPatternEffect			= m_iColors[COL_PATTERN_EFF_NUM];
+	pSettings->Appearance.iColSelection				= m_iColors[COL_SELECTION];
+	pSettings->Appearance.iColCursor				= m_iColors[COL_CURSOR];
+
+	pSettings->General.bPatternColor				= m_bPatternColors;
+
 	theApp.ReloadColorScheme();
 
 	return CPropertyPage::OnApply();
@@ -315,6 +328,8 @@ void CConfigAppearance::OnCbnSelchangeFont()
 
 BOOL CConfigAppearance::OnSetActive()
 {
+	CheckDlgButton(IDC_PATTERNCOLORS, m_bPatternColors);
+	SetModified();
 	return CPropertyPage::OnSetActive();
 }
 
@@ -343,6 +358,7 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 {
 	CComboBox *List = (CComboBox*)GetDlgItem(IDC_SCHEME);
 	CComboBox *FontList = (CComboBox*)GetDlgItem(IDC_FONT);
+	CComboBox *FontSizeList = (CComboBox*)GetDlgItem(IDC_FONT_SIZE);
 	
 	int Index = List->GetCurSel();
 
@@ -362,7 +378,9 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 			SetColor(COL_CURSOR, COLOR_SCHEME.CURSOR);
 
 			m_strFont = "Fixedsys";
+			m_iFontSize = 12;
 			FontList->SelectString(0, m_strFont);
+			FontSizeList->SelectString(0, _T("12"));
 			break;
 		case 1:
 			SetColor(COL_BACKGROUND, 0x00181818);
@@ -374,7 +392,9 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 			SetColor(COL_SELECTION, 0x00454550);
 			SetColor(COL_CURSOR, 0x00908080);
 			m_strFont = "Fixedsys";
+			m_iFontSize = 12;
 			FontList->SelectString(0, m_strFont);
+			FontSizeList->SelectString(0, _T("12"));
 			break;
 		case 2:
 			SetColor(COL_BACKGROUND, 0x00131313);
@@ -386,12 +406,14 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 			SetColor(COL_SELECTION, 0xFF8080);
 			SetColor(COL_CURSOR, 0x00707070);
 			m_strFont = "Fixedsys";
+			m_iFontSize = 12;
 			FontList->SelectString(0, m_strFont);
+			FontSizeList->SelectString(0, _T("12"));
 			break;
 		case 3:	// White
 			SetColor(COL_BACKGROUND, 0xFFFFFF);
-			SetColor(COL_BACKGROUND_HILITE, 0xF0F0F0);
-			SetColor(COL_BACKGROUND_HILITE2, 0xE0E0E0);
+			SetColor(COL_BACKGROUND_HILITE, 0xFFFFFF);
+			SetColor(COL_BACKGROUND_HILITE2, 0xFFF0FF);
 			SetColor(COL_PATTERN_TEXT, 0x00);
 			SetColor(COL_PATTERN_TEXT_HILITE, 0xFF0000);
 			SetColor(COL_PATTERN_TEXT_HILITE2, 0xFF2020);
@@ -400,6 +422,10 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 			SetColor(COL_PATTERN_INSTRUMENT, 0x00);
 			SetColor(COL_PATTERN_VOLUME, 0x00);
 			SetColor(COL_PATTERN_EFF_NUM, 0x00);
+			m_strFont = "Courier";
+			m_iFontSize = 12;
+			FontList->SelectString(0, m_strFont);
+			FontSizeList->SelectString(0, _T("12"));
 			break;
 	}
 
@@ -416,4 +442,18 @@ void CConfigAppearance::SetColor(int Index, int Color)
 int CConfigAppearance::GetColor(int Index) const
 {
 	return m_iColors[Index];
+}
+
+void CConfigAppearance::OnCbnSelchangeFontSize()
+{
+	CString str;
+	m_pFontSizeList->GetLBText(m_pFontSizeList->GetCurSel(), str);
+	m_iFontSize = _ttoi(str);
+	RedrawWindow();
+	SetModified();
+}
+
+void CConfigAppearance::OnBnClickedPatterncolors()
+{
+	m_bPatternColors = IsDlgButtonChecked(IDC_PATTERNCOLORS) != 0;
 }

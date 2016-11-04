@@ -32,25 +32,14 @@
 #include "Settings.h"
 #include "ColorScheme.h"
 
-UINT GetAppProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nDefault)
-{
-	return theApp.GetProfileInt(lpszSection, lpszEntry, nDefault);
-}
+#define SETTING_INT(Section, Entry, Default, Variable)	\
+	AddSetting(new CSettingInt(_T(Section), _T(Entry), Default, Variable))	\
 
-CString GetAppProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszDefault = NULL)
-{
-	return theApp.GetProfileString(lpszSection, lpszEntry, lpszDefault);
-}
+#define SETTING_BOOL(Section, Entry, Default, Variable)	\
+	AddSetting(new CSettingBool(_T(Section), _T(Entry), Default, Variable))	\
 
-BOOL WriteAppProfileInt(LPCTSTR lpszSection, LPCTSTR lpszEntry, int nValue)
-{
-	return theApp.WriteProfileInt(lpszSection, lpszEntry, nValue);
-}
-
-BOOL WriteAppProfileString(LPCTSTR lpszSection, LPCTSTR lpszEntry, LPCTSTR lpszValue)
-{
-	return theApp.WriteProfileString(lpszSection, lpszEntry, lpszValue);
-}
+#define SETTING_STRING(Section, Entry, Default, Variable)	\
+	AddSetting(new CSettingString(_T(Section), _T(Entry), Default, Variable))	\
 
 // CSettings
 
@@ -69,19 +58,11 @@ CSettings::~CSettings()
 	}
 }
 
-#define SETTING_INT(Section, Entry, Default, Variable)	\
-	AddSetting(new CSettingInt(_T(Section), _T(Entry), Default, Variable))	\
-
-#define SETTING_BOOL(Section, Entry, Default, Variable)	\
-	AddSetting(new CSettingBool(_T(Section), _T(Entry), Default, Variable))	\
-
-#define SETTING_STRING(Section, Entry, Default, Variable)	\
-	AddSetting(new CSettingString(_T(Section), _T(Entry), Default, Variable))	\
-
 void CSettings::SetupSettings()
 {
 	//
 	// This function defines all settings in the program that are stored in registry
+	// All settings are loaded on program start and saved when closing the program
 	//
 
 	// The SETTING macros takes four arguments: 
@@ -89,7 +70,7 @@ void CSettings::SetupSettings()
 	//  1. Registry section
 	//  2. Registry key name
 	//  3. Default value
-	//  4. A variable that contains the setting, loaded on program start up and saved on shutdown
+	//  4. A variable that contains the setting, loaded on program startup and saved on shutdown
 	//
 
 	// General
@@ -108,6 +89,8 @@ void CSettings::SetupSettings()
 	SETTING_BOOL("General", "Delete pull up", false, &General.bPullUpDelete);
 	SETTING_BOOL("General", "Backups", false, &General.bBackups);
 	SETTING_STRING("General", "Pattern font", FONT_FACE, &General.strFont);
+	SETTING_INT("General", "Pattern font size", FONT_SIZE, &General.iFontSize);
+	SETTING_BOOL("General", "Single instance", false, &General.bSingleInstance);
 
 	// Keys
 	SETTING_INT("Keys", "Note cut",		0xE2, &Keys.iKeyNoteCut);
@@ -195,6 +178,13 @@ void CSettings::DefaultSettings()
 	}
 }
 
+void CSettings::DeleteSettings()
+{
+	// Delete all settings from registry
+	HKEY hKey = theApp.GetAppRegistryKey();
+	theApp.DelRegTree(hKey, _T(""));
+}
+
 void CSettings::SetWindowPos(int Left, int Top, int Right, int Bottom, int State)
 {
 	WindowPos.iLeft = Left;
@@ -223,12 +213,12 @@ void CSettings::SetPath(CString PathName, unsigned int PathType)
 
 void CSettings::StoreSetting(CString Section, CString Name, int Value) const
 {
-	WriteAppProfileInt(Section, Name, Value);
+	theApp.WriteProfileInt(Section, Name, Value);
 }
 
-int CSettings::LoadSetting(CString Section, CString Name) const
+int CSettings::LoadSetting(CString Section, CString Name, int Default) const
 {
-	return GetAppProfileInt(Section, Name, 0);
+	return theApp.GetProfileInt(Section, Name, Default);
 }
 
 
@@ -236,12 +226,12 @@ int CSettings::LoadSetting(CString Section, CString Name) const
 
 void CSettingBool::Load()
 {
-	*(bool*)m_pVariable = GetAppProfileInt(m_pSection, m_pEntry, m_bDefaultValue ? 1 : 0) == 1;
+	*(bool*)m_pVariable = theApp.GetProfileInt(m_pSection, m_pEntry, m_bDefaultValue ? 1 : 0) == 1;
 }
 
 void CSettingBool::Save()
 {
-	WriteAppProfileInt(m_pSection, m_pEntry, *(bool*)m_pVariable);
+	theApp.WriteProfileInt(m_pSection, m_pEntry, *(bool*)m_pVariable);
 }
 
 void CSettingBool::Default()
@@ -251,12 +241,12 @@ void CSettingBool::Default()
 
 void CSettingInt::Load()
 {
-	*(int*)m_pVariable = GetAppProfileInt(m_pSection, m_pEntry, m_iDefaultValue);
+	*(int*)m_pVariable = theApp.GetProfileInt(m_pSection, m_pEntry, m_iDefaultValue);
 }
 
 void CSettingInt::Save()
 {
-	WriteAppProfileInt(m_pSection, m_pEntry, *(int*)m_pVariable);
+	theApp.WriteProfileInt(m_pSection, m_pEntry, *(int*)m_pVariable);
 }
 
 void CSettingInt::Default()
@@ -266,12 +256,12 @@ void CSettingInt::Default()
 
 void CSettingString::Load()
 {
-	*(CString*)m_pVariable = GetAppProfileString(m_pSection, m_pEntry, m_pDefaultValue);
+	*(CString*)m_pVariable = theApp.GetProfileString(m_pSection, m_pEntry, m_pDefaultValue);
 }
 
 void CSettingString::Save()
 {
-	WriteAppProfileString(m_pSection, m_pEntry, *(CString*)m_pVariable);
+	theApp.WriteProfileString(m_pSection, m_pEntry, *(CString*)m_pVariable);
 }
 
 void CSettingString::Default()

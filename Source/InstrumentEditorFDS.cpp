@@ -57,9 +57,7 @@ void CInstrumentEditorFDS::DoDataExchange(CDataExchange* pDX)
 
 void CInstrumentEditorFDS::SelectInstrument(int Instrument)
 {
-	CInstrumentFDS *pInst = (CInstrumentFDS*)GetDocument()->GetInstrument(Instrument);
-
-	m_pInstrument = pInst;
+	m_pInstrument = (CInstrumentFDS*)GetDocument()->GetInstrument(Instrument);
 
 	if (m_pWaveEditor)
 		m_pWaveEditor->SetInstrument(m_pInstrument);
@@ -67,25 +65,33 @@ void CInstrumentEditorFDS::SelectInstrument(int Instrument)
 	if (m_pModSequenceEditor)
 		m_pModSequenceEditor->SetInstrument(m_pInstrument);
 
-	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_RATE_SPIN))->SetPos(pInst->GetModulationFreq());
-	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DEPTH_SPIN))->SetPos(pInst->GetModulationDepth());
-	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DELAY_SPIN))->SetPos(pInst->GetModulationDelay());
+	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_RATE_SPIN))->SetPos(m_pInstrument->GetModulationSpeed());
+	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DEPTH_SPIN))->SetPos(m_pInstrument->GetModulationDepth());
+	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DELAY_SPIN))->SetPos(m_pInstrument->GetModulationDelay());
 
-	WaveChanged();
+//	CheckDlgButton(IDC_ENABLE_FM, m_pInstrument->GetModulationEnable() ? 1 : 0);
+
+	EnableModControls(m_pInstrument->GetModulationEnable());
 }
 
 
 BEGIN_MESSAGE_MAP(CInstrumentEditorFDS, CInstrumentEditPanel)
 	ON_COMMAND(IDC_PRESET_SINE, OnPresetSine)
 	ON_COMMAND(IDC_PRESET_TRIANGLE, OnPresetTriangle)
-	ON_COMMAND(IDC_PRESET_SQUARE, OnPresetSquare)
 	ON_COMMAND(IDC_PRESET_SAWTOOTH, OnPresetSawtooth)
+	ON_COMMAND(IDC_PRESET_PULSE_50, OnPresetPulse50)
+	ON_COMMAND(IDC_PRESET_PULSE_25, OnPresetPulse25)
 	ON_COMMAND(IDC_MOD_PRESET_FLAT, OnModPresetFlat)
 	ON_COMMAND(IDC_MOD_PRESET_SINE, OnModPresetSine)
 	ON_WM_VSCROLL()
 	ON_EN_CHANGE(IDC_MOD_RATE, OnModRateChange)
 	ON_EN_CHANGE(IDC_MOD_DEPTH, OnModDepthChange)
 	ON_EN_CHANGE(IDC_MOD_DELAY, OnModDelayChange)
+	ON_BN_CLICKED(IDC_COPY_WAVE, &CInstrumentEditorFDS::OnBnClickedCopyWave)
+	ON_BN_CLICKED(IDC_PASTE_WAVE, &CInstrumentEditorFDS::OnBnClickedPasteWave)
+	ON_BN_CLICKED(IDC_COPY_TABLE, &CInstrumentEditorFDS::OnBnClickedCopyTable)
+	ON_BN_CLICKED(IDC_PASTE_TABLE, &CInstrumentEditorFDS::OnBnClickedPasteTable)
+//	ON_BN_CLICKED(IDC_ENABLE_FM, &CInstrumentEditorFDS::OnBnClickedEnableFm)
 END_MESSAGE_MAP()
 
 // CInstrumentEditorFDS message handlers
@@ -96,7 +102,7 @@ BOOL CInstrumentEditorFDS::OnInitDialog()
 
 	// Create wave editor
 	CRect rect(SX(20), SY(30), 0, 0);
-	m_pWaveEditor = new CWaveEditor(4, 2, 64, 64);
+	m_pWaveEditor = new CWaveEditorFDS(5, 2, 64, 64);
 	m_pWaveEditor->CreateEx(WS_EX_CLIENTEDGE, NULL, _T(""), WS_CHILD | WS_VISIBLE, rect, this);
 	m_pWaveEditor->ShowWindow(SW_SHOW);
 	m_pWaveEditor->UpdateWindow();
@@ -122,68 +128,67 @@ BOOL CInstrumentEditorFDS::OnInitDialog()
 
 void CInstrumentEditorFDS::OnPresetSine()
 {
-	for (int i = 0; i < 64; i++) {
+	for (int i = 0; i < 64; ++i) {
 		float angle = (float(i) * 3.141592f * 2.0f) / 64.0f + 0.049087375f;
 		int sample = int((sinf(angle) + 1.0f) * 31.5f + 0.5f);
 		m_pInstrument->SetSample(i, sample);
 	}
 
 	m_pWaveEditor->RedrawWindow();
-	WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnPresetTriangle()
 {
-	int sample;
-
-	for (int i = 0; i < 64; i++) {
-		sample = (i < 32 ? i << 1 : (63 - i) << 1);
+	for (int i = 0; i < 64; ++i) {
+		int sample = (i < 32 ? i << 1 : (63 - i) << 1);
 		m_pInstrument->SetSample(i, sample);
 	}
 
 	m_pWaveEditor->RedrawWindow();
-	WaveChanged();
 }
 
-void CInstrumentEditorFDS::OnPresetSquare()
+void CInstrumentEditorFDS::OnPresetPulse50()
 {
-	int sample;
-
-	for (int i = 0; i < 64; i++) {
-		sample = (i < 32 ? 0 : 63);
+	for (int i = 0; i < 64; ++i) {
+		int sample = (i < 32 ? 0 : 63);
 		m_pInstrument->SetSample(i, sample);
 	}
 
 	m_pWaveEditor->RedrawWindow();
-	WaveChanged();
+}
+
+void CInstrumentEditorFDS::OnPresetPulse25()
+{
+	for (int i = 0; i < 64; ++i) {
+		int sample = (i < 16 ? 0 : 63);
+		m_pInstrument->SetSample(i, sample);
+	}
+
+	m_pWaveEditor->RedrawWindow();
 }
 
 void CInstrumentEditorFDS::OnPresetSawtooth()
 {
-	int sample;
-
-	for (int i = 0; i < 64; i++) {
-		sample = i;
+	for (int i = 0; i < 64; ++i) {
+		int sample = i;
 		m_pInstrument->SetSample(i, sample);
 	}
 
 	m_pWaveEditor->RedrawWindow();
-	WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModPresetFlat()
 {
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < 32; ++i) {
 		m_pInstrument->SetModulation(i, 0);
 	}
 
 	m_pModSequenceEditor->RedrawWindow();
-	WaveChanged();
 }
 
 void CInstrumentEditorFDS::OnModPresetSine()
 {
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; ++i) {
 		m_pInstrument->SetModulation(i, 7);
 		m_pInstrument->SetModulation(i + 8, 1);
 		m_pInstrument->SetModulation(i + 16, 1);
@@ -199,24 +204,31 @@ void CInstrumentEditorFDS::OnModPresetSine()
 	m_pInstrument->SetModulation(25, 0);
 
 	m_pModSequenceEditor->RedrawWindow();
-	WaveChanged();
+}
+
+int CInstrumentEditorFDS::GetModRate() const 
+{
+	CString str;
+	GetDlgItemText(IDC_MOD_RATE, str);
+	str.Remove(-96);
+	return atoi(str.GetBuffer());
 }
 
 void CInstrumentEditorFDS::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	int ModFreq = GetDlgItemInt(IDC_MOD_RATE);
+	int ModSpeed = GetModRate();
 	int ModDepth = GetDlgItemInt(IDC_MOD_DEPTH);
 	int ModDelay = GetDlgItemInt(IDC_MOD_DELAY);
 
-	m_pInstrument->SetModulationFreq(ModFreq);
+	m_pInstrument->SetModulationSpeed(ModSpeed);
 }
 
 void CInstrumentEditorFDS::OnModRateChange()
 {
 	if (m_pInstrument) {
-		int ModFreq = GetDlgItemInt(IDC_MOD_RATE);
-		LIMIT(ModFreq, 4095, 0);
-		m_pInstrument->SetModulationFreq(ModFreq);
+		int ModSpeed = GetModRate();
+		LIMIT(ModSpeed, 4095, 0);
+		m_pInstrument->SetModulationSpeed(ModSpeed);
 	}
 }
 
@@ -240,94 +252,28 @@ void CInstrumentEditorFDS::OnModDelayChange()
 
 BOOL CInstrumentEditorFDS::PreTranslateMessage(MSG* pMsg)
 {
+	// TODO: remove this
+
 	if (pMsg->message == WM_USER) {
-		WaveChanged();
+//		WaveChanged();
 		return TRUE;
 	}
 	else if (pMsg->message == WM_USER + 1) {
-		WaveChanged();
+//		WaveChanged();
 		return TRUE;
 	}
 	else if (pMsg->message == WM_KEYDOWN) {
 		if (pMsg->wParam == 13) {
 			if (GetFocus() == GetDlgItem(IDC_WAVE)) {
-				ReadWaveString();
+//				ReadWaveString();
 			}
 			else if (GetFocus() == GetDlgItem(IDC_MODULATION)) {
-				ReadModString();
+//				ReadModString();
 			}
 		}
 	}
 
 	return CInstrumentEditPanel::PreTranslateMessage(pMsg);
-}
-
-// Update wave and modulation string
-void CInstrumentEditorFDS::WaveChanged()
-{
-	CString wave;
-
-	for (int i = 0; i < 64; i++) {
-		CString temp;
-		temp.Format(_T("%i "), m_pInstrument->GetSample(i));
-		wave.Append(temp);
-	}
-
-	SetDlgItemText(IDC_WAVE, wave);
-
-	CString mod;
-
-	for (int i = 0; i < 32; i++) {
-		CString temp;
-		temp.Format(_T("%i "), m_pInstrument->GetModulation(i));
-		mod.Append(temp);
-	}
-
-	SetDlgItemText(IDC_MODULATION, mod);
-}
-
-void CInstrumentEditorFDS::ReadWaveString()
-{
-	CString in_str;
-	string str;
-	GetDlgItemText(IDC_WAVE, in_str);
-	str.assign(in_str);
-	istringstream values(str);
-	istream_iterator<int> begin(values);
-	istream_iterator<int> end;
-
-	for (int i = 0; i < 64; i++) {
-		int val = 0;
-		if (begin != end)
-			val = *begin++;
-		val = (val < 0) ? 0 : ((val > 63) ? 63 : val);
-		m_pInstrument->SetSample(i, val);
-	}
-
-	m_pWaveEditor->RedrawWindow();
-	WaveChanged();
-}
-
-void CInstrumentEditorFDS::ReadModString()
-{
-	CString in_str;
-	string str;
-	GetDlgItemText(IDC_MODULATION, in_str);
-	str.assign(in_str);
-	istringstream values(str);
-	istream_iterator<int> begin(values);
-	istream_iterator<int> end;
-
-	for (int i = 0; i < 32; i++) {
-		int val = 0;
-		if (begin != end)
-			val = *begin++;
-		val = (val < 0) ? 0 : ((val > 7) ? 7 : val);
-		m_pInstrument->SetModulation(i, val);
-	}
-
-	m_pModSequenceEditor->RedrawWindow();
-	WaveChanged();
 }
 
 void CInstrumentEditorFDS::PreviewNote(unsigned char Key)
@@ -336,4 +282,127 @@ void CInstrumentEditorFDS::PreviewNote(unsigned char Key)
 	CWnd *pFocus = GetFocus();
 	if (pFocus != GetDlgItem(IDC_WAVE) && pFocus != GetDlgItem(IDC_MODULATION))
 		static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+}
+
+void CInstrumentEditorFDS::OnBnClickedCopyWave()
+{
+	CString Str;
+
+	// Assemble a MML string
+	for (int i = 0; i < 64; ++i)
+		Str.AppendFormat(_T("%i "), m_pInstrument->GetSample(i));
+
+	if (!OpenClipboard())
+		return;
+
+	EmptyClipboard();
+
+	int size = Str.GetLength() + 1;
+	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);  
+	strcpy_s(lptstrCopy, size, Str.GetBuffer());
+	GlobalUnlock(hMem);
+	SetClipboardData(CF_TEXT, hMem);
+
+	CloseClipboard();	
+}
+
+void CInstrumentEditorFDS::OnBnClickedPasteWave()
+{
+	// Copy from clipboard
+	if (!OpenClipboard())
+		return;
+
+	HANDLE hMem = GetClipboardData(CF_TEXT);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);
+	string str(lptstrCopy);
+	GlobalUnlock(hMem);
+	CloseClipboard();
+
+	// Convert to register values
+	istringstream values(str);
+	istream_iterator<int> begin(values);
+	istream_iterator<int> end;
+
+	for (int i = 0; (i < 64) && (begin != end); ++i) {
+		int value = *begin++;
+		if (value >= 0 && value <= 63)
+			m_pInstrument->SetSample(i, value);
+	}
+
+	m_pWaveEditor->RedrawWindow();
+}
+
+void CInstrumentEditorFDS::OnBnClickedCopyTable()
+{
+	CString Str;
+
+	// Assemble a MML string
+	for (int i = 0; i < 32; ++i)
+		Str.AppendFormat(_T("%i "), m_pInstrument->GetModulation(i));
+
+	if (!OpenClipboard())
+		return;
+
+	EmptyClipboard();
+
+	int size = Str.GetLength() + 1;
+	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);  
+	strcpy_s(lptstrCopy, size, Str.GetBuffer());
+	GlobalUnlock(hMem);
+	SetClipboardData(CF_TEXT, hMem);
+
+	CloseClipboard();
+}
+
+void CInstrumentEditorFDS::OnBnClickedPasteTable()
+{
+	// Copy from clipboard
+	if (!OpenClipboard())
+		return;
+
+	HANDLE hMem = GetClipboardData(CF_TEXT);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);
+	string str(lptstrCopy);
+	GlobalUnlock(hMem);
+	CloseClipboard();
+
+	// Convert to register values
+	istringstream values(str);
+	istream_iterator<int> begin(values);
+	istream_iterator<int> end;
+
+	for (int i = 0; (i < 32) && (begin != end); ++i) {
+		int value = *begin++;
+		if (value >= 0 && value <= 7)
+			m_pInstrument->SetModulation(i, value);
+	}
+
+	m_pModSequenceEditor->RedrawWindow();
+}
+
+void CInstrumentEditorFDS::OnBnClickedEnableFm()
+{
+	/*
+	UINT button = IsDlgButtonChecked(IDC_ENABLE_FM);
+
+	EnableModControls(button == 1);
+	*/
+}
+
+void CInstrumentEditorFDS::EnableModControls(bool enable)
+{
+	if (!enable) {
+		GetDlgItem(IDC_MOD_RATE)->EnableWindow(FALSE);
+		GetDlgItem(IDC_MOD_DEPTH)->EnableWindow(FALSE);
+		GetDlgItem(IDC_MOD_DELAY)->EnableWindow(FALSE);
+		m_pInstrument->SetModulationEnable(false);
+	}
+	else {
+		GetDlgItem(IDC_MOD_RATE)->EnableWindow(TRUE);
+		GetDlgItem(IDC_MOD_DEPTH)->EnableWindow(TRUE);
+		GetDlgItem(IDC_MOD_DELAY)->EnableWindow(TRUE);
+		m_pInstrument->SetModulationEnable(true);
+	}
 }

@@ -28,18 +28,20 @@ const char TEST_WAVE[] = {
 	00, 01, 12, 22, 32, 36, 39, 39, 42, 47, 47, 50, 48, 51, 54, 58,
 	54, 55, 49, 50, 52, 61, 63, 63, 59, 56, 53, 51, 48, 47, 41, 35,
 	35, 35, 41, 47, 48, 51, 53, 56, 59, 63, 63, 61, 52, 50, 49, 55,
-	54, 58, 54, 51, 48, 50, 47, 47, 42, 39, 39, 36, 32, 22, 12, 01};
+	54, 58, 54, 51, 48, 50, 47, 47, 42, 39, 39, 36, 32, 22, 12, 01
+};
 
 const int FIXED_FDS_INST_SIZE = 1 + 16 + 4 + 1;
 
 CInstrumentFDS::CInstrumentFDS() : CInstrument(), m_bChanged(false)
 {
-	memcpy(m_iSamples, TEST_WAVE, 64);	
-	memset(m_iModulation, 0, 32);
+	memcpy(m_iSamples, TEST_WAVE, WAVE_SIZE);	
+	memset(m_iModulation, 0, MOD_SIZE);
 
-	m_iModulationFreq = 0;
+	m_iModulationSpeed = 0;
 	m_iModulationDepth = 0;
 	m_iModulationDelay = 0;
+	m_bModulationEnable = true;
 
 	m_pVolume = new CSequence();
 	m_pArpeggio = new CSequence();
@@ -58,11 +60,11 @@ CInstrument *CInstrumentFDS::Clone()
 	CInstrumentFDS *pNewInst = new CInstrumentFDS();
 
 	// Copy parameters
-	memcpy(pNewInst->m_iSamples, m_iSamples, 64);
-	memcpy(pNewInst->m_iModulation, m_iModulation, 32);
+	memcpy(pNewInst->m_iSamples, m_iSamples, WAVE_SIZE);
+	memcpy(pNewInst->m_iModulation, m_iModulation, MOD_SIZE);
 	pNewInst->m_iModulationDelay = m_iModulationDelay;
 	pNewInst->m_iModulationDepth = m_iModulationDepth;
-	pNewInst->m_iModulationFreq = m_iModulationFreq;
+	pNewInst->m_iModulationSpeed = m_iModulationSpeed;
 
 	// Copy sequences
 	pNewInst->m_pVolume->Copy(m_pVolume);
@@ -74,7 +76,6 @@ CInstrument *CInstrumentFDS::Clone()
 
 	return pNewInst;
 }
-
 
 void CInstrumentFDS::StoreInstSequence(CFile *pFile, CSequence *pSeq)
 {
@@ -119,10 +120,10 @@ bool CInstrumentFDS::LoadInstSequence(CFile *pFile, CSequence *pSeq)
 	pSeq->SetReleasePoint(ReleasePoint);
 	pSeq->SetSetting(Settings);
 
-	for (int x = 0; x < SeqCount; x++) {
+	for (int i = 0; i < SeqCount; ++i) {
 		char Value;
 		pFile->Read(&Value, 1);
-		pSeq->SetItem(x, Value);
+		pSeq->SetItem(i, Value);
 	}
 
 	return true;
@@ -175,17 +176,17 @@ bool CInstrumentFDS::LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 {
 	// Write wave
-	for (int i = 0; i < 64; ++i) {
+	for (int i = 0; i < WAVE_SIZE; ++i) {
 		pDocFile->WriteBlockChar(GetSample(i));
 	}
 
 	// Write modulation table
-	for (int i = 0; i < 32; ++i) {
+	for (int i = 0; i < MOD_SIZE; ++i) {
 		pDocFile->WriteBlockChar(GetModulation(i));
 	}
 
 	// Modulation parameters
-	pDocFile->WriteBlockInt(GetModulationFreq());
+	pDocFile->WriteBlockInt(GetModulationSpeed());
 	pDocFile->WriteBlockInt(GetModulationDepth());
 	pDocFile->WriteBlockInt(GetModulationDelay());
 
@@ -197,15 +198,15 @@ void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 
 bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 {
-	for (int i = 0; i < 64; ++i) {
+	for (int i = 0; i < WAVE_SIZE; ++i) {
 		SetSample(i, pDocFile->GetBlockChar());
 	}
 
-	for (int i = 0; i < 32; ++i) {
+	for (int i = 0; i < MOD_SIZE; ++i) {
 		SetModulation(i, pDocFile->GetBlockChar());
 	}
 
-	SetModulationFreq(pDocFile->GetBlockInt());
+	SetModulationSpeed(pDocFile->GetBlockInt());
 	SetModulationDepth(pDocFile->GetBlockInt());
 	SetModulationDelay(pDocFile->GetBlockInt());
 
@@ -228,6 +229,11 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 	else {
 		LoadSequence(pDocFile, m_pVolume);
 		LoadSequence(pDocFile, m_pArpeggio);
+		//
+		// Note: Remove this line when files are unable to load 
+		// (if a file contains FDS instruments but FDS is disabled)
+		// this was a problem in an earlier version.
+		//
 		if (pDocFile->GetBlockVersion() > 2)
 			LoadSequence(pDocFile, m_pPitch);
 	}
@@ -245,23 +251,21 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 
 void CInstrumentFDS::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
-	int i;
-
 	// Write wave
-	for (i = 0; i < 64; i++) {
+	for (int i = 0; i < WAVE_SIZE; ++i) {
 		char sample = GetSample(i);
 		pFile->Write(&sample, 1);
 	}
 
 	// Write modulation table
-	for (i = 0; i < 32; i++) {
+	for (int i = 0; i < MOD_SIZE; ++i) {
 		char mod = GetModulation(i);
 		pFile->Write(&mod, 1);
 	}
 
 	// Modulation parameters
 	int data;
-	data = GetModulationFreq();
+	data = GetModulationSpeed();
 	pFile->Write(&data, sizeof(int));
 	data = GetModulationDepth();
 	pFile->Write(&data, sizeof(int));
@@ -277,14 +281,14 @@ void CInstrumentFDS::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 bool CInstrumentFDS::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
 	// Read wave
-	for (int i = 0; i < 64; i++) {
+	for (int i = 0; i < WAVE_SIZE; ++i) {
 		char sample;
 		pFile->Read(&sample, 1);
 		SetSample(i, sample);
 	}
 
 	// Read modulation table
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < MOD_SIZE; ++i) {
 		char mod;
 		pFile->Read(&mod, 1);
 		SetModulation(i, mod);
@@ -293,7 +297,7 @@ bool CInstrumentFDS::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 	// Modulation parameters
 	int data;
 	pFile->Read(&data, sizeof(int));
-	SetModulationFreq(data);
+	SetModulationSpeed(data);
 	pFile->Read(&data, sizeof(int));
 	SetModulationDepth(data);
 	pFile->Read(&data, sizeof(int));
@@ -323,8 +327,6 @@ int CInstrumentFDS::CompileSize(CCompiler *pCompiler)
 
 int CInstrumentFDS::Compile(CCompiler *pCompiler, int Index)
 {
-	char Data;
-
 	pCompiler->WriteLog("FDS {");
 
 	// Store wave
@@ -335,13 +337,13 @@ int CInstrumentFDS::Compile(CCompiler *pCompiler, int Index)
 
 	// Store modulation table, two entries/byte
 	for (int i = 0; i < 16; ++i) {
-		Data = GetModulation(i << 1) | (GetModulation((i << 1) + 1) << 3);
+		char Data = GetModulation(i << 1) | (GetModulation((i << 1) + 1) << 3);
 		pCompiler->StoreByte(Data);
 	}
 
 	pCompiler->StoreByte(GetModulationDelay());
 	pCompiler->StoreByte(GetModulationDepth());
-	pCompiler->StoreShort(GetModulationFreq());
+	pCompiler->StoreShort(GetModulationSpeed());
 
 	// Store sequences
 	char Switch = (m_pVolume->GetItemCount() > 0 ? 1 : 0) | (m_pArpeggio->GetItemCount() > 0 ? 2 : 0) | (m_pPitch->GetItemCount() > 0 ? 4 : 0);
@@ -361,6 +363,11 @@ int CInstrumentFDS::Compile(CCompiler *pCompiler, int Index)
 		pCompiler->StoreShort(pCompiler->GetSequenceAddressFDS(Index, 2));
 
 	return CompileSize(pCompiler);
+}
+
+bool CInstrumentFDS::CanRelease() const
+{
+	return false; // TODO
 }
 
 bool CInstrumentFDS::HasChanged()
@@ -392,14 +399,14 @@ void CInstrumentFDS::SetModulation(int Index, int Value)
 	m_bChanged = true;
 }
 
-int CInstrumentFDS::GetModulationFreq() const
+int CInstrumentFDS::GetModulationSpeed() const
 {
-	return m_iModulationFreq;
+	return m_iModulationSpeed;
 }
 
-void CInstrumentFDS::SetModulationFreq(int Freq)
+void CInstrumentFDS::SetModulationSpeed(int Speed)
 {
-	m_iModulationFreq = Freq;
+	m_iModulationSpeed = Speed;
 	m_bChanged = true;
 }
 
@@ -438,4 +445,14 @@ CSequence* CInstrumentFDS::GetArpSeq() const
 CSequence* CInstrumentFDS::GetPitchSeq() const
 {
 	return m_pPitch;
+}
+
+bool CInstrumentFDS::GetModulationEnable() const
+{
+	return m_bModulationEnable;
+}
+
+void CInstrumentFDS::SetModulationEnable(bool Enable)
+{
+	m_bModulationEnable = Enable;
 }

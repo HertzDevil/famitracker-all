@@ -30,7 +30,7 @@
 
 class CSquare : public CChannel {
 public:
-	CSquare(CMixer *pMixer, int ID);
+	CSquare(CMixer *pMixer, int ID, int Chip);
 	~CSquare();
 
 	void	Reset();
@@ -40,7 +40,7 @@ public:
 	void	Process(uint32 Time);
 
 	void	LengthCounterUpdate();
-	void	SweepUpdate(bool First);
+	void	SweepUpdate(int Diff);
 	void	EnvelopeUpdate();
 
 public:

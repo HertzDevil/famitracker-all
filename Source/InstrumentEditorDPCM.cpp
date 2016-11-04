@@ -126,7 +126,6 @@ BOOL CInstrumentEditorDPCM::OnInitDialog()
 
 	CComboBox *pPitch, *pOctave;
 	CString Text;
-	int i;
 
 	m_iOctave = 3;
 	m_iSelectedKey = 0;
@@ -150,14 +149,14 @@ BOOL CInstrumentEditorDPCM::OnInitDialog()
 
 //	m_pSampleListCtrl->OnFile
 
-	for (i = 0; i < 16; i++) {
+	for (int i = 0; i < 16; ++i) {
 		Text.Format(_T("%i"), i);
 		pPitch->AddString(Text);
 	}
 
 	pPitch->SetCurSel(15);
 
-	for (i = 0; i < OCTAVE_RANGE; i++) {
+	for (int i = 0; i < OCTAVE_RANGE; ++i) {
 		Text.Format(_T("%i"), i);
 		pOctave->AddString(Text);
 	}
@@ -166,7 +165,7 @@ BOOL CInstrumentEditorDPCM::OnInitDialog()
 	CheckDlgButton(IDC_LOOP, 0);
 	m_pTableListCtrl->DeleteAllItems();
 
-	for (i = 0; i < 12; i++)
+	for (int i = 0; i < 12; ++i)
 		m_pTableListCtrl->InsertItem(i, KEY_NAMES[i], 0);
 
 	BuildSampleList();
@@ -247,7 +246,7 @@ void CInstrumentEditorDPCM::BuildSampleList()
 
 // When saved in NSF, the samples has to be aligned at even 6-bits addresses
 //#define ADJUST_FOR_STORAGE(x) (((x >> 6) + (x & 0x3F ? 1 : 0)) << 6)
-// Todo: I think I was wrong
+// TODO: I think I was wrong
 #define ADJUST_FOR_STORAGE(x) (x)
 
 bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
@@ -264,11 +263,18 @@ bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
 	if (pNewSample != NULL) {
 		strcpy(pNewSample->Name, FileName);
 		int Size = (int)SampleFile.GetLength();
+		int AddSize = 0;
 		// Clip file if too large
 		Size = min(Size, CDSample::MAX_SIZE);
-		pNewSample->SampleSize = Size;
-		pNewSample->SampleData = new char[Size];
-		SampleFile.Read(pNewSample->SampleData, pNewSample->SampleSize);
+		// Make sure size is compatible with DPCM hardware
+		if ((Size & 0xF) != 1) {
+			AfxMessageBox("The sample size has been adjusted to fit the DPCM hardware limitations.");
+			AddSize = 0x10 - ((Size + 0x0F) & 0x0F);
+		}
+		pNewSample->SampleSize = Size + AddSize;
+		pNewSample->SampleData = new char[Size + AddSize];
+		SampleFile.Read(pNewSample->SampleData, Size);
+		memset(pNewSample->SampleData + Size, 0xAA, AddSize);
 		if (!InsertSample(pNewSample))
 			return false;
 	}
@@ -281,7 +287,6 @@ bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
 
 bool CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
 {	
-	int Size(0);
 	int FreeSlot = GetDocument()->GetFreeDSample();
 
 	// Out of sample slots
@@ -292,10 +297,9 @@ bool CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
 
 	CDSample *pFreeSample = GetDocument()->GetDSample(FreeSlot);
 
-	for (int i = 0; i < MAX_DSAMPLES; ++i)
-		Size += ADJUST_FOR_STORAGE(GetDocument()->GetDSample(i)->SampleSize);
+	int Size = GetDocument()->GetTotalSampleSize();
 	
-	if ((Size + pNewSample->SampleSize) > 0x4000) {
+	if ((Size + pNewSample->SampleSize) > MAX_SAMPLE_SPACE) {
 		AfxMessageBox(IDS_OUT_OF_SAMPLEMEM, MB_ICONERROR);
 	}
 	else {
@@ -654,7 +658,7 @@ void CInstrumentEditorDPCM::OnLvnItemchangedSampleList(NMHDR *pNMHDR, LRESULT *p
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	// TODO: Add your control notification handler code here
-	// Todo: save current item
+	// TODO: save current item
 	*pResult = 0;
 }
 

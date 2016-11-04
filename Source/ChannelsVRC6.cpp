@@ -26,17 +26,19 @@
 #include "ChannelHandler.h"
 #include "ChannelsVRC6.h"
 
+CChannelHandlerVRC6::CChannelHandlerVRC6() : CChannelHandler() 
+{
+	SetMaxPeriod(0xFFF);
+}
+
 void CChannelHandlerVRC6::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
-	CInstrumentVRC6 *pInst;
+	CInstrumentVRC6 *pInstrument;
 	int PostEffect = 0, PostEffectParam;
 
 	int LastInstrument = m_iInstrument;
 
 	if (!CChannelHandler::CheckNote(pNoteData, INST_VRC6))
-		return;
-
-	if ((pInst = (CInstrumentVRC6*)m_pDocument->GetInstrument(m_iInstrument)) == NULL)
 		return;
 
 	unsigned int Note, Octave;
@@ -78,11 +80,16 @@ void CChannelHandlerVRC6::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		}
 	}
 
+	pInstrument = (CInstrumentVRC6*)m_pDocument->GetInstrument(m_iInstrument);
+
+	if (!pInstrument)
+		return;
+
 	if (LastInstrument != m_iInstrument || Note > 0 && Note != HALT && Note != RELEASE) {
 		// Setup instrument
-		for (int i = 0; i < SEQ_COUNT; i++) {
-			m_iSeqEnabled[i] = pInst->GetSeqEnable(i);
-			m_iSeqIndex[i]	 = pInst->GetSeqIndex(i);
+		for (int i = 0; i < CInstrumentVRC6::SEQUENCE_COUNT; ++i) {
+			m_iSeqEnabled[i] = pInstrument->GetSeqEnable(i);
+			m_iSeqIndex[i]	 = pInstrument->GetSeqIndex(i);
 			m_iSeqPointer[i] = 0;
 		}
 	}
@@ -101,16 +108,16 @@ void CChannelHandlerVRC6::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		return;
 
 	if (!m_bRelease) {
-
 		// Get the note
 		m_iNote				= RunNote(Octave, Note);
-		m_iOutVol			= 0xF;
+		m_iSeqVolume		= 0xF;
 		m_iDutyPeriod		= m_iDefaultDuty;
 		m_bEnabled			= true;
 		m_iLastInstrument	= m_iInstrument;
 	}
 	else {
 		ReleaseNote();
+		ReleaseSequences(SNDCHIP_VRC6);
 	}
 
 	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
@@ -129,22 +136,13 @@ void CChannelHandlerVRC6::ProcessChannel()
 		return;
 
 	// Sequences
-	for (int i = 0; i < SEQ_COUNT; i++)
-		CChannelHandler::RunSequence(i, m_pDocument->GetSequenceVRC6(m_iSeqIndex[i], i));
+	for (int i = 0; i < CInstrumentVRC6::SEQUENCE_COUNT; ++i)
+		CChannelHandler::RunSequence(i, m_pDocument->GetSequence(SNDCHIP_VRC6, m_iSeqIndex[i], CInstrumentVRC6::SEQUENCE_TYPES[i]));
 }
 
 void CChannelHandlerVRC6::ResetChannel()
 {
 	CChannelHandler::ResetChannel();
-}
-
-int CChannelHandlerVRC6::LimitFreq(int Freq)
-{
-	if (Freq > 0xFFF)
-		Freq = 0xFFF;
-	if (Freq < 0)
-		Freq = 0;
-	return Freq;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,30 +151,15 @@ int CChannelHandlerVRC6::LimitFreq(int Freq)
 
 void CVRC6Square1::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	char DutyCycle = m_iDutyPeriod << 4;
-	int Volume, Freq, VibFreq, TremVol;
-
 	if (!m_bEnabled)
 		return;
 
-	VibFreq = GetVibrato();
-	TremVol = GetTremolo();
+	unsigned int Period = CalculatePeriod();
+	unsigned int Volume = CalculateVolume(15);
+	unsigned char DutyCycle = m_iDutyPeriod << 4;
 
-	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
-
-	HiFreq = (Freq & 0xFF);
-	LoFreq = (Freq >> 8);
-
-	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-	if (Volume < 0)
-		Volume = 0;
-	if (Volume > 15)
-		Volume = 15;
-
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
+	unsigned char HiFreq = (Period & 0xFF);
+	unsigned char LoFreq = (Period >> 8);
 
 	m_pAPU->ExternalWrite(0x9000, DutyCycle | Volume);
 	m_pAPU->ExternalWrite(0x9001, HiFreq);
@@ -196,30 +179,15 @@ void CVRC6Square1::ClearRegisters()
 
 void CVRC6Square2::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	char DutyCycle = m_iDutyPeriod << 4;
-	int Volume, Freq, VibFreq, TremVol;
-
 	if (!m_bEnabled)
 		return;
 
-	VibFreq = GetVibrato();
-	TremVol = GetTremolo();
+	unsigned int Period = CalculatePeriod();
+	unsigned int Volume = CalculateVolume(15);
+	unsigned char DutyCycle = m_iDutyPeriod << 4;
 
-	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
-
-	HiFreq = (Freq & 0xFF);
-	LoFreq = (Freq >> 8);
-
-	Volume	= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-	if (Volume < 0)
-		Volume = 0;
-	if (Volume > 15)
-		Volume = 15;
-
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
+	unsigned char HiFreq = (Period & 0xFF);
+	unsigned char LoFreq = (Period >> 8);
 
 	m_pAPU->ExternalWrite(0xA000, DutyCycle | Volume);
 	m_pAPU->ExternalWrite(0xA001, HiFreq);
@@ -239,21 +207,16 @@ void CVRC6Square2::ClearRegisters()
 
 void CVRC6Sawtooth::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	int Volume, Freq, VibFreq, TremVol;
-
 	if (!m_bEnabled)
 		return;
 
-	VibFreq = GetVibrato();
-	TremVol = GetTremolo();
+	unsigned int Period = CalculatePeriod();
 
-	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
+	unsigned char HiFreq = (Period & 0xFF);
+	unsigned char LoFreq = (Period >> 8);
 
-	HiFreq = (Freq & 0xFF);
-	LoFreq = (Freq >> 8);
-
-	Volume = (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
+	unsigned int TremVol = GetTremolo();
+	unsigned int Volume = (m_iSeqVolume * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
 
 	Volume = (Volume << 1) | ((m_iDutyPeriod & 1) << 5);
 
@@ -262,7 +225,7 @@ void CVRC6Sawtooth::RefreshChannel()
 	if (Volume > 63)
 		Volume = 63;
 
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
+	if (m_iSeqVolume > 0 && m_iVolume > 0 && Volume == 0)
 		Volume = 1;
 
 	m_pAPU->ExternalWrite(0xB000, Volume);

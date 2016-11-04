@@ -139,7 +139,7 @@
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				DebugInformationFormat="0"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -160,6 +160,7 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
+				GenerateMapFile="false"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -187,91 +188,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release_upx|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="false"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
-				MinimalRebuild="false"
-				RuntimeLibrary="0"
-				TreatWChar_tAsBuiltInType="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="D:\Program\upx303w\upx.exe $(OutDir)\$(ProjectName).exe"
 			/>
 		</Configuration>
 	</Configurations>
@@ -330,14 +246,6 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Source\FamiTrackerView.cpp"
@@ -358,14 +266,10 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Source\Graphics.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\Source\MainFrm.cpp"
@@ -380,14 +284,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -418,14 +314,6 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Source\stdafx.cpp"
@@ -440,14 +328,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -471,6 +351,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Source\ChannelsDlg.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\DialogReBar.cpp"
 					>
 				</File>
@@ -491,14 +375,6 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -529,14 +405,6 @@
 							ObjectFile="$(IntDir)/$(InputName)1.obj"
 						/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\Source\SpeedDlg.cpp"
@@ -551,14 +419,6 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -588,14 +448,6 @@
 								ObjectFile="$(IntDir)/$(InputName)1.obj"
 							/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath=".\Source\ConfigGeneral.cpp"
@@ -616,14 +468,6 @@
 								ObjectFile="$(IntDir)/$(InputName)1.obj"
 							/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath=".\Source\ConfigMIDI.cpp"
@@ -638,14 +482,6 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -680,14 +516,6 @@
 								ObjectFile="$(IntDir)/$(InputName)1.obj"
 							/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter
@@ -706,14 +534,6 @@
 						</FileConfiguration>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_upx|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -741,14 +561,6 @@
 							</FileConfiguration>
 							<FileConfiguration
 								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									ObjectFile="$(IntDir)/$(InputName)1.obj"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Release_upx|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -811,14 +623,6 @@
 									ObjectFile="$(IntDir)/$(InputName)1.obj"
 								/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="Release_upx|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									ObjectFile="$(IntDir)/$(InputName)1.obj"
-								/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath=".\Source\InstrumentEditorFDS.cpp"
@@ -830,6 +634,14 @@
 						</File>
 						<File
 							RelativePath=".\Source\InstrumentEditorN106.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorN106Wave.cpp"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorS5B.cpp"
 							>
 						</File>
 						<File
@@ -906,15 +718,15 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\Instrument5B.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\Source\InstrumentFDS.cpp"
 						>
 					</File>
 					<File
 						RelativePath=".\Source\InstrumentN106.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\InstrumentS5B.cpp"
 						>
 					</File>
 					<File
@@ -939,14 +751,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -997,7 +801,7 @@
 						Name="Internal"
 						>
 						<File
-							RelativePath=".\Source\Apu\Dpcm.cpp"
+							RelativePath=".\Source\Apu\DPCM.cpp"
 							>
 						</File>
 						<File
@@ -1014,10 +818,10 @@
 						</File>
 					</Filter>
 					<Filter
-						Name="External"
+						Name="Expansion"
 						>
 						<File
-							RelativePath=".\Source\APU\FDS2.cpp"
+							RelativePath=".\Source\APU\FDS.cpp"
 							>
 						</File>
 						<File
@@ -1029,6 +833,10 @@
 							>
 						</File>
 						<File
+							RelativePath=".\Source\APU\S5B.cpp"
+							>
+						</File>
+						<File
 							RelativePath=".\Source\Apu\VRC6.cpp"
 							>
 						</File>
@@ -1037,10 +845,18 @@
 							>
 						</File>
 						<Filter
-							Name="OPLL"
+							Name="External"
 							>
 							<File
+								RelativePath=".\Source\APU\emu2149.c"
+								>
+							</File>
+							<File
 								RelativePath=".\Source\APU\emu2413.c"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\APU\FDSSound.cpp"
 								>
 							</File>
 						</Filter>
@@ -1066,10 +882,6 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\Channels5B.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\Source\ChannelsFDS.cpp"
 						>
 					</File>
@@ -1079,6 +891,10 @@
 					</File>
 					<File
 						RelativePath=".\Source\ChannelsN106.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsS5B.cpp"
 						>
 					</File>
 					<File
@@ -1121,14 +937,6 @@
 							ObjectFile="$(IntDir)/$(InputName)1.obj"
 						/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"
-						/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\Source\MIDIImport.cpp"
@@ -1143,14 +951,6 @@
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)/$(InputName)1.obj"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_upx|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1210,6 +1010,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\Graphics.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\MainFrm.h"
 				>
 			</File>
@@ -1220,6 +1024,26 @@
 			<File
 				RelativePath=".\resource.h"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;&#x0D;&#x0A;"
+						Outputs="hlp\HTMLDefines.h"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\Source\Settings.h"
@@ -1288,7 +1112,7 @@
 						</File>
 					</Filter>
 					<Filter
-						Name="External Headers"
+						Name="Expansion Headers"
 						>
 						<File
 							RelativePath=".\Source\Apu\External.h"
@@ -1307,7 +1131,11 @@
 							>
 						</File>
 						<File
-							RelativePath=".\Source\Apu\Vrc6.h"
+							RelativePath=".\Source\APU\S5B.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\Apu\VRC6.h"
 							>
 						</File>
 						<File
@@ -1315,14 +1143,22 @@
 							>
 						</File>
 						<Filter
-							Name="OPLL"
+							Name="External"
 							>
 							<File
 								RelativePath=".\Source\APU\2413tone.h"
 								>
 							</File>
 							<File
+								RelativePath=".\Source\APU\emu2149.h"
+								>
+							</File>
+							<File
 								RelativePath=".\Source\APU\emu2413.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\APU\FDSSound.h"
 								>
 							</File>
 							<File
@@ -1352,10 +1188,6 @@
 						>
 					</File>
 					<File
-						RelativePath=".\Source\Channels5B.h"
-						>
-					</File>
-					<File
 						RelativePath=".\Source\ChannelsFDS.h"
 						>
 					</File>
@@ -1365,6 +1197,10 @@
 					</File>
 					<File
 						RelativePath=".\Source\ChannelsN106.h"
+						>
+					</File>
+					<File
+						RelativePath=".\Source\ChannelsS5B.h"
 						>
 					</File>
 					<File
@@ -1382,6 +1218,10 @@
 				>
 				<File
 					RelativePath=".\Source\AboutDlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\ChannelsDlg.h"
 					>
 				</File>
 				<File
@@ -1512,6 +1352,14 @@
 						</File>
 						<File
 							RelativePath=".\Source\InstrumentEditorN106.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorN106Wave.h"
+							>
+						</File>
+						<File
+							RelativePath=".\Source\InstrumentEditorS5B.h"
 							>
 						</File>
 						<File
@@ -1729,11 +1577,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Toolbar-d5.bmp"
+				RelativePath=".\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
-				RelativePath=".\Toolbar-d5.bmp"
+				RelativePath=".\res\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
@@ -1773,17 +1621,6 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Making help file..."
-						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;&#x0D;&#x0A;if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
-						Outputs="$(OutDir)\$(ProjectName).chm"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_upx|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
@@ -1935,6 +1772,35 @@
 					DeploymentContent="true"
 					>
 				</File>
+				<Filter
+					Name="Configuration"
+					>
+					<File
+						RelativePath=".\hlp\config_appearance.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\config_audio.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\config_general.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\config_midi.htm"
+						DeploymentContent="true"
+						>
+					</File>
+					<File
+						RelativePath=".\hlp\config_shortcuts.htm"
+						DeploymentContent="true"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 		<Filter
@@ -2004,14 +1870,6 @@
 					Name="VCCustomBuildTool"
 				/>
 			</FileConfiguration>
-			<FileConfiguration
-				Name="Release_upx|Win32"
-				ExcludedFromBuild="true"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-				/>
-			</FileConfiguration>
 		</File>
 		<File
 			RelativePath=".\FamiTracker.reg"
@@ -2019,10 +1877,6 @@
 		</File>
 		<File
 			RelativePath=".\Texts\FastTracker effects.txt"
-			>
-		</File>
-		<File
-			RelativePath=".\FTM documentation.txt"
 			>
 		</File>
 		<File

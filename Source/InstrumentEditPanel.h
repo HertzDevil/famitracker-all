@@ -29,8 +29,8 @@ class CInstrumentEditPanel : public CDialog
 public:
 	CInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditPanel();
-	virtual int GetIDD() = 0;
-	virtual TCHAR *GetTitle() = 0;
+	virtual int GetIDD() const = 0;
+	virtual TCHAR *GetTitle() const = 0;
 
 	// These must be implemented
 	virtual void SelectInstrument(int Instrument) = 0;

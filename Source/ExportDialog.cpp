@@ -38,17 +38,26 @@ const LPTSTR CExportDialog::DEFAULT_EXPORT_NAMES[] = {
 	_T("NES - iNES ROM image"),
 	_T("BIN - Raw music data"),
 	_T("PRG - Clean 32kB ROM image"),
+//	_T("ASM - Assembly source"),
 };
 
 const exportFunc_t CExportDialog::DEFAULT_EXPORT_FUNCS[] = {
 	&CExportDialog::CreateNSF,
 	&CExportDialog::CreateNES,
 	&CExportDialog::CreateBIN,
-	&CExportDialog::CreatePRG
+	&CExportDialog::CreatePRG,
+//	&CExportDialog::CreateASM,
 };
 
+/*
+#ifdef _DEBUG
+const int CExportDialog::DEFAULT_EXPORTERS = 5;
+#else
+*/
 const int CExportDialog::DEFAULT_EXPORTERS = 4;
-
+/*
+#endif
+*/
 // Remember last option when dialog is closed
 int CExportDialog::m_iExportOption = 0;
 

@@ -64,7 +64,8 @@ public:
 		{ return GetPatternData(Channel, Pattern, Row)->EffParam[Column]; };
 
 	bool IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row);
-	bool IsPatternFree(unsigned int Channel, unsigned int Pattern);
+	bool IsPatternEmpty(unsigned int Channel, unsigned int Pattern);
+	bool IsPatternInUse(unsigned int Channel, unsigned int Pattern);
 
 	int GetEffectColumnCount(int Channel) const
 		{ return m_iEffectColumns[Channel]; };

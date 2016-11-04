@@ -42,7 +42,7 @@ public:
 	static const int CHIP_COUNT = 8;	// Number of allowed expansion chips
 
 protected:
-	void AddChip(LPCTSTR pName, int Ident, CInstrument *pInst);
+	void AddChip(int Ident, CInstrument *pInst, LPCTSTR pName);
 
 protected:
 	// Chips

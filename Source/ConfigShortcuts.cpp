@@ -27,16 +27,18 @@
 
 // CConfigShortcuts dialog
 
-CAccelerator Accelerator;
-
 IMPLEMENT_DYNAMIC(CConfigShortcuts, CPropertyPage)
 CConfigShortcuts::CConfigShortcuts()
-	: CPropertyPage(CConfigShortcuts::IDD)
+	: CPropertyPage(CConfigShortcuts::IDD), m_bShift(false), m_bControl(false), m_bAlt(false)
 {
+	m_iKeys = new int[CAccelerator::ACCEL_COUNT];
+	m_iMods = new int[CAccelerator::ACCEL_COUNT];
 }
 
 CConfigShortcuts::~CConfigShortcuts()
 {
+	SAFE_RELEASE_ARRAY(m_iKeys);
+	SAFE_RELEASE_ARRAY(m_iMods);
 }
 
 void CConfigShortcuts::DoDataExchange(CDataExchange* pDX)
@@ -46,11 +48,9 @@ void CConfigShortcuts::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CConfigShortcuts, CPropertyPage)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_SHORTCUTS, OnLvnItemchangedShortcuts)
 	ON_NOTIFY(NM_CLICK, IDC_SHORTCUTS, OnNMClickShortcuts)
-	ON_CBN_SELCHANGE(IDC_MODIFIERS, OnCbnSelchangeModifiers)
-	ON_CBN_SELCHANGE(IDC_KEYS, OnCbnSelchangeKeys)
 	ON_BN_CLICKED(IDC_DEFAULT, OnBnClickedDefault)
+	ON_BN_CLICKED(IDC_CLEAR, &CConfigShortcuts::OnBnClickedClear)
 END_MESSAGE_MAP()
 
 
@@ -62,43 +62,24 @@ BOOL CConfigShortcuts::OnInitDialog()
 
 	CAccelerator *pAccel = theApp.GetAccelerator();
 	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	CComboBox *pModifiers = (CComboBox*)GetDlgItem(IDC_MODIFIERS);
-	CComboBox *pKeys = (CComboBox*)GetDlgItem(IDC_KEYS);
 
 	pListView->DeleteAllItems();
 	pListView->InsertColumn(0, _T("Action"), LVCFMT_LEFT, 170);
-	pListView->InsertColumn(1, _T("Modifier"), LVCFMT_LEFT, 105);
-	pListView->InsertColumn(2, _T("Key"), LVCFMT_LEFT, 75);
+	pListView->InsertColumn(1, _T("Modifier"), LVCFMT_LEFT, 90);
+	pListView->InsertColumn(2, _T("Key"), LVCFMT_LEFT, 110);
 
-	int Count = Accelerator.GetItemCount();
+	// Build shortcut list
+	for (int i = 0; i < CAccelerator::ACCEL_COUNT; ++i) {
+		pListView->InsertItem(i, pAccel->GetItemName(i), 0);
+		pListView->SetItemText(i, 1, pAccel->GetItemModName(i));
+		pListView->SetItemText(i, 2, pAccel->GetItemKeyName(i));
 
-	for (int i = 0; i < Count; i++) {
-		pListView->InsertItem(i, Accelerator.GetItemName(i), 0);
-		pListView->SetItemText(i, 1, Accelerator.GetModName(i));
-		pListView->SetItemText(i, 2, Accelerator.GetKeyName(i));
-	}
-
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_NONE]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_SHIFT]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_CONTROL]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_CONTROL]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_SHIFT]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_CONTROL | MOD_SHIFT]);
-	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_CONTROL | MOD_SHIFT]);
-
-	pKeys->AddString(_T("None"));
-
-	for (int i = 0; i < 0xFF; i++) {
-		LPCTSTR Name = Accelerator.EnumKeyNames(i);
-		if (_tcslen(Name) > 0)
-			pKeys->AddString(Name);
+		m_iKeys[i] = pAccel->GetItemKey(i);
+		m_iMods[i] = pAccel->GetItemMod(i);
 	}
 	
 	pListView->SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	pListView->SetSelectionMark(0);
-	pModifiers->SetCurSel(0);
-	pKeys->SetCurSel(0);
 
 	m_iSelectedItem = 0;
 
@@ -106,69 +87,32 @@ BOOL CConfigShortcuts::OnInitDialog()
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void CConfigShortcuts::OnLvnItemchangedShortcuts(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	// TODO: Add your control notification handler code here
-	*pResult = 0;
-}
-
 void CConfigShortcuts::OnNMClickShortcuts(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	CAccelerator *pAccel = theApp.GetAccelerator();
 	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	CComboBox *pModifiers = (CComboBox*)GetDlgItem(IDC_MODIFIERS);
-	CComboBox *pKeys = (CComboBox*)GetDlgItem(IDC_KEYS);
-
 	m_iSelectedItem = pListView->GetSelectionMark();
-
-	CString Name = pListView->GetItemText(m_iSelectedItem, 0);
-
-	int Item = pAccel->GetItem(Name);
-
-	if (Item == -1)
-		return;
-
-	pModifiers->SetCurSel(pModifiers->FindStringExact(/*-1*/0, pAccel->GetModName(Item)));
-	pKeys->SetCurSel(pKeys->FindStringExact(0, pAccel->GetKeyName(Item)));
+	CString KeyString = AssembleKeyString(m_iMods[m_iSelectedItem], m_iKeys[m_iSelectedItem]);
+	SetDlgItemText(IDC_KEY, KeyString);
 
 	*pResult = 0;
-}
-
-void CConfigShortcuts::OnCbnSelchangeModifiers()
-{
-	CAccelerator *pAccel = theApp.GetAccelerator();
-	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	CComboBox *pModifiers = (CComboBox*)GetDlgItem(IDC_MODIFIERS);
-	CString ModText;
-
-	int CurrentMod = pModifiers->GetCurSel();
-
-	pModifiers->GetLBText(CurrentMod, ModText);
-	pListView->SetItemText(m_iSelectedItem, 1, ModText);
-
-//	pAccel->SelectMod(m_iSelectedItem, CurrentMod);
-	SetModified();
-}
-
-void CConfigShortcuts::OnCbnSelchangeKeys()
-{
-	CAccelerator *pAccel = theApp.GetAccelerator();
-	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	CComboBox *pKeys = (CComboBox*)GetDlgItem(IDC_KEYS);
-
-	int CurrentKey = pKeys->GetCurSel();
-	CString KeyText;
-
-	pKeys->GetLBText(CurrentKey, KeyText);
-	pListView->SetItemText(m_iSelectedItem, 2, KeyText);
-
-//	pAccel->SelectKey(m_iSelectedItem, KeyText);
-	SetModified();
 }
 
 void CConfigShortcuts::OnBnClickedDefault()
 {
+	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
+	CAccelerator *pAccel = theApp.GetAccelerator();
+	
+	int Key = pAccel->GetDefaultKey(m_iSelectedItem);
+	int Mod = pAccel->GetDefaultMod(m_iSelectedItem);
+
+	StoreKey(m_iSelectedItem, Key, Mod);
+
+	CString KeyString = AssembleKeyString(Mod, Key);
+	SetDlgItemText(IDC_KEY, KeyString);
+
+	SetModified();
+
+	/*
 	CAccelerator *pAccel = theApp.GetAccelerator();
 	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
 	
@@ -181,32 +125,141 @@ void CConfigShortcuts::OnBnClickedDefault()
 
 	int Count = Accelerator.GetItemCount();
 
-	for (int i = 0; i < Count; i++) {
+	for (int i = 0; i < Count; ++i) {
 		pListView->InsertItem(i, Accelerator.GetItemName(i), 0);
 		pListView->SetItemText(i, 1, Accelerator.GetModName(i));
 		pListView->SetItemText(i, 2, Accelerator.GetKeyName(i));
 	}
+	*/
 }
 
 BOOL CConfigShortcuts::OnApply()
 {
 	CAccelerator *pAccel = theApp.GetAccelerator();
 	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
-	
-	int Count = Accelerator.GetItemCount();
 
-	for (int i = 0; i < Count; i++) {
-		CString ModTxt = pListView->GetItemText(i, 1);
-
-		for (int j = 0; j < 7; ++j) {
-			if (ModTxt == CAccelerator::MOD_NAMES[j]) {
-				pAccel->SelectMod(i, j);
-				break;
-			}
-		}
-
-		pAccel->SelectKey(i, pListView->GetItemText(i, 2));
-	}
+	// Store keys
+	for (int i = 0; i < CAccelerator::ACCEL_COUNT; ++i)
+		pAccel->StoreShortcut(i, m_iKeys[i], m_iMods[i]);
 
 	return CPropertyPage::OnApply();
+}
+
+BOOL CConfigShortcuts::PreTranslateMessage(MSG* pMsg)
+{
+	if (GetFocus() == GetDlgItem(IDC_KEY)) {
+		switch (pMsg->message) {
+			case WM_KEYDOWN:
+			case WM_SYSKEYDOWN:
+				KeyPressed(pMsg->wParam);
+				return TRUE;
+			case WM_KEYUP:
+			case WM_SYSKEYUP:
+				KeyReleased(pMsg->wParam);
+				return TRUE;
+		}
+	}
+
+	return CPropertyPage::PreTranslateMessage(pMsg);
+}
+
+void CConfigShortcuts::KeyPressed(int Key)
+{
+	switch (Key) {
+		case VK_SHIFT:
+			m_bShift = true;
+			return;
+		case VK_CONTROL:
+			m_bControl = true;
+			return;
+		case VK_MENU:
+			m_bAlt = true;
+			return;
+	}
+
+	SetupKey(Key);
+}
+
+void CConfigShortcuts::KeyReleased(int Key)
+{
+	switch (Key) {
+		case VK_SHIFT:
+			m_bShift = false;
+			break;
+		case VK_CONTROL:
+			m_bControl = false;
+			break;
+		case VK_MENU:
+			m_bAlt = false;
+			break;
+	}
+}
+
+void CConfigShortcuts::SetupKey(int Key)
+{
+	int Mod = (m_bShift ? MOD_SHIFT : 0) | (m_bControl ? MOD_CONTROL : 0) | (m_bAlt ? MOD_ALT : 0);
+
+	StoreKey(m_iSelectedItem, Key, Mod);
+
+	// Display key
+	CString KeyStr = AssembleKeyString(Mod, Key);
+	SetDlgItemText(IDC_KEY, KeyStr);
+
+	SetModified();
+}
+
+void CConfigShortcuts::StoreKey(int Item, int Key, int Mod)
+{
+	// Store in temp. list
+	CAccelerator *pAccel = theApp.GetAccelerator();
+	CString KeyName = pAccel->GetVKeyName(Key);
+
+	// Save to list
+	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
+
+	pListView->SetItemText(m_iSelectedItem, 1, CAccelerator::MOD_NAMES[Mod]);
+	pListView->SetItemText(m_iSelectedItem, 2, KeyName);
+
+	m_iKeys[Item] = Key;
+	m_iMods[Item] = Mod;
+}
+
+void CConfigShortcuts::OnBnClickedClear()
+{
+	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
+	
+	pListView->SetItemText(m_iSelectedItem, 1, CAccelerator::MOD_NAMES[MOD_NONE]);
+	pListView->SetItemText(m_iSelectedItem, 2, _T("None"));
+
+	SetDlgItemText(IDC_KEY, _T(""));
+
+	m_iKeys[m_iSelectedItem] = 0;
+	m_iMods[m_iSelectedItem] = MOD_NONE;
+
+	SetModified();
+}
+
+CString CConfigShortcuts::AssembleKeyString(int Mod, int Key)
+{
+	CAccelerator *pAccel = theApp.GetAccelerator();
+	CString KeyStr;
+
+	if (Mod & MOD_SHIFT) {
+		KeyStr.Append(pAccel->GetVKeyName(VK_SHIFT));
+		KeyStr.Append(_T(" + "));
+	}
+
+	if (Mod & MOD_CONTROL) {
+		KeyStr.Append(pAccel->GetVKeyName(VK_CONTROL));
+		KeyStr.Append(_T(" + "));
+	}
+
+	if (Mod & MOD_ALT) {
+		KeyStr.Append(pAccel->GetVKeyName(VK_MENU));
+		KeyStr.Append(_T(" + "));
+	}
+
+	KeyStr.Append(pAccel->GetVKeyName(Key));
+
+	return KeyStr;
 }

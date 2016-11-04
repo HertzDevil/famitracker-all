@@ -38,30 +38,60 @@ enum {
 	CMD_NOTE_RELEASE
 };
 
-CChannelHandlerVRC7::CChannelHandlerVRC7(int ChanID) : 
-	CChannelHandler(ChanID), 
+CChannelHandlerVRC7::CChannelHandlerVRC7() : 
+	CChannelHandler(), 
 	m_iCommand(0),
 	m_iTriggeredNote(0)
 {
 	m_iVolume = MAX_VOL;
+	SetMaxPeriod(2047);
+}
+
+void CChannelHandlerVRC7::SetChannelID(int ID)
+{
+	CChannelHandler::SetChannelID(ID);
+	m_iChannel = ID - CHANID_VRC7_CH1;
 }
 
 void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
-	CInstrumentVRC7 *pInstrument;
-
 	int PostEffect = 0, PostEffectParam;
+	int Patch = -1;
+	CInstrumentVRC7 *pInstrument = NULL;
+#if 0
+	int Instrument = pNoteData->Instrument;
+
+	if (Instrument != MAX_INSTRUMENTS/* && Instrument != m_iInstrument*/) {
+//		m_iLastInstrument = m_iInstrument;
+		m_iInstrument = Instrument;
+	}
+	else
+		Instrument = m_iInstrument;
+
+	if (Instrument != MAX_INSTRUMENTS)
+		pInstrument = (CInstrumentVRC7*)m_pDocument->GetInstrument(Instrument);
+#endif
 
 	if (pNoteData->Instrument != MAX_INSTRUMENTS)
 		m_iInstrument = pNoteData->Instrument;
 
-	// Get the instrument
-	pInstrument = (CInstrumentVRC7*)m_pDocument->GetInstrument(m_iInstrument);
+	if (m_iInstrument != MAX_INSTRUMENTS)
+		pInstrument = (CInstrumentVRC7*)m_pDocument->GetInstrument(m_iInstrument);
 
+/*
+	if (Instrument != MAX_INSTRUMENTS) {
+		// Get the instrument
+		if ((pInstrument = (CInstrumentVRC7*)m_pDocument->GetInstrument(Instrument)) == NULL)
+			return;
+
+		if (pInstrument->GetType() != INST_VRC7)
+			return;
+	}
+*/
 	// Evaluate effects
-	for (int n = 0; n < EffColumns; n++) {
-		int EffCmd	 = pNoteData->EffNumber[n];
-		int EffParam = pNoteData->EffParam[n];
+	for (int i = 0; i < EffColumns; ++i) {
+		int EffCmd	 = pNoteData->EffNumber[i];
+		int EffParam = pNoteData->EffParam[i];
 
 		if (EffCmd == EF_PORTA_DOWN) {
 			m_iEffect = EF_PORTA_UP;
@@ -79,6 +109,9 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 						PostEffect = EffCmd;
 						PostEffectParam = EffParam;
 						break;
+					case EF_DUTY_CYCLE:
+						Patch = EffParam;
+						break;
 				}
 			}
 		}
@@ -93,37 +126,37 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		// Halt
 		m_iCommand = CMD_NOTE_HALT;
 		theApp.RegisterKeyState(m_iChannelID, -1);
-		/*
-		m_iNote = 0;
-		m_iOctave = 0;
-		m_iFrequency = 0;
-		*/
 	}
 	else if (pNoteData->Note == RELEASE) {
 		// Release
 		m_iCommand = CMD_NOTE_RELEASE;
 		theApp.RegisterKeyState(m_iChannelID, -1);
-//		m_iNote = 0;
-//		m_iOctave = 0;
 	}
 	else if (pNoteData->Note != NONE) {
 
 		// Check instrument
-		if (!pInstrument || pInstrument->GetType() != INST_VRC7)
-			return;
+//		if (!pInstrument)
+//			return;
+
+		if (pInstrument) {
+			// Only allow VRC7 instruments
+			if (pInstrument->GetType() != INST_VRC7)
+				return;
+		}
 
 		int OldNote = m_iNote;
 		int OldOctave = m_iOctave;
 
 		// Portamento fix
 		if (m_iCommand == CMD_NOTE_HALT)
-			m_iFrequency = 0;
+			m_iPeriod = 0;
 
 		// Trigger note
 		m_iNote		= CChannelHandler::RunNote(pNoteData->Octave, pNoteData->Note);
-		m_iPatch	= pInstrument->GetPatch();
 		m_bEnabled	= true;
 		m_bHold		= true;
+
+//		if (m_iInstrument != m_iLastInstrument /*|| m_iCommand != CMD_NOTE_ON*/)
 
 		if ((m_iEffect != EF_PORTAMENTO || m_iPortaSpeed == 0) || m_iCommand == CMD_NOTE_HALT)
 			m_iCommand = CMD_NOTE_TRIGGER;
@@ -132,7 +165,7 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 
 			// Set current frequency to the one with highest octave
 			if (m_iOctave > OldOctave) {
-				m_iFrequency >>= (m_iOctave - OldOctave);
+				m_iPeriod >>= (m_iOctave - OldOctave);
 			}
 			else if (OldOctave > m_iOctave) {
 				// Do nothing
@@ -140,14 +173,22 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 				m_iOctave = OldOctave;
 			}
 		}
-		
-		// Load custom parameters
-		if (m_iPatch == 0) {
-			for (int i = 0; i < 8; ++i)
-				m_iRegs[i] = pInstrument->GetCustomReg(i);
+
+		if (pInstrument) {
+			// Patch number
+			m_iPatch = pInstrument->GetPatch();
+
+			// Load custom parameters
+			if (m_iPatch == 0) {
+				for (int i = 0; i < 8; ++i)
+					m_iRegs[i] = pInstrument->GetCustomReg(i);
+			}
 		}
 	}
-	
+/*
+	if (Patch != -1)
+		m_iPatch = Patch;
+*/
 	if (pNoteData->Note != NONE && (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP))
 		m_iEffect = EF_NONE;
 
@@ -167,7 +208,7 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		m_iPortaTo = TriggerNote(m_iNote);
 
 		if (m_iOctave > OldOctave) {
-			m_iFrequency >>= (m_iOctave - OldOctave);
+			m_iPeriod >>= (m_iOctave - OldOctave);
 		}
 		else if (m_iOctave < OldOctave) {
 			m_iPortaTo >>= (OldOctave - m_iOctave);
@@ -204,15 +245,6 @@ unsigned int CChannelHandlerVRC7::GetFnum(int Note)
 	return FREQ_TABLE[Note % 12] << 2;
 }
 
-int CChannelHandlerVRC7::LimitFreq(int Freq)
-{
-	if (Freq > 2047)
-		Freq = 2047;
-	if (Freq < 0)
-		Freq = 0;
-	return Freq;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VRC7 Channels
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +261,7 @@ void CVRC7Channel::RefreshChannel()
 	Patch = m_iPatch;
 	Volume = 15 - ((m_iVolume >> VOL_SHIFT) - GetTremolo());
 	Bnum = m_iOctave;
-	Fnum = (m_iFrequency >> 2) - GetVibrato() - GetFinePitch();// (m_iFinePitch - 0x80);
+	Fnum = (m_iPeriod >> 2) - GetVibrato() - GetFinePitch();// (m_iFinePitch - 0x80);
 
 	// Write custom instrument
 	if (Patch == 0 && m_iCommand == CMD_NOTE_TRIGGER) {
@@ -275,6 +307,7 @@ void CVRC7Channel::ClearRegisters()
 	m_iEffect = EF_NONE;
 
 	m_iCommand = CMD_NOTE_HALT;
+
 }
 
 void CVRC7Channel::RegWrite(unsigned char Reg, unsigned char Value)

@@ -33,34 +33,41 @@ public:
 		m_pMixer(pMixer),
 		m_iChanId(ID),
 		m_iChip(Chip),
-		m_iFrameCycles(0),
+		m_iTime(0),
 		m_iLastValue(0)
 	{
 	}
 
 	// Begin a new audio frame
 	inline void EndFrame() {
-		m_iFrameCycles = 0;
+		m_iTime = 0;
+	}
+
+	inline uint16 GetPeriod() const {
+		return m_iPeriod;
 	}
 
 protected:
 	inline virtual void Mix(int32 Value) {
 		if (m_iLastValue != Value) {
-			m_pMixer->AddValue(m_iChanId, m_iChip, Value, Value, m_iFrameCycles);
+			m_pMixer->AddValue(m_iChanId, m_iChip, Value, Value, m_iTime);
 			m_iLastValue = Value;
 		}
 	};
 
 protected:
 	CMixer	*m_pMixer;			// The mixer
-	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
+
+	uint32	m_iTime;			// Cycle counter, resets every new frame
 	int32	m_iLastValue;		// Last value sent to mixer
 	uint16	m_iChanId;			// This channels unique ID
 	uint16	m_iChip;			// Chip
 
 	// Variables used by channels
-	uint8	m_iControlReg, m_iEnabled;
-	uint16	m_iFrequency, m_iLengthCounter;
+	uint8	m_iControlReg;
+	uint8	m_iEnabled;
+	uint16	m_iPeriod;
+	uint16	m_iLengthCounter;
 	uint32	m_iCounter;
 };
 
@@ -70,25 +77,27 @@ public:
 		m_pMixer(pMixer),
 		m_iChip(Chip),
 		m_iChanId(ID),
-		m_iFrameCycles(0),
+		m_iTime(0),
 		m_iLastValue(0) 
-	{}
+	{
+	}
 
 	inline void EndFrame() {
-		m_iFrameCycles = 0;
+		m_iTime = 0;
 	}
 
 protected:
 	inline void Mix(int32 Value) {
-		int32 Delta = Value - m_iLastValue;
+		int32 Delta = m_iLastValue - Value;
 		if (Delta)
-			m_pMixer->AddValue(m_iChanId, m_iChip, Delta, Value, m_iFrameCycles);
+			m_pMixer->AddValue(m_iChanId, m_iChip, Delta, Value, m_iTime);
 		m_iLastValue = Value;
 	}
 
 protected:
 	CMixer	*m_pMixer;
-	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
+
+	uint32	m_iTime;			// Cycle counter, resets every new frame
 	uint8	m_iChip;
 	uint8	m_iChanId;
 	int32	m_iLastValue;		// Last value sent to mixer

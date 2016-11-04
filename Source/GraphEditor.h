@@ -61,8 +61,7 @@ protected:
 	void PaintBuffer(CDC *pBackDC, CDC *pFrontDC);
 	void CursorChanged(int x);
 private:
-	int m_iStartLineX, m_iEndLineX;
-	int m_iStartLineY, m_iEndLineY;
+	CPoint m_ptLineStart, m_ptLineEnd;
 	int m_iEditing;
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -123,6 +122,18 @@ private:
 	static const int ITEMS = 20;
 public:
 	CPitchGraphEditor(CSequence *pSequence) : CGraphEditor(pSequence) { };
+	afx_msg void OnPaint();
+	void ModifyItem(CPoint point, bool Redraw);
+	int GetItemHeight();
+};
+
+// Sunsoft noise editor
+class CNoiseEditor : public CGraphEditor
+{
+private:
+	int m_iItems;
+public:
+	CNoiseEditor(CSequence *pSequence, int Items) : CGraphEditor(pSequence), m_iItems(Items) { };
 	afx_msg void OnPaint();
 	void ModifyItem(CPoint point, bool Redraw);
 	int GetItemHeight();

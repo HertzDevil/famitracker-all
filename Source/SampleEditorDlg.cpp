@@ -82,6 +82,11 @@ BOOL CSampleEditorDlg::OnInitDialog()
 	// A timer for the flashing start cursor
 	SetTimer(1, 500, NULL);
 
+	CString title;
+	GetWindowText(title);
+	title.AppendFormat(_T(" [%s]"), m_pSample->Name);
+	SetWindowText(title);
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -267,7 +272,7 @@ void CSampleEditorDlg::OnBnClickedDelete()
 	m_pSample->SampleSize -= Diff;
 
 	// Reallocate
-	// todo: fix this, it crashes
+	// TODO: fix this, it crashes
 	/*
 	char *pData = new char[m_pSample->SampleSize];
 	memcpy(pData, m_pSample->SampleData, m_pSample->SampleSize);
@@ -293,9 +298,12 @@ void CSampleEditorDlg::UpdateSampleView()
 
 void CSampleEditorDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	// Todo: this never gets called
+	// TODO: this never gets called
 	if (nChar == VK_DELETE) {
 		OnBnClickedDelete();
+	}
+	if (nChar == VK_HOME) {
+		m_pSampleView->OnHome();
 	}
 
 	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
@@ -610,7 +618,7 @@ void CSampleEditorDlg::OnBnClickedTilt()
 	int Cntr = rand() % Step;
 
 	for (int i = StartSample; i < EndSample; ++i) {
-		for (int j = 0; j < 8; j++) {
+		for (int j = 0; j < 8; ++j) {
 			if (++Cntr == Step) {
 				m_pSample->SampleData[i] &= (0xFF ^ (1 << j));
 				Cntr = 0;
@@ -635,4 +643,9 @@ void CSampleView::OnSize(UINT nType, int cx, int cy)
 		scrollRect.bottom = scrollRect.top + height;
 		m_sbScrollBar.MoveWindow(&scrollRect);
 	}
+}
+
+void CSampleView::OnHome()
+{
+	m_iStartCursor = 0;
 }

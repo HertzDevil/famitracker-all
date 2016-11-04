@@ -31,8 +31,8 @@ class CInstrumentEditorDPCM : public CInstrumentEditPanel
 public:
 	CInstrumentEditorDPCM(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorDPCM();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("DPCM samples"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("DPCM samples"); };
 
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT_DPCM };

@@ -59,8 +59,9 @@ public:
 	virtual ~CVRC6();
 	void Reset();
 	void Write(uint16 Address, uint8 Value);
+	uint8 Read(uint16 Address, bool &Mapped);
 	void EndFrame();
-	void Process(int Time);
+	void Process(uint32 Time);
 
 private:
 	CVRC6_Pulse		*Pulse1, *Pulse2;

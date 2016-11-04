@@ -26,36 +26,50 @@
 #include "ChannelHandler.h"
 #include "ChannelsFDS.h"
 
+CChannelHandlerFDS::CChannelHandlerFDS() : CChannelHandler() 
+{ 
+	SetMaxPeriod(0xFFF);
+
+	m_iSeqEnabled[SEQ_VOLUME] = 0;
+	m_iSeqEnabled[SEQ_ARPEGGIO] = 0;
+	m_iSeqEnabled[SEQ_PITCH] = 0;
+
+	memset(m_iModTable, 0, 32);
+}
+
 void CChannelHandlerFDS::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
-	int Note, Octave, Volume;
-	CInstrumentFDS *pInst;
+	CInstrumentFDS *pInstrument = NULL;
 	int PostEffect = 0, PostEffectParam;
-
-	Note	= pNoteData->Note;
-	Octave	= pNoteData->Octave;
-	Volume	= pNoteData->Vol;
+	int EffModDepth = -1;
+	int EffModSpeedHi = -1, EffModSpeedLo = -1;
 
 	if (!CChannelHandler::CheckNote(pNoteData, INST_FDS))
 		return;
 
-	if (!(pInst = (CInstrumentFDS*)m_pDocument->GetInstrument(m_iInstrument)))
-		return;
-
-	if (pNoteData->Note == RELEASE)
-		m_bRelease = true;
-	else if (pNoteData->Note != NONE)
-		m_bRelease = false;
+	int Note	= pNoteData->Note;
+	int Octave	= pNoteData->Octave;
+	int Volume	= pNoteData->Vol;
 
 	// Read volume
 	if (Volume < 0x10) {
 		m_iVolume = Volume << VOL_SHIFT;
 	}
 
+	if (m_iInstrument != MAX_INSTRUMENTS) {
+		// Get instrument
+		pInstrument = (CInstrumentFDS*)m_pDocument->GetInstrument(m_iInstrument);
+	}
+
+	if (pNoteData->Note == RELEASE)
+		m_bRelease = true;
+	else if (pNoteData->Note != NONE)
+		m_bRelease = false;
+
 	// Evaluate effects
-	for (int n = 0; n < EffColumns; n++) {
-		unsigned char EffNum   = pNoteData->EffNumber[n];
-		unsigned char EffParam = pNoteData->EffParam[n];
+	for (int i = 0; i < EffColumns; ++i) {
+		unsigned char EffNum   = pNoteData->EffNumber[i];
+		unsigned char EffParam = pNoteData->EffParam[i];
 
 		if (EffNum == EF_PORTA_DOWN) {
 			m_iPortaSpeed = EffParam;
@@ -74,62 +88,86 @@ void CChannelHandlerFDS::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 					PostEffectParam = EffParam;
 					SetupSlide(EffNum, EffParam);
 					break;
+				case EF_FDS_MOD_DEPTH:
+					EffModDepth = EffParam & 0x3F;
+					break;
+				case EF_FDS_MOD_SPEED_HI:
+					EffModSpeedHi = EffParam & 0x0F;
+					break;
+				case EF_FDS_MOD_SPEED_LO:
+					EffModSpeedLo = EffParam;
+					break;
 			}
 		}
 	}
 
-	// No new note data, nothing more to do
-	if (pNoteData->Note == NONE)
-		return;
-
-	// Halt or release
-	if (Note == HALT) {
-		KillChannel();		// todo: use CutNote
-		m_iNote = 0x80;
-		return;
-	}
-
 	// Load the instrument, only when a new instrument is loaded?
-	if (!m_bRelease) {
-		// Todo: check this in nsf
-		FillWaveRAM(pInst);
-		FillModulationTable(pInst);
+	if (!m_bRelease && m_iLastInstrument != m_iInstrument && pInstrument) {
+		// TODO: check this in nsf
+		FillWaveRAM(pInstrument);
+		//if (pInstrument->GetModulationEnable())
+			FillModulationTable(pInstrument);
 	}
 
-	if (!m_bRelease) {
+	if (Note == HALT) {
+		CutNote();
+		m_iNote = 0x80;
+	}
+	else if (Note == RELEASE) {
+		ReleaseNote();
+	}
+	else if (Note != NONE) {
+
+		if (pInstrument) {
+			// Check instrument type
+			if (pInstrument->GetType() != INST_FDS)
+				return;
+		}
+
 		// Trigger a new note
 		m_iNote	= RunNote(Octave, Note);
 		m_bEnabled = true;
 		m_iLastInstrument = m_iInstrument;
 
-		m_iOutVol = 0x1F;
+		m_iSeqVolume = 0x1F;
 
-		m_pVolumeSeq = pInst->GetVolumeSeq();
-		m_pArpeggioSeq = pInst->GetArpSeq();
-		m_pPitchSeq = pInst->GetPitchSeq();
+		if (pInstrument) {
+			m_pVolumeSeq = pInstrument->GetVolumeSeq();
+			m_pArpeggioSeq = pInstrument->GetArpSeq();
+			m_pPitchSeq = pInstrument->GetPitchSeq();
 
-		m_iSeqEnabled[SEQ_VOLUME] = m_pVolumeSeq->GetItemCount() > 0 ? 1 : 0;
-		m_iSeqPointer[SEQ_VOLUME] = 0;
+			m_iSeqEnabled[SEQ_VOLUME] = (m_pVolumeSeq->GetItemCount() > 0) ? 1 : 0;
+			m_iSeqPointer[SEQ_VOLUME] = 0;
 
-		m_iSeqEnabled[SEQ_ARPEGGIO] = m_pArpeggioSeq->GetItemCount() > 0 ? 1 : 0;
-		m_iSeqPointer[SEQ_ARPEGGIO] = 0;
+			m_iSeqEnabled[SEQ_ARPEGGIO] = (m_pArpeggioSeq->GetItemCount() > 0) ? 1 : 0;
+			m_iSeqPointer[SEQ_ARPEGGIO] = 0;
 
-		m_iSeqEnabled[SEQ_PITCH] = m_pPitchSeq->GetItemCount() > 0 ? 1 : 0;
-		m_iSeqPointer[SEQ_PITCH] = 0;
+			m_iSeqEnabled[SEQ_PITCH] = (m_pPitchSeq->GetItemCount() > 0) ? 1 : 0;
+			m_iSeqPointer[SEQ_PITCH] = 0;
 
-		m_iModulationFreq = pInst->GetModulationFreq();
-		m_iModulationDepth = pInst->GetModulationDepth();
-		m_iModulationDelay = pInst->GetModulationDelay();
+//			if (pInstrument->GetModulationEnable()) {
+				m_iModulationSpeed = pInstrument->GetModulationSpeed();
+				m_iModulationDepth = pInstrument->GetModulationDepth();
+				m_iModulationDelay = pInstrument->GetModulationDelay();
+//			}
+		}
+
+		if ((m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP))
+			m_iEffect = EF_NONE;
 	}
-	else {
-		ReleaseNote();
-	}
 
-	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
-		m_iEffect = EF_NONE;
 
 	if (PostEffect)
 		SetupSlide(PostEffect, PostEffectParam);
+
+	if (EffModDepth != -1)
+		m_iModulationDepth = EffModDepth;
+
+	if (EffModSpeedHi != -1)
+		m_iModulationSpeed = (m_iModulationSpeed & 0xFF) | (EffModSpeedHi << 8);
+
+	if (EffModSpeedLo != -1)
+		m_iModulationSpeed = (m_iModulationSpeed & 0xF00) | EffModSpeedLo;
 }
 
 void CChannelHandlerFDS::ProcessChannel()
@@ -148,47 +186,33 @@ void CChannelHandlerFDS::ProcessChannel()
 		CChannelHandler::RunSequence(SEQ_PITCH, m_pPitchSeq);
 }
 
-int CChannelHandlerFDS::LimitFreq(int Freq)
-{
-	if (Freq > 4095)
-		Freq = 4095;
-	if (Freq < 0)
-		Freq = 0;
-	return Freq;
-}
-
 void CChannelHandlerFDS::RefreshChannel()
 {
-	unsigned char LoFreq, HiFreq;
-	unsigned char Volume;
-	unsigned char ModFreqLo, ModFreqHi;
-
 	/*****/
+
 	if (m_iInstrument != MAX_INSTRUMENTS) {
 		CInstrumentFDS *pInst = (CInstrumentFDS*)m_pDocument->GetInstrument(m_iInstrument);
 		if (pInst && pInst->GetType() == INST_FDS) {
 			if (pInst->HasChanged()) {
 				// Realtime update
-				m_iModulationFreq = pInst->GetModulationFreq();
+				m_iModulationSpeed = pInst->GetModulationSpeed();
 				m_iModulationDepth = pInst->GetModulationDepth();
 				FillWaveRAM(pInst);
 				FillModulationTable(pInst);
 			}
 		}
 	}
+
 	/*****/
 
-	int Frequency = m_iFrequency - GetVibrato() - GetFinePitch() + GetPitch();
+	int Frequency = CalculatePeriod();
+	unsigned char LoFreq = Frequency & 0xFF;
+	unsigned char HiFreq = (Frequency >> 8) & 0x0F;
 
-	Frequency = LimitFreq(Frequency);
+	unsigned char ModFreqLo = m_iModulationSpeed & 0xFF;
+	unsigned char ModFreqHi = (m_iModulationSpeed >> 8) & 0x0F;
 
-	LoFreq = Frequency & 0xFF;
-	HiFreq = (Frequency >> 8) & 0x0F;
-
-	ModFreqLo = m_iModulationFreq & 0xFF;
-	ModFreqHi = (m_iModulationFreq >> 8) & 0x0F;
-
-	Volume = CalculateVolume(32);
+	unsigned char Volume = CalculateVolume(32);
 
 	if (m_iNote == 0x80)
 		Volume = 0;
@@ -214,6 +238,7 @@ void CChannelHandlerFDS::RefreshChannel()
 		m_pAPU->ExternalWrite(0x4087, 0x80);
 		m_iModulationDelay--;
 	}
+
 }
 
 void CChannelHandlerFDS::ClearRegisters()
@@ -233,11 +258,12 @@ void CChannelHandlerFDS::ClearRegisters()
 	// Disable modulation
 	m_pAPU->ExternalWrite(0x4087, 0x80);
 
-	m_iOutVol = 0x20;
+	m_iSeqVolume = 0x20;
 
 	m_iNote = 0x80;
 
-	m_iLastInstrument = MAX_INSTRUMENTS;
+//	m_iLastInstrument = MAX_INSTRUMENTS;
+//	m_iInstrument = 0;
 }
 
 void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInst)
@@ -246,8 +272,11 @@ void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInst)
 	// Enable write for waveform RAM
 	m_pAPU->ExternalWrite(0x4089, 0x80);
 
+	// This is the time the loop takes in NSF code
+	AddCycles(1088);
+
 	// Wave ram
-	for (int i = 0; i < 0x40; i++)
+	for (int i = 0; i < 0x40; ++i)
 		m_pAPU->ExternalWrite(0x4040 + i, pInst->GetSample(i));
 
 	// Disable write for waveform RAM, master volume = full
@@ -257,11 +286,28 @@ void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInst)
 void CChannelHandlerFDS::FillModulationTable(CInstrumentFDS *pInst)
 {
 	// Fills the 32 byte modulation table
-	// Disable modulation
-	m_pAPU->ExternalWrite(0x4087, 0x80);
-	// Reset modulation table pointer, set bias to zero
-	m_pAPU->ExternalWrite(0x4085, 0x00);
-	// Fill the table
-	for (int i = 0; i < 32; i++)
-		m_pAPU->ExternalWrite(0x4088, pInst->GetModulation(i));
+
+
+	bool bNew(true);
+
+	for (int i = 0; i < 32; ++i) {
+		if (m_iModTable[i] != pInst->GetModulation(i)) {
+			bNew = true;
+			break;
+		}
+	}
+
+	if (bNew) {
+		// Copy table
+		for (int i = 0; i < 32; ++i)
+			m_iModTable[i] = pInst->GetModulation(i);
+
+		// Disable modulation
+		m_pAPU->ExternalWrite(0x4087, 0x80);
+		// Reset modulation table pointer, set bias to zero
+		m_pAPU->ExternalWrite(0x4085, 0x00);
+		// Fill the table
+		for (int i = 0; i < 32; ++i)
+			m_pAPU->ExternalWrite(0x4088, m_iModTable[i]);
+	}
 }

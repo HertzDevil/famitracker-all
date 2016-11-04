@@ -27,8 +27,8 @@ class CInstrumentEditorVRC6 : public CSequenceInstrumentEditPanel
 public:
 	CInstrumentEditorVRC6(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorVRC6();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("Konami VRC6"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("Konami VRC6"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -64,7 +64,6 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnChangeSeqIndex();
-	afx_msg void OnBnClickedParse();
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	virtual BOOL DestroyWindow();

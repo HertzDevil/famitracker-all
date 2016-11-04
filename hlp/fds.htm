@@ -3,6 +3,15 @@
 <META NAME="GENERATOR" Content="Microsoft Visual Studio 8.0">
 <TITLE></TITLE>
     <link href="style.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        .style1
+        {
+            font-family: verdana;
+            font-size: 9pt;
+            font-weight: bold;
+            color: black;
+        }
+    </style>
 </HEAD>
 <BODY>
 
@@ -26,24 +35,37 @@
 
 
 
-<p class="text">
-    The instrument editor allows to edit the custom waveform<span lang="sv">, either 
-    with the mouse or by changing the Wave-textbox.</span> Four default waveforms 
-    are available: sine, triangle, square and sawtooth.</p>
-<p class="text">
+    <p class="style1">
+        <span lang="sv">Wave editor</span></p>
+    <p class="text">
+        <span lang="sv">The instrument editor contains a wave editor, the wave is 64 
+        steps long and the amplitude is 64 steps.</span></p>
+    <p class="text">
+        <span lang="sv">Usage: Left-click to change each sample, middle-click to draw a 
+        line and right-click to switch between line/dot mode. A few presets are also 
+        available.</span></p>
+    <p class="text">
+        <span lang="sv">Use copy/paste wave to copy a MML-string of the wave to/from the 
+        clipboard.</span></p>
+    <p class="style1">
+        <span lang="sv">Modulator editor</span></p>
+    <p class="text">
     The rest of the controls belongs to the frequency modulator<span lang="sv">:</span> rate<span 
         lang="sv"> (0 - 4095)</span>, depth<span lang="sv"> (0 - 63)</span> and 
     delay<span lang="sv"> (0 - 255)</span> after a note is triggered can be set. (This is copied straight from MCK). 
-    The big box is the modulation table, where each box tells how much to add or 
+    </p>
+    <p class="text">
+        The big box is the modulation table, where each box tells how much to add or 
     subtract from the frequency<span lang="sv">. Each value is  
     used twice by the modulator unit, and t</span>he frequency is automatically reset each time end 
     is reached. Yellow = 0, green above = +1,<span lang="sv"> </span>+2,<span 
-        lang="sv"> </span>+5, green below = -1,<span lang="sv"> </span>-2,<span 
+        lang="sv"> </span>+<span lang="sv">4</span>, green below = -1,<span lang="sv"> </span>-2,<span 
         lang="sv"> </span>-4 and blue 
-    is reset to initial frequency.<span lang="sv"> </span></p>
+    is reset to initial frequency.<span lang="sv"> Use copy/paste table to copy and 
+        MML-string of the table to/from the clipboard.</span></p>
 <p>
     <IMG id="IMG2" style="FONT-SIZE: 10pt" src="img/fds_fm_table.PNG" alt=""></p>
-<p class="text">
+    <p class="text">
     There is also a tab with envelopes for volume, arpeggio &amp; pitch.</p>
 
 

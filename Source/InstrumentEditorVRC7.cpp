@@ -18,6 +18,9 @@
 ** must bear this legend.
 */
 
+#include <iterator> 
+#include <string>
+#include <sstream>
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
@@ -25,6 +28,12 @@
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditorVRC7.h"
 
+using namespace std;
+
+static unsigned char default_inst[(16+3)*16] = 
+{
+#include "apu/vrc7tone.h" 
+};
 
 // CInstrumentSettingsVRC7 dialog
 
@@ -59,7 +68,9 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorVRC7, CInstrumentEditPanel)
 	ON_BN_CLICKED(IDC_C_DM, &CInstrumentEditorVRC7::OnBnClickedCheckbox)
 	ON_WM_VSCROLL()
 	ON_WM_HSCROLL()
-//	ON_BN_CLICKED(IDC_HOLD, &CInstrumentEditorVRC7::OnBnClickedHold)
+	ON_WM_CONTEXTMENU()
+	ON_COMMAND(IDC_COPY, &CInstrumentEditorVRC7::OnCopy)
+	ON_COMMAND(IDC_PASTE, &CInstrumentEditorVRC7::OnPaste)
 END_MESSAGE_MAP()
 
 
@@ -72,8 +83,11 @@ BOOL CInstrumentEditorVRC7::OnInitDialog()
 	CComboBox *pPatchBox = (CComboBox*)GetDlgItem(IDC_PATCH);
 	CString Text;
 
-	for (int i = 0; i < 16; i++) {
-		Text.Format(_T("Patch #%i %s"), i, i == 0 ? _T("(custom patch)") : _T(""));
+	Text.Format(_T("Patch #0 (custom patch)"));
+	pPatchBox->AddString(Text);
+
+	for (int i = 1; i < 16; ++i) {
+		Text.Format(_T("Patch #%i"), i);
 		pPatchBox->AddString(Text);
 	}
 
@@ -109,14 +123,30 @@ void CInstrumentEditorVRC7::OnCbnSelchangePatch()
 	m_pInstrument->SetPatch(Patch);
 	//InstConf->SetPatch(Patch);
 	EnableControls(Patch == 0);
+
+	if (Patch == 0)
+		LoadCustomPatch();
+	else
+		LoadInternalPatch(Patch);
+
 //	CheckDlgButton(IDC_HOLD, InstConf->GetHold());
 }
 
 void CInstrumentEditorVRC7::EnableControls(bool bEnable)
 {
 	const int SLIDER_IDS[] = {
-		IDC_M_AM, IDC_M_AR, IDC_M_DM, IDC_M_DR, IDC_M_EG, IDC_M_KSL, IDC_M_KSR2, IDC_M_MUL, IDC_M_RR, IDC_M_SL, IDC_M_SR, IDC_M_VIB,
-		IDC_C_AM, IDC_C_AR, IDC_C_DM, IDC_C_DR, IDC_C_EG, IDC_C_KSL, IDC_C_KSR, IDC_C_MUL, IDC_C_RR, IDC_C_SL, IDC_C_SR, IDC_C_VIB,
+		IDC_M_AM, IDC_M_AR, 
+		IDC_M_DM, IDC_M_DR, 
+		IDC_M_EG, IDC_M_KSL, 
+		IDC_M_KSR2, IDC_M_MUL, 
+		IDC_M_RR, IDC_M_SL, 
+		IDC_M_SR, IDC_M_VIB,
+		IDC_C_AM, IDC_C_AR, 
+		IDC_C_DM, IDC_C_DR, 
+		IDC_C_EG, IDC_C_KSL, 
+		IDC_C_KSR, IDC_C_MUL, 
+		IDC_C_RR, IDC_C_SL, 
+		IDC_C_SR, IDC_C_VIB,
 		IDC_TL, IDC_FB
 	};
 
@@ -129,12 +159,16 @@ void CInstrumentEditorVRC7::EnableControls(bool bEnable)
 void CInstrumentEditorVRC7::SelectInstrument(int Instrument)
 {
 	CComboBox *pPatchBox = (CComboBox*)GetDlgItem(IDC_PATCH);
-	CInstrumentVRC7 *InstConf = (CInstrumentVRC7*)GetDocument()->GetInstrument(Instrument);
-	//m_iInstrument = Instrument;
-	m_pInstrument = InstConf;
-	int Patch = InstConf->GetPatch();
+	m_pInstrument = (CInstrumentVRC7*)GetDocument()->GetInstrument(Instrument);
+	int Patch = m_pInstrument->GetPatch();
+
 	pPatchBox->SetCurSel(Patch);
-	LoadCustomPatch();
+	
+	if (Patch == 0)
+		LoadCustomPatch();
+	else
+		LoadInternalPatch(Patch);
+	
 	EnableControls(Patch == 0);
 }
 
@@ -166,9 +200,66 @@ void CInstrumentEditorVRC7::SetSliderVal(int Slider, int Value)
 	pSlider->SetPos(Value);
 }
 
+void CInstrumentEditorVRC7::LoadInternalPatch(int Num)
+{
+	unsigned int Reg;
+
+	GetDlgItem(IDC_PASTE)->EnableWindow(FALSE);
+
+	// Register 0
+	Reg = default_inst[(Num * 16) + 0];
+	CheckDlgButton(IDC_M_AM, Reg & 0x80 ? 1 : 0);
+	CheckDlgButton(IDC_M_VIB, Reg & 0x40 ? 1 : 0);
+	CheckDlgButton(IDC_M_EG, Reg & 0x20 ? 1 : 0);
+	CheckDlgButton(IDC_M_KSR2, Reg & 0x10 ? 1 : 0);
+	SetSliderVal(IDC_M_MUL, Reg & 0x0F);
+
+	// Register 1
+	Reg = default_inst[(Num * 16) + 1];
+	CheckDlgButton(IDC_C_AM, Reg & 0x80 ? 1 : 0);
+	CheckDlgButton(IDC_C_VIB, Reg & 0x40 ? 1 : 0);
+	CheckDlgButton(IDC_C_EG, Reg & 0x20 ? 1 : 0);
+	CheckDlgButton(IDC_C_KSR, Reg & 0x10 ? 1 : 0);
+	SetSliderVal(IDC_C_MUL, Reg & 0x0F);
+
+	// Register 2
+	Reg = default_inst[(Num * 16) + 2];
+	SetSliderVal(IDC_M_KSL, Reg >> 6);
+	SetSliderVal(IDC_TL, Reg & 0x3F);
+
+	// Register 3
+	Reg = default_inst[(Num * 16) + 3];
+	SetSliderVal(IDC_C_KSL, Reg >> 6);
+	SetSliderVal(IDC_FB, 7 - (Reg & 7));
+	CheckDlgButton(IDC_C_DC, Reg & 0x10 ? 1 : 0);
+	CheckDlgButton(IDC_M_DM, Reg & 0x08 ? 1 : 0);
+
+	// Register 4
+	Reg = default_inst[(Num * 16) + 4];
+	SetSliderVal(IDC_M_AR, Reg >> 4);
+	SetSliderVal(IDC_M_DR, Reg & 0x0F);
+
+	// Register 5
+	Reg = default_inst[(Num * 16) + 5];
+	SetSliderVal(IDC_C_AR, Reg >> 4);
+	SetSliderVal(IDC_C_DR, Reg & 0x0F);
+
+	// Register 6
+	Reg = default_inst[(Num * 16) + 6];
+	SetSliderVal(IDC_M_SR, Reg >> 4);
+	SetSliderVal(IDC_M_RR, Reg & 0x0F);
+
+	// Register 7
+	Reg = default_inst[(Num * 16) + 7];
+	SetSliderVal(IDC_C_SR, Reg >> 4);
+	SetSliderVal(IDC_C_RR, Reg & 0x0F);
+}
+
 void CInstrumentEditorVRC7::LoadCustomPatch()
 {
 	unsigned int Reg;
+
+	GetDlgItem(IDC_PASTE)->EnableWindow(TRUE);
 
 	// Register 0
 	Reg = m_pInstrument->GetCustomReg(0);
@@ -292,7 +383,74 @@ void CInstrumentEditorVRC7::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScro
 	CInstrumentEditPanel::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
-void CInstrumentEditorVRC7::OnBnClickedHold()
+void CInstrumentEditorVRC7::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 {
-//	m_pInstrument->SetHold(IsDlgButtonChecked(IDC_HOLD) == 1);
+	CMenu menu;
+	
+	menu.CreatePopupMenu();
+	menu.AppendMenu(MF_STRING, 1, _T("&Copy"));
+	menu.AppendMenu(MF_STRING, 2, _T("&Paste"));
+
+	switch (menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, this)) {
+		case 1: // Copy
+			OnCopy();
+			break;
+		case 2: // Paste
+			OnPaste();
+			break;
+	}
+}
+
+void CInstrumentEditorVRC7::OnCopy()
+{
+	CString MML;
+
+	int patch = m_pInstrument->GetPatch();
+	// Assemble a MML string
+	for (int i = 0; i < 8; ++i)
+		MML.AppendFormat(_T("$%02X "), (patch == 0) ? (unsigned char)(m_pInstrument->GetCustomReg(i)) : default_inst[patch * 16 + i]);
+	
+	if (!OpenClipboard())
+		return;
+
+	EmptyClipboard();
+
+	int size = MML.GetLength() + 1;
+	HANDLE hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);  
+	strcpy_s(lptstrCopy, size, MML.GetBuffer());
+	GlobalUnlock(hMem);
+	SetClipboardData(CF_TEXT, hMem);
+	CloseClipboard();
+}
+
+void CInstrumentEditorVRC7::OnPaste()
+{
+	// Copy from clipboard
+	if (!OpenClipboard())
+		return;
+
+	HANDLE hMem = GetClipboardData(CF_TEXT);
+	LPTSTR lptstrCopy = (LPTSTR)GlobalLock(hMem);
+	string str = lptstrCopy;
+	GlobalUnlock(hMem);
+	CloseClipboard();
+
+	// Convert to register values
+	istringstream values(str);
+	istream_iterator<string> begin(values);
+	istream_iterator<string> end;
+
+	for (int i = 0; (i < 8) && (begin != end); ++i) {
+		string number = *begin++;
+		if (number[0] == _T('$')) {
+			int value;
+			_stscanf_s(number.c_str(), _T("$%X"), &value);
+			if (value >= 0 && value <= 0xFF) {
+				m_pInstrument->SetCustomReg(i, value);
+			}
+		}
+	}
+
+	LoadCustomPatch();
 }

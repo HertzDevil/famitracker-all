@@ -46,59 +46,57 @@
     <p>
     <span class="text">
         This is the sound generator found inside the NES CPU. The NTSC version (america/japan) 
-        was called 2A03 and the PAL version (europe) was called 2A07.<span lang="sv"> The difference 
+        <span lang="sv">is named</span> 2A03 and the PAL version (europe)
+        <span lang="sv">is</span> <span lang="sv">named </span>2A07.<span lang="sv"> The difference 
         between the chips is that NTSC version runs at 1.79 MHz and 60 FPS while PAL 
         runs at 
-        1.66 MHz and 50 FPS. The NSF format allows any frame rate, so it is 
+        1.66 MHz and 50 FPS. The 60/50 FPS comes from the video refresh rate, but the NSF format allows any frame rate 
+        and is 
         customizable from the <a href="menus.htm#Tracker">Tracker menu</a>.</span><br />
     <br />
-        <span lang="sv">There are</span> five channels available: two square waves,
-        one triangle wave, one noise generator and one digital sample (DPCM) channel.<br />
-    </p>
-    </span><span class="bold">Square 1 and 2</span><span class="text"><br />
-    <p>
-        Produces pulse waves with four duty settings (12.5%, 25%, 50% and 25% inverted). 
+        <span lang="sv">There are</span> five <span lang="sv">sound </span>channels 
+        available:</p>
+    </span>
+    <ul>
+        <li><span class="bold">Square 1 and 2<br />
+            </span><span class="text">Produces pulse waves with four duty 
+            <span lang="sv">lengths </span>(12.5%, 25%, 50% and 25% inverted). 
         These channels have a hardware sweep unit that can be accessed by
-        <a href="effect_list.htm">H and I effects</a>.<br />
-        <br />
-    </span><span class="style1">Note</span><span class="text">: There is a bug that resets the duty phase when switching between 
+            <a href="effect_list.htm">H and I effects</a>.<br />
+            <br /></span><span class="style1">Note</span><span class="text">: There is a bug that resets the duty phase when switching between 
     certain frequencies, this can be heard as a pop and might be noticable when 
-    using vibrato or pitch slides across those frequencies.<br />
-        <br />
-    </p>
-    </span><span class="bold">Triangle</span><br />
-    <p>
-    <span class="text">Triangle shaped waveform. There is no volume control for this channel, 
+    using vibrato or pitch slides across those frequencies.<br /><br /></li>
+        </span>
+        <li><span class="bold">Triangle<br />
+            </span><span class="text">Triangle shaped waveform. There is no volume control for this channel, 
     so it will always be either on or off.<span lang="sv"> The triangle cycle period is 
         twice as long as for square channels so triangle notes will be one octave lower than 
-        square notes.<br />
-        </span><br />
-    </p>
-    </span><strong><span class="bold">Noise</span></strong><p>
-        <span class="text"><span lang="sv">White no</span>ise generator. Can produce 32k-bit and 93-bit sequences, selectable
+        square notes.</span><br /><br /></li>
+        </span>
+        <li><strong><span class="bold">Noise<br />
+            </span></strong><span class="text"><span lang="sv">White no</span>ise generator. Can produce 32k-bit and 93-bit sequences, selectable
     from the instruments duty/noise setting.<span lang="sv"> There are only 16 different 
-        pitches available, so a pitch value instead of notes &amp; octaves is displayed.<br />
-        </span><br />
-    </p>
-    </span><strong><span class="bold">DPCM (Delta PCM)</span></strong><p>
-        <span class="text">Used to play delta modulated samples. <span lang="sv">Channel 
+        pitches available, so a pitch value instead of notes &amp; octaves is displayed.</span><br /><br /></li>
+        </span>
+        <li><strong><span class="bold">DPCM (Delta PCM)<br />
+            <span class="text">Used to play delta modulated samples. <span lang="sv">Channel 
         </span>effects (<span lang="sv">volume,</span> arpeggio &amp; pitch slides) do<span 
             lang="sv">es</span> 
     not<span lang="sv"> work </span>on this channel.<span lang="sv"> The volume column has no effect on this 
-        channel.</span></span></p>
+        channel.</span></span></span></strong></li>
+    </ul>
     <p>
-    <span class="bold">Note</span><span class="text">: Due to the way the sound is mixed in the hardware, the volume level 
-    of triangle and noise channels will be affected <span lang="sv">by</span> the DPCM channel.<span 
-            lang="sv"> More info is available on the bottom of this page.<br />
-        </span></p>
+    <span class="bold">Note</span><span class="text">: <span lang="sv">T</span>he volume level 
+    of triangle and noise channels will be affected <span lang="sv">by</span> the DPCM channel<span 
+            lang="sv">, due to the way the sound is mixed in the hardware</span>.<span 
+            lang="sv"> More info is available on the bottom of this page.</span></p>
     </span>
     <hr />
     <h1>
         <span class="heading"><a name="Instruments">Instruments</a></span></h1>
 <p class="text">
-        The 2A03 instruments contains a combination of parameters for the 
-        waveform channels and a set of samples for the DPCM channel.<span lang="sv"> 
-        Press ESC to close the instrument editor.</span></p>
+        TThe 2A03 instruments contains a combination of parameters for the 
+        waveform channels and a set of samples for the DPCM channel.</p>
 <p class="text">
     <b class="bold">2A03 settings</b></p>
     
@@ -110,11 +108,13 @@
 <p class="text">
     This part of the instrument is only used by the wave channels of 2A03 (square, triangle and 
     noise). The idea is based on the MML style, where a set of sequences are 
-    used to program the channels. A sequence is a list of values that are applied to the channel at the same rate as the frame rate, shown in the main window. Default for NTSC is 60 FPS and PAL is 50 FPS.<span 
+    used to program the channels. A sequence is a list of values that are applied to the channel at the same rate as the 
+    <span lang="sv">NSF refresh </span>rate, shown in the main window.
+    <span 
         lang="sv"> As shown in the example, 30 items takes 500 ms to run when 
     using 60 FPS.</span></p>
 <p class="text">
-    These effects are available (none applies to the DPCM channel)</p>
+    These effects are available (none applies to the DPCM channel)/p>
             <table class="text">
                 <tr>
                     <td class="style2" valign="top">
@@ -169,40 +169,45 @@
 <p class="text">
     Sequences are defined in the graphical sequence editor, where you can draw with 
     the mouse (right-click to draw lines) or directly edit<span lang="sv"> the 
-    values</span> in the text box. Left 
+    values</span>  in the text box. Left 
     click the bottom part to set a loop point and right click to set a release 
     point.</p>
 <p class="text">
     A loop point causes the sequence to loop and a release points will hold the 
     sequence until a release command.<span lang="sv"> </span>The loop point is defined as a &#39;|&#39; and release point as &#39;/&#39; in the text 
     <span lang="sv">string</span>.</p>
+    <p class="text">
+        <span lang="sv">Any key can be pressed inside the instrument editor to preview 
+        the instrument. 
+        Press ESC to close the instrument editor.</span></p>
     <hr />
 <p class="text">
-    <b class="bold">DPCM samples</b></p>
+    <b class="bold">DPCM samples/b></p>
 <p class="text">
             <STRONG style="font-weight: 700">
 			<IMG id="IMG2" style="FONT-SIZE: 10pt" src="img/inst_dpcm.png" alt=""></STRONG></p>
 <p class="text">
     This tab is used to assign samples for the DPCM channel, <span lang="sv">it 
     does not affect the wave channels</span>. Assigned samples are samples assigned in 
-    <span lang="sv">the selected </span>instrument while 
+    <span lang="sv">the selected </span>iinstrument while 
     loaded samples are global for all instruments.</p>
     <p class="text">
-        <span lang="sv"><b>Load:</b> load samples from files. The format must be 1-bit 
-        delta PCM and max size can be 4081 bytes.</span></p>
+        <span lang="sv"><b>Load:</b> Load samples from files. The format must be 1-bit 
+        delta PCM and max size is 4081 bytes. The size should be (x * 16) + 1 bytes, 
+        others sizes will be padded.</span></p>
     <p class="style1">
-        <span lang="sv">Unload: <span class="style3">Remove selected sample.</span></span></p>
+        <span lang="sv">Unload: <span class="style3">Remove selected sample.</span></p>
     <p class="style1">
         <span lang="sv">Save: <span class="style3">Saves selected sample to a file.</span></span></p>
     <p class="style1">
-        <span lang="sv">Import: <span class="style3">Load and convert PCM files to delta 
+        <span lang="sv">Import: <span class="style3">Load and convert PCM&nbsp; files to delta 
         PCM.
     <a href="dpcm_import.htm">See more info about importing PCM.</a></span></span></p>
     <p class="style1">
-        <span lang="sv">Edit: <span class="style3">Opens a DPCM editor, read about it
-    <a href="dpcm_editor.htm">here</a>.</span></span></p>
+        <span lang="sv">Edit: <span class="style3">Opens a <a href="dpcm_editor.htm">
+        DPCM editor</a>.</span></span></p>
     <p class="style1">
-        <span lang="sv">Preview: <span class="style3">Plays the sample.</span></span></p>
+        <span lang="sv">Preview: <span class="style3">Plays the sample.</span></p>
     
 
 
@@ -323,8 +328,9 @@
 <p class="text">
             <STRONG>Note: 
             </STRONG>Playing a DPCM sample may decrease the volume level of triangle and 
-            noise. If full volume isn&#39;t regained after a sample is finished, use a note stop 
-            or the Z-effect in the DPCM channel to restore it.<span lang="sv"> You can check 
+            noise. If full volume isn&#39;t <span lang="sv">restored</span> after 
+            <span lang="sv">the</span> sample is finished, use a note stop 
+            or <span lang="sv">a</span> Z<span lang="sv">00</span>-effect in the DPCM channel to restore it.<span lang="sv"> You can check 
             the <a href="menus.htm#Tracker">Tracker/Display DPCM</a> state menu item to 
             display the current value of the DPCM 
             delta counter, a high value results in lower volume output.</span>

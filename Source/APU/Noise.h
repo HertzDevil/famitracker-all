@@ -42,8 +42,11 @@ public:
 	void	LengthCounterUpdate();
 	void	EnvelopeUpdate();
 
-private:
-	static const uint16	NOISE_FREQ[];
+public:
+	static const uint16	NOISE_PERIODS_NTSC[];
+	static const uint16	NOISE_PERIODS_PAL[];
+
+	const uint16 *PERIOD_TABLE;
 
 private:
 	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;

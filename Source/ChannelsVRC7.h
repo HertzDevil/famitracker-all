@@ -26,33 +26,33 @@
 
 class CChannelHandlerVRC7 : public CChannelHandler {
 public:
-	CChannelHandlerVRC7(int ChanID);
+	CChannelHandlerVRC7();
 	virtual void ProcessChannel();
 	virtual void ResetChannel();
+	virtual void SetChannelID(int ID);
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
 	unsigned int TriggerNote(int Note);
-	int LimitFreq(int Freq);
 protected:
 	unsigned int GetFnum(int Note);
 
 protected:
 	unsigned char m_iChannel;
 	unsigned char m_iPatch;
-	int m_iCommand;
-	char m_iRegs[8];
 
-	int m_iTriggeredNote;
-	bool m_bHold;
+	char	m_iRegs[8];
 
-	int m_iOctave;
+	bool	m_bHold;
+
+	int		m_iCommand;
+	int		m_iTriggeredNote;
+	int		m_iOctave;
 };
 
 class CVRC7Channel : public CChannelHandlerVRC7 {
 public:
-	CVRC7Channel() : CChannelHandlerVRC7(5) {};
+	CVRC7Channel() : CChannelHandlerVRC7() {};
 	void RefreshChannel();
-	void ChannelIndex(int Channel) {m_iChannel = Channel; m_iChannelID = 5 + Channel; };
 protected:
 	void ClearRegisters();
 private:

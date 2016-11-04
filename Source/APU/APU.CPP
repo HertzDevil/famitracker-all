@@ -33,9 +33,10 @@
 //
 // Mail: zxy965r@tninet.se
 //
-// Todo:
+// TODO:
 //
 
+#include <vector>
 #include "../stdafx.h"
 #include <cstdio>
 #include <memory>
@@ -51,6 +52,7 @@
 #include "fds.h"
 #include "n106.h"
 #include "vrc7.h"
+#include "s5b.h"
 
 
 const int	 CAPU::SEQUENCER_PERIOD		= 7458;
@@ -67,6 +69,8 @@ const uint8 CAPU::LENGTH_TABLE[] = {
 	0xC0, 0x18, 0x48, 0x1A, 0x10, 0x1C, 0x20, 0x1E
 };
 
+static std::vector<CExternal*> ExChips;
+
 CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem) : 
 	m_pParent(pCallback),
 	m_iFrameCycles(0),
@@ -75,8 +79,8 @@ CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem) :
 	m_iExternalSoundChip(0),
 	m_iCyclesToRun(0)
 {
-	m_pSquare1 = new CSquare(m_pMixer, CHANID_SQUARE1);
-	m_pSquare2 = new CSquare(m_pMixer, CHANID_SQUARE2);
+	m_pSquare1 = new CSquare(m_pMixer, CHANID_SQUARE1, SNDCHIP_NONE);
+	m_pSquare2 = new CSquare(m_pMixer, CHANID_SQUARE2, SNDCHIP_NONE);
 	m_pTriangle = new CTriangle(m_pMixer, CHANID_TRIANGLE);
 	m_pNoise = new CNoise(m_pMixer, CHANID_NOISE);
 	m_pDPCM = new CDPCM(m_pMixer, pSampleMem, CHANID_DPCM);
@@ -86,8 +90,7 @@ CAPU::CAPU(ICallback *pCallback, CSampleMem *pSampleMem) :
 	m_pVRC7 = new CVRC7(m_pMixer);
 	m_pFDS = new CFDS(m_pMixer);
 	m_pN106 = new CN106(m_pMixer);
-
-	m_pDPCM->SetSpeed(SPEED_NTSC);
+	m_pS5B = new CS5B(m_pMixer);
 
 #ifdef LOGGING
 	m_pLog = new CFile("apu_log.txt", CFile::modeCreate | CFile::modeWrite);
@@ -107,6 +110,7 @@ CAPU::~CAPU()
 	SAFE_RELEASE(m_pVRC7);
 	SAFE_RELEASE(m_pFDS);
 	SAFE_RELEASE(m_pN106);
+	SAFE_RELEASE(m_pS5B);
 
 	SAFE_RELEASE(m_pMixer);
 
@@ -134,8 +138,8 @@ inline void CAPU::Clock_120Hz()
 	// 120Hz Frame counter (1/2 frame)
 	//
 
-	m_pSquare1->SweepUpdate(true);
-	m_pSquare2->SweepUpdate(false);
+	m_pSquare1->SweepUpdate(1);
+	m_pSquare2->SweepUpdate(0);
 
 	m_pSquare1->LengthCounterUpdate();
 	m_pSquare2->LengthCounterUpdate();
@@ -186,7 +190,7 @@ void CAPU::Process()
 	// The amount of cycles that will be emulated is added by CAPU::AddCycles
 	//
 	
-	static uint32 Time;
+	static uint32 Time, i;
 
 	while (m_iCyclesToRun > 0) {
 
@@ -196,23 +200,31 @@ void CAPU::Process()
 			Time = m_iSequencerClock;
 		if (Time > m_iFrameClock)
 			Time = m_iFrameClock;
-			
-		m_pSquare1->Process(Time);
-		m_pSquare2->Process(Time);
-		m_pTriangle->Process(Time);
-		m_pNoise->Process(Time);
-		m_pDPCM->Process(Time);
+		
+		// Fixes the problem with distortion due to volume modulation
+		i = Time;
+		while (i > 0) {
+			uint32 Period = min(m_pSquare1->GetPeriod(), m_pSquare2->GetPeriod());
+			Period = min(max(Period, 7), i);
+			m_pSquare1->Process(Period);
+			m_pSquare2->Process(Period);
+			i -= Period;
+		}
 
-		if (m_iExternalSoundChip & SNDCHIP_VRC6)
-			m_pVRC6->Process(Time);
-		if (m_iExternalSoundChip & SNDCHIP_MMC5)
-			m_pMMC5->Process(Time);
-		if (m_iExternalSoundChip & SNDCHIP_FDS)
-			m_pFDS->Process(Time);
-		if (m_iExternalSoundChip & SNDCHIP_N106)
-			m_pN106->Process(Time);
-		if (m_iExternalSoundChip & SNDCHIP_VRC7)
-			m_pVRC7->Process(Time);
+		i = Time;
+		while (i > 0) {
+			uint32 Period = min(m_pTriangle->GetPeriod(), m_pNoise->GetPeriod());
+			Period = min(Period, m_pDPCM->GetPeriod());
+			Period = min(max(Period, 7), i);
+			m_pTriangle->Process(Period);
+			m_pNoise->Process(Period);
+			m_pDPCM->Process(Period);
+			i -= Period;
+		}
+
+		for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
+			(*iter)->Process(Time);
+		}
 
 		m_iFrameCycles		+= Time;
 		m_iSequencerClock	-= Time;
@@ -238,22 +250,15 @@ void CAPU::EndFrame()
 	m_pNoise->EndFrame();
 	m_pDPCM->EndFrame();
 
-	if (m_iExternalSoundChip & SNDCHIP_VRC6)
-		m_pVRC6->EndFrame();
-	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		m_pMMC5->EndFrame();
-	if (m_iExternalSoundChip & SNDCHIP_FDS)
-		m_pFDS->EndFrame();
-	if (m_iExternalSoundChip & SNDCHIP_N106)
-		m_pN106->EndFrame();	
-	if (m_iExternalSoundChip & SNDCHIP_VRC7)
-		m_pVRC7->EndFrame();
+	for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
+		(*iter)->EndFrame();
+	}
 
 	int SamplesAvail = m_pMixer->FinishBuffer(m_iFrameCycles);
 	int ReadSamples	= m_pMixer->ReadBuffer(SamplesAvail, m_pSoundBuffer, m_bStereoEnabled);
 	m_pParent->FlushBuffer(m_pSoundBuffer, ReadSamples);
 	
-	m_iFrameClock += m_iFrameCycleCount;
+	m_iFrameClock /*+*/= m_iFrameCycleCount;
 	m_iFrameCycles = 0;
 
 #ifdef LOGGING
@@ -280,12 +285,10 @@ void CAPU::Reset()
 	m_pTriangle->Reset();
 	m_pNoise->Reset();
 	m_pDPCM->Reset();
-	
-	m_pVRC6->Reset();
-	m_pMMC5->Reset();
-	m_pFDS->Reset();
-	m_pN106->Reset();
-	m_pVRC7->Reset();
+
+	for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
+		(*iter)->Reset();
+	}
 
 #ifdef LOGGING
 	m_iFrame = 0;
@@ -304,6 +307,23 @@ void CAPU::SetExternalSound(uint8 Chip)
 	// Set expansion chip
 	m_iExternalSoundChip = Chip;
 	m_pMixer->ExternalSound(Chip);
+
+	ExChips.clear();
+
+	if (Chip & SNDCHIP_VRC6)
+		ExChips.push_back(m_pVRC6);
+	if (Chip & SNDCHIP_VRC7)
+		ExChips.push_back(m_pVRC7);
+	if (Chip & SNDCHIP_FDS)
+		ExChips.push_back(m_pFDS);
+	if (Chip & SNDCHIP_MMC5)
+		ExChips.push_back(m_pMMC5);
+	if (Chip & SNDCHIP_N106)
+		ExChips.push_back(m_pN106);
+	if (Chip & SNDCHIP_S5B)
+		ExChips.push_back(m_pS5B);
+
+	Reset();
 }
 
 void CAPU::ChangeMachine(int Machine)
@@ -311,13 +331,17 @@ void CAPU::ChangeMachine(int Machine)
 	// Allow to change speed on the fly
 	//
 
-	if (Machine == MACHINE_NTSC) {
-		m_pDPCM->SetSpeed(MACHINE_NTSC);
-		m_pMixer->SetClockRate((uint32)BASE_FREQ_NTSC);
-	}
-	else if (Machine == MACHINE_PAL) {
-		m_pDPCM->SetSpeed(MACHINE_PAL);
-		m_pMixer->SetClockRate((uint32)BASE_FREQ_PAL);
+	switch (Machine) {
+		case MACHINE_NTSC:
+			m_pNoise->PERIOD_TABLE = CNoise::NOISE_PERIODS_NTSC;
+			m_pDPCM->PERIOD_TABLE = CDPCM::DMC_PERIODS_NTSC;			
+			m_pMixer->SetClockRate(BASE_FREQ_NTSC);
+			break;
+		case MACHINE_PAL:
+			m_pNoise->PERIOD_TABLE = CNoise::NOISE_PERIODS_PAL;
+			m_pDPCM->PERIOD_TABLE = CDPCM::DMC_PERIODS_PAL;			
+			m_pMixer->SetClockRate(BASE_FREQ_PAL);
+			break;
 	}
 }
 
@@ -332,7 +356,7 @@ bool CAPU::SetupSound(int SampleRate, int NrChannels, int Machine)
 	uint8 FrameRate = (Machine == MACHINE_NTSC) ? FRAME_RATE_NTSC : FRAME_RATE_PAL;
 
 	m_iSoundBufferSamples = uint32(SampleRate / FRAME_RATE_PAL);	// Samples / frame. Allocate for PAL, since it's more
-	m_bStereoEnabled	  = (NrChannels == 2) ? true : false;	
+	m_bStereoEnabled	  = (NrChannels == 2);	
 	m_iSoundBufferSize	  = m_iSoundBufferSamples * NrChannels;		// Total amount of samples to allocate
 	m_iSampleSizeShift	  = (NrChannels == 2) ? 1 : 0;
 	m_iBufferPointer	  = 0;
@@ -349,12 +373,13 @@ bool CAPU::SetupSound(int SampleRate, int NrChannels, int Machine)
 	if (m_pSoundBuffer == NULL)
 		return false;
 
-	// DPCM needs to know if PAL/NTSC
-	m_pDPCM->SetSpeed(Machine);
+	ChangeMachine(Machine);
 
 	// VRC7 generates samples on it's own
-	m_pVRC7->SetSampleSpeed(SampleRate, BaseFreq,
-			(Machine == MACHINE_NTSC ? FRAME_RATE_NTSC : FRAME_RATE_PAL));
+	m_pVRC7->SetSampleSpeed(SampleRate, BaseFreq, FrameRate);
+
+	// Same for sunsoft
+	m_pS5B->SetSampleSpeed(SampleRate, BaseFreq, FrameRate);
 
 	// Numbers of cycles/audio frame
 	m_iFrameCycleCount = BaseFreq / FrameRate;
@@ -362,8 +387,10 @@ bool CAPU::SetupSound(int SampleRate, int NrChannels, int Machine)
 	return true;
 }
 
-void CAPU::AddTime(uint32 Cycles)
+void CAPU::AddTime(int32 Cycles)
 {
+	if (Cycles < 0)
+		return;
 	m_iCyclesToRun += Cycles;
 }
 
@@ -390,6 +417,8 @@ void CAPU::Write(uint16 Address, uint8 Value)
 		case 0x0C: m_pNoise->Write(Address & 0x03, Value); break;
 		case 0x10: m_pDPCM->Write(Address & 0x03, Value); break;
 	}
+
+	m_iRegs[Address & 0x1F] = Value;
 
 #ifdef LOGGING
 	m_iRegs[Address & 0x1F] = Value;
@@ -462,16 +491,9 @@ void CAPU::ExternalWrite(uint16 Address, uint8 Value)
 
 	Process();
 
-	if (m_iExternalSoundChip & SNDCHIP_VRC6)
-		m_pVRC6->Write(Address, Value);
-	if (m_iExternalSoundChip & SNDCHIP_MMC5)
-		m_pMMC5->Write(Address, Value);
-	if (m_iExternalSoundChip & SNDCHIP_FDS)
-		m_pFDS->Write(Address, Value);
-	if (m_iExternalSoundChip & SNDCHIP_N106)
-		m_pN106->Write(Address, Value);
-	if (m_iExternalSoundChip & SNDCHIP_VRC7)
-		m_pVRC7->Write(Address, Value);
+	for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
+		(*iter)->Write(Address, Value);
+	}
 }
 
 uint8 CAPU::ExternalRead(uint16 Address)
@@ -479,17 +501,18 @@ uint8 CAPU::ExternalRead(uint16 Address)
 	// Data read from an external chip
 	//
 
-	uint8 Value = 0;
+	uint8 Value(0);
+	bool Mapped(false);
 
 	Process();
 
-	if (!m_iExternalSoundChip)
-		Value = Address >> 8;
+	for (std::vector<CExternal*>::iterator iter = ExChips.begin(); iter != ExChips.end(); ++iter) {
+		if (!Mapped)
+			Value = (*iter)->Read(Address, Mapped);
+	}
 
-	if (m_iExternalSoundChip & SNDCHIP_N106 && !Value)
-		Value = m_pN106->Read(Address);
-	if (m_iExternalSoundChip & SNDCHIP_FDS && !Value)
-		Value = m_pFDS->Read(Address);
+	if (!Mapped)
+		Value = Address >> 8;	// open bus
 
 	return Value;
 }

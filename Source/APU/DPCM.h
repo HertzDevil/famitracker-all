@@ -18,18 +18,10 @@
 ** must bear this legend.
 */
 
-
-/*
- * Delta modulation generation
- *
- */
-
 #ifndef _DPCM_H_
 #define _DPCM_H_
 
 #include "channel.h"
-
-class CEmulator;
 
 class CDPCM : public CChannel {
 public:
@@ -37,34 +29,36 @@ public:
 	~CDPCM();
 
 	void	Reset();
-	void	SetSpeed(int Speed);
 	void	Write(uint16 Address, uint8 Value);
 	void	WriteControl(uint8 Value);
-	uint8	ReadControl();
-	uint8	DidIRQ();
+	uint8	ReadControl() const;
+	uint8	DidIRQ() const;
 	void	Process(uint32 Time);
 	void	Reload();
 
 	uint8	GetSamplePos() const { return  (m_iDMA_Address - (m_iDMA_LoadReg << 6 | 0x4000)) >> 6; };
 	uint8	GetDeltaCounter() const { return m_iDeltaCounter; };
-	bool	IsPlaying() const { return m_iEnabled == 1; };
+	bool	IsPlaying() const { return (m_iDMA_BytesRemaining > 0); };
 
 public:
-	static const uint16	DMC_FREQ_NTSC[];
-	static const uint16	DMC_FREQ_PAL[];
+	static const uint16	DMC_PERIODS_NTSC[];
+	static const uint16	DMC_PERIODS_PAL[];
+
+	const uint16 *PERIOD_TABLE;
 
 private:
-	uint8	m_iBitDivider, m_iShiftReg;
+	uint8	m_iBitDivider;
+	uint8	m_iShiftReg;
 	uint8	m_iPlayMode;
 	uint8	m_iDeltaCounter;
 	uint8	m_iSampleBuffer;
 
-	uint16	m_iDMA_LoadReg, m_iDMA_Address;
-	uint16	m_iDMA_Length, m_iDMA_LengthCounter;
+	uint16	m_iDMA_LoadReg;
+	uint16	m_iDMA_LengthReg;
+	uint16	m_iDMA_Address;
+	uint16	m_iDMA_BytesRemaining;
 
 	bool	m_bTriggeredIRQ, m_bSampleFilled, m_bSilenceFlag;
-
-	uint16	m_iDMC_FreqTable[16];
 
 	// Needed by FamiTracker 
 	CSampleMem	*m_pSampleMem;

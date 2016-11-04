@@ -38,7 +38,7 @@ const int MAX_INSTRUMENTS = 64;
 const int MAX_SEQUENCES	= 128;
 
 // Maximum number of items in each sequence
-const int MAX_SEQUENCE_ITEMS = /*128*/ 253;		// todo: need to check if this exports correctly
+const int MAX_SEQUENCE_ITEMS = /*128*/ 253;		// TODO: need to check if this exports correctly
 
 // Maximum number of patterns per channel
 const int MAX_PATTERN = 128;
@@ -52,6 +52,9 @@ const int MAX_PATTERN_LENGTH = 256;
 // Maximum number of dmc samples (this would be more limited by NES memory)
 const int MAX_DSAMPLES = 64;
 
+// Sample space available (from $C000-$FFFF) Will be increased when bankswitching is supported
+const int MAX_SAMPLE_SPACE = 0x4000;
+
 // Number of effect columns allowed
 const int MAX_EFFECT_COLUMNS = 4;
 
@@ -62,10 +65,16 @@ const unsigned int MAX_TRACKS = 64;
 const int MAX_TEMPO	= 255;
 
 // Min tempo
-const int MIN_TEMPO	= 1;
+const int MIN_TEMPO	= 32;
+
+// Max speed
+const int MAX_SPEED = 31;
+
+// Min speed
+const int MIN_SPEED = 1;
 
 
-// Number of avaliable channels (max) Todo: should not be used anymore!
+// Number of avaliable channels (max) TODO: should not be used anymore!
 // instead, check the channelsavailable variable and allocate dynamically
 const int MAX_CHANNELS	 = 5 + 3 + 2 + 6 + 1 + 8 + 3;		
 
@@ -77,15 +86,31 @@ const int OCTAVE_RANGE = 8;
 const int NOTE_RANGE   = 12;
 
 // Sequence types (shared with VRC6)
+
 enum {
 	SEQ_VOLUME,
 	SEQ_ARPEGGIO,
 	SEQ_PITCH,
-	SEQ_HIPITCH,		// todo: remove this eventually
+	SEQ_HIPITCH,		// TODO: remove this eventually
 	SEQ_DUTYCYCLE,
 
 	SEQ_COUNT
 };
+
+// New sequence types
+/*
+enum {
+	SEQ_VOLUME,
+	SEQ_ARPEGGIO,
+	SEQ_PITCH,
+	SEQ_HIPITCH,		// TODO: remove this eventually
+	SEQ_DUTYCYCLE,
+	SEQ_SUNSOFT_NOISE,
+
+	SEQ_COUNT
+};
+*/
+//const int SEQ_SUNSOFT_NOISE = SEQ_DUTYCYCLE + 1;
 
 // Channel effects
 enum {
@@ -115,12 +140,25 @@ enum {
 	EF_NOTE_CUT,
 	EF_RETRIGGER,
 
-//	EF_DELAYED_VOLUME,
+	EF_DELAYED_VOLUME,	
+
+	EF_FDS_MOD_DEPTH,
+	EF_FDS_MOD_SPEED_HI,
+	EF_FDS_MOD_SPEED_LO,
+
+	EF_DPCM_PITCH,
 
 	EF_COUNT
 };
 
-const int EF_DPCM_PITCH = EF_SWEEPUP;
+// DPCM  effects
+//const int EF_DPCM_PITCH = EF_SWEEPUP;		// DPCM pitch, 'H'
+
+//const int EF_VRC7_PATCH = EF_DUTY_CYCLE;	// VRC7 patch setting, 'V'
+
+// FDS effects
+//const int EF_FDS_MOD_DEPTH = EF_SWEEPUP;	// FDS modulation depth, 'H'
+
 //const int EF_RETRIGGER = EF_SWEEPDOWN;
 
 // Channel effect letters
@@ -147,8 +185,13 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'R',	// Slide down
 						 'A',	// Volume slide
 						 'S',	// Note cut
-						 'X',	// DPCM retrigger
-		//				 'J',	// Delayed volume
+						 'X',	// DPCM retrigger						 
+						 ' ',	// (TODO, delayed volume)
+						 'H',	// FDS modulation depth
+						 'I',	// FDS modulation speed hi
+						 'J',	// FDS modulation speed lo
+						 'W'	// DPCM Pitch
+						 
 };
 
 
@@ -191,7 +234,8 @@ public:
 	// Allocate memory
 	void Allocate(int iSize, char *pData = NULL);
 
-	// Sample data & name, todo: make this private
+	// Sample data & name
+	// TODO: make these private
 	unsigned int SampleSize;
 	char *SampleData;
 	char Name[256];

@@ -26,7 +26,13 @@
 #include "SequenceEditor.h"
 #include "InstrumentEditorVRC6.h"
 
-LPCTSTR CInstrumentEditorVRC6::INST_SETTINGS_VRC6[] = {_T("Volume"), _T("Arpeggio"), _T("Pitch"), _T("Hi-pitch"), _T("Pulse Width")};
+LPCTSTR CInstrumentEditorVRC6::INST_SETTINGS_VRC6[] = {
+	_T("Volume"), 
+	_T("Arpeggio"), 
+	_T("Pitch"), 
+	_T("Hi-pitch"), 
+	_T("Pulse Width")
+};
 
 // CInstrumentEditorVRC6 dialog
 
@@ -75,7 +81,7 @@ void CInstrumentEditorVRC6::SelectInstrument(int Instrument)
 void CInstrumentEditorVRC6::SelectSequence(int Sequence, int Type)
 {
 	// Selects the current sequence in the sequence editor
-	m_pSequence = GetDocument()->GetSequenceVRC6(Sequence, Type);
+	m_pSequence = GetDocument()->GetSequence(SNDCHIP_VRC6, Sequence, Type);
 	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_VRC6);
 }
 
@@ -107,7 +113,6 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorVRC6, CInstrumentEditPanel)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, OnLvnItemchangedInstsettings)	
 	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
 	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
-	ON_BN_CLICKED(IDC_PARSE, OnBnClickedParse)
 END_MESSAGE_MAP()
 
 // CInstrumentSettings message handlers
@@ -203,7 +208,13 @@ void CInstrumentEditorVRC6::OnBnClickedFreeSeq()
 	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
 }
 
-void CInstrumentEditorVRC6::OnBnClickedParse()
+BOOL CInstrumentEditorVRC6::DestroyWindow()
+{
+	m_pSequenceEditor->DestroyWindow();
+	return CDialog::DestroyWindow();
+}
+
+void CInstrumentEditorVRC6::OnKeyReturn()
 {
 	// Translate the sequence text string to a sequence
 	CString Text;
@@ -226,15 +237,4 @@ void CInstrumentEditorVRC6::OnBnClickedParse()
 			TranslateMML(Text, MAX_DUTY, 0);
 			break;
 	}
-}
-
-BOOL CInstrumentEditorVRC6::DestroyWindow()
-{
-	m_pSequenceEditor->DestroyWindow();
-	return CDialog::DestroyWindow();
-}
-
-void CInstrumentEditorVRC6::OnKeyReturn()
-{
-	OnBnClickedParse();
 }

@@ -26,18 +26,20 @@
 
 class CChannelHandlerMMC5 : public CChannelHandler {
 public:
-	CChannelHandlerMMC5(int ChanID) : CChannelHandler(ChanID) {};
+	CChannelHandlerMMC5();
 	virtual void ProcessChannel();
 	virtual void ResetChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
-	virtual int LimitFreq(int Freq);
+protected:
+	static const int SEQUENCES = 5;
+	static const int SEQ_TYPES[];
 };
 
 // Square 1
 class CMMC5Square1Chan : public CChannelHandlerMMC5 {
 public:
-	CMMC5Square1Chan() : CChannelHandlerMMC5(5) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CMMC5Square1Chan() : CChannelHandlerMMC5() {};
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
@@ -46,7 +48,7 @@ protected:
 // Square 2
 class CMMC5Square2Chan : public CChannelHandlerMMC5 {
 public:
-	CMMC5Square2Chan() : CChannelHandlerMMC5(6) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CMMC5Square2Chan() : CChannelHandlerMMC5() {};
 	void RefreshChannel();
 protected:
 	void ClearRegisters();

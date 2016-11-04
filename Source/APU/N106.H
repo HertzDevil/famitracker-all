@@ -49,7 +49,7 @@ public:
 	void Process(uint32 Time);
 	void EndFrame();
 	void Write(uint16 Address, uint8 Value);
-	uint8 Read(uint16 Address);
+	uint8 Read(uint16 Address, bool &Mapped);
 private:
 	CN106Chan	*m_pChannels[8];
 	uint8		*m_pWaveData;

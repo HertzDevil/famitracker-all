@@ -29,8 +29,8 @@ class CInstrumentEditorFDSEnvelope : public CSequenceInstrumentEditPanel
 public:
 	CInstrumentEditorFDSEnvelope(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorFDSEnvelope();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("Envelopes"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("Envelopes"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);

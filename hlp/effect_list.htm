@@ -8,6 +8,21 @@
             {
                 width: 50px;
             }
+            .style2
+            {
+                width: 50px;
+                font-weight: bold;
+            }
+            .style3
+            {
+                font-family: Verdana;
+                font-size: x-small;
+                font-weight: bold;
+            }
+            .style6
+            {
+                font-weight: bold;
+            }
         </style>
 	</HEAD>
 	<BODY bgcolor="#ffffff">
@@ -90,15 +105,17 @@
 				<td class="style1">
 					<strong>Exx</strong></td>
 				<td>
-					Volume setting. <em>Obsolete, <span lang="sv">please </span>use the volume colum instead.</em></td>
+					Volume setting. <em>Obsolete, use the volume colum instead.</em></td>
 			</tr>
 			<tr>
 				<td class="style1">
 					<strong>Fxx</strong></td>
 				<td>
-					Speed/tempo, sets the speed when <strong>xx </strong>is between <strong>00</strong>
-                    - <strong>19,</strong> and tempo when <strong>xx</strong> is between <strong>20</strong>
-                    - <strong>FF</strong></td>
+					Speed/tempo, sets the speed when <strong>xx </strong>is between<b> </b> <strong>0<span 
+                        lang="sv">1</span></strong><b>
+                    - </b><span class="style6" lang="sv">1F</span><strong>,</strong> and tempo when <strong>xx</strong> is between 
+                    <span class="style6" lang="sv">20</span><b>
+                    - </b> <strong>FF</strong></td>
 			</tr>
 			<tr>
 				<td class="style1">
@@ -110,7 +127,9 @@
 				<td class="style1">
 					<strong>Hxy</strong></td>
 				<td>
-					Hardware sweep up, triggers a hardware sweep up (only available for square) <strong>
+					Hardware sweep up, triggers a hardware sweep up (only available <span lang="sv">
+                    on </span>&nbsp;<span lang="sv">2A03
+                    </span>square<span lang="sv">s</span>) <strong>
                         x</strong> = period (<strong>0</strong> - <strong>7</strong>), <strong>y</strong>
                     = shift (<strong>1</strong> - <strong>7</strong>)</td>
 			</tr>
@@ -118,8 +137,8 @@
 				<td class="style1">
 					<strong>Ixy</strong></td>
 				<td>
-					Hardware sweep down, triggers a hardware sweep down (only avaliable for 
-					square), 
+					Hardware sweep down, triggers a hardware sweep down (only avaliable
+                    <span lang="sv">on 2A03 </span>square<span lang="sv">s</span>), 
                     <strong>x</strong> = period (<strong>0</strong> - <strong>7</strong>), y = shift
                     (<strong>1</strong> - <strong>7</strong>)</td>
 			</tr>
@@ -154,26 +173,73 @@
 				<td>
 					Square duty / noise mode, sets the square duty and noise mode setting, <strong>xx</strong>
                     = <strong>00</strong> - <strong>03</strong> for square and <strong>00</strong> -
-                    <strong>01</strong> for noise</td>
+                    <strong>01</strong> for noise<span lang="sv">. <strong>xx</strong>
+                    = <strong>00</strong> - <strong>0</strong>7 for VRC6.</span></td>
+			</tr>
+			</table>		
+	    <p>
+            <span class="style3" lang="sv">DPCM effects</span></p>
+		<table cellpadding="3" cellspacing="0" border="1" bgcolor="#FCFCFC" 
+            class="table">
+            <tr>
+                <td class="style1">
+                    <strong class="bold">Effect</strong></td>
+                <td>
+                    <strong class="bold">Description</strong></td>
+            </tr>
+			<tr>
+				<td class="style2">
+					<span lang="sv">W0x</span></td>
+				<td>
+					<span lang="sv">DPCM pitch (0 - F)</span></td>
 			</tr>
 			<tr>
-				<td class="style1">
+				<td class="style2">
 					<b>Xxx</b></td>
 				<td>
-					DPCM retrigger, xx = length in frames between retrigger.</td>
+					DPCM retrigger, <b>xx</b> = length in frames between retrigger.</td>
 			</tr>
 			<tr>
-				<td class="style1">
-					<strong>Yxx</strong></td>
+				<td class="style2">
+					<span lang="sv">Yxx</span></td>
 				<td>
-					DPCM sample offset, each step adds 64 bytes</td>
+					<span lang="sv">DPCM sample offset, each step adds 64 bytes</span></td>
 			</tr>
 			<tr>
-				<td class="style1">
-					<strong>Zxx</strong></td>
+				<td class="style2">
+					<span lang="sv">Zxx</span></td>
 				<td>
 					DPCM delta counter, changes the delta counter directly (through a write to $4011), 
 					affects volume of noise and triangle.&nbsp; <strong>xx</strong> is between <strong>00</strong> - <strong>80</strong></td>
+			</tr>
+		</table>		
+	    <p>
+            <span class="style3" lang="sv">FDS effects</span></p>
+		<table cellpadding="3" cellspacing="0" border="1" bgcolor="#FCFCFC" 
+            class="table">
+            <tr>
+                <td class="style1">
+                    <strong class="bold">Effect</strong></td>
+                <td>
+                    <strong class="bold">Description</strong></td>
+            </tr>
+			<tr>
+				<td class="style2">
+					<span lang="sv">Hxx</span></td>
+				<td>
+					<span lang="sv">Modulation depth (0 - 3F)</span></td>
+			</tr>
+			<tr>
+				<td class="style2">
+					<span lang="sv">Ixx</span></td>
+				<td>
+					<span lang="sv">Modulation speed, high part (0 - F)</span></td>
+			</tr>
+			<tr>
+				<td class="style2">
+					<span lang="sv">Jxx</span></td>
+				<td>
+					<span lang="sv">Modulation speed, low part (0 - FF)</span></td>
 			</tr>
 		</table>		
 	</BODY>

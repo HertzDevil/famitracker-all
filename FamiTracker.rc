@@ -47,11 +47,13 @@ BEGIN
     BUTTON      ID_APP_ABOUT
     BUTTON      ID_CONTEXT_HELP
     SEPARATOR
-    BUTTON      ID_FRAME_INSERT
-    BUTTON      ID_FRAME_REMOVE
+    BUTTON      ID_MODULE_FRAME_INSERT
+    BUTTON      ID_MODULE_FRAME_REMOVE
     BUTTON      ID_MODULE_MOVEFRAMEDOWN
     BUTTON      ID_MODULE_MOVEFRAMEUP
     BUTTON      ID_MODULE_DUPLICATEFRAME
+    SEPARATOR
+    BUTTON      ID_MODULE_MODULEPROPERTIES
     SEPARATOR
     BUTTON      ID_TRACKER_PLAY
     BUTTON      ID_TRACKER_PLAYPATTERN
@@ -108,6 +110,13 @@ BEGIN
         MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
         MENUITEM "&Redo\tCtrl+Y",               ID_EDIT_REDO
         MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+        MENUITEM SEPARATOR
+        MENUITEM "Select &All\tCtrl+A",         ID_EDIT_SELECTALL
+        MENUITEM SEPARATOR
         POPUP "Transpose"
         BEGIN
             MENUITEM "Decrease Note\tCtrl+F1",      ID_TRANSPOSE_DECREASENOTE
@@ -118,13 +127,6 @@ BEGIN
         MENUITEM "Interpolate\tCtrl+G",         ID_EDIT_INTERPOLATE
         MENUITEM "&Reverse\tCtrl+R",            ID_EDIT_REVERSE
         MENUITEM "R&eplace instrument\tAlt+S",  ID_EDIT_REPLACEINSTRUMENT
-        MENUITEM SEPARATOR
-        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
-        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
-        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
-        MENUITEM SEPARATOR
-        MENUITEM "Select &All\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Clear patterns",              ID_EDIT_CLEARPATTERNS
         POPUP "Clean up"
@@ -142,22 +144,25 @@ BEGIN
     END
     POPUP "&Module"
     BEGIN
-        MENUITEM "Insert Frame",                ID_FRAME_INSERT
-        MENUITEM "Remove Frame",                ID_FRAME_REMOVE
+        MENUITEM "Insert frame",                ID_MODULE_FRAME_INSERT
+        MENUITEM "Remove frame",                ID_MODULE_FRAME_REMOVE
         MENUITEM "&Duplicate frame",            ID_MODULE_DUPLICATEFRAME
         MENUITEM SEPARATOR
         MENUITEM "Move Frame Up",               ID_MODULE_MOVEFRAMEUP
         MENUITEM "Move Frame Down",             ID_MODULE_MOVEFRAMEDOWN
         MENUITEM SEPARATOR
-        MENUITEM "Module Properties",           ID_MODULE_MODULEPROPERTIES
+        MENUITEM "Module Properties\tCtrl+P",   ID_MODULE_MODULEPROPERTIES
+        MENUITEM "Channels",                    ID_MODULE_CHANNELS
     END
     POPUP "&Instrument"
     BEGIN
         MENUITEM "New",                         ID_MODULE_ADDINSTRUMENT
         MENUITEM "Remove",                      ID_MODULE_REMOVEINSTRUMENT
         MENUITEM "Clone",                       ID_INSTRUMENT_CLONE
-        MENUITEM "Load",                        ID_MODULE_LOADINSTRUMENT
-        MENUITEM "Save",                        ID_MODULE_SAVEINSTRUMENT
+        MENUITEM SEPARATOR
+        MENUITEM "Load from file...",           ID_MODULE_LOADINSTRUMENT
+        MENUITEM "Save to file...",             ID_MODULE_SAVEINSTRUMENT
+        MENUITEM SEPARATOR
         MENUITEM "Edit\tCtrl+I",                ID_MODULE_EDITINSTRUMENT
     END
     POPUP "T&racker"
@@ -235,20 +240,20 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 264, 222
+IDD_ABOUTBOX DIALOGEX 0, 0, 275, 233
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About FamiTracker"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "FamiTracker Version x.x.x\n\nA Famicom/NES music tracker",IDC_ABOUT,54,7,119,26,SS_NOPREFIX
     LTEXT           "Copyright (C) 2005 - 2011 jsr",IDC_STATIC,54,38,118,8
-    DEFPUSHBUTTON   "OK",IDOK,207,14,50,16,WS_GROUP
-    LTEXT           "Libraries:\n* Blip_buffer 0.4.0 is Copyright (C) blargg (http://www.slack.net/~ant/nes-emu/)\n* Fast Fourier Transform code is (C) Reliable Software\n* YM2413 emulator is written by Mitsutaka Okazaki",IDC_STATIC,54,173,203,44
+    DEFPUSHBUTTON   "OK",IDOK,218,14,50,16,WS_GROUP
+    LTEXT           "Libraries:\n* Blip_buffer 0.4.0 is Copyright (C) blargg (http://www.slack.net/~ant/nes-emu/)\n* Fast Fourier Transform code is (C) Reliable Software\n* YM2413 && YM2149 emulators are written by Mitsutaka Okazaki\n* FDS sound emulator from nezplug",IDC_STATIC,54,175,214,52
     LTEXT           "E-mail:",IDC_STATIC,54,55,24,10
-    LTEXT           "This software is licensed under the GNU General Public\n License. Source is available on the webpage.",IDC_STATIC,54,113,203,18
-    ICON            IDR_MAINFRAME,IDC_STATIC,7,15,21,20,SS_REALSIZEIMAGE
-    LTEXT           "Contributions:\n* Export plugin support by Gradualore\n* Icon is made by Kuhneghetz\n* Toolbar icons are made by ilkke\n",IDC_STATIC,54,136,203,33
-    LTEXT           "All comments and feedback are welcome\nGreets to everyone at the 2A03.org forum and everyone who has contributed with bug reports and suggestions!",IDC_STATIC,54,81,203,27
+    LTEXT           "This software is licensed under the GNU General Public\n License. Source is available on the webpage.",IDC_STATIC,54,113,214,18
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,15,20,20,SS_REALSIZEIMAGE
+    LTEXT           "Contributions:\n* Export plugin support by Gradualore\n* Icon is made by Kuhneghetz\n* Toolbar icons are made by ilkke\n",IDC_STATIC,54,136,214,33
+    LTEXT           "All comments and feedback are welcome\nGreets to everyone at the 2A03.org forum and everyone who has contributed with bug reports and suggestions!",IDC_STATIC,54,81,214,27
     LTEXT           "zxy965r@tninet.se",IDC_MAIL,84,55,64,10,SS_NOTIFY
     LTEXT           "http://famitracker.shoodot.net",IDC_WEBPAGE,84,65,103,9,SS_NOTIFY
     LTEXT           "Web:",IDC_STATIC,54,65,24,9
@@ -305,13 +310,13 @@ BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 257
+        RIGHTMARGIN, 268
         VERTGUIDE, 48
         VERTGUIDE, 54
         VERTGUIDE, 78
         VERTGUIDE, 84
         TOPMARGIN, 7
-        BOTTOMMARGIN, 217
+        BOTTOMMARGIN, 228
         HORZGUIDE, 60
         HORZGUIDE, 69
     END
@@ -335,7 +340,7 @@ BEGIN
     IDS_INST_LIMIT          "You cannot add more instruments"
     IDS_CLIPBOARD_OPEN_ERROR "Cannot open clipboard."
     IDS_CLIPBOARD_NOT_AVALIABLE "Clipboard format is not avaliable"
-    IDS_SAVE_ERROR          "Couldn't save file, check that it isn't write protected or shared with other applications"
+    IDS_SAVE_ERROR          "Couldn't save file, check that it isn't write protected or shared with other applications and there are free disk space available."
     IDS_INSTRUMENT_FILE_FAIL "Instrument file was not vaild"
     IDS_SAMPLES_NEEDED      "Following samples are needed for this instrument:\n\n"
     IDS_OPEN                "Open"
@@ -448,7 +453,7 @@ BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
     ID_INDICATOR_INSTRUMENT "Instrument: 00"
-    ID_INDICATOR_TEMPO      "0000 BPM"
+    ID_INDICATOR_TEMPO      "000 BPM"
 END
 
 STRINGTABLE 
@@ -465,6 +470,10 @@ BEGIN
     IDS_REMOVE_PATTERNS     "Do you want to remove all unused patterns? There is no undo for this action."
     IDS_SOUND_FAIL          "It appears the current sound settings aren't working, change settings and try again!"
     IDS_UNDERRUN_MESSAGE    "Audio buffer underrun, increase audio buffer size or decrease CPU utilization."
+    IDS_MIDI_ERR_INPUT      "MIDI Error: Could not open MIDI input device!"
+    IDS_MIDI_ERR_OUTPUT     "MIDI Error: Could not open MIDI output device!"
+    IDS_WELCOME_VER         "Welcome to FamiTracker %i.%i.%i, press F1 for help"
+    IDS_NEW_SOUND_CONFIG    "New sound configuration loaded"
 END
 
 STRINGTABLE 
@@ -522,7 +531,8 @@ STRINGTABLE
 BEGIN
     ID_BUTTON32892          "FamiTracker settings"
     ID_SPEED_DEFAULT        "Chooses default playback rate corresponding to selected video standard"
-    ID_MODULE_MODULEPROPERTIES "Opens the module properties window"
+    ID_MODULE_MODULEPROPERTIES 
+                            "Opens the module properties window\nModule properties"
 END
 
 STRINGTABLE 
@@ -606,6 +616,12 @@ BEGIN
                             "Removes all unused instruments\nRemove unused instruments"
 END
 
+STRINGTABLE 
+BEGIN
+    ID_MODULE_FRAME_INSERT  "Insert a new frame on current location"
+    ID_MODULE_FRAME_REMOVE  "Removes selected frame"
+END
+
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -660,6 +676,8 @@ BEGIN
         MENUITEM "&Reverse\tCtrl+R",            ID_EDIT_REVERSE
         MENUITEM "Pick up row",                 ID_POPUP_PICKUPROW
         MENUITEM SEPARATOR
+        MENUITEM "R&eplace instrument\tAlt+S",  ID_EDIT_REPLACEINSTRUMENT
+        MENUITEM SEPARATOR
         MENUITEM "&Toggle channel\tAlt+F9",     ID_POPUP_TOGGLECHANNEL
         MENUITEM "&Solo channel\tAlt+F10",      ID_POPUP_SOLOCHANNEL
     END
@@ -687,8 +705,10 @@ BEGIN
     BEGIN
         MENUITEM "Add",                         ID_INSTRUMENT_ADD
         MENUITEM "Remove",                      ID_INSTRUMENT_REMOVE
-        MENUITEM "Edit",                        ID_INSTRUMENT_EDIT
+        MENUITEM SEPARATOR
         MENUITEM "Clone",                       ID_INSTRUMENT_CLONE
+        MENUITEM SEPARATOR
+        MENUITEM "Edit",                        ID_INSTRUMENT_EDIT
     END
 END
 
@@ -718,6 +738,16 @@ BEGIN
     END
 END
 
+IDR_PATTERN_HEADER_POPUP MENU 
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "&Toggle channel\tAlt+F9",     ID_POPUP_TOGGLECHANNEL
+        MENUITEM "&Solo channel\tAlt+F10",      ID_POPUP_SOLOCHANNEL
+        MENUITEM "&Unmute all channels",        ID_POPUP_UNMUTEALLCHANNELS
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -732,7 +762,7 @@ BEGIN
     EDITTEXT        IDC_TEMPO,43,29,38,12,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "",IDC_TEMPO_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,81,28,11,13
     CONTROL         "",IDC_INSTRUMENTS,"SysListView32",LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,193,5,202,103
-    EDITTEXT        IDC_INSTNAME,310,109,85,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_INSTNAME,314,109,81,12,ES_AUTOHSCROLL
     GROUPBOX        "Song settings",IDC_STATIC,7,5,78,71
     EDITTEXT        IDC_ROWS,43,43,38,12,ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN
     CONTROL         "",IDC_ROWS_SPIN,"msctls_updown32",UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,81,43,11,13
@@ -757,20 +787,20 @@ BEGIN
     GROUPBOX        "Song information",IDC_STATIC,91,5,96,61
 END
 
-IDD_PERFORMANCE DIALOGEX 0, 0, 171, 95
+IDD_PERFORMANCE DIALOGEX 0, 0, 177, 95
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Performance"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Close",IDOK,55,74,60,14
+    DEFPUSHBUTTON   "Close",IDOK,58,74,60,14
     GROUPBOX        "CPU usage",IDC_STATIC,7,7,68,53
     CTEXT           "--%",IDC_CPU,43,30,29,10
     CONTROL         "",IDC_CPU_BAR,"msctls_progress32",PBS_SMOOTH | PBS_VERTICAL | WS_BORDER,18,19,18,34
-    LTEXT           "Frame rate: 0 Hz",IDC_FRAMERATE,89,18,64,8
+    LTEXT           "Frame rate: 0 Hz",IDC_FRAMERATE,89,18,72,8
     LTEXT           "Underruns: 0",IDC_UNDERRUN,89,45,66,8
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,7,67,156,1
-    GROUPBOX        "Other",IDC_STATIC,81,7,82,26
-    GROUPBOX        "Audio",IDC_STATIC,81,34,82,26
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,7,67,162,1
+    GROUPBOX        "Other",IDC_STATIC,81,7,88,26
+    GROUPBOX        "Audio",IDC_STATIC,81,34,88,26
 END
 
 IDD_SPEED DIALOGEX 0, 0, 196, 44
@@ -816,8 +846,7 @@ BEGIN
     GROUPBOX        "Sequence editor",IDC_STATIC,120,7,245,158
     GROUPBOX        "Instrument settings",IDC_STATIC,7,7,107,158,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "Select next empty slot",IDC_FREE_SEQ,12,129,96,15
-    EDITTEXT        IDC_SEQUENCE_STRING,126,149,204,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Parse",IDC_PARSE,333,149,25,13
+    EDITTEXT        IDC_SEQUENCE_STRING,126,149,232,13,ES_AUTOHSCROLL
 END
 
 IDD_INSTRUMENT_DPCM DIALOGEX 0, 0, 372, 174
@@ -861,17 +890,19 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Appearance"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    COMBOBOX        IDC_FONT,15,139,135,93,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Pattern font",IDC_STATIC,7,123,149,37
-    GROUPBOX        "Colors",IDC_STATIC,7,56,149,59
-    CONTROL         "",IDC_COL_PREVIEW,"Static",SS_OWNERDRAW,15,89,69,15
-    COMBOBOX        IDC_COL_ITEM,48,70,102,172,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Item",IDC_STATIC,15,73,21,10
-    PUSHBUTTON      "Pick color",IDC_PICK_COL,96,89,54,15
+    COMBOBOX        IDC_FONT,15,139,102,93,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Pattern font and size",IDC_STATIC,7,123,149,37
+    GROUPBOX        "Colors",IDC_STATIC,7,54,149,62
+    CONTROL         "",IDC_COL_PREVIEW,"Static",SS_OWNERDRAW,15,84,69,15
+    COMBOBOX        IDC_COL_ITEM,35,66,115,172,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Item",IDC_STATIC,15,68,16,8
+    PUSHBUTTON      "Pick color",IDC_PICK_COL,96,84,54,15
     CONTROL         "",IDC_PREVIEW,"Static",SS_OWNERDRAW,176,18,90,125
     COMBOBOX        IDC_SCHEME,15,22,135,126,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Color schemes",IDC_STATIC,7,7,149,39
     GROUPBOX        "Preview",IDC_STATIC,166,7,107,153
+    COMBOBOX        IDC_FONT_SIZE,122,139,28,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Pattern colors",IDC_PATTERNCOLORS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,102,113,9
 END
 
 IDD_MIDIIMPORT DIALOGEX 0, 0, 204, 137
@@ -901,24 +932,23 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "General"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Wrap cursor",IDC_OPT_WRAPCURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,17,113,9
+    CONTROL         "Wrap cursor",IDC_OPT_WRAPCURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,18,113,9
     GROUPBOX        "General settings",IDC_STATIC,7,7,125,153
-    CONTROL         "Free cursor edit",IDC_OPT_FREECURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,41,113,9
-    CONTROL         "Preview wave-files",IDC_OPT_WAVEPREVIEW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,53,113,9
-    CONTROL         "Key repeat",IDC_OPT_KEYREPEAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,65,113,9
+    CONTROL         "Free cursor edit",IDC_OPT_FREECURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,40,113,9
+    CONTROL         "Preview wave-files",IDC_OPT_WAVEPREVIEW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,51,113,9
+    CONTROL         "Key repeat",IDC_OPT_KEYREPEAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,62,113,9
     GROUPBOX        "Pattern edit style",IDC_STATIC,138,7,135,48
-    CONTROL         "Show row numbers in hex",IDC_OPT_HEXROW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,77,113,9
+    CONTROL         "Show row numbers in hex",IDC_OPT_HEXROW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,73,113,9
     CONTROL         "Preview next/previous frame",IDC_OPT_FRAMEPREVIEW,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,89,113,9
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,84,113,9
     CONTROL         "Don't reset DPCM on note stop",IDC_OPT_NODPCMRESET,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,101,113,9
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,95,113,9
     GROUPBOX        "Edit settings",IDC_STATIC,137,57,135,30
     LTEXT           "Page jump length",IDC_STATIC,143,70,56,9
     COMBOBOX        IDC_PAGELENGTH,215,68,48,65,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Ignore Step when moving",IDC_OPT_NOSTEPMOVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,113,113,9
-    CONTROL         "Pattern colors",IDC_OPT_PATTENRCOLORS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,125,113,9
+    CONTROL         "Ignore Step when moving",IDC_OPT_NOSTEPMOVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,106,113,9
     CONTROL         "Wrap across frames",IDC_OPT_WRAPFRAMES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,29,113,9
-    CONTROL         "Delete-key pulls up rows",IDC_OPT_PULLUPDELETE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,137,113,9
+    CONTROL         "Delete-key pulls up rows",IDC_OPT_PULLUPDELETE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,117,113,9
     GROUPBOX        "Keys",IDC_STATIC,138,89,135,71
     LTEXT           "Note cut",IDC_STATIC,144,100,50,11
     EDITTEXT        IDC_KEY_NOTE_CUT,204,99,60,13,ES_AUTOHSCROLL | ES_READONLY
@@ -928,10 +958,11 @@ BEGIN
     EDITTEXT        IDC_KEY_CLEAR,204,114,60,13,ES_AUTOHSCROLL | ES_READONLY
     LTEXT           "Repeat",IDC_STATIC,144,129,50,11
     EDITTEXT        IDC_KEY_REPEAT,204,128,60,13,ES_AUTOHSCROLL | ES_READONLY
-    CONTROL         "Backup files",IDC_OPT_BACKUPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,148,113,9
+    CONTROL         "Backup files",IDC_OPT_BACKUPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,128,113,9
     CONTROL         "FastTracker 2",IDC_STYLE1,"Button",BS_AUTORADIOBUTTON,144,18,120,8
     CONTROL         "ModPlug tracker",IDC_STYLE2,"Button",BS_AUTORADIOBUTTON,144,30,120,8
     CONTROL         "Impulse Tracker",IDC_STYLE3,"Button",BS_AUTORADIOBUTTON,144,42,120,8
+    CONTROL         "Single instance",IDC_OPT_SINGLEINSTANCE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,139,113,9
 END
 
 IDD_PROPERTIES DIALOGEX 0, 0, 213, 257
@@ -963,7 +994,7 @@ CAPTION "MIDI"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     COMBOBOX        IDC_OUTDEVICES,13,58,253,50,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Enable master sync ticks",IDC_MASTER_SYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,87,173,10
+    CONTROL         "Receive sync ticks",IDC_MASTER_SYNC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,87,173,10
     CONTROL         "Skip key releases",IDC_KEY_RELEASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,98,173,10
     CONTROL         "Map MIDI channels to NES channels",IDC_CHANMAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,109,173,10
     CONTROL         "Record velocities",IDC_VELOCITY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,120,173,10
@@ -975,6 +1006,7 @@ END
 
 IDD_CONFIG_SOUND DIALOGEX 0, 0, 280, 167
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Sound"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
@@ -1008,12 +1040,11 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Shortcuts"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_SHORTCUTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,266,136
-    RTEXT           "Modifier",IDC_STATIC,7,149,35,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_MODIFIERS,48,149,72,71,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Key",IDC_STATIC,126,149,18,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_KEYS,150,149,60,118,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Defaults",IDC_DEFAULT,216,147,57,14
+    CONTROL         "",IDC_SHORTCUTS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,266,136
+    PUSHBUTTON      "Default",IDC_DEFAULT,222,147,51,14
+    EDITTEXT        IDC_KEY,36,147,145,14,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Keys:",IDC_STATIC,7,149,23,12
+    PUSHBUTTON      "Clear",IDC_CLEAR,186,147,32,14
 END
 
 IDD_OCTAVE DIALOGEX 0, 0, 300, 12
@@ -1043,11 +1074,10 @@ BEGIN
     GROUPBOX        "Sequence editor",IDC_STATIC,120,7,245,158
     GROUPBOX        "Instrument settings",IDC_STATIC,7,7,107,158,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "Select next empty slot",IDC_FREE_SEQ,12,134,96,12
-    EDITTEXT        IDC_SEQUENCE_STRING,126,149,204,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Parse",IDC_PARSE_MML,333,149,25,13
+    EDITTEXT        IDC_SEQUENCE_STRING,126,149,232,13,ES_AUTOHSCROLL
 END
 
-IDD_EXPORT DIALOGEX 0, 0, 234, 268
+IDD_EXPORT DIALOGEX 0, 0, 234, 280
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export file"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -1062,8 +1092,8 @@ BEGIN
     EDITTEXT        IDC_COPYRIGHT,60,49,102,13,ES_AUTOHSCROLL
     CONTROL         "Set PAL flag in the NSF header",IDC_PAL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,67,146,10
     DEFPUSHBUTTON   "&Export",IDC_EXPORT,174,7,53,14
-    GROUPBOX        "Progress",IDC_STATIC,7,120,220,141
-    EDITTEXT        IDC_OUTPUT,14,132,206,124,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
+    GROUPBOX        "Progress",IDC_STATIC,7,120,220,153
+    EDITTEXT        IDC_OUTPUT,14,132,206,135,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
     GROUPBOX        "Type of file",IDC_STATIC,7,84,220,29
     COMBOBOX        IDC_TYPE,16,95,204,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Play",IDC_PLAY,174,68,53,14,NOT WS_VISIBLE
@@ -1073,14 +1103,14 @@ IDD_INSTRUMENT_VRC7 DIALOGEX 0, 0, 372, 172
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    COMBOBOX        IDC_PATCH,15,18,343,128,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Patch",IDC_STATIC,7,7,358,30
+    COMBOBOX        IDC_PATCH,15,18,295,128,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Patch",IDC_STATIC,7,7,310,30
     CONTROL         "Amplitude modulation",IDC_M_AM,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,54,84,10,WS_EX_TRANSPARENT
     CONTROL         "Vibrato",IDC_M_VIB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,104,54,39,10,WS_EX_TRANSPARENT
     CONTROL         "Sustained",IDC_M_EG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,70,47,10,WS_EX_TRANSPARENT
     CONTROL         "RATE key scale",IDC_M_KSR2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,89,70,65,10,WS_EX_TRANSPARENT
-    GROUPBOX        "Custom patch settings: modulator",IDC_STATIC,7,42,153,123
-    GROUPBOX        "Custom patch settings: carrier",IDC_STATIC,166,42,152,123
+    GROUPBOX        "Modulator settings",IDC_STATIC,7,42,153,123
+    GROUPBOX        "Carrier settings",IDC_STATIC,166,42,152,123
     CONTROL         "",IDC_M_MUL,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,51,107,105,11,WS_EX_TRANSPARENT
     LTEXT           "Mult. factor",IDC_STATIC,14,108,38,8
     LTEXT           "Level",IDC_STATIC,91,87,18,8
@@ -1115,16 +1145,18 @@ BEGIN
     LTEXT           "Level",IDC_STATIC,249,87,18,8
     CTEXT           "Feedback",IDC_STATIC,322,112,36,9
     CONTROL         "",IDC_FB,"msctls_trackbar32",TBS_AUTOTICKS | TBS_VERT | TBS_BOTH | WS_TABSTOP,325,124,25,41
+    PUSHBUTTON      "Paste",IDC_PASTE,322,23,43,14
+    PUSHBUTTON      "Copy",IDC_COPY,322,7,43,14
 END
 
-IDD_CREATEWAV DIALOGEX 0, 0, 215, 63
+IDD_CREATEWAV DIALOGEX 0, 0, 151, 83
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Create wave file"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Begin",IDC_BEGIN,156,7,52,14
-    PUSHBUTTON      "Cancel",IDCANCEL,156,24,52,14
-    GROUPBOX        "Song length",IDC_STATIC,7,7,137,49
+    DEFPUSHBUTTON   "Begin",IDC_BEGIN,37,62,52,14
+    PUSHBUTTON      "Cancel",IDCANCEL,92,62,52,14
+    GROUPBOX        "Song length",IDC_STATIC,7,7,137,47
     CONTROL         "Play the song",IDC_RADIO_LOOP,"Button",BS_AUTORADIOBUTTON,12,20,59,10
     CONTROL         "Play for",IDC_RADIO_TIME,"Button",BS_AUTORADIOBUTTON,12,38,41,10
     EDITTEXT        IDC_TIMES,73,19,36,12,ES_AUTOHSCROLL
@@ -1148,7 +1180,7 @@ BEGIN
     CTEXT           "Progress",IDC_TIME,7,49,206,11
 END
 
-IDD_MAINBAR DIALOGEX 0, 0, 367, 128
+IDD_MAINBAR DIALOGEX 0, 0, 368, 128
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -1162,33 +1194,42 @@ IDD_INSTRUMENT_FDS DIALOGEX 0, 0, 372, 172
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Wave",IDC_STATIC,7,7,184,111
-    PUSHBUTTON      "Sine",IDC_PRESET_SINE,17,101,38,12
-    PUSHBUTTON      "Triangle",IDC_PRESET_TRIANGLE,58,101,38,12
-    PUSHBUTTON      "Square",IDC_PRESET_SQUARE,99,101,38,12
-    PUSHBUTTON      "Sawtooth",IDC_PRESET_SAWTOOTH,141,101,38,12
-    LTEXT           "Modulation rate",IDC_STATIC,246,23,51,8
-    EDITTEXT        IDC_MOD_RATE,312,20,43,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_MOD_RATE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,309,20,11,14
-    LTEXT           "Modulation depth",IDC_STATIC,246,41,56,8
-    EDITTEXT        IDC_MOD_DEPTH,312,39,43,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_MOD_DEPTH_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,309,39,11,14
-    LTEXT           "Modulation delay",IDC_STATIC,246,60,55,8
-    EDITTEXT        IDC_MOD_DELAY,312,57,43,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_MOD_DELAY_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,309,57,11,14
+    GROUPBOX        "Wave",IDC_STATIC,7,7,228,111
+    PUSHBUTTON      "Sine",IDC_PRESET_SINE,14,101,41,12
+    PUSHBUTTON      "Triangle",IDC_PRESET_TRIANGLE,57,101,41,12
+    PUSHBUTTON      "Sawtooth",IDC_PRESET_SAWTOOTH,100,101,41,12
+    LTEXT           "Modulation rate",IDC_STATIC,255,24,51,8
+    EDITTEXT        IDC_MOD_RATE,318,22,37,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_MOD_RATE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,344,25,11,14
+    LTEXT           "Modulation depth",IDC_STATIC,255,46,56,8
+    EDITTEXT        IDC_MOD_DEPTH,318,43,37,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_MOD_DEPTH_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,344,43,11,14
+    LTEXT           "Modulation delay",IDC_STATIC,255,68,55,8
+    EDITTEXT        IDC_MOD_DELAY,318,65,37,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_MOD_DELAY_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,344,63,11,14
     PUSHBUTTON      "Flat",IDC_MOD_PRESET_FLAT,318,131,46,12
     PUSHBUTTON      "Sine",IDC_MOD_PRESET_SINE,318,148,46,12
-    GROUPBOX        "Frequency modulation",IDC_STATIC,236,7,128,70
-    EDITTEXT        IDC_WAVE,235,85,129,13,ES_AUTOHSCROLL
-    EDITTEXT        IDC_MODULATION,235,101,129,13,ES_AUTOHSCROLL
-    LTEXT           "Wave",IDC_STATIC,197,86,31,10
-    LTEXT           "Modulation",IDC_STATIC,197,102,35,10
+    GROUPBOX        "Frequency modulation",IDC_STATIC,246,7,118,79
+    PUSHBUTTON      "Copy wave",IDC_COPY_WAVE,246,90,52,14
+    PUSHBUTTON      "Paste wave",IDC_PASTE_WAVE,246,104,52,14
+    PUSHBUTTON      "Copy table",IDC_COPY_TABLE,305,90,50,14
+    PUSHBUTTON      "Paste table",IDC_PASTE_TABLE,305,104,50,14
+    PUSHBUTTON      "50% pulse",IDC_PRESET_PULSE_50,143,101,41,12
+    PUSHBUTTON      "25% pulse",IDC_PRESET_PULSE_25,186,101,41,12
 END
 
-IDD_INSTRUMENT_N106 DIALOGEX 0, 0, 372, 174
+IDD_INSTRUMENT_N106 DIALOGEX 0, 0, 372, 172
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
+    CONTROL         "",IDC_INSTSETTINGS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,12,18,96,109
+    CONTROL         "Sequence #",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | SS_CENTERIMAGE | WS_GROUP,12,149,53,10,WS_EX_TRANSPARENT
+    EDITTEXT        IDC_SEQ_INDEX,69,147,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SEQUENCE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,66,153,11,9
+    GROUPBOX        "Sequence editor",IDC_STATIC,120,7,245,158
+    GROUPBOX        "Instrument settings",IDC_STATIC,7,7,107,158,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "Select next empty slot",IDC_FREE_SEQ,12,129,96,15
+    EDITTEXT        IDC_SEQUENCE_STRING,126,149,232,13,ES_AUTOHSCROLL
 END
 
 IDD_INSTRUMENTPANEL DIALOGEX 0, 0, 213, 349
@@ -1233,17 +1274,61 @@ BEGIN
     COMBOBOX        IDC_TYPE,8,151,63,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
-IDD_CHANNELS DIALOGEX 0, 0, 236, 199
+IDD_CHANNELS DIALOGEX 0, 0, 303, 237
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Channels"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,179,7,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,179,22,50,14
-    CONTROL         "",IDC_LIST1,"SysListView32",LVS_LIST | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,166,185
-    PUSHBUTTON      "Move up",IDCANCEL2,179,39,50,14
-    PUSHBUTTON      "Move down",IDCANCEL3,179,55,50,14
-    PUSHBUTTON      "Visible",IDCANCEL4,179,71,50,14
+    DEFPUSHBUTTON   "OK",IDOK,7,216,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,59,216,50,14
+    PUSHBUTTON      "Move up",IDC_MOVE_UP,191,216,50,14
+    PUSHBUTTON      "Move down",IDC_MOVE_DOWN,246,216,50,14
+    CONTROL         "",IDC_ADDED_LIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_BORDER | WS_TABSTOP,159,17,129,181
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,7,209,289,1
+    GROUPBOX        "Available channels",IDC_STATIC,7,7,138,197
+    GROUPBOX        "Added channels",IDC_STATIC,151,7,145,197
+    CONTROL         "",IDC_AVAILABLE_TREE,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | WS_BORDER | WS_HSCROLL | WS_TABSTOP,14,17,122,181
+END
+
+IDD_HEADER DIALOGEX 0, 0, 530, 21
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+END
+
+IDD_INSTRUMENT_S5B DIALOGEX 0, 0, 372, 172
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_INSTSETTINGS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,12,18,96,109
+    CONTROL         "Sequence #",IDC_STATIC,"Static",SS_LEFTNOWORDWRAP | SS_CENTERIMAGE | WS_GROUP,12,149,53,10,WS_EX_TRANSPARENT
+    EDITTEXT        IDC_SEQ_INDEX,69,147,39,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SEQUENCE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,66,153,11,9
+    GROUPBOX        "Sequence editor",IDC_STATIC,120,7,245,158
+    GROUPBOX        "Instrument settings",IDC_STATIC,7,7,107,158,0,WS_EX_TRANSPARENT
+    PUSHBUTTON      "Select next empty slot",IDC_FREE_SEQ,12,129,96,15
+    EDITTEXT        IDC_SEQUENCE_STRING,126,149,232,13,ES_AUTOHSCROLL
+END
+
+IDD_INSTRUMENT_N106_WAVE DIALOGEX 0, 0, 372, 172
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Wave",IDC_STATIC,7,7,228,111
+    PUSHBUTTON      "Sine",IDC_PRESET_SINE,14,101,41,12
+    PUSHBUTTON      "Triangle",IDC_PRESET_TRIANGLE,57,101,41,12
+    PUSHBUTTON      "Sawtooth",IDC_PRESET_SAWTOOTH,100,101,41,12
+    PUSHBUTTON      "50% pulse",IDC_PRESET_PULSE_50,143,101,41,12
+    PUSHBUTTON      "25% pulse",IDC_PRESET_PULSE_25,186,101,41,12
+    EDITTEXT        IDC_MML,16,142,283,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Copy",IDC_COPY,315,132,50,14
+    PUSHBUTTON      "Paste",IDC_PASTE,315,151,50,14
+    LTEXT           "Wave size",IDC_STATIC,244,20,34,8
+    COMBOBOX        IDC_WAVE_SIZE,305,17,48,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Wave position",IDC_STATIC,244,38,46,8
+    COMBOBOX        IDC_WAVE_POS,305,35,48,30,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "MML string",IDC_STATIC,7,128,301,37
 END
 
 
@@ -1281,7 +1366,7 @@ BEGIN
     IDD_PERFORMANCE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 163
+        RIGHTMARGIN, 169
         TOPMARGIN, 7
         BOTTOMMARGIN, 88
     END
@@ -1313,7 +1398,6 @@ BEGIN
         VERTGUIDE, 108
         VERTGUIDE, 120
         VERTGUIDE, 126
-        VERTGUIDE, 330
         VERTGUIDE, 358
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
@@ -1361,6 +1445,10 @@ BEGIN
         VERTGUIDE, 266
         TOPMARGIN, 7
         BOTTOMMARGIN, 160
+        HORZGUIDE, 72
+        HORZGUIDE, 91
+        HORZGUIDE, 123
+        HORZGUIDE, 145
     END
 
     IDD_MIDIIMPORT, DIALOG
@@ -1385,10 +1473,6 @@ BEGIN
         VERTGUIDE, 264
         TOPMARGIN, 7
         BOTTOMMARGIN, 160
-        HORZGUIDE, 105
-        HORZGUIDE, 120
-        HORZGUIDE, 134
-        HORZGUIDE, 148
     END
 
     IDD_PROPERTIES, DIALOG
@@ -1441,14 +1525,12 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 273
-        VERTGUIDE, 42
-        VERTGUIDE, 48
-        VERTGUIDE, 120
-        VERTGUIDE, 126
-        VERTGUIDE, 144
-        VERTGUIDE, 150
-        VERTGUIDE, 210
-        VERTGUIDE, 216
+        VERTGUIDE, 30
+        VERTGUIDE, 36
+        VERTGUIDE, 181
+        VERTGUIDE, 186
+        VERTGUIDE, 218
+        VERTGUIDE, 222
         TOPMARGIN, 7
         BOTTOMMARGIN, 161
     END
@@ -1471,6 +1553,7 @@ BEGIN
         VERTGUIDE, 108
         VERTGUIDE, 120
         VERTGUIDE, 126
+        VERTGUIDE, 358
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
         HORZGUIDE, 162
@@ -1488,10 +1571,10 @@ BEGIN
         VERTGUIDE, 174
         VERTGUIDE, 220
         TOPMARGIN, 7
-        BOTTOMMARGIN, 261
+        BOTTOMMARGIN, 273
         HORZGUIDE, 120
         HORZGUIDE, 132
-        HORZGUIDE, 256
+        HORZGUIDE, 267
     END
 
     IDD_INSTRUMENT_VRC7, DIALOG
@@ -1501,12 +1584,12 @@ BEGIN
         VERTGUIDE, 14
         VERTGUIDE, 156
         VERTGUIDE, 171
-        VERTGUIDE, 310
-        VERTGUIDE, 318
         VERTGUIDE, 337
         VERTGUIDE, 358
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
+        HORZGUIDE, 24
+        HORZGUIDE, 37
         HORZGUIDE, 42
         HORZGUIDE, 59
         HORZGUIDE, 75
@@ -1521,15 +1604,14 @@ BEGIN
     IDD_CREATEWAV, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 208
+        RIGHTMARGIN, 144
         VERTGUIDE, 12
         VERTGUIDE, 24
-        VERTGUIDE, 144
-        VERTGUIDE, 156
         TOPMARGIN, 7
-        BOTTOMMARGIN, 56
+        BOTTOMMARGIN, 76
         HORZGUIDE, 25
         HORZGUIDE, 43
+        HORZGUIDE, 54
     END
 
     IDD_WAVE_PROGRESS, DIALOG
@@ -1543,7 +1625,7 @@ BEGIN
     IDD_MAINBAR, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 360
+        RIGHTMARGIN, 361
         TOPMARGIN, 5
         BOTTOMMARGIN, 123
     END
@@ -1552,15 +1634,15 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 364
-        VERTGUIDE, 191
-        VERTGUIDE, 236
+        VERTGUIDE, 235
         VERTGUIDE, 246
-        VERTGUIDE, 312
+        VERTGUIDE, 255
+        VERTGUIDE, 318
         VERTGUIDE, 355
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
-        HORZGUIDE, 27
-        HORZGUIDE, 91
+        HORZGUIDE, 90
+        HORZGUIDE, 107
         HORZGUIDE, 118
     END
 
@@ -1569,7 +1651,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 365
         TOPMARGIN, 7
-        BOTTOMMARGIN, 167
+        BOTTOMMARGIN, 165
     END
 
     IDD_INSTRUMENTPANEL, DIALOG
@@ -1610,9 +1692,40 @@ BEGIN
     IDD_CHANNELS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 229
+        RIGHTMARGIN, 296
+        VERTGUIDE, 151
         TOPMARGIN, 7
-        BOTTOMMARGIN, 192
+        BOTTOMMARGIN, 230
+        HORZGUIDE, 17
+        HORZGUIDE, 198
+        HORZGUIDE, 204
+        HORZGUIDE, 210
+    END
+
+    IDD_HEADER, DIALOG
+    BEGIN
+        RIGHTMARGIN, 528
+        BOTTOMMARGIN, 20
+    END
+
+    IDD_INSTRUMENT_S5B, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 365
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 165
+    END
+
+    IDD_INSTRUMENT_N106_WAVE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 365
+        VERTGUIDE, 235
+        VERTGUIDE, 244
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 165
+        HORZGUIDE, 24
+        HORZGUIDE, 107
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1735,6 +1848,15 @@ BEGIN
     IDC_VIBRATO, 0x403, 20, 0
 0x6c4f, 0x2064, 0x7473, 0x6c79, 0x2065, 0x6228, 0x6e65, 0x2064, 0x7075, 
 0x0029, 
+    0
+END
+
+IDD_INSTRUMENT_N106_WAVE DLGINIT
+BEGIN
+    IDC_WAVE_POS, 0x403, 3, 0
+0x3233, "\000" 
+    IDC_WAVE_POS, 0x403, 3, 0
+0x3631, "\000" 
     0
 END
 

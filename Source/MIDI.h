@@ -49,6 +49,8 @@ public:
 	void	ResetOutput();
 	void	ToggleInput();
 
+	int		GetQuantization();
+
 	bool	IsOpened() const;
 	bool	IsAvailable() const;
 
@@ -86,6 +88,10 @@ private:
 	char	MsgChanQueue[MAX_QUEUE];
 	char	Data1Queue[MAX_QUEUE];
 	char	Data2Queue[MAX_QUEUE];
+
+	char	Quantization[MAX_QUEUE];
+
+	int		m_iTimingCounter;
 
 	int		m_iQueuePtr;
 	int		m_iQueueHead;

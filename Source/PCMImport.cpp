@@ -219,7 +219,7 @@ void CPCMImport::UpdateFileInfo()
 	SampleRate.Format(_T("%i Hz, %i bits, %s"), m_iSamplesPerSec, m_iSampleSize * 8, (m_iChannels == 2) ? _T("Stereo") : _T("Mono"));
 	SetDlgItemText(IDC_SAMPLE_RATE, SampleRate);
 	
-	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_FREQ_NTSC[m_iQuality];
+	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_PERIODS_NTSC[m_iQuality];
 	float resample_factor = base_freq / (float)m_iSamplesPerSec;
 
 	CString Resampling;
@@ -232,7 +232,7 @@ CDSample *CPCMImport::ConvertFile()
 	// Converts a WAV file to a DPCM sample
 	unsigned char DeltaAcc = 0;	// DPCM sample accumulator
 	int Sample = 0;				// PCM sample
-	int Delta = 0;				// Delta counter
+	int Delta = 32;				// Delta counter
 	int AccReady = 8;
 	int WaveSize = m_iWaveSize;
 
@@ -250,8 +250,8 @@ CDSample *CPCMImport::ConvertFile()
 	int iSamples = 0;
 
 	// Determine resampling factor
-	// To avoid resampling @ quality = 15, use 33143 Hz
-	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_FREQ_NTSC[m_iQuality];
+	// To avoid resampling @ quality = 15, use 33144 Hz
+	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_PERIODS_NTSC[m_iQuality];
 	resample_factor = base_freq / (float)m_iSamplesPerSec;
 
 	// Conversion
@@ -261,7 +261,8 @@ CDSample *CPCMImport::ConvertFile()
 
 		// Read & resample PCM sample from file
 		while (resampling > 0.0f && WaveSize > 0) {
-			Sample = (ReadSample() * m_iVolume) / 16;
+			Sample = ReadSample();
+			Sample = (Sample * m_iVolume) / 16;
 			WaveSize -= m_iBlockAlign;
 			resampling -= resample_factor;
 		}
@@ -269,16 +270,16 @@ CDSample *CPCMImport::ConvertFile()
 		DeltaAcc >>= 1;
 
 		// PCM -> DPCM
-		if (Sample > Delta) {
+		if (Sample >= Delta) {
 			++Delta;
-			if (Delta > 31)
-				Delta = 31;
+			if (Delta > 63)
+				Delta = 63;
 			DeltaAcc |= 0x80;
 		}
-		else {
+		else if (Sample < Delta) {
 			--Delta;
-			if (Delta < -31)
-				Delta = -31;
+			if (Delta < 0)
+				Delta = 0;
 		}
 
 		if (--AccReady == 0) {
@@ -375,36 +376,38 @@ bool CPCMImport::OpenWaveFile()
 
 int CPCMImport::ReadSample(void)
 {
-	short SampleRight = 0;
-	short SampleLeft = 0;
-	short Sample = 0;
+	int Sample = 0;
 
 	if (m_iSampleSize == 2) {
 		// 16 bit samples
+		short sample_word;
 		if (m_iChannels == 2) {
-			m_fSampleFile.Read(&SampleLeft, 2);
-			SampleLeft /= 256;
-			m_fSampleFile.Read(&SampleRight, 2);
-			SampleRight /= 256;
-			Sample = (SampleLeft + SampleRight) / 2;
+			m_fSampleFile.Read(&sample_word, 2);
+			Sample = sample_word;
+			m_fSampleFile.Read(&sample_word, 2);
+			Sample += sample_word;
+			sample_word = Sample >> 1;
 		}
 		else {
-			m_fSampleFile.Read(&Sample, 2);
-			Sample /= 256;
+			m_fSampleFile.Read(&sample_word, 2);
 		}
+		Sample = (sample_word + 0x8000) >> 8;
 	}
 	else {
 		// 8 bit samples
+		unsigned char sample_byte;
 		if (m_iChannels == 2) {
-			m_fSampleFile.Read(&SampleLeft, 1);
-			m_fSampleFile.Read(&SampleRight, 1);
-			Sample = (SampleLeft + SampleRight) / 2;
+			m_fSampleFile.Read(&sample_byte, 1);
+			Sample = sample_byte;
+			m_fSampleFile.Read(&sample_byte, 1);
+			Sample += sample_byte;
+			sample_byte = Sample >> 1;
 		}
 		else {
-			m_fSampleFile.Read(&Sample, 1);
+			m_fSampleFile.Read(&sample_byte, 1);
 		}
-		if (Sample & 0x80)
-			Sample = -(Sample & 0x7F);
+		// Convert to signed
+		Sample = ((signed short)sample_byte);
 	}
 
 	return Sample;

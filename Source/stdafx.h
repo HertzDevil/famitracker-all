@@ -24,6 +24,8 @@
 
 #pragma once
 
+#define _CRTDBG_MAPALLOC
+
 // Get rid of warnings in VS 2005
 #define _CRT_SECURE_NO_DEPRECATE
 

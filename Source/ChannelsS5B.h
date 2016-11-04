@@ -24,15 +24,16 @@
 // Derived channels, 5B
 //
 
-class CChannelHandler5B : public CChannelHandler {
+class CChannelHandlerS5B : public CChannelHandler {
 public:
-	CChannelHandler5B(int ChanID) : CChannelHandler(ChanID) {};
+	CChannelHandlerS5B();
 	virtual void ProcessChannel();
-	virtual void RefreshChannel();
 
 protected:
-	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
-	virtual void ClearRegisters();
+	virtual void PlayChannelNote(stChanNote *pNoteData, int EffColumns);
+
+protected:
+	void WriteReg(int Reg, int Value);
 
 //	void RunSequence(int Index, CSequence *pSequence);
 /*
@@ -44,30 +45,31 @@ protected:
 	int	ModDelay[SEQ_COUNT];
 	int	ModPointer[SEQ_COUNT];
 	*/
+
 };
 
 // Channel 1
-class C5BChannel1 : public CChannelHandler5B {
+class CS5BChannel1 : public CChannelHandlerS5B {
 public:
-	C5BChannel1() : CChannelHandler5B(5) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CS5BChannel1() : CChannelHandlerS5B() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 };
 
 // Channel 2
-class C5BChannel2 : public CChannelHandler5B {
+class CS5BChannel2 : public CChannelHandlerS5B {
 public:
-	C5BChannel2() : CChannelHandler5B(6) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CS5BChannel2() : CChannelHandlerS5B() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();
 };
 
 // Channel 3
-class C5BChannel3 : public CChannelHandler5B {
+class CS5BChannel3 : public CChannelHandlerS5B {
 public:
-	C5BChannel3() : CChannelHandler5B(7) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CS5BChannel3() : CChannelHandlerS5B() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	void RefreshChannel();
 protected:
 	void ClearRegisters();

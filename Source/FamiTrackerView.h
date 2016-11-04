@@ -41,7 +41,7 @@ enum {
 	CMD_BEGIN,
 	CMD_GET_FRAME,
 	CMD_MOVE_TO_START,
-	CMD_MOVE_TO_CURSOR
+	CMD_MOVE_TO_CURSOR,
 };
 
 // Custom window messages
@@ -96,7 +96,7 @@ public:
 	int			 GetFrameQueue() const;
 
 	// Settings
-	unsigned int GetStepping() const { return m_iRealKeyStepping; };	
+	unsigned int GetStepping() const { return m_iInsertKeyStepping; };
 	void		 SetStepping(int Step);
 	void		 SetChangeAllPattern(bool ChangeAll) { m_bChangeAllPattern = ChangeAll; };
 	bool		 ChangeAllPatterns() { return m_bChangeAllPattern; };
@@ -121,6 +121,7 @@ public:
 	// General
 	void		 SoloChannel(unsigned int Channel);
 	void		 ToggleChannel(unsigned int Channel);
+	void		 UnmuteAllChannels();
 	bool		 IsChannelSolo(unsigned int Channel) const;
 	bool		 IsChannelMuted(unsigned int Channel) const;
 
@@ -138,7 +139,12 @@ public:
 
 	void		 DrawFrameWindow();
 
-	bool	DoRelease() const;
+	bool		DoRelease() const;
+
+	CPatternView *GetPatternView() const { return m_pPatternView; }
+
+	// testing
+	void HandleRawData(WPARAM wParam, LPARAM lParam);
 
 protected:
 	// General
@@ -208,8 +214,8 @@ protected:
 	int					m_iMenuChannel;
 
 	// Cursor & editing
-	unsigned int		m_iKeyStepping;							// Numbers of rows to jump when moving
-	unsigned int		m_iRealKeyStepping;
+	unsigned int		m_iMoveKeyStepping;						// Number of rows to jump when moving
+	unsigned int		m_iInsertKeyStepping;					// Number of rows to move when inserting notes
 	unsigned int		m_iInstrument;							// Selected instrument
 	unsigned int		m_iOctave;								// Selected octave	
 	bool				m_bEditEnable;							// Edit is enabled
@@ -288,7 +294,6 @@ protected:
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 
 public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
@@ -341,10 +346,12 @@ public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	afx_msg void OnTimer(UINT nIDEvent);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnFrameInsert();
-	afx_msg void OnFrameRemove();
+	afx_msg void OnModuleFrameInsert();
+	afx_msg void OnModuleFrameRemove();
 	afx_msg void OnTrackerPlayrow();
+	afx_msg void OnUpdateFrameInsert(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateFrameRemove(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateDuplicateFrame(CCmdUI *pCmdUI);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnEditPastemix();
@@ -355,6 +362,7 @@ public:
 	afx_msg void OnUpdateModuleMoveframeup(CCmdUI *pCmdUI);
 	afx_msg void OnTrackerToggleChannel();
 	afx_msg void OnTrackerSoloChannel();
+	afx_msg void OnTrackerUnmuteAllChannels();
 	afx_msg void OnNextOctave();
 	afx_msg void OnPreviousOctave();
 	afx_msg void OnPasteOverwrite();
@@ -370,6 +378,9 @@ public:
 	afx_msg void OnBlockStart();
 	afx_msg void OnBlockEnd();
 	afx_msg void OnPickupRow();
+
+	afx_msg LRESULT OnMidiEvent(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateMsg(WPARAM wParam, LPARAM lParam);
 };
 
 #ifndef _DEBUG  // debug version in FamiTrackerView.cpp

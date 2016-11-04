@@ -96,12 +96,13 @@ void CN106::Write(uint16 Address, uint8 Value)
 
 }
 
-uint8 CN106::Read(uint16 Address)
+uint8 CN106::Read(uint16 Address, bool &Mapped)
 {
 	uint16 ReadAddr;
 
 	switch (Address) {
 		case 0x4800:
+			Mapped = true;
 			ReadAddr = ExpandAddr & 0x3F;
 			if (ExpandAddr & 0x80)
 				ExpandAddr = ((ExpandAddr + 1) & 0x7F) | 0x80;
@@ -132,6 +133,12 @@ void CN106Chan::Reset()
 	m_iWaveOffset = 0;
 	m_iWaveLength = 0x20;
 
+	m_iFreqs[0] = 0;
+	m_iFreqs[1] = 0;
+	m_iFreqs[2] = 0;
+
+	m_iVolume = 0;
+
 	EndFrame();
 }
 
@@ -147,7 +154,7 @@ void CN106Chan::Write(uint16 Address, uint8 Value)
 		case 0x04:
 			m_iFreqs[2] = Value & 3;
 //			m_iWaveLength = (8 - ((Value >> 2) & 0x07)) << 2;
-			m_iWaveLength = 32 - Value & 0x1C;
+			m_iWaveLength = 32 - (Value & 0x1C);
 			break;
 		case 0x06:
 			m_iWaveOffset = Value;
@@ -170,19 +177,11 @@ void CN106Chan::Process(uint32 Time, uint8 ChannelsActive)
 
 	Period = (uint32)(((((ChannelsActive + 1) * 45 * 0x40000) / (float)21477270) * (float)CAPU::BASE_FREQ_NTSC) / m_iFrequency);
 
-	//	uint64 b = (ChannelsActive + 1) * 0xB40000 * CAPU::BASE_FREQ_NTSC;
-//	PrintDebug("%f\n", b);
-//	Period = b / 21477270 / m_iFrequency;
-
-//	Period = 983040 * (ChannelsActive + 1) / m_iFrequency;
-
-	//Period = (((ChannelsActive + 1) * 0xB40000) * CAPU::BASE_FREQ_NTSC) / (21477270 * m_iFrequency);
-
 	if (!m_iWaveLength || !m_iVolume || !Period)
 		return;
 
 	while (Time >= m_iCounter) {
-		m_iFrameCycles += m_iCounter;
+		m_iTime += m_iCounter;
 		Time -= m_iCounter;
 		m_iCounter = Period;
 		
@@ -198,5 +197,5 @@ void CN106Chan::Process(uint32 Time, uint8 ChannelsActive)
 	}
 	
 	m_iCounter -= Time;
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }

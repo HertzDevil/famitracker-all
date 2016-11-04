@@ -30,6 +30,8 @@
 #include "InstrumentEditorFDS.h"
 #include "InstrumentEditorFDSEnvelope.h"
 #include "InstrumentEditorN106.h"
+#include "InstrumentEditorN106Wave.h"
+#include "InstrumentEditorS5B.h"
 #include "MainFrm.h"
 
 // Constants
@@ -38,7 +40,7 @@ const int CInstrumentEditDlg::KEYBOARD_LEFT	  = 12;
 const int CInstrumentEditDlg::KEYBOARD_WIDTH  = 561;
 const int CInstrumentEditDlg::KEYBOARD_HEIGHT = 58;
 
-const TCHAR *CInstrumentEditDlg::CHIP_NAMES[] = {_T(""), _T("2A03"), _T("VRC6"), _T("VRC7"), _T("FDS"), _T("N106"), _T("5B")};
+const TCHAR *CInstrumentEditDlg::CHIP_NAMES[] = {_T(""), _T("2A03"), _T("VRC6"), _T("VRC7"), _T("FDS"), _T("Namco"), _T("Sunsoft")};
 
 // CInstrumentEditDlg dialog
 
@@ -168,12 +170,17 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 				break;
 			case INST_N106:
 				InsertPane(new CInstrumentEditorN106(), true);
+				InsertPane(new CInstrumentEditorN106Wave(), false);
+				break;
+			case INST_S5B:
+				InsertPane(new CInstrumentEditorS5B(), true);
+				break;
 		}
 
 		m_iSelectedInstType = InstType;
 	}
 
-	for (int i = 0; i < PANEL_COUNT; i++) {
+	for (int i = 0; i < PANEL_COUNT; ++i) {
 		if (m_pPanels[i] != NULL) {
 			m_pPanels[i]->SelectInstrument(Index);
 		}
@@ -227,8 +234,6 @@ void CInstrumentEditDlg::OnPaint()
 	WhiteKey.CreateCompatibleDC(&dc);
 	BlackKey.CreateCompatibleDC(&dc);
 
-	int i, j;
-
 	OldWhite = WhiteKey.SelectObject(&WhiteKeyBmp);
 	OldBlack = BlackKey.SelectObject(&BlackKeyBmp);
 
@@ -241,10 +246,10 @@ void CInstrumentEditDlg::OnPaint()
 	int Note	= m_iLightNote % 12;
 	int Octave	= m_iLightNote / 12;
 
-	for (j = 0; j < 8; j++) {
+	for (int j = 0; j < 8; j++) {
 		Pos = /*KEYBOARD_LEFT +*/ ((WHITE_KEY_W * 7) * j);
 
-		for (i = 0; i < 7; i++) {
+		for (int i = 0; i < 7; i++) {
 			if ((Note == WHITE[i]) && (Octave == j) && m_iLightNote != -1)
 				WhiteKey.SelectObject(WhiteKeyMarkBmp);
 			else
@@ -253,7 +258,7 @@ void CInstrumentEditDlg::OnPaint()
 			BackDC.BitBlt(i * WHITE_KEY_W + Pos, 0, 100, 100, &WhiteKey, 0, 0, SRCCOPY);
 		}
 
-		for (i = 0; i < 2; i++) {
+		for (int i = 0; i < 2; i++) {
 			if ((Note == BLACK_1[i]) && (Octave == j) && m_iLightNote != -1)
 				BlackKey.SelectObject(BlackKeyMarkBmp);
 			else
@@ -262,7 +267,7 @@ void CInstrumentEditDlg::OnPaint()
 			BackDC.BitBlt(i * WHITE_KEY_W + WHITE_KEY_W / 2 + 1 + Pos, 0, 100, 100, &BlackKey, 0, 0, SRCCOPY);
 		}
 
-		for (i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			if ((Note == BLACK_2[i]) && (Octave == j) && m_iLightNote != -1)
 				BlackKey.SelectObject(BlackKeyMarkBmp);
 			else
@@ -296,7 +301,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 	int Note;
 	int KeyPos;
 
-	// Todo: remove hardcoded numbers
+	// TODO: remove hardcoded numbers
 
 	// Send to DPCM channel if DPCM view is activated
 	if (m_iSelectedInstType == INST_2A03 && m_pPanels[1]->IsWindowVisible())
@@ -466,7 +471,7 @@ void CInstrumentEditDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
 	CDialog::OnNcLButtonUp(nHitTest, point);
 }
 
-bool CInstrumentEditDlg::IsOpened()
+bool CInstrumentEditDlg::IsOpened() const
 {
 	return m_bOpened;
 }

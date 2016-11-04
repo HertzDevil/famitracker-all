@@ -26,68 +26,26 @@
 /*
  * This class is used to translate key shortcuts -> command messages
  *
- * Todo: move this to windows accelerator functions?
+ * TODO: move this to windows internal accelerator functions?
  *
  */
 
-static const TCHAR *KEY_NAMES[] = {
-	"",			 "",		"",			"",			"",			"",			"",			"",			// 00-07
-	"Backspace", "Tab",		"",			"",			"clear",	"Enter",	"",			"",			// 08-0F
-	"",			 "",		"",			"Pause",	"",			"",			"",			"",			// 10-17
-	"",			 "",		"Escape",	"",			"",			"",			"",			"",			// 18-1F
-	"Space",	 "PgUp",	"PgDn",		"End",		"Home",		"Left",		"Up",		"Right",	// 20-27
-	"Down",		 "Select",	"Print",	"",			"PrtScn",	"Insert",	"Del",		"Help",		// 28-2F
-	"0",		 "1",		"2",		"3",		"4",		"5",		"6",		"7",		// 30-37
-	"8",		 "9",		"",			"",			"",			"",			"",			"",			// 38-3F
-	"",			 "A",		"B",		"C",		"D",		"E",		"F",		"G",		// 40-47
-	"H",		 "I",		"J",		"K",		"L",		"M",		"N",		"O",		// 48-4F
-	"P",		 "Q",		"R",		"S",		"T",		"U",		"V",		"W",		// 50-57
-	"X",		 "Y",		"Z",		"",			"",			"",			"",			"",			// 58-5F
-	"Num 0",	 "Num 1",	"Num 2",	"Num 3",	"Num 4",	"Num 5",	"Num 6",	"Num 7",	// 60-67
-	"Num 8",	 "Num 9",	"Num *",	"Num +",	"",			"Num -",	"Num ,",	"Num /",	// 68-6F
-	"F1",		 "F2",		"F3",		"F4",		"F5",		"F6",		"F7",		"F8",		// 70-77
-	"F9",		 "F10",		"F11",		"F12",		"F13",		"F14",		"F15",		"F16",		// 78-7F
-	"F17",		 "F18",		"F19",		"F20",		"F21",		"F22",		"F23",		"F24",		// 80-87
-	"",			 "",		"",			"",			"",			"",			"",			"",			// 88-8F
-	"Num",		 "Scroll",	"",			"",			"",			"",			"",			"",			// 90-97
-	"",			 "",		"",			"",			"",			"",			"",			"",			// 98-9F
-	"",			 "",		"",			"",			"",			"",			"",			"",			// A0-A7
-	"",			 "",		"",			"",			"",			"",			"",			"",			// A8-AF
-	"",			 "",		"",			"",			"",			"",			"",			"",			// B0-B7
-	"",			 "",		";: (US)",	"+",		",",		"-",		".",		"/ (US)",	// B8-BF
-	"~ (US)",	 "",		"",			"",			"",			"",			"",			"",			// C0-C7
-	"",			 "",		"",			"",			"",			"",			"",			"",			// C8-CF
-	"",			 "",		"",			"",			"",			"",			"",			"",			// D0-D7
-	"",			 "",		"",			"[{ (US)",	"\\| (US)",	"]} (US)",	"\" (US)",	"OEM 8",	// D8-DF
-	"",			 "OEM 102",	"",			"",			"",			"",			"",			"",			// E0-E7
-	"",			 "",		"",			"",			"",			"",			"",			"",			// E8-EF
-	"",			 "",		"",			"",			"",			"",			"",			"",			// F0-F7
-	"",			 "",		"",			"",			"",			"",			"",			""			// F8-FF
-};
-
+// List of modifier strings
 LPCTSTR CAccelerator::MOD_NAMES[] = {
 	_T("None"), 
 	_T("Alt"), 
 	_T("Ctrl"), 
-	_T("Alt+Ctrl"), 
+	_T("Ctrl+Alt"), 
 	_T("Shift"), 
-	_T("Alt+Shift"), 
-	_T("Ctrl+Shift"), 
-	_T("Alt+Ctrl+Shift")
-};
-
-struct stAccelEntry {
-	char *name;
-	int	 mod;
-	int	 key;
-	int	 id;
-	int	 focus;
+	_T("Shift+Alt"), 
+	_T("Shift+Ctrl"), 
+	_T("Shift+Ctrl+Alt")
 };
 
 // Default shortcut table
-const stAccelEntry DEFAULT_TABLE[] = {
-	{_T("Increase octave"),				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
-	{_T("Decrease octave"),				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
+const stAccelEntry CAccelerator::DEFAULT_TABLE[] = {
+	{_T("Decrease octave"),				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
+	{_T("Increase octave"),				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
 	{_T("Play / Stop"),					MOD_NONE,		VK_RETURN,		ID_TRACKER_TOGGLE_PLAY},
 	{_T("Play"),						MOD_NONE,		0,				ID_TRACKER_PLAY},
 	{_T("Play from start"),				MOD_NONE,		VK_F5,			ID_TRACKER_PLAY_START},
@@ -131,13 +89,19 @@ const stAccelEntry DEFAULT_TABLE[] = {
 	{_T("Select block start"),			MOD_ALT,		'B',			ID_BLOCK_START},
 	{_T("Select block end"),			MOD_ALT,		'E',			ID_BLOCK_END},
 	{_T("Pick up row settings"),		MOD_NONE,		0,				ID_POPUP_PICKUPROW},
+	{_T("Next song"),					MOD_NONE,		0,				ID_NEXT_SONG},
+	{_T("Previous song"),				MOD_NONE,		0,				ID_PREV_SONG},
+	
 
 };
 
-const int ACCEL_COUNT = sizeof(DEFAULT_TABLE) / sizeof(stAccelEntry);
+const int CAccelerator::ACCEL_COUNT = sizeof(CAccelerator::DEFAULT_TABLE) / sizeof(stAccelEntry);
 
-stAccelEntry EntriesTable[ACCEL_COUNT];
+// Shortcut table
+static stAccelEntry EntriesTable[CAccelerator::ACCEL_COUNT];
 
+// Registry key
+LPCTSTR CAccelerator::SHORTCUTS_SECTION = _T("Shortcuts");
 
 CAccelerator::CAccelerator() : m_iModifier(0)
 {
@@ -147,17 +111,119 @@ CAccelerator::CAccelerator() : m_iModifier(0)
 CAccelerator::~CAccelerator()
 {
 }
-
+/*
 int CAccelerator::GetItemCount() const
 {
 	return ACCEL_COUNT;
 }
-
-char *CAccelerator::GetItemName(int Item) const
+*/
+LPCTSTR CAccelerator::GetItemName(int Item) const
 {
 	ASSERT(Item < ACCEL_COUNT);
 	return EntriesTable[Item].name;
 }
+
+int CAccelerator::GetItemKey(int Item) const
+{
+	ASSERT(Item < ACCEL_COUNT);
+	return EntriesTable[Item].key;
+}
+
+int CAccelerator::GetItemMod(int Item) const
+{
+	ASSERT(Item < ACCEL_COUNT);
+	return EntriesTable[Item].mod;
+}
+
+int CAccelerator::GetDefaultKey(int Item) const
+{
+	ASSERT(Item < ACCEL_COUNT);
+	return DEFAULT_TABLE[Item].key;
+}
+
+int CAccelerator::GetDefaultMod(int Item) const
+{
+	ASSERT(Item < ACCEL_COUNT);
+	return DEFAULT_TABLE[Item].mod;
+}
+
+LPCTSTR CAccelerator::GetItemModName(int Item) const
+{
+	ASSERT(Item < ACCEL_COUNT);
+	return MOD_NAMES[EntriesTable[Item].mod];
+}
+
+LPCTSTR CAccelerator::GetItemKeyName(int Item) const
+{
+	if (EntriesTable[Item].key > 0) {
+		return GetVKeyName(EntriesTable[Item].key);
+	}
+
+	return _T("None");
+}
+
+LPCTSTR CAccelerator::GetVKeyName(int virtualKey) const
+{
+    unsigned int scanCode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
+
+    // because MapVirtualKey strips the extended bit for some keys
+    switch (virtualKey) {
+        case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
+        case VK_PRIOR: case VK_NEXT: // page up and page down
+        case VK_END: case VK_HOME:
+        case VK_INSERT: case VK_DELETE:
+        case VK_DIVIDE:	 // numpad slash
+        case VK_NUMLOCK:
+            scanCode |= 0x100; // set extended bit
+            break;
+    }
+
+    static char keyName[50];
+
+    if (GetKeyNameText(scanCode << 16, keyName, sizeof(keyName)) != 0)
+        return keyName;
+
+	return "";
+}
+
+
+void CAccelerator::StoreShortcut(int Item, int Key, int Mod)
+{
+	ASSERT(Item < ACCEL_COUNT);
+	EntriesTable[Item].key = Key;
+	EntriesTable[Item].mod = Mod;
+}
+
+// Registry storage/loading
+
+void CAccelerator::SaveShortcuts(CSettings *pSettings) const
+{
+	// Save values
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		pSettings->StoreSetting(SHORTCUTS_SECTION, EntriesTable[i].name, (EntriesTable[i].mod << 8) | EntriesTable[i].key);
+	}
+}
+
+void CAccelerator::LoadShortcuts(CSettings *pSettings)
+{
+	// Set up names and default values
+	LoadDefaults();
+
+	// Load custom values, if exists
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		int Default = (EntriesTable[i].mod << 8) | EntriesTable[i].key;
+		int Setting = pSettings->LoadSetting(SHORTCUTS_SECTION, EntriesTable[i].name, Default);
+		EntriesTable[i].key = Setting & 0xFF;
+		EntriesTable[i].mod = Setting >> 8;
+	}
+}
+
+void CAccelerator::LoadDefaults()
+{
+	memcpy(EntriesTable, DEFAULT_TABLE, sizeof(stAccelEntry) * ACCEL_COUNT);
+}
+
+// Following handles key -> ID translation
 
 unsigned short CAccelerator::GetAction(unsigned char nChar)
 {
@@ -176,7 +242,7 @@ unsigned short CAccelerator::GetAction(unsigned char nChar)
 	}
 
 	// Find exact match
-	for (int i = 0; i < ACCEL_COUNT; i++) {
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
 		unsigned char Mod = EntriesTable[i].mod;
 		unsigned char Key = EntriesTable[i].key;
 
@@ -186,7 +252,7 @@ unsigned short CAccelerator::GetAction(unsigned char nChar)
 	}
 
 	// Find partial match
-	for (int i = 0; i < ACCEL_COUNT; i++) {
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
 		unsigned char Mod = EntriesTable[i].mod;
 		unsigned char Key = EntriesTable[i].key;
 
@@ -211,88 +277,6 @@ void CAccelerator::KeyReleased(unsigned char nChar)
 			m_iModifier &= ~MOD_ALT;
 			break;
 	}
-}
-
-LPCTSTR CAccelerator::GetModName(int Item) const
-{
-	return MOD_NAMES[EntriesTable[Item].mod];
-}
-
-LPCTSTR CAccelerator::GetKeyName(int Item) const
-{
-	if (EntriesTable[Item].key > 0) {
-		return KEY_NAMES[EntriesTable[Item].key];
-	}
-
-	return _T("None");
-}
-
-LPCTSTR CAccelerator::EnumKeyNames(int Index) const
-{
-	return KEY_NAMES[Index];
-}
-
-int CAccelerator::GetItem(CString Name) const
-{
-	for (int i = 0; i < ACCEL_COUNT; i++) {
-		if (Name.Compare(EntriesTable[i].name) == 0)
-			return i;
-	}
-
-	return -1;
-}
-
-void CAccelerator::SelectMod(int Item, int Mod)
-{
-	EntriesTable[Item].mod = Mod;
-}
-
-void CAccelerator::SelectKey(int Item, CString Key)
-{
-	int i;
-
-	if (Key.Compare(_T("None")) == 0) {
-		EntriesTable[Item].key = 0;
-		return;
-	}
-
-	for (i = 0; i < 0xFF; i++) {
-		if (Key.Compare(KEY_NAMES[i]) == 0)
-			break;
-	}
-
-	if (i == 0xFF)
-		return;
-
-	EntriesTable[Item].key = i;
-}
-
-void CAccelerator::SaveShortcuts(CSettings *pSettings) const
-{
-	// Save values
-	for (int i = 0; i < ACCEL_COUNT; ++i) {
-		pSettings->StoreSetting(_T("Shortcuts"), EntriesTable[i].name, (EntriesTable[i].mod << 8) | EntriesTable[i].key);
-	}
-}
-
-void CAccelerator::LoadShortcuts(CSettings *pSettings)
-{
-	// Set up names and default values
-	LoadDefaults();
-
-	// Load custom values, if exists
-	for (int i = 0; i < ACCEL_COUNT; ++i) {
-		int Setting = pSettings->LoadSetting(_T("Shortcuts"), EntriesTable[i].name);
-		if (Setting > 0) {
-			EntriesTable[i].key = Setting & 0xFF;
-			EntriesTable[i].mod = Setting >> 8;
-		}
-	}
-}
-
-void CAccelerator::LoadDefaults()
-{
-	memcpy(EntriesTable, DEFAULT_TABLE, sizeof(stAccelEntry) * ACCEL_COUNT);
 }
 
 void CAccelerator::LostFocus()

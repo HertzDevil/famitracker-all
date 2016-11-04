@@ -32,8 +32,8 @@ class CInstrumentEditorFDS : public CInstrumentEditPanel
 public:
 	CInstrumentEditorFDS(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorFDS();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("Nintendo FDS"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("Nintendo FDS"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -42,15 +42,18 @@ public:
 	enum { IDD = IDD_INSTRUMENT_FDS };
 
 protected:
-	void WaveChanged();
-	void ReadWaveString();
-	void ReadModString();
+	//void WaveChanged();
+	//void ReadWaveString();
+	//void ReadModString();
 
 	virtual	void PreviewNote(unsigned char Key);
 
+	void EnableModControls(bool enable);
+	int GetModRate() const;
+
 protected:
 	CInstrumentFDS		*m_pInstrument;
-	CWaveEditor			*m_pWaveEditor;
+	CWaveEditorFDS		*m_pWaveEditor;
 	CModSequenceEditor	*m_pModSequenceEditor;
 
 protected:
@@ -61,7 +64,8 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPresetSine();
 	afx_msg void OnPresetTriangle();
-	afx_msg void OnPresetSquare();
+	afx_msg void OnPresetPulse50();
+	afx_msg void OnPresetPulse25();
 	afx_msg void OnPresetSawtooth();
 	afx_msg void OnModPresetFlat();
 	afx_msg void OnModPresetSine();
@@ -70,4 +74,9 @@ public:
 	afx_msg void OnModDepthChange();
 	afx_msg void OnModDelayChange();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedCopyWave();
+	afx_msg void OnBnClickedPasteWave();
+	afx_msg void OnBnClickedCopyTable();
+	afx_msg void OnBnClickedPasteTable();
+	afx_msg void OnBnClickedEnableFm();
 };

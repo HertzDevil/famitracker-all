@@ -37,7 +37,7 @@ BEGIN_MESSAGE_MAP(CInstrumentList, CListCtrl)
 	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
-// todo: expand this class
+// TODO: expand this class
 
 CInstrumentList::CInstrumentList(CMainFrame *pMainFrame) : m_pMainFrame(pMainFrame)
 {
@@ -57,7 +57,7 @@ void CInstrumentList::OnContextMenu(CWnd* pWnd, CPoint point)
 		_stscanf(Text, _T("%X"), &Instrument);
 		pDoc->GetInstrumentName(Instrument, Text);
 		pView->SetInstrument(Instrument);
-		// Todo: fix??
+		// TODO: fix??
 		//m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->SetWindowText(Text);
 	}
 

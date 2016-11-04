@@ -23,6 +23,7 @@
 #include "FamiTrackerDoc.h"
 #include "GraphEditor.h"
 #include "SequenceEditor.h"
+#include "Graphics.h"
 
 #define ENABLE_RELEASE
 
@@ -52,10 +53,7 @@ CGraphEditor::CGraphEditor(CSequence *pSequence) :
 	m_pSequence = pSequence;
 	m_iLastPlayPos = 0;
 
-	m_iStartLineX = 0;
-	m_iStartLineY = 0;
-	m_iEndLineX = 0;
-	m_iEndLineY = 0;
+	m_ptLineStart = m_ptLineEnd = CPoint(0, 0);
 }
 
 CGraphEditor::~CGraphEditor()
@@ -218,7 +216,7 @@ void CGraphEditor::DrawLoopPoint(CDC *pDC, int StepWidth)
 	if (LoopPoint > -1) {
 		int x = StepWidth * LoopPoint + GRAPH_LEFT + 1;
 
-		pDC->FillSolidRect(x + 1, m_BottomRect.top, m_BottomRect.right - x, m_BottomRect.bottom, 0x606000);
+		GradientBar(pDC, x + 1, m_BottomRect.top, m_BottomRect.right - x, m_BottomRect.Height(), 0x808000, 0x202000);
 		pDC->FillSolidRect(x, m_BottomRect.top, 1, m_BottomRect.bottom, 0xF0F000);
 
 		pDC->SetTextColor(0xFFFFFF);
@@ -239,7 +237,7 @@ void CGraphEditor::DrawReleasePoint(CDC *pDC, int StepWidth)
 	if (ReleasePoint > -1) {
 		int x = StepWidth * ReleasePoint + GRAPH_LEFT + 1;
 
-		pDC->FillSolidRect(x + 1, m_BottomRect.top, m_BottomRect.right - x, m_BottomRect.bottom, 0x600060);
+		GradientBar(pDC, x + 1, m_BottomRect.top, m_BottomRect.right - x, m_BottomRect.Height(), 0x800080, 0x200020);
 		pDC->FillSolidRect(x, m_BottomRect.top, 1, m_BottomRect.bottom, 0xF000F0);
 
 		pDC->SetTextColor(0xFFFFFF);
@@ -252,12 +250,12 @@ void CGraphEditor::DrawReleasePoint(CDC *pDC, int StepWidth)
 
 void CGraphEditor::DrawLine(CDC *pDC)
 {
-	if (m_iStartLineX != 0 && m_iStartLineY != 0) {
+	if (m_ptLineStart.x != 0 && m_ptLineStart.y != 0) {
 		CPen *OldPen, Pen;
 		Pen.CreatePen(1, 3, 0xFFFFFF);
 		OldPen = pDC->SelectObject(&Pen);
-		pDC->MoveTo(m_iStartLineX, m_iStartLineY);
-		pDC->LineTo(m_iEndLineX, m_iEndLineY);
+		pDC->MoveTo(m_ptLineStart);
+		pDC->LineTo(m_ptLineEnd);
 		pDC->SelectObject(OldPen);
 	}
 }
@@ -269,8 +267,14 @@ void CGraphEditor::DrawRect(CDC *pDC, int x, int y, int w, int h, bool Highlight
 		pDC->Draw3dRect(x, y, w, h, 0x80FF80, 0x408040);
 	}
 	else {
+		/*
 		pDC->FillSolidRect(x, y, w, h, 0xC0C0C0);
 		pDC->Draw3dRect(x, y, w, h, 0xFFFFFF, 0x808080);
+		*/
+
+		pDC->FillSolidRect(x, y, w, h, 0xC0C0C0);
+		pDC->Draw3dRect(x, y, w, h, 0xFFFFFF, 0xA0A0A0);
+
 	}
 }
 
@@ -340,13 +344,12 @@ void CGraphEditor::OnMouseMove(UINT nFlags, CPoint point)
 				int PosY = point.y;
 
 				if (m_iEditing == EDIT_LINE) {
-					m_iEndLineX = PosX;
-					m_iEndLineY = PosY;
+					m_ptLineEnd = CPoint(PosX, PosY);
 
-					StartX = (m_iStartLineX < m_iEndLineX ? m_iStartLineX : m_iEndLineX);
-					StartY = (m_iStartLineX < m_iEndLineX ? m_iStartLineY : m_iEndLineY);
-					EndX = (m_iStartLineX > m_iEndLineX ? m_iStartLineX : m_iEndLineX);
-					EndY = (m_iStartLineX > m_iEndLineX ? m_iStartLineY : m_iEndLineY);
+					StartX = (m_ptLineStart.x < m_ptLineEnd.x ? m_ptLineStart.x : m_ptLineEnd.x);
+					StartY = (m_ptLineStart.x < m_ptLineEnd.x ? m_ptLineStart.y : m_ptLineEnd.y);
+					EndX = (m_ptLineStart.x > m_ptLineEnd.x ? m_ptLineStart.x : m_ptLineEnd.x);
+					EndY = (m_ptLineStart.x > m_ptLineEnd.x ? m_ptLineStart.y : m_ptLineEnd.y);
 
 					DeltaY = float(EndY - StartY) / float((EndX - StartX) + 1);
 					fY = float(StartY);
@@ -382,8 +385,7 @@ void CGraphEditor::OnRButtonDown(UINT nFlags, CPoint point)
 	SetCapture();
 
 	if (point.y < m_GraphRect.bottom) {
-		m_iStartLineX = m_iEndLineX = point.x;
-		m_iStartLineY = m_iEndLineY = point.y;
+		m_ptLineStart = m_ptLineEnd = point;
 		m_iEditing = EDIT_LINE;
 	}
 	else if (point.y > m_GraphRect.bottom) {
@@ -398,7 +400,7 @@ void CGraphEditor::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	ReleaseCapture();
 
-	m_iStartLineX = m_iStartLineY = 0;
+	m_ptLineStart = CPoint(0, 0);
 	m_iEditing = EDIT_NONE;
 	RedrawWindow();
 	CWnd::OnRButtonUp(nFlags, point);
@@ -464,6 +466,10 @@ void CGraphEditor::CursorChanged(int x)
 		return;
 
 	int Pos = x / ((m_GraphRect.Width() - 2) / m_pSequence->GetItemCount());
+
+	if (Pos >= (signed)m_pSequence->GetItemCount())
+		return;
+
 	int Value = m_pSequence->GetItem(Pos);
 	m_pParentWnd->PostMessage(WM_CURSOR_CHANGE, Pos, Value);
 }
@@ -903,4 +909,87 @@ void CPitchGraphEditor::ModifyItem(CPoint point, bool Redraw)
 	m_pSequence->SetItem(ItemIndex, ItemValue);
 
 	CGraphEditor::ModifyItem(point, Redraw);
+}
+
+// Sunsoft noise editor
+
+void CNoiseEditor::OnPaint()
+{
+	CPaintDC dc(this);
+	
+	CDC *pDC = m_pBackDC;
+
+	if (!pDC)
+		return;
+
+	DrawBackground(pDC, m_iItems);
+	DrawRange(pDC, m_iItems, 0);
+
+	// Return now if no sequence is selected
+	if (!m_pSequence) {
+		PaintBuffer(m_pBackDC, &dc);
+		return;
+	}
+
+	// Draw items
+	int Count = m_pSequence->GetItemCount();
+
+	if (!Count) {
+		PaintBuffer(m_pBackDC, &dc);
+		return;
+	}
+
+	int StepWidth = GetItemWidth();
+	int StepHeight = m_GraphRect.Height() / m_iItems;
+
+	// Draw items
+	for (int i = 0; i < Count; i++) {
+		int item = m_pSequence->GetItem(i);
+		int x = m_GraphRect.left + i * StepWidth + 1;
+		int y = m_GraphRect.top + StepHeight * (m_iItems - item);
+		int w = StepWidth;
+		int h = StepHeight * item;
+		DrawRect(pDC, x, y, w, h, m_iCurrentPlayPos == i);
+
+		DrawRect(pDC, x, y, w, 10, false);
+
+	}
+	
+	DrawLoopPoint(pDC, StepWidth);
+	DrawReleasePoint(pDC, StepWidth);
+	DrawLine(pDC);
+
+	PaintBuffer(m_pBackDC, &dc);
+}
+
+void CNoiseEditor::ModifyItem(CPoint point, bool Redraw)
+{
+	int ItemIndex;
+	int ItemValue;
+
+	if (!m_pSequence || !m_pSequence->GetItemCount())
+		return;
+
+	int ItemWidth = GetItemWidth();
+	int ItemHeight = GetItemHeight();
+
+	ItemIndex = (point.x - GRAPH_LEFT) / ItemWidth;
+	ItemValue = m_iItems - (((point.y - m_GraphRect.top) + (ItemHeight / 2)) / ItemHeight);
+
+	if (ItemValue < 0)
+		ItemValue = 0;
+	if (ItemValue > m_iItems)
+		ItemValue = m_iItems;
+
+	if (ItemIndex < 0 || ItemIndex >= (int)m_pSequence->GetItemCount())
+		return;
+
+	m_pSequence->SetItem(ItemIndex, ItemValue);
+
+	CGraphEditor::ModifyItem(point, Redraw);
+}
+
+int CNoiseEditor::GetItemHeight()
+{
+	return m_GraphRect.Height() / m_iItems;
 }

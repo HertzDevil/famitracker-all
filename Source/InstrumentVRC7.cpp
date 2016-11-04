@@ -125,6 +125,11 @@ int CInstrumentVRC7::Compile(CCompiler *pCompiler, int Index)
 	return (Patch == 0) ? 9 : 1;
 }
 
+bool CInstrumentVRC7::CanRelease() const
+{
+	return true;	// Can always release
+}
+
 void CInstrumentVRC7::SetPatch(unsigned int Patch)
 {
 	m_iPatch = Patch;

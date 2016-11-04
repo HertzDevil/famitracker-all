@@ -27,6 +27,7 @@
 #include "CreateWaveDlg.h"
 #include "InstrumentEditDlg.h"
 #include "ModulePropertiesDlg.h"
+#include "ChannelsDlg.h"
 #include "SampleWindow.h"
 #include "InstrumentEditor2A03.h"
 #include "InstrumentEditorDPCM.h"
@@ -41,6 +42,7 @@
 #include "Accelerator.h"
 #include "SoundGen.h"
 #include "MIDI.h"
+#include "TrackerChannel.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -88,11 +90,10 @@ void ScaleMouse(CPoint &pt)
 	pt.y = MulDiv(pt.y, DEFAULT_DPI, _dpiY);
 }
 
-// Todo: fix
+// TODO: fix
 CDialogBar m_wndInstrumentBar;
 CDialogBar m_wndFrameBar;
 bool m_bDisplayFrameBar = /*true*/ false;
-
 
 // CMainFrame
 
@@ -165,6 +166,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_COMMAND(ID_MODULE_LOADINSTRUMENT, OnLoadInstrument)
 	ON_COMMAND(ID_MODULE_EDITINSTRUMENT, OnEditInstrument)
 	ON_COMMAND(ID_MODULE_MODULEPROPERTIES, OnModuleModuleproperties)
+	ON_COMMAND(ID_MODULE_CHANNELS, OnModuleChannels)
 	ON_COMMAND(ID_TRACKER_SWITCHTOTRACKINSTRUMENT, OnTrackerSwitchToInstrument)
 	ON_COMMAND(ID_TRACKER_DPCM, OnTrackerDPCM)
 	ON_COMMAND(ID_NEXT_SONG, OnNextSong)
@@ -222,6 +224,14 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWnd)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_ENABLEMIDI, OnUpdateEditEnablemidi)
 	ON_CBN_SELCHANGE(IDC_SUBTUNE, OnCbnSelchangeSong)
 	ON_CBN_SELCHANGE(IDC_OCTAVE, OnCbnSelchangeOctave)
+	ON_COMMAND(ID_INSTRUMENT_ADD_2A03, OnAddInstrument2A03)
+	ON_COMMAND(ID_INSTRUMENT_ADD_VRC6, OnAddInstrumentVRC6)
+	ON_COMMAND(ID_INSTRUMENT_ADD_VRC7, OnAddInstrumentVRC7)
+	ON_COMMAND(ID_INSTRUMENT_ADD_FDS, OnAddInstrumentFDS)
+	ON_COMMAND(ID_INSTRUMENT_ADD_MMC5, OnAddInstrumentMMC5)
+	ON_COMMAND(ID_INSTRUMENT_ADD_N106, OnAddInstrumentN106)
+	ON_COMMAND(ID_INSTRUMENT_ADD_S5B, OnAddInstrumentS5B)
+	ON_WM_COPYDATA()
 END_MESSAGE_MAP()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -286,7 +296,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_iInstrumentIcons[INST_FDS] = 3;
 	//m_iInstrumentIcons[INST_MMC5] = 0;
 	m_iInstrumentIcons[INST_N106] = 4;
-	m_iInstrumentIcons[INST_5B] = 5;
+	m_iInstrumentIcons[INST_S5B] = 5;
 
 	return 0;
 }
@@ -318,9 +328,9 @@ bool CMainFrame::CreateToolbars()
 	rbi1.fMask		= RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_STYLE | RBBIM_SIZE;
 	rbi1.fStyle		= RBBS_NOGRIPPER;
 	rbi1.hwndChild	= m_wndToolBar;
-	rbi1.cxMinChild	= SX(525);
+	rbi1.cxMinChild	= SX(554);
 	rbi1.cyMinChild	= SY(22);
-	rbi1.cx			= SX(480);
+	rbi1.cx			= SX(496);
 
 	if (!m_wndToolBarReBar.GetReBarCtrl().InsertBand(-1, &rbi1)) {
 		TRACE0("Failed to create rebar\n");
@@ -461,7 +471,7 @@ bool CMainFrame::CreateInstrumentToolbar()
 	// Setup the instrument toolbar
 	REBARBANDINFO rbi;
 
-	if (!m_wndInstToolBarWnd.CreateEx(0, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(SX(288), SY(173), SX(442), SY(199)), (CWnd*)&m_wndDialogBar, 0))
+	if (!m_wndInstToolBarWnd.CreateEx(0, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(SX(288), SY(173), SX(456), SY(199)), (CWnd*)&m_wndDialogBar, 0))
 		return false;
 
 	if (!m_wndInstToolReBar.Create(WS_CHILD | WS_VISIBLE, CRect(0, 0, 0, 0), &m_wndInstToolBarWnd, AFX_IDW_REBAR))
@@ -469,6 +479,8 @@ bool CMainFrame::CreateInstrumentToolbar()
 
 	if (!m_wndInstToolBar.CreateEx(&m_wndInstToolReBar, TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) || !m_wndInstToolBar.LoadToolBar(IDR_INSTRUMENT_TOOLBAR))
 		return false;
+
+	m_wndInstToolBar.GetToolBarCtrl().SetExtendedStyle(TBSTYLE_EX_DRAWDDARROWS);
 
 	// Set 24-bit icons
 	HBITMAP hbm = (HBITMAP)::LoadImage(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_TOOLBAR_INST_256), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
@@ -492,6 +504,9 @@ bool CMainFrame::CreateInstrumentToolbar()
 	// Route messages to this window
 	m_wndInstToolBar.SetOwner(this);
 
+	// Turn add new instrument button into a drop-down list
+	m_wndInstToolBar.SetButtonStyle(0, TBBS_DROPDOWN);
+
 	return true;
 }
 
@@ -505,9 +520,10 @@ void CMainFrame::ResizeFrameWindow()
 
 	if (pDoc) {
 		int Channels = pDoc->GetAvailableChannels();
+		int Chip = pDoc->GetExpansionChip();
 		m_pFrameWindow->MoveWindow(SX(12), SY(12), SX(51 + CFrameBoxWnd::FRAME_ITEM_WIDTH * Channels), SY(161));
 
-		switch (pDoc->GetExpansionChip()) {
+		switch (Chip) {
 			case SNDCHIP_NONE:
 				m_wndStatusBar.SetPaneText(1, _T("No expansion chip"));
 				break;
@@ -526,7 +542,7 @@ void CMainFrame::ResizeFrameWindow()
 			case SNDCHIP_N106:
 				m_wndStatusBar.SetPaneText(1, _T("Namco N106"));
 				break;
-			case SNDCHIP_5B:
+			case SNDCHIP_S5B:
 				m_wndStatusBar.SetPaneText(1, _T("Sunsoft 5B"));
 				break;
 		}
@@ -542,7 +558,7 @@ void CMainFrame::ResizeFrameWindow()
 	m_wndDialogBar.MoveWindow(DialogStartPos, 2, ParentRect.Width() - DialogStartPos, ParentRect.Height() - 4);
 	m_wndDialogBar.GetWindowRect(&ChildRect);
 	m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS)->MoveWindow(SX(288), SY(10), ChildRect.Width() - SX(296), SY(158));
-	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->MoveWindow(SX(444), SY(175), ChildRect.Width() - SX(452), SY(22));
+	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->MoveWindow(SX(458), SY(175), ChildRect.Width() - SX(466), SY(22));
 
 	m_pFrameWindow->RedrawWindow();
 
@@ -563,12 +579,7 @@ void CMainFrame::SetupColors(void)
 void CMainFrame::SetTempo(int Tempo)
 {
 	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(GetActiveDocument());
-
-	if (Tempo > 255) 
-		Tempo = 255;
-	if (Tempo < 20) 
-		Tempo = 20;
-
+	LIMIT(Tempo, MAX_TEMPO, MIN_TEMPO);
 	pDoc->SetSongTempo(Tempo);
 	theApp.GetSoundGenerator()->ResetTempo();
 }
@@ -576,12 +587,7 @@ void CMainFrame::SetTempo(int Tempo)
 void CMainFrame::SetSpeed(int Speed)
 {
 	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(GetActiveDocument());
-
-	if (Speed > 19) 
-		Speed = 19;
-	if (Speed < 1) 
-		Speed = 1;
-
+	LIMIT(Speed, MAX_SPEED, MIN_SPEED);
 	pDoc->SetSongSpeed(Speed);
 	theApp.GetSoundGenerator()->ResetTempo();
 }
@@ -641,7 +647,7 @@ void CMainFrame::SetSecondHighlightRow(int Rows)
 
 void CMainFrame::DisplayOctave()
 {
-	CComboBox *pOctaveList  = (CComboBox*)m_wndOctaveBar.GetDlgItem(IDC_OCTAVE);
+	CComboBox *pOctaveList = (CComboBox*)m_wndOctaveBar.GetDlgItem(IDC_OCTAVE);
 	CFamiTrackerView *pView	= (CFamiTrackerView*)GetActiveView();
 	pOctaveList->SetCurSel(pView->GetOctave());
 }
@@ -683,6 +689,27 @@ void CMainFrame::ClearInstrumentList()
 {
 	m_pInstrumentList->DeleteAllItems();
 	m_wndDialogBar.GetDlgItem(IDC_INSTNAME)->SetWindowText(_T(""));
+}
+
+void CMainFrame::NewInstrument(int ChipType)
+{
+	// Add new instrument to module
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
+
+	int Index = pDoc->AddInstrument(CFamiTrackerDoc::NEW_INST_NAME, ChipType);
+
+	if (Index == -1) {
+		// Out of slots
+		AfxMessageBox(IDS_INST_LIMIT, MB_ICONERROR);
+		return;
+	}
+
+	// Add to list
+	AddInstrument(Index);
+
+	// also select it
+	SelectInstrument(Index);
 }
 
 void CMainFrame::AddInstrument(int Index)
@@ -733,7 +760,7 @@ int CMainFrame::FindInstrument(int Index) const
 
 int CMainFrame::GetInstrumentIndex(int ListIndex) const
 {
-	// Convert an instrument list index to instrument slot index
+	// Convert instrument list index to instrument slot index
 	int Instrument;
 	TCHAR Text[256];
 	m_pInstrumentList->GetItemText(ListIndex, 0, Text, 256);
@@ -908,28 +935,49 @@ void CMainFrame::OnInstNameChange()
 	pDoc->SetInstrumentName(m_iInstrument, T2A(Text));
 }
 
+void CMainFrame::OnAddInstrument2A03()
+{
+	NewInstrument(SNDCHIP_NONE);
+}
+
+void CMainFrame::OnAddInstrumentVRC6()
+{
+	NewInstrument(SNDCHIP_VRC6);
+}
+
+void CMainFrame::OnAddInstrumentVRC7()
+{
+	NewInstrument(SNDCHIP_VRC7);
+}
+
+void CMainFrame::OnAddInstrumentFDS()
+{
+	NewInstrument(SNDCHIP_FDS);
+}
+
+void CMainFrame::OnAddInstrumentMMC5()
+{
+	NewInstrument(SNDCHIP_MMC5);
+}
+
+void CMainFrame::OnAddInstrumentN106()
+{
+	NewInstrument(SNDCHIP_N106);
+}
+
+void CMainFrame::OnAddInstrumentS5B()
+{
+	NewInstrument(SNDCHIP_S5B);
+}
+
 void CMainFrame::OnAddInstrument()
 {
 	// Add new instrument to module
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
-	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
 
 	// Chip type depends on selected channel
+	CFamiTrackerView *pView = ((CFamiTrackerView*)GetActiveView());
 	int ChipType = pView->GetSelectedChipType();
-
-	int Index = pDoc->AddInstrument(CFamiTrackerDoc::NEW_INST_NAME, ChipType);
-
-	if (Index == -1) {
-		// Out of slots
-		AfxMessageBox(IDS_INST_LIMIT, MB_ICONERROR);
-		return;
-	}
-
-	// Add to list
-	AddInstrument(Index);
-
-	// also select it
-	SelectInstrument(Index);
+	NewInstrument(ChipType);
 }
 
 void CMainFrame::OnRemoveInstrument()
@@ -1013,8 +1061,6 @@ void CMainFrame::OnLoadInstrument()
 
 	POSITION pos (FileDialog.GetStartPosition());
 
-	int apa(4);
-
 	// Load multiple files
 	while(pos) {
 		CString csFileName(FileDialog.GetNextPathName(pos));
@@ -1037,12 +1083,12 @@ void CMainFrame::OnSaveInstrument()
 	char Name[256];
 	CString String;
 
-	int Index;
-	CListCtrl *pList = (CListCtrl*)m_wndDialogBar.GetDlgItem(IDC_INSTRUMENTS);
+	int Index = GetSelectedInstrument();
 
-	Index = pList->GetSelectionMark();
+	if (Index == -1)
+		return;
 
-	if (pList->GetItemCount() == -1 || Index == -1)
+	if (!pDoc->IsInstrumentUsed(Index))
 		return;
 
 	pDoc->GetInstrumentName(Index, Name);
@@ -1237,7 +1283,7 @@ void CMainFrame::OnTimer(UINT nIDEvent)
 	switch (nIDEvent) {
 		// Welcome message
 		case TMR_WELCOME:
-			text.Format(_T("Welcome to FamiTracker %i.%i.%i, press F1 for help"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+			text.Format(IDS_WELCOME_VER, VERSION_MAJ, VERSION_MIN, VERSION_REV);
 			SetMessageText(text);
 			KillTimer(0);
 			break;
@@ -1506,8 +1552,14 @@ void CMainFrame::OnUpdateTrackerSwitchToInstrument(CCmdUI *pCmdUI)
 void CMainFrame::OnModuleModuleproperties()
 {
 	// Display module properties dialog
-	CModulePropertiesDlg PropertiesDlg;
-	PropertiesDlg.DoModal();
+	CModulePropertiesDlg propertiesDlg;
+	propertiesDlg.DoModal();
+}
+
+void CMainFrame::OnModuleChannels()
+{
+	CChannelsDlg channelsDlg;
+	channelsDlg.DoModal();
 }
 
 void CMainFrame::UpdateTrackBox()
@@ -1556,7 +1608,7 @@ void CMainFrame::OnCbnSelchangeOctave()
 
 BOOL CMainFrame::PreTranslateMessage(MSG* pMsg)
 {
-	// Todo: check this
+	// TODO: check this
 	if (pMsg->message == WM_COMMAND) {
 		m_pFrameWindow->SendMessage(WM_COMMAND, pMsg->wParam, pMsg->lParam);
 	}
@@ -1705,6 +1757,7 @@ void CMainFrame::OnSelectFrameEditor()
 
 bool CMainFrame::HasFocus()
 {
+	// TODO: check this
 	//return GetFocus() == GetView();
 	return true;
 }
@@ -1725,6 +1778,7 @@ void CMainFrame::OnUpdateEditPaste(CCmdUI *pCmdUI)
 
 void CMainFrame::OnHelpEffecttable()
 {
+	// Display effect table in help
 	HtmlHelp((DWORD)_T("effect_list.htm"), HH_DISPLAY_TOPIC);
 }
 
@@ -1788,4 +1842,95 @@ void CMainFrame::ChangedTrack()
 int CMainFrame::GetSelectedTrack() const
 {
 	return m_iTrack;
+}
+
+BOOL CMainFrame::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
+{
+	// Handle new instrument menu
+	switch (((LPNMHDR)lParam)->code) {
+		case TBN_DROPDOWN:
+			OnNewInstrument((LPNMHDR)lParam, pResult);
+			return FALSE;
+	}
+
+	return CFrameWnd::OnNotify(wParam, lParam, pResult);
+}
+
+void CMainFrame::OnNewInstrument( NMHDR * pNotifyStruct, LRESULT * result )
+{
+	CRect rect;
+	::GetWindowRect(pNotifyStruct->hwndFrom, &rect);
+
+	CMenu menu;
+
+	menu.CreatePopupMenu();
+
+	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)GetActiveDocument();
+	int Chip = pDoc->GetExpansionChip();
+
+	CFamiTrackerView *pView = (CFamiTrackerView*)GetActiveView();
+
+	int SelectedChip = pDoc->GetChannel(pView->GetSelectedChannel())->GetChip();	// where the cursor is located
+
+	menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_2A03, _T("New 2A03 instrument"));
+
+	if (Chip & SNDCHIP_VRC6)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_VRC6, _T("New VRC6 instrument"));
+	if (Chip & SNDCHIP_VRC7)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_VRC7, _T("New VRC7 instrument"));
+	if (Chip & SNDCHIP_FDS)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_FDS, _T("New FDS instrument"));
+	if (Chip & SNDCHIP_MMC5)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_MMC5, _T("New MMC5 instrument"));
+	if (Chip & SNDCHIP_N106)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_N106, _T("New Namco instrument"));
+	if (Chip & SNDCHIP_S5B)
+		menu.AppendMenu(MF_STRING, ID_INSTRUMENT_ADD_S5B, _T("New Sunsoft instrument"));
+
+	switch (SelectedChip) {
+		case SNDCHIP_NONE:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_2A03);
+			break;
+		case SNDCHIP_VRC6:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_VRC6);
+			break;
+		case SNDCHIP_VRC7:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_VRC7);
+			break;
+		case SNDCHIP_FDS:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_FDS);
+			break;
+		case SNDCHIP_MMC5:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_MMC5);
+			break;
+		case SNDCHIP_N106:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_N106);
+			break;
+		case SNDCHIP_S5B:
+			menu.SetDefaultItem(ID_INSTRUMENT_ADD_S5B);
+			break;
+	}
+
+	menu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, rect.left, rect.bottom, this);
+}
+
+BOOL CMainFrame::OnCopyData(CWnd* pWnd, COPYDATASTRUCT* pCopyDataStruct)
+{
+	switch (pCopyDataStruct->dwData) {
+		case IPC_LOAD:
+			// Load file
+			if (_tcslen((LPCTSTR)pCopyDataStruct->lpData) > 0)
+				theApp.OpenDocumentFile((LPCTSTR)pCopyDataStruct->lpData);
+			return TRUE;
+		case IPC_LOAD_PLAY:
+			// Load file
+			if (_tcslen((LPCTSTR)pCopyDataStruct->lpData) > 0)
+				theApp.OpenDocumentFile((LPCTSTR)pCopyDataStruct->lpData);
+			// and play
+			if (((CFamiTrackerDoc*)theApp.GetActiveDocument())->IsFileLoaded())
+				theApp.GetSoundGenerator()->StartPlayer(MODE_PLAY_START);
+			return TRUE;
+	}
+
+	return CFrameWnd::OnCopyData(pWnd, pCopyDataStruct);
 }

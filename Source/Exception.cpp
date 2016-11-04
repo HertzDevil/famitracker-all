@@ -23,27 +23,29 @@
 #include "Exception.h"
 #include "FamiTracker.h"
 
+//
 // This file contains an unhandled exception handler
-// It will dump a memory file
+// It will dump a memory file and save the current module to a new file
+//
 
-const TCHAR* FTM_DUMP = _T("crash_recover");
-const TCHAR* MINIDUMP_FILE = _T("MiniDump.dmp");
+// This won't be called when running with a debugger attached
+
+const TCHAR FTM_DUMP[] = _T("recover");
+const TCHAR MINIDUMP_FILE[] = _T("MiniDump.dmp");
 
 //#ifdef ENABLE_CRASH_HANDLER
 
 LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 {
-	TRACE("App: Crash handler called\n");	// though this should never happen when running the debugger
-
 	HANDLE hFile = CreateFile(MINIDUMP_FILE, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
 
+	// Save the memory dump file
 	if ((hFile != NULL) && (hFile != INVALID_HANDLE_VALUE))  {
 		// Create the minidump 
 		MINIDUMP_EXCEPTION_INFORMATION mdei; 
 		mdei.ThreadId			= GetCurrentThreadId();
 		mdei.ExceptionPointers	= ep;
 		mdei.ClientPointers		= FALSE;
-
 		MINIDUMP_TYPE mdt		= MiniDumpNormal;
 
 		MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, mdt, (ep != 0) ? &mdei : NULL, 0, 0);
@@ -51,7 +53,8 @@ LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 		CloseHandle(hFile);
 	}
 
-	// Find a free filename
+	// Find a free filename. 
+	// Start with "recover" and append a number if file exists.
 	CString DocDumpFile = FTM_DUMP;
 	int counter = 1;
 
@@ -62,10 +65,11 @@ LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 
 	// Display a message
 	CString text;
-	text.Format(_T("Unhandled exception %X.\n\n"), ep->ExceptionRecord->ExceptionCode);
+	text.Format(_T("This application has encountered a problem and needs to close.\n\n"));
+	text.AppendFormat(_T("Unhandled exception %X.\n\n"), ep->ExceptionRecord->ExceptionCode);
 	text.AppendFormat(_T("A memory dump file has been made (%s), please include this if you file a bug report.\n\n"), MINIDUMP_FILE);
-	text.AppendFormat(_T("Current module will be saved as %s. (Please note that this operation might fail)\n\n"), DocDumpFile);
-	text.Append(_T("Application will now close."));
+	text.AppendFormat(_T("Attempting to save current module as %s."), DocDumpFile);
+//	text.Append(_T("Application will now close."));
 	AfxMessageBox(text, MB_ICONSTOP);
 
 	// Try to save the document
@@ -74,7 +78,11 @@ LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 	if (pDoc)
 		pDoc->OnSaveDocument(DocDumpFile);
 
-	return EXCEPTION_EXECUTE_HANDLER; 
+	// Exit this process
+	ExitProcess(0);
+
+	// (never called)
+	return EXCEPTION_CONTINUE_SEARCH; 
 }
 
 //#endif

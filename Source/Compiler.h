@@ -43,6 +43,8 @@ struct stNSFHeader {
 
 const unsigned int MAX_BANKS = 0x80;
 
+// A databank is a 4kB NSF bank
+// It holds the bank data, location and a write pointer
 class CDataBank {
 public:
 	CDataBank();
@@ -50,9 +52,9 @@ public:
 	void			AllocateBank(unsigned char Origin);
 	void			WriteByte(unsigned int Pointer, unsigned char Value);
 	void			WriteShort(unsigned int Pointer, unsigned short Value);
-	bool			Overflow(unsigned int iSize);
-	unsigned char	*GetData();
-	void			CopyData(unsigned char *pToArray);
+	bool			Overflow(unsigned int iSize) const;
+	unsigned char	*GetData() const;
+	void			CopyData(unsigned char *pToArray) const;
 
 private:
 	unsigned char	*m_pData;
@@ -108,16 +110,16 @@ public:
 	int AddWavetable(unsigned char Wave[64]);
 
 private:
-	void CreateHeader(CFamiTrackerDoc *pDoc, stNSFHeader *pHeader, bool EnablePAL);
+	void CreateHeader(stNSFHeader *pHeader, bool EnablePAL);
 
 	const char *LoadDriver(const char *driver) const;
 
 	void AllocateSpace();
 	void RemoveSpace();
-	void ScanSong(CFamiTrackerDoc *pDoc);
+	void ScanSong();
 
-	void CompileData(CFamiTrackerDoc *pDoc);
-	void AssembleData(CFamiTrackerDoc *pDoc);
+	void CompileData();
+	void AssembleData();
 
 	// Data bank functions
 	void AllocateNewBank(unsigned int iAddress);
@@ -125,26 +127,27 @@ private:
 	void SetInitialPosition(unsigned int iAddress);
 	void SkipBytes(unsigned int iBytes);
 
-	unsigned int GetCurrentOffset();
-	unsigned int GetAbsoluteAddress();
+	unsigned int GetCurrentOffset() const;
+	unsigned int GetAbsoluteAddress() const;
 
 	// Song conversion functions
-	void WriteHeader(stTuneHeader *pHeader, CFamiTrackerDoc *pDoc);
+	void WriteHeader(stTuneHeader *pHeader);
 	void WriteTrackHeader(stSongHeader *m_stTrackHeader, unsigned int iAddress);
 
-	void StoreSongs(CFamiTrackerDoc *pDoc);
-	void CreateFrameList(CFamiTrackerDoc *pDoc, int Track);
-	void StorePatterns(CFamiTrackerDoc *pDoc, unsigned int Track);
+	void StoreSongs();
+	void CreateFrameList(int Track);
+	void StorePatterns(unsigned int Track);
 
-	void CreateInstrumentList(CFamiTrackerDoc *pDoc);
-	void CreateSequenceList(CFamiTrackerDoc *pDoc);
+	void CreateInstrumentList();
+	void CreateSequenceList();
 
-	void CreateDPCMList(CFamiTrackerDoc *pDoc);
-	void StoreDPCM(CFamiTrackerDoc *pDoc);
+	void CreateDPCMList();
+	void StoreDPCM();
+	void StoreDPCM2();
 
-	unsigned int StoreSequence(CFamiTrackerDoc *pDoc, CSequence *pSeq);
+	unsigned int StoreSequence(CSequence *pSeq);
 
-	bool IsPatternAddressed(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel);
+	bool IsPatternAddressed(int Track, int Pattern, int Channel);
 
 	int GetSampleIndex(int SampleNumber);
 	bool IsSampleAccessed(int SampleNumber);
@@ -164,6 +167,8 @@ private:
 	bool			m_bBankSwitched;			// True for bank switched song
 	unsigned int	m_iMasterHeaderAddr;
 	unsigned int	m_iDriverSize;				// Size of driver binary
+
+//	unsigned char	*m_pDPCMBanks[MAX_BANKS];
 
 	// For bank switching
 	CDataBank		m_DataBanks[MAX_BANKS];

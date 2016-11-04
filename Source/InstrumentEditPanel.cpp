@@ -18,12 +18,17 @@
 ** must bear this legend.
 */
 
+#include <iterator> 
+#include <string>
+#include <sstream>
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditDlg.h"
+
+using namespace std;
 
 // CInstrumentEditPanel dialog
 //
@@ -63,7 +68,7 @@ HBRUSH CInstrumentEditPanel::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	// Todo: Find a proper way to get the background color
+	// TODO: Find a proper way to get the background color
 	//m_iBGColor = GetPixel(pDC->m_hDC, 2, 2);
 
 	if (!theApp.IsThemeActive())
@@ -73,7 +78,7 @@ HBRUSH CInstrumentEditPanel::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		case CTLCOLOR_STATIC:
 //		case CTLCOLOR_DLG:
 			pDC->SetBkMode(TRANSPARENT);
-			// Todo: this might fail on some themes?
+			// TODO: this might fail on some themes?
 			//return NULL;
 			return GetSysColorBrush(COLOR_3DHILIGHT);
 			//return CreateSolidBrush(m_iBGColor);
@@ -145,6 +150,8 @@ void CInstrumentEditPanel::PreviewRelease(unsigned char Key)
 	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
 }
 
+
+//
 // CSequenceInstrumentEditPanel
 // 
 // For dialog panels with sequence editors. Can translate MML strings 
@@ -185,56 +192,37 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 {
 	// Takes a string and translates it into a sequence
 
-	CString Accum;
-	int Len, i, c, Value, AddedItems;
-	bool Mult = false;
-	bool NewValue = false;
-	bool MultValue = false;
+	int AddedItems = 0;
 
-	Len = String.GetLength();
-
-	AddedItems = 0;
-
+	// Reset loop points
 	pSequence->SetLoopPoint(-1);
 	pSequence->SetReleasePoint(-1);
 
-	for (i = 0; i < (Len + 1) && AddedItems < MAX_SEQUENCE_ITEMS; i++) {
-		c = String.GetAt(i);
+	string str;
+	str.assign(String);
+	istringstream values(str);
+	istream_iterator<string> begin(values);
+	istream_iterator<string> end;
 
-		if (c >= '0' && c <= '9' || c == '-' && i != Len) {
-			// Digit
-			Accum.AppendChar(c);
-		}
-		else if (c == '|') {
-			// Loop point
+	while (begin != end && AddedItems < MAX_SEQUENCE_ITEMS) {
+		string item = *begin++;
+
+		if (item[0] == '|') {
+			// Set loop point
 			pSequence->SetLoopPoint(AddedItems);
 		}
-		else if (c == '/') {
-			// Release point
+		else if (item[0] == '/') {
+			// Set release point
 			pSequence->SetReleasePoint(AddedItems);
 		}
 		else {
-			if (Accum.GetLength() > 0)
-				NewValue = true;
-		}
-		if (NewValue) {
-
-			if (Accum.GetLength() > 0) {
-				Value = _tstoi(Accum);
-
-				// Limit
-				if (Value < Min)
-					Value = Min;
-				if (Value > Max)
-					Value = Max;
-
-				pSequence->SetItem(AddedItems++, Value);
-
-				if (Mult && !MultValue)
-					MultValue = true;
+			// Convert to number
+			int value = _ttoi(item.c_str());
+			// Check for invalid chars
+			if (!(value == 0 && item[0] != '0')) {
+				LIMIT(value, Max, Min);
+				pSequence->SetItem(AddedItems++, value);
 			}
-			Accum = "";
-			NewValue = false;
 		}
 	}
 

@@ -60,7 +60,8 @@ CMIDI::CMIDI() :
 	m_iQueueHead(0), 
 	m_iQueueTail(0),
 	m_hMIDIIn(NULL),
-	m_hMIDIOut(NULL)
+	m_hMIDIOut(NULL),
+	m_iTimingCounter(0)
 {
 	// Allow only one single midi object
 	ASSERT( m_pInstance == NULL );
@@ -79,6 +80,8 @@ bool CMIDI::Init(void)
 	// Load from settings
 	m_iInDevice = theApp.GetSettings()->Midi.iMidiDevice;
 	m_iOutDevice = theApp.GetSettings()->Midi.iMidiOutDevice;
+
+	m_bMasterSync = theApp.GetSettings()->Midi.bMidiMasterSync;
 
 	// Open devices
 	OpenDevices();
@@ -109,7 +112,7 @@ bool CMIDI::OpenDevices(void)
 
 		if (Result != MMSYSERR_NOERROR) {
 			m_hMIDIIn = NULL;
-			AfxMessageBox(_T("MIDI Error: Could not open MIDI input device!"));
+			AfxMessageBox(IDS_MIDI_ERR_INPUT);
 			return false;
 		}
 
@@ -125,7 +128,7 @@ bool CMIDI::OpenDevices(void)
 
 		if (Result != MMSYSERR_NOERROR) {
 			m_hMIDIOut = NULL;
-			AfxMessageBox(_T("MIDI Error: Could not open MIDI output device!"));
+			AfxMessageBox(IDS_MIDI_ERR_OUTPUT);
 			return false;
 		}
 
@@ -178,14 +181,14 @@ void CMIDI::GetInputDeviceString(int Num, CString &Text) const
 {
 	MIDIINCAPS InCaps;
 	midiInGetDevCaps(Num, &InCaps, sizeof(MIDIINCAPS));
-	Text.Format(_T("%s"), InCaps.szPname);
+	Text = InCaps.szPname;
 }
 
 void CMIDI::GetOutputDeviceString(int Num, CString &Text) const
 {
 	MIDIOUTCAPS OutCaps;
 	midiOutGetDevCaps(Num, &OutCaps, sizeof(MIDIOUTCAPS));
-	Text.Format(_T("%s"), OutCaps.szPname);
+	Text = OutCaps.szPname;
 }
 
 void CMIDI::SetInputDevice(int Device, bool MasterSync)
@@ -209,39 +212,53 @@ void CMIDI::Enqueue(unsigned char MsgType, unsigned char MsgChannel, unsigned ch
 {
 	MsgTypeQueue[m_iQueueHead] = MsgType;
 	MsgChanQueue[m_iQueueHead] = MsgChannel;
-	Data1Queue[m_iQueueHead]	= Data1;
-	Data2Queue[m_iQueueHead]	= Data2;
+	Data1Queue[m_iQueueHead]   = Data1;
+	Data2Queue[m_iQueueHead]   = Data2;
+
+	Quantization[m_iQueueHead] = m_iTimingCounter;
 
 	m_iQueueHead = (m_iQueueHead + 1) % MAX_QUEUE;
 }
 
 void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2)
 {
-	static int TimingCounter;
+	//static int TimingCounter;
 
 	unsigned char MsgType, MsgChannel;
 
 	MsgType		= Status >> 4;
 	MsgChannel	= Status & 0x0F;
 
-	switch (MsgType) {
-		case MIDI_MSG_NOTE_OFF:
-		case MIDI_MSG_NOTE_ON: 
-		case MIDI_MSG_PITCH_WHEEL:
-			Enqueue(MsgType, MsgChannel, Data1, Data2);
-			theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
-			break;
-	}
-
 	// Timing
-	if (Status == 0xF8 && m_bMasterSync) {
-		if (TimingCounter++ == 6) {
-			TimingCounter = 0;
-			Enqueue(MsgType, MsgChannel, Data1, Data2);
-			theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
-		}
+	switch (Status) {
+		case 0xF8:	// Timing tick
+			if (m_bMasterSync) {
+				if (++m_iTimingCounter == 6) {
+					m_iTimingCounter = 0;
+					Enqueue(MsgType, MsgChannel, Data1, Data2);
+					theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
+				}
+			}
+			break;
+		case 0xFA:	// Start
+			m_iTimingCounter = 0;
+			break;
+		case 0xFC:	// Stop
+			m_iTimingCounter = 0;
+			break;
+		default:
+			switch (MsgType) {
+				case MIDI_MSG_NOTE_OFF:
+				case MIDI_MSG_NOTE_ON: 
+				case MIDI_MSG_PITCH_WHEEL:
+					Enqueue(MsgType, MsgChannel, Data1, Data2);
+					theApp.GetActiveView()->PostMessage(MSG_MIDI_EVENT);
+					break;
+			}
 	}
 }
+
+int m_iQuant;
 
 bool CMIDI::ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Data1, unsigned char & Data2)
 {
@@ -253,9 +270,16 @@ bool CMIDI::ReadMessage(unsigned char & Message, unsigned char & Channel, unsign
 	Data1 = Data1Queue[m_iQueueTail];
 	Data2 = Data2Queue[m_iQueueTail];
 
+	m_iQuant = Quantization[m_iQueueTail];
+
 	m_iQueueTail = (m_iQueueTail + 1) % MAX_QUEUE;
 
 	return true;
+}
+
+int CMIDI::GetQuantization()
+{
+	return m_iQuant;
 }
 
 void CMIDI::ToggleInput()

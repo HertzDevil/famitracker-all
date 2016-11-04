@@ -81,20 +81,33 @@ void CPatternData::SetVolume(unsigned int Channel, unsigned int Pattern, unsigne
 bool CPatternData::IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row)
 {
 	stChanNote *Note = GetPatternData(Channel, Pattern, Row);
-	bool IsFree = Note->Note != 0 || 
-		Note->EffNumber[0] != 0 || Note->EffNumber[1] != 0 || 
-		Note->EffNumber[2] != 0 || Note->EffNumber[3] != 0 || 
-		Note->Vol < 0x10 || Note->Instrument != MAX_INSTRUMENTS;
+
+	bool IsFree = Note->Note == NONE && 
+		Note->EffNumber[0] == 0 && Note->EffNumber[1] == 0 && 
+		Note->EffNumber[2] == 0 && Note->EffNumber[3] == 0 && 
+		Note->Vol == 0x10 && Note->Instrument == MAX_INSTRUMENTS;
+
 	return IsFree;
 }
 
-bool CPatternData::IsPatternFree(unsigned int Channel, unsigned int Pattern)
+bool CPatternData::IsPatternEmpty(unsigned int Channel, unsigned int Pattern)
 {
+	// Check if pattern is empty
 	for (unsigned int i = 0; i < m_iPatternLength; i++) {
-		if (IsCellFree(Channel, Pattern, i))
+		if (!IsCellFree(Channel, Pattern, i))
 			return false;
 	}
 	return true;
+}
+
+bool CPatternData::IsPatternInUse(unsigned int Channel, unsigned int Pattern)
+{
+	// Check if pattern is addressed in frame list
+	for (unsigned i = 0; i < m_iFrameCount; ++i) {
+		if (m_iFrameList[i][Channel] == Pattern)
+			return true;
+	}
+	return false;
 }
 
 stChanNote *CPatternData::GetPatternData(int Channel, int Pattern, int Row)

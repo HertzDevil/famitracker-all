@@ -30,7 +30,7 @@ enum {
 	INST_VRC7,
 	INST_FDS,
 	INST_N106,
-	INST_5B
+	INST_S5B
 };
 
 // External classes
@@ -48,7 +48,7 @@ public:
 	void GetName(char *Name) const;
 	char* GetName();
 public:
-	virtual int GetType() const = 0;														// Returns instrument type
+	virtual int GetType() const = 0;												// Returns instrument type
 	virtual CInstrument* CreateNew() = 0;											// Creates a new object
 	virtual CInstrument* Clone() = 0;												// Creates a copy
 	virtual void Store(CDocumentFile *pDocFile) = 0;								// Saves the instrument to the module
@@ -57,6 +57,7 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc) = 0;	// Loads from an FTI file
 	virtual int CompileSize(CCompiler *pCompiler) = 0;								// Gets the compiled size
 	virtual int Compile(CCompiler *pCompiler, int Index) = 0;						// Compiles the instrument for NSF generation
+	virtual bool CanRelease() const = 0;
 private:
 	char m_cName[128];
 	int	 m_iType;
@@ -74,6 +75,7 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
 
 public:
 	int		GetSeqEnable(int Index) const;
@@ -94,6 +96,10 @@ public:
 	int		GetPitchOption() const;
 
 	bool	AssignedSamples() const;
+
+public:
+	static const int SEQUENCE_COUNT = 5;
+	static const int SEQUENCE_TYPES[];
 
 private:
 	int		m_iSeqEnable[SEQ_COUNT];
@@ -117,11 +123,15 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
 public:
-	int		GetSeqEnable(int Index);
-	int		GetSeqIndex(int Index);
+	int		GetSeqEnable(int Index) const;
+	int		GetSeqIndex(int Index) const;
 	void	SetSeqEnable(int Index, int Value);
 	void	SetSeqIndex(int Index, int Value);
+public:
+	static const int SEQUENCE_COUNT = 5;
+	static const int SEQUENCE_TYPES[];
 private:
 	int		m_iSeqEnable[SEQ_COUNT];
 	int		m_iSeqIndex[SEQ_COUNT];
@@ -139,6 +149,7 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
 public:
 	void		 SetPatch(unsigned int Patch);
 	unsigned int GetPatch() const;
@@ -152,7 +163,7 @@ private:
 class CInstrumentFDS : public CInstrument {
 public:
 	CInstrumentFDS();
-	~CInstrumentFDS();
+	virtual ~CInstrumentFDS();
 	virtual int GetType() const { return INST_FDS; };
 	virtual CInstrument* CreateNew() { return new CInstrumentFDS(); };
 	virtual CInstrument* Clone();
@@ -162,17 +173,20 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
 public:
 	unsigned char GetSample(int Index) const;
 	void	SetSample(int Index, int Sample);
-	int		GetModulationFreq() const;
-	void	SetModulationFreq(int Freq);
+	int		GetModulationSpeed() const;
+	void	SetModulationSpeed(int Speed);
 	int		GetModulation(int Index) const;
 	void	SetModulation(int Index, int Value);
 	int		GetModulationDepth() const;
 	void	SetModulationDepth(int Depth);
 	int		GetModulationDelay() const;
 	void	SetModulationDelay(int Delay);
+	bool	GetModulationEnable() const;
+	void	SetModulationEnable(bool Enable);
 	bool	HasChanged();
 	CSequence* GetVolumeSeq() const;
 	CSequence* GetArpSeq() const;
@@ -182,6 +196,9 @@ private:
 	bool LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq);
 	void StoreInstSequence(CFile *pDocFile, CSequence *pSeq);
 	bool LoadInstSequence(CFile *pFile, CSequence *pSeq);
+public:
+	static const int WAVE_SIZE = 64;
+	static const int MOD_SIZE = 32;
 private:
 	// Used to update instrument when changed in instrument editor
 	bool m_bChanged;
@@ -189,9 +206,10 @@ private:
 	// Instrument data
 	unsigned char m_iSamples[64];
 	unsigned char m_iModulation[32];
-	int			  m_iModulationFreq;
+	int			  m_iModulationSpeed;
 	int			  m_iModulationDepth;
 	int			  m_iModulationDelay;
+	bool		  m_bModulationEnable;
 
 	CSequence*	  m_pVolume;
 	CSequence*	  m_pArpeggio;
@@ -210,16 +228,36 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
+public:	
+	int		GetSeqEnable(int Index) const;
+	int		GetSeqIndex(int Index) const;
+	void	SetSeqEnable(int Index, int Value);
+	void	SetSeqIndex(int Index, int Value);
+	int		GetWaveSize() const;
+	void	SetWaveSize(int size);
+	int		GetWavePos() const;
+	void	SetWavePos(int pos);
+	int		GetSample(int index) const;
+	void	SetSample(int index, int sample);
 public:
+	static const int SEQUENCE_COUNT = 5;
+	static const int SEQUENCE_TYPES[];
+	static const int MAX_N106_WAVE = 32;
 private:
-	// Todo
+	int		m_iSeqEnable[SEQ_COUNT];
+	int		m_iSeqIndex[SEQ_COUNT];
+	int		m_iSamples[MAX_N106_WAVE];
+	int		m_iSampleLen;
+	int		m_iSamplePos;
+	// TODO
 };
 
-class CInstrument5B : public CInstrument {
+class CInstrumentS5B : public CInstrument {
 public:
-	CInstrument5B();
-	virtual int GetType() const { return INST_5B; };
-	virtual CInstrument* CreateNew() { return new CInstrument5B(); };
+	CInstrumentS5B();
+	virtual int GetType() const { return INST_S5B; };
+	virtual CInstrument* CreateNew() { return new CInstrumentS5B(); };
 	virtual CInstrument* Clone();
 	virtual void Store(CDocumentFile *pDocFile);
 	virtual bool Load(CDocumentFile *pDocFile);
@@ -227,8 +265,17 @@ public:
 	virtual bool LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int CompileSize(CCompiler *pCompiler);
 	virtual int Compile(CCompiler *pCompiler, int Index);
+	virtual bool CanRelease() const;
 public:
+	int		GetSeqEnable(int Index) const;
+	int		GetSeqIndex(int Index) const;
+	void	SetSeqEnable(int Index, int Value);
+	void	SetSeqIndex(int Index, int Value);
+public:
+	static const int SEQUENCE_COUNT = 5;
+	static const int SEQUENCE_TYPES[];
 private:
-	// Todo
+	int		m_iSeqEnable[SEQ_COUNT];
+	int		m_iSeqIndex[SEQ_COUNT];
 };
 

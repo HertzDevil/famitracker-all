@@ -23,7 +23,7 @@
 // The NSF driver binaries
 
 // Change this for new versions
-const char DRIVER_ID[] = "NSF-driver v2.4";
+const char DRIVER_ID[] = "NSF-driver v2.6";
 
 #pragma warning( disable : 4309 ) // disable warning 4309: 'initializing' : truncation of constant value
 
@@ -57,7 +57,7 @@ const char NSF_CALLER_BIN_VRC6[] = {
 //
 // created with a binary->c-array program
 
-const unsigned int DRIVER1_LOCATION = 0xAC00;				// Define program starts
+const unsigned int DRIVER1_LOCATION = 0xAB00;				// Define program starts
 const unsigned int DRIVER2_LOCATION = 0x8000;
 
 #define DRIVER_SIZE			(sizeof(DRIVER_MODE1))			// both mode 1 & 2 have the same size
@@ -68,12 +68,12 @@ const unsigned int DRIVER2_LOCATION = 0x8000;
 
 // These are not covered by the GNU GPL license
 
-// Mode 1, located @ DRIVER1_LOCATION
+// Mode 1, located below DPCM
 const char DRIVER_MODE1[] = {
 	#include "drivers/drv_mode1.h"
 };
 
-// Mode 2, located @ $8000
+// Mode 2, located at start of the PRG area
 const char DRIVER_MODE2[] = {
 	#include "drivers/drv_mode2.h"
 };

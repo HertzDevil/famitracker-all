@@ -18,6 +18,7 @@
 ** must bear this legend.
 */
 
+
 #include "stdafx.h"
 #include "Exception.h"
 #include "FamiTracker.h"
@@ -32,6 +33,11 @@
 #include "Settings.h"
 #include "ChannelMap.h"
 #include "CustomExporters.h"
+
+// Single instance-stuff
+const TCHAR FT_SHARED_MUTEX_NAME[] = _T("FamiTrackerMutex");	// Name of global mutex
+const TCHAR FT_SHARED_MEM_NAME[] = _T("FamiTrackerWnd");		// Name of global memory area
+const int SHARED_MEM_SIZE = 256;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,6 +57,9 @@ BEGIN_MESSAGE_MAP(CFamiTrackerApp, CWinApp)
 	ON_COMMAND(ID_TRACKER_STOP, OnTrackerStop)
 	ON_COMMAND(ID_TRACKER_TOGGLE_PLAY, OnTrackerTogglePlay)
 	ON_COMMAND(ID_TRACKER_PLAYPATTERN, OnTrackerPlaypattern)
+#ifdef UPDATE_CHECK
+	ON_COMMAND(ID_HELP_CHECKFORNEWVERSIONS, CheckNewVersion)
+#endif
 END_MESSAGE_MAP()
 
 // Include this for windows xp style in visual studio 2005 or later
@@ -67,7 +76,9 @@ CFamiTrackerApp::CFamiTrackerApp() :
 	m_pChannelMap(NULL),
 	m_customExporters(NULL),
 	m_hAliveCheck(NULL),
-	m_hNotificationEvent(NULL)
+	m_hNotificationEvent(NULL),
+	m_hWndMapFile(NULL),
+	m_pInstanceMutex(NULL)
 {
 	// Place all significant initialization in InitInstance
 	EnableHtmlHelp();
@@ -107,13 +118,16 @@ BOOL CFamiTrackerApp::InitInstance()
 	m_pSettings = new CSettings();
 	m_pSettings->LoadSettings();
 
+	if (CheckSingleInstance())
+		return FALSE;
+
 	//who: added by Derek Andrews <derek.george.andrews@gmail.com>
 	//why: Load all custom exporter plugins on startup.
 	
 	TCHAR pathToPlugins[MAX_PATH];
 	GetModuleFileName(NULL, pathToPlugins, MAX_PATH);
 	PathRemoveFileSpec(pathToPlugins);
-	PathAppend(pathToPlugins, "\\Plugins");
+	PathAppend(pathToPlugins, _T("\\Plugins"));
 	m_customExporters = new CCustomExporters( pathToPlugins );
 
 	// Load custom accelerator
@@ -132,14 +146,14 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views
 	CSingleDocTemplate* pDocTemplate;
-
+	
 	pDocTemplate = new CSingleDocTemplate(IDR_MAINFRAME, RUNTIME_CLASS(CFamiTrackerDoc), RUNTIME_CLASS(CMainFrame), RUNTIME_CLASS(CFamiTrackerView));
 
 	if (!pDocTemplate)
 		return FALSE;
 
 	AddDocTemplate(pDocTemplate);
-	
+
 	// Determine windows version
     OSVERSIONINFO osvi;
 
@@ -160,18 +174,33 @@ BOOL CFamiTrackerApp::InitInstance()
 	EnableShellOpen();
 
 	// Skip this if in wip/beta mode
-#ifndef WIP
+#if /*!defined(WIP) &&*/ !defined(_DEBUG)
+	// Add shell options
 	RegisterShellFileTypes(TRUE);
+	// Add an option to play files
+	CString strPathName, strTemp, strFileTypeId;
+	AfxGetModuleShortFileName(AfxGetInstanceHandle(), strPathName);
+	CString strOpenCommandLine = strPathName;
+	strOpenCommandLine += _T(" /play \"%1\"");
+	if (pDocTemplate->GetDocString(strFileTypeId, CDocTemplate::regFileTypeId) && !strFileTypeId.IsEmpty()) {
+		strTemp.Format(_T("%s\\shell\\play\\%s"), (LPCTSTR)strFileTypeId, _T("command"));
+		AfxRegSetValue(HKEY_CLASSES_ROOT, strTemp, REG_SZ, strOpenCommandLine, lstrlen(strOpenCommandLine) * sizeof(TCHAR));
+	}
 #endif
 	
 	// Parse command line for standard shell commands, DDE, file open + some custom ones
-	/*CCommandLineInfo*/ CFTCommandLineInfo cmdInfo;
+	CFTCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
 
 	// Dispatch commands specified on the command line.  Will return FALSE if
 	// app was launched with /RegServer, /Register, /Unregserver or /Unregister.
-	if (!ProcessShellCommand(cmdInfo))
+	if (!ProcessShellCommand(cmdInfo)) {
+		if (cmdInfo.m_nShellCommand == CCommandLineInfo::AppUnregister) {
+			// Also clear settings from registry when unregistering
+			m_pSettings->DeleteSettings();
+		}
 		return FALSE;
+	}
 
 	// Move root key back to default
 	if (osvi.dwMajorVersion >= 6) { 
@@ -223,6 +252,13 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Initialization is done
 	TRACE0("App: InitInstance done\n");
 
+	// Save the window handle to main window
+	RegisterSingleInstance();
+
+#ifndef _DEBUG
+	m_pMainWnd->GetMenu()->GetSubMenu(2)->RemoveMenu(ID_MODULE_CHANNELS, MF_BYCOMMAND);
+#endif
+
 	return TRUE;
 }
 
@@ -232,6 +268,8 @@ int CFamiTrackerApp::ExitInstance()
 	// The document is already closed at this point (and detached from sound player)
 
 	TRACE("App: ExitInstance started\n");
+
+	UnregisterSingleInstance();
 
 	ShutDownSynth();
 
@@ -272,6 +310,12 @@ BOOL CFamiTrackerApp::PreTranslateMessage(MSG* pMsg)
 {
 	CAccelerator *pAccel = theApp.GetAccelerator();
 
+	/*
+	if (pMsg->message == WM_USER + 100) {
+		((CFamiTrackerView*) GetActiveView())->HandleRawData(pMsg->wParam, pMsg->lParam);
+	}
+	*/
+
 	// Dynamic accelerator translation
 	if ((pMsg->message == WM_KEYDOWN || pMsg->message == WM_SYSKEYDOWN) ) {	// WM_SYSKEYDOWN is for ALT
 		BOOL bRes = CWinApp::PreTranslateMessage(pMsg);
@@ -306,7 +350,7 @@ void CFamiTrackerApp::CheckAppThemed()
 	if (hinstDll) {
 		typedef BOOL (*ISAPPTHEMEDPROC)();
 		ISAPPTHEMEDPROC pIsAppThemed;
-		pIsAppThemed = (ISAPPTHEMEDPROC) ::GetProcAddress(hinstDll, "IsAppThemed");
+		pIsAppThemed = (ISAPPTHEMEDPROC) ::GetProcAddress(hinstDll, _T("IsAppThemed"));
 
 		if(pIsAppThemed)
 			m_bThemeActive = (pIsAppThemed() == TRUE);
@@ -341,7 +385,7 @@ void CFamiTrackerApp::ShutDownSynth()
 	SetEvent(m_hNotificationEvent);
 
 	// Wait for thread to exit, timout = 2s
-	DWORD dwResult = ::WaitForSingleObject(hThread, 2000);
+	DWORD dwResult = ::WaitForSingleObject(hThread, 4000);
 
 	if (dwResult != WAIT_OBJECT_0) {
 		TRACE0("App: Closing the sound generator thread failed\n");
@@ -370,6 +414,81 @@ CCustomExporters* CFamiTrackerApp::GetCustomExporters(void) const
 	return m_customExporters;
 }
 
+void CFamiTrackerApp::RegisterSingleInstance()
+{
+	// Create a memory area with this app's window handle
+	if (!GetSettings()->General.bSingleInstance)
+		return;
+
+	m_hWndMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHARED_MEM_SIZE, FT_SHARED_MEM_NAME);
+
+	if (m_hWndMapFile != NULL) {
+		LPTSTR pBuf = (LPTSTR) MapViewOfFile(m_hWndMapFile, FILE_MAP_ALL_ACCESS, 0, 0, SHARED_MEM_SIZE);
+		if (pBuf != NULL) { 
+			// Create a string of main window handle
+			_itot((int)GetMainWnd()->m_hWnd, pBuf, 10);
+			UnmapViewOfFile(pBuf);
+		}
+	}
+}
+
+void CFamiTrackerApp::UnregisterSingleInstance()
+{	
+	// Close shared memory area
+	if (m_hWndMapFile) {
+		CloseHandle(m_hWndMapFile);
+		m_hWndMapFile = NULL;
+	}
+
+	if (m_pInstanceMutex) {
+		delete m_pInstanceMutex;
+		m_pInstanceMutex = NULL;
+	}
+}
+
+bool CFamiTrackerApp::CheckSingleInstance()
+{	
+	// Returns true if program should close
+	
+	if (!GetSettings()->General.bSingleInstance)
+		return false;
+
+	m_pInstanceMutex = new CMutex(FALSE, FT_SHARED_MUTEX_NAME);
+
+	if (GetLastError() == ERROR_ALREADY_EXISTS) {
+		// Another instance detected, get window handle
+		HANDLE hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FT_SHARED_MEM_NAME);
+		if (hMapFile != NULL) {	
+			LPCTSTR pBuf = (LPTSTR) MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, SHARED_MEM_SIZE);
+			if (pBuf != NULL) {
+				// Get window handle
+				HWND hWnd = (HWND)_ttoi(pBuf);
+				if (hWnd != NULL) {
+					// Get file name
+					CFTCommandLineInfo cmdInfo;
+					ParseCommandLine(cmdInfo);
+					LPTSTR pFilePath = cmdInfo.m_strFileName.GetBuffer();
+					// We have the window handle & file, send a message to open the file
+					COPYDATASTRUCT data;
+					data.dwData = cmdInfo.m_bPlay ? IPC_LOAD_PLAY : IPC_LOAD;
+					data.cbData = (DWORD)(strlen(pFilePath) + 1);
+					data.lpData = pFilePath;
+					SendMessage(hWnd, WM_COPYDATA, NULL, (LPARAM)&data);
+					UnmapViewOfFile(pBuf);
+					CloseHandle(hMapFile);
+					// Then close the program
+					return true;
+				}
+
+				UnmapViewOfFile(pBuf);
+			}
+			CloseHandle(hMapFile);
+		}
+	}
+
+	return false;
+}
+
 ////////////////////////////////////////////////////////
 //  Things that belongs to the synth are kept below!  //
 ////////////////////////////////////////////////////////
@@ -379,8 +498,7 @@ void CFamiTrackerApp::LoadSoundConfig()
 {
 	GetSoundGenerator()->PostThreadMessage(M_LOAD_SETTINGS, 0, 0);
 	SetEvent(m_hNotificationEvent);
-
-	((CFrameWnd*)GetMainWnd())->SetMessageText(_T("New sound configuration loaded"));
+	((CFrameWnd*)GetMainWnd())->SetMessageText(IDS_NEW_SOUND_CONFIG);
 }
 
 // Silences everything
@@ -422,17 +540,9 @@ void CFamiTrackerApp::CheckSynth()
 int CFamiTrackerApp::GetCPUUsage() const
 {
 	// Calculate CPU usage
-	/*
-	static FILETIME KernelLastTime[2], UserLastTime[2];
-	FILETIME CreationTime[2], ExitTime[2], KernelTime[2], UserTime[2];
-	unsigned int TotalTime[2];
-	*/
-
 	const int THREAD_COUNT = 2;
-
 	static FILETIME KernelLastTime[THREAD_COUNT], UserLastTime[THREAD_COUNT];
 	const HANDLE hThreads[THREAD_COUNT] = {m_hThread, m_pSoundGenerator->m_hThread};
-
 	unsigned int TotalTime = 0;
 
 	for (int i = 0; i < THREAD_COUNT; ++i) {
@@ -526,7 +636,7 @@ void CFamiTrackerApp::OnTrackerStop()
 
 // Player interface
 
-bool CFamiTrackerApp::IsPlaying()
+bool CFamiTrackerApp::IsPlaying() const
 {
 	return GetSoundGenerator()->IsPlaying();
 }

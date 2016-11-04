@@ -30,6 +30,8 @@
 const int VIBRATO_LENGTH = 256;
 const int TREMOLO_LENGTH = 256;
 
+const int NOTE_COUNT = 96;	// 96 available notes
+
 // Custom messages
 enum { M_SILENT_ALL = WM_USER + 1,
 	   M_LOAD_SETTINGS,
@@ -42,11 +44,13 @@ enum { M_SILENT_ALL = WM_USER + 1,
 	   M_WRITE_APU,
 	   M_CLOSE_SOUND};
 
-enum {MODE_PLAY,
-	  MODE_PLAY_START,
-	  MODE_PLAY_REPEAT,
-	  MODE_PLAY_CURSOR,
-	  MODE_PLAY_FRAME};
+// Player modes
+enum {MODE_PLAY,			// Play from top of pattern
+	  MODE_PLAY_START,		// Play from start of song
+	  MODE_PLAY_REPEAT,		// Play and repeat
+	  MODE_PLAY_CURSOR,		// Play from cursor
+	  MODE_PLAY_FRAME		// Play frame
+};
 
 typedef enum { SONG_TIME_LIMIT, SONG_LOOP_LIMIT } RENDER_END;
 
@@ -98,6 +102,11 @@ public:
 	void		LockDocument();
 	void		UnlockDocument();
 
+	bool		WaitForStop() const;
+
+	int			FindNote(unsigned int Period) const;
+	unsigned int GetPeriod(int Note) const;
+
 public:
 	// Vibrato
 	void		 GenerateVibratoTable(int Type);
@@ -134,6 +143,12 @@ public:
 
 	void		 WriteAPU(int Address, char Value);
 
+	// Used by channels
+	void		AddCycles(int Count);
+
+	// Other
+	uint8		GetReg(int Reg) const { return m_pAPU->GetReg(Reg); };
+
 	// 
 	// Private functions
 	//
@@ -142,13 +157,14 @@ private:
 	void		CreateChannels();
 	void		SetupChannels();
 	void		AssignChannel(CTrackerChannel *pTrackerChannel, CChannelHandler *pRenderer);
+	void		ResetAPU();
+	void		GeneratePeriodTables(int BaseFreq);
 
 	// Audio
 	bool		ResetSound();
 
 	// Player
 	void	 	PlayNote(int Channel, stChanNote *NoteData, int EffColumns);
-	void	 	ResetAPU();
 	void		RunFrame();
 	void		CheckControl();
 	void		ResetBuffer();
@@ -197,7 +213,7 @@ private:
 	HANDLE				m_hAliveCheck;
 	HWND				m_hWnd;
 
-// Sound variables (todo: move sound to a new class?)
+// Sound variables (TODO: move sound to a new class?)
 private:
 	unsigned int		m_iSampleSize;						// Size of samples, in bits
 	unsigned int		m_iBufSizeSamples;					// Buffer size in samples
@@ -212,11 +228,13 @@ private:
 	unsigned int		m_iTempo, m_iSpeed;					// Tempo and speed
 	int					m_iTempoAccum;						// Used for speed calculation
 	unsigned int		m_iPlayTime;
-	bool				m_bPlaying;
+	volatile bool		m_bPlaying;
 	bool				m_bPlayLooping;
 	int					m_iFrameCounter;
 
 	int					m_iUpdateCycles;					// Number of cycles/APU update
+
+	int					m_iConsumedCycles;					// Cycles consumed by the update registers functions
 
 	// Play control
 	int					m_iJumpToPattern;
@@ -224,10 +242,13 @@ private:
 	int					m_iStepRows;
 	int					m_iPlayMode;
 
-	unsigned int		*m_pNoteLookupTable;
-	unsigned int		m_iNoteLookupTable[96];				// For 2A03/2A07
+	unsigned int		*m_pNoteLookupTable;				// NTSC or PAL
+	unsigned int		m_iNoteLookupTableNTSC[96];			// For 2A03
+	unsigned int		m_iNoteLookupTablePAL[96];			// For 2A07
 	unsigned int		m_iNoteLookupTableSaw[96];			// For VRC6 sawtooth
 	unsigned int		m_iNoteLookupTableFDS[96];			// For FDS
+	unsigned int		m_iNoteLookupTableN106[96];			// For N106
+	unsigned int		m_iNoteLookupTableS5B[96];			// For sunsoft
 	int					m_iVibratoTable[VIBRATO_LENGTH];
 
 	unsigned int		m_iMachineType;						// NTSC/PAL

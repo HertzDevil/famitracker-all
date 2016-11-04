@@ -120,3 +120,12 @@ int CTrackerChannel::GetPitch() const
 {
 	return m_iPitch;
 }
+/*
+int CTrackerChannel::GetEffect(int Letter) const
+{
+	if (m_iChip == SNDCHIP_FDS) {
+	}
+
+	return 
+}
+*/

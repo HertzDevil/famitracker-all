@@ -37,11 +37,12 @@ const int HEADER_CHAN_START = /*16*/ 0;
 const int HEADER_CHAN_HEIGHT = 36;
 // Row column
 const int ROW_COL_WIDTH = 32;
-const int ROW_HEIGHT = 12;
+const int ROW_HEIGHT = 12;		// 12
 // Patterns
 const int CHANNEL_WIDTH = 107;
 const int COLUMN_SPACING = 4;
 const int CHAR_WIDTH = 10;
+
 
 // Structure used by clipboard, no pointers allowed here
 struct stClipData {
@@ -64,22 +65,23 @@ struct stUndoBlock {
 	int ActualPatternLen;
 };
 
+// Row color cache
+struct RowColorInfo_t {
+	COLORREF Note;
+	COLORREF Instrument;
+	COLORREF Volume;
+	COLORREF Effect;
+	COLORREF Back;
+	COLORREF Shaded;
+};
+
 // Cursor position
 class CCursorPos {
 public:
-	CCursorPos() : m_iRow(0), m_iChannel(0), m_iColumn(0) {
-	};
-
-	CCursorPos(int Row, int Channel, int Column) : m_iRow(Row), m_iChannel(Channel), m_iColumn(Column) {
-	};
-
-	const CCursorPos& operator=(const CCursorPos &pos) {
-		// Copy position
-		m_iRow = pos.m_iRow;
-		m_iColumn = pos.m_iColumn;
-		m_iChannel = pos.m_iChannel;
-		return *this;
-	};
+	CCursorPos();
+	CCursorPos(int Row, int Channel, int Column);
+	const CCursorPos& operator=(const CCursorPos &pos);
+	bool Invalid() const;
 
 public:
 	int m_iRow;
@@ -87,8 +89,21 @@ public:
 	int m_iChannel;
 };
 
+// Selection
 class CSelection {
 public:
+	int GetStartRow() const;
+	int GetEndRow() const;
+	int GetColStart() const;
+	int GetColEnd() const;
+	int GetChanStart() const;
+	int GetChanEnd() const;
+	bool IsWithin(CCursorPos pos) const;
+	bool IsSingleChannel() const;
+
+	void SetStart(CCursorPos pos);
+	void SetEnd(CCursorPos pos);
+
 public:
 	CCursorPos m_cpStart;
 	CCursorPos m_cpEnd;
@@ -100,13 +115,16 @@ class CFamiTrackerView;
 
 // CPatternView
 class CPatternView {
+public:
+	static const unsigned int ROW_PLAY_COLOR = 0x400050;
+
 	// Public functions
 public:
 	CPatternView();
 	~CPatternView();
 
 	bool InitView(UINT ClipBoard);
-	void CreateFonts();
+	void ApplyColorScheme();
 	void SetDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
 	void SetWindowSize(int width, int height);
 	void Reset();
@@ -232,24 +250,25 @@ public:
 	void SetBlockStart();
 	void SetBlockEnd();
 
+	int GetChannelWidth(int i) const { return m_iChannelWidths[i]; }
+	int GetVisibleWidth() const { return m_iVisibleWidth; }
+
 	// Private functions
 private:
-	int GetRowAtPoint(int PointY) const;
-	int GetColumnAtPoint(int PointX) const;
+	int  GetRowAtPoint(int PointY) const;
+	int  GetColumnAtPoint(int PointX) const;
 	bool IsColumnSelected(int Column, int Channel) const;
-	int GetSelectColumn(int Column) const;
+	int  GetSelectColumn(int Column) const;
 	bool IsSingleChannelSelection() const;
 
 	CCursorPos GetCursorAtPoint(CPoint point) const;
 
 	void ClearRow(CDC *pDC, int Line);
-	void DrawRows(CDC *pDC);
+	void DrawRowArea(CDC *pDC);
 	void DrawRow(CDC *pDC, int Row, int Line, int Frame, bool bPreview);
 
-	void DrawCell(int PosX, int Column, int Channel, bool bHighlight, bool bHighlight2, bool bShaded, bool bInvert, unsigned int BackColor, stChanNote *NoteData, CDC *dc);
-
-	void DrawChar(int x, int y, char c, int Color, CDC *pDC);
-
+	void DrawCell(int PosX, int Column, int Channel, bool bInvert, stChanNote *pNoteData, CDC *pDC, RowColorInfo_t *pColorInfo);
+	void DrawChar(int x, int y, char c, COLORREF Color, CDC *pDC);
 	void DrawNoteColumn(unsigned int PosX, unsigned int PosY, CDC *pDC);
 	void DrawInstrumentColumn(unsigned int PosX, unsigned int PosY, CDC *pDC);
 
@@ -258,18 +277,12 @@ private:
 
 	// Head
 	void DrawChannelNames(CDC *pDC);
-
 	void DrawUnbufferedArea(CDC *pDC);
 
-	// Selection routines
-	bool IsWithinSelection(CCursorPos pos) const;
-	int GetSelectRowStart() const; 
-	int GetSelectRowEnd() const;
-	int GetSelectColStart() const; 
-	int GetSelectColEnd() const;
-	int GetSelectChanStart() const;
-	int GetSelectChanEnd() const;
+	// Other
+	void DrawRegisters(CDC *pDC);
 
+	// Selection routines
 	void ResetSelection();
 	void SetSelectionStart();
 	void UpdateSelection();
@@ -279,6 +292,13 @@ private:
 
 	stUndoBlock *SaveUndoState() const;
 	void RestoreState(stUndoBlock *pUndoBlock);
+
+private:
+	static LPCTSTR DEFAULT_HEADER_FONT;
+	static const int DEFAULT_FONT_SIZE;
+	static const int DEFAULT_HEADER_FONT_SIZE;
+
+	static const int SELECT_THRESHOLD;
 
 	// Variables
 private:
@@ -308,6 +328,7 @@ private:
 	// Play cursor
 	int m_iPlayRow;
 	int m_iPlayFrame;
+	bool m_bForcePlayRowUpdate;
 
 	bool m_bFollowMode;					// Follow mode enable/disable
 
@@ -321,6 +342,7 @@ private:
 	int m_iHighlightSecond;
 	int m_iPatternWidth;
 	int m_iVisibleWidth;
+	int m_iRowHeight;
 
 	bool m_bForceFullRedraw;
 	bool m_bDrawEntire;
@@ -332,35 +354,38 @@ private:
 	bool m_bUpdated;
 	bool m_bErasedBg;
 
+	int m_iPatternFontSize;
+
 	// Colors
-	unsigned int m_iColEmptyBg;
+	COLORREF m_colEmptyBg;
+	COLORREF m_colSeparator;
+	COLORREF m_colHead1, m_colHead2, m_colHead3, m_colHead4;
 
 	// Meters and DPCM
 	stDPCMState m_DPCMState;
 
 	int	m_iMouseHoverChan;
 	int m_iMouseHoverEffArrow;
+	//int m_iMouseClickChan;
 
 	// Selection
 	bool m_bSelecting;
 	bool m_bCurrentlySelecting;
 	bool m_bDragStart;
 	bool m_bDragging;
+	bool m_bSelectedAll;
 
-	CCursorPos m_cpSelStart;
-	CCursorPos m_cpSelEnd;
+	CSelection m_selSelection;
+	CCursorPos m_cpSelCursor;
 
 	// Drag
-	CCursorPos m_cpDragStart;
-	CCursorPos m_cpDragEnd;
+	CSelection m_selDrag;
 	CCursorPos m_cpDragPoint;
 
 	bool m_bSelectionInvalid;
 	bool m_bFullRowSelect;
 
 	CPoint m_ptSelStartPoint;
-
-	CCursorPos m_cpSelCursor;
 
 	// Keys
 	bool m_bShiftPressed;
@@ -374,8 +399,9 @@ private:
 	CDC		*m_pBackDC;
 	CBitmap *m_pBackBmp;
 	CBitmap	m_bmpCache, *m_pOldCacheBmp;
-	CFont	HeaderFont;
-	CFont	PatternFont;
+	CFont	m_fontHeader;
+	CFont	m_fontPattern;
+	CFont	m_fontCourierNew;
 
 	// Scrolling
 	CPoint	m_ptScrollMousePos;

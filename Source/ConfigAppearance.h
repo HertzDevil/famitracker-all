@@ -51,23 +51,30 @@ public:
 	enum { IDD = IDD_CONFIG_APPEARANCE };
 
 protected:
+	static int CALLBACK EnumFontFamExProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
+
+	static const TCHAR *COLOR_ITEMS[];
+	static const TCHAR *COLOR_SCHEMES[];
+	static const int NUM_COLOR_SCHEMES;
+
+	static const int FONT_SIZES[];
+	static const int FONT_SIZE_COUNT;
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	void SetColor(int Index, int Color);
 	int GetColor(int Index) const;
 
+protected:
 	CComboBox*	m_pFontList;
+	CComboBox*	m_pFontSizeList;
 	CString		m_strFont;
 	
-	int m_iSelectedItem;
-/*
-	int	m_iColBackground;
-	int m_iColBackgroundHilite;
-	int m_iColText;
-	int m_iColTextHilite;
-	int m_iColSelection;
-	int m_iColCursor;
-*/
+	int			m_iFontSize;
+	int			m_iSelectedItem;
+	bool		m_bPatternColors;
+
 	int m_iColors[COLOR_ITEM_COUNT];
 
 	DECLARE_MESSAGE_MAP()
@@ -80,4 +87,6 @@ public:
 	afx_msg void OnBnClickedPickCol();
 	afx_msg void OnCbnSelchangeColItem();
 	afx_msg void OnCbnSelchangeScheme();
+	afx_msg void OnCbnSelchangeFontSize();
+	afx_msg void OnBnClickedPatterncolors();
 };

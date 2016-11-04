@@ -75,7 +75,7 @@ BOOL CSpeedDlg::OnInitDialog()
 	CSliderCtrl *Slider = (CSliderCtrl*)GetDlgItem(IDC_SPEED_SLD);
 	CString String;
 
-	// Todo: Program will crash if speed is set below 25Hz, I don't know why
+	// TODO: Program will crash if speed is set below 25Hz, I don't know why
 	Slider->SetRange(RATE_MIN, RATE_MAX);
 	Slider->SetPos(m_iSpeed);
 

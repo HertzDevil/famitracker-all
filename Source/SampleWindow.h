@@ -27,6 +27,7 @@ public:
 
 	virtual void Activate() = 0;
 	virtual void Deactivate() = 0;
+	virtual void SetSampleRate(int SampleRate) = 0;
 	virtual void SetSampleData(int *iSamples, unsigned int iCount) = 0;
 	virtual void Draw(CDC *pDC, bool bMessage) = 0;
 
@@ -45,6 +46,7 @@ public:
 	CSampleWindow();
 	virtual ~CSampleWindow();
 
+	void SetSampleRate(int SampleRate);
 	void DrawSamples(int *Samples, int Count);
 
 	static const int WIN_WIDTH = 145;

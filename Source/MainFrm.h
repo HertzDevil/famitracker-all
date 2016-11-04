@@ -60,6 +60,7 @@ public:
 	void	ClearInstrumentList();
 	void	AddInstrument(int Index);
 	void	RemoveInstrument(int Index);
+	void	NewInstrument(int ChipType);
 
 	void	SetIndicatorTime(int Min, int Sec, int MSec);
 	void	SetSongInfo(char *Name, char *Artist, char *Copyright);
@@ -190,6 +191,7 @@ protected:
 	virtual BOOL DestroyWindow();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnModuleModuleproperties();
+	afx_msg void OnModuleChannels();
 	afx_msg void OnLoadInstrument();
 	afx_msg void OnSaveInstrument();
 	afx_msg void OnEditInstrument();
@@ -230,6 +232,17 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnNextInstrument();
 	afx_msg void OnPrevInstrument();
+	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	afx_msg void OnNewInstrument( NMHDR * pNotifyStruct, LRESULT * result );
+	afx_msg void OnAddInstrument2A03();
+	afx_msg void OnAddInstrumentVRC6();
+	afx_msg void OnAddInstrumentVRC7();
+	afx_msg void OnAddInstrumentFDS();
+	afx_msg void OnAddInstrumentMMC5();
+	afx_msg void OnAddInstrumentN106();
+	afx_msg void OnAddInstrumentS5B();
+public:
+	afx_msg BOOL OnCopyData(CWnd* pWnd, COPYDATASTRUCT* pCopyDataStruct);
 };
 
 // Global DPI functions

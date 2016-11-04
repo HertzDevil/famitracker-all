@@ -25,14 +25,16 @@
 #include "FamiTrackerView.h"
 #include "MainFrm.h"
 #include "FrameBoxWnd.h"
+#include "PatternView.h"
 #include "SoundGen.h"
 #include "Settings.h"
+#include "Graphics.h"
 
 //
 // CFrameBoxWnd - This is the frame editor to the left in the control panel
 //
 
-// Todo: make this class inherit from CView instead of CWnd
+const TCHAR CFrameBoxWnd::DEFAULT_FONT[] = _T("System");
 
 IMPLEMENT_DYNAMIC(CFrameBoxWnd, CWnd)
 
@@ -94,17 +96,8 @@ int CFrameBoxWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 void CFrameBoxWnd::CreateGdiObjects()
 {
-	int ColBackground	= theApp.GetSettings()->Appearance.iColBackground;
-	int ColText			= theApp.GetSettings()->Appearance.iColPatternText;
-	int ColTextHilite	= theApp.GetSettings()->Appearance.iColPatternTextHilite;
-	int ColCursor		= theApp.GetSettings()->Appearance.iColCursor;
-	int ColCursor2		= DIM(theApp.GetSettings()->Appearance.iColCursor, 70);
-
-	// Create GDI objects
-	m_Font.CreateFont(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, _T("System"));
-
-	m_Brush.CreateSolidBrush(ColBackground);
-	m_Pen.CreatePen(0, 0, ColBackground);
+	m_Font.DeleteObject();
+	m_Font.CreateFont(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DEFAULT_FONT);
 }
 
 void CFrameBoxWnd::OnPaint()
@@ -113,52 +106,36 @@ void CFrameBoxWnd::OnPaint()
 
 	// Do not call CWnd::OnPaint() for painting messages
 
-	// Todo: cache the GDI objects
+	const unsigned int QUEUE_COLOR = 0x108010;	// Colour of row in play queue
 
-	CBrush	*OldBrush;
-	CPen	*OldPen;
-	CBitmap	*OldBmp;
-	CFont	*OldFont;
-	CRect	WinRect;
-
-	unsigned int Width, Height;
-
-	int ColBackground	= theApp.GetSettings()->Appearance.iColBackground;
-	int ColText			= theApp.GetSettings()->Appearance.iColPatternText;
-	int ColTextHilite	= theApp.GetSettings()->Appearance.iColPatternTextHilite;
-	int ColCursor		= theApp.GetSettings()->Appearance.iColCursor;
-	int ColCursor2		= DIM(theApp.GetSettings()->Appearance.iColCursor, 70);
-
-	bool bHexRows = theApp.GetSettings()->General.bRowInHex;
+	// Cache settings
+	const COLORREF ColBackground	= theApp.GetSettings()->Appearance.iColBackground;
+	const COLORREF ColText			= theApp.GetSettings()->Appearance.iColPatternText;
+	const COLORREF ColTextHilite	= theApp.GetSettings()->Appearance.iColPatternTextHilite;
+	const COLORREF ColCursor		= theApp.GetSettings()->Appearance.iColCursor;
+	const COLORREF ColCursor2		= DIM(theApp.GetSettings()->Appearance.iColCursor, 70);
+	const bool bHexRows				= theApp.GetSettings()->General.bRowInHex;
 
 	LPCSTR ROW_FORMAT = bHexRows ? _T("%02X") : _T("%02i");
 
-	int ItemsToDraw;
-	int FrameCount, ChannelCount, TotalChannelCount;
-	int ActiveFrame, ActiveChannel;
-	int Nr;
-
-	//char Text[256];
-	CString Text;
-
+	// Get window size
+	CRect WinRect;
 	GetClientRect(&WinRect);
 
 	if (!m_pDocument || !m_pView)  {
 		dc.FillSolidRect(WinRect, 0);
 		return;
 	}
-
-	if (!m_pDocument->IsFileLoaded()) {
+	else if (!m_pDocument->IsFileLoaded()) {
 		dc.FillSolidRect(WinRect, 0);
 		return;
 	}
-
-	if (theApp.GetSoundGenerator()->IsRendering())
+	else if (theApp.GetSoundGenerator()->IsRendering())
 		return;
 
-	Width	= WinRect.right - WinRect.left;
-	Height	= WinRect.bottom - WinRect.top;
-	
+	unsigned int Width = WinRect.Width();
+	unsigned int Height = WinRect.Height();
+
 	// Check if width has changed, delete objects then
 	if (m_bmpBack.m_hObject != NULL) {
 		CSize size = m_bmpBack.GetBitmapDimension();
@@ -175,16 +152,17 @@ void CFrameBoxWnd::OnPaint()
 		m_dcBack.CreateCompatibleDC(&dc);
 	}
 
-	OldBmp = m_dcBack.SelectObject(&m_bmpBack);
+	CBitmap *pOldBmp = m_dcBack.SelectObject(&m_bmpBack);
+	CFont *pOldFont = m_dcBack.SelectObject(&m_Font);
 
-	ItemsToDraw = 9;
+	// Setup
+	int ItemsToDraw = (Height - TOP_OFFSET) / ROW_HEIGHT;
 
-	ActiveFrame			= m_pView->GetSelectedFrame();
-	ActiveChannel		= m_pView->GetSelectedChannel();
-	FrameCount			= m_pDocument->GetFrameCount();
-	TotalChannelCount	= m_pDocument->GetAvailableChannels();
-
-	ChannelCount		= TotalChannelCount;
+	int ActiveFrame			= m_pView->GetSelectedFrame();
+	int ActiveChannel		= m_pView->GetSelectedChannel();
+	int FrameCount			= m_pDocument->GetFrameCount();
+	int TotalChannelCount	= m_pDocument->GetAvailableChannels();
+	int ChannelCount		= TotalChannelCount;
 
 	if (ActiveChannel < m_iFirstChannel)
 		m_iFirstChannel = ActiveChannel;
@@ -196,41 +174,26 @@ void CFrameBoxWnd::OnPaint()
 	if (ActiveFrame < 0)
 		ActiveFrame = 0;
 
-	OldBrush = m_dcBack.SelectObject(&m_Brush);
-	OldPen	 = m_dcBack.SelectObject(&m_Pen);
-
 	m_dcBack.SetBkMode(TRANSPARENT);
 
-	int TopColor;
-	float Strength;
-
-	if (GetFocus() == this) {
-		TopColor = 0xFF4040;
-		Strength = 60.0f;
-	}
-	else {
-		TopColor = ColTextHilite;
-		Strength = 20.0f;
-	}
-
-	for (unsigned int i = 0; i < Height; ++i) {
-		float Angle = (float) ((i * 100) / Height) * 3.14f * 2;
-		int Level = (int)(cosf(Angle / 100.0f) * Strength);
-		if (Level < 0)
-			Level = 0;
-		m_dcBack.FillSolidRect(0, i, Width, 1, DIM_TO(TopColor, ColBackground, Level));
-	}
+	// Draw background
+	m_dcBack.FillSolidRect(0, 0, Width, Height, ColBackground);
 	
-	m_dcBack.SetBkColor(ColBackground);
-
-	OldFont = m_dcBack.SelectObject(&m_Font);
+	int Frame = 0;
 
 	if (ActiveFrame > (ItemsToDraw / 2))
-		Nr = ActiveFrame - (ItemsToDraw / 2);
-	else
-		Nr = 0;
+		Frame = ActiveFrame - (ItemsToDraw / 2);
 
-	unsigned int CurrentColor;
+	// Selected row
+	int RowColor = BLEND(ColCursor, ColBackground, 50);
+
+	if (m_bInputEnable)
+		RowColor = 0xFE8090;
+
+	// Draw selected row
+	GradientBar(&m_dcBack, 0, SY((ItemsToDraw / 2) * ROW_HEIGHT + 3), Width, SY(16), RowColor, ColBackground);
+	
+	CString Text;
 
 	for (int i = 0; i < ItemsToDraw; ++i) {
 
@@ -238,65 +201,65 @@ void CFrameBoxWnd::OnPaint()
 			(ActiveFrame - (ItemsToDraw / 2) + i) < FrameCount) {
 
 			// Play cursor
-			if (m_pView->GetPlayFrame() == Nr && !m_pView->GetFollowMode() && theApp.IsPlaying()) {
-				m_dcBack.FillSolidRect(0, SY(i * 15 + 4), SX(Width), SY(15 - 1), 0x200060);
+			if (m_pView->GetPlayFrame() == Frame && !m_pView->GetFollowMode() && theApp.IsPlaying()) {
+				GradientBar(&m_dcBack, 0, SY(i * ROW_HEIGHT + 4), SX(Width), SY(ROW_HEIGHT - 1), CPatternView::ROW_PLAY_COLOR, ColBackground);
 			}
 
 			// Queue cursor
-			if (m_pView->GetFrameQueue() == Nr) {
-				m_dcBack.FillSolidRect(0, SY(i * 15 + 4), SX(Width), SY(15 - 1), 0x108010);
+			if (m_pView->GetFrameQueue() == Frame) {
+				GradientBar(&m_dcBack, 0, SY(i * ROW_HEIGHT + 4), SX(Width), SY(ROW_HEIGHT - 1), QUEUE_COLOR, ColBackground);
 			}
 
-			// Cursor box
 			if (i == ItemsToDraw / 2) {
-				m_dcBack.FillSolidRect(SX(28 + ((ActiveChannel - m_iFirstChannel) * 20)), SY((ItemsToDraw / 2) * 15 + 5), SX(20), SY(12), ColCursor);
+				// Cursor box
+				int x = ((ActiveChannel - m_iFirstChannel) * 20);
+				int y = (ItemsToDraw / 2) * ROW_HEIGHT + 3;
+
+				GradientBar(&m_dcBack, SX(28 + x), SY(y), SX(20), SY(16), ColCursor, ColBackground);
+				m_dcBack.Draw3dRect(SX(28 + x), SY(y), SX(20), SY(16), BLEND(ColCursor, 0xFFFFFF, 90), BLEND(ColCursor, ColBackground, 60));
 
 				if (m_bInputEnable && m_bCursor) {
-					m_dcBack.FillSolidRect(SX(28 + ((ActiveChannel - m_iFirstChannel) * 20) + 10 * m_iCursorPos), SY((ItemsToDraw / 2) * 15 + 5), SX(10), SY(12), ColBackground);
+					// Flashing black box indicating that input is active
+					m_dcBack.FillSolidRect(SX(30 + x + 8 * m_iCursorPos), SY(y + 2), SX(8), SY(12), ColBackground);
 				}
 			}
 
-			//sprintf(Text, ROW_FORMAT, Nr);
-			Text.Format(ROW_FORMAT, Nr); 
-	
+			Text.Format(ROW_FORMAT, Frame); 
 			m_dcBack.SetTextColor(ColTextHilite);
-			m_dcBack.TextOut(SX(6), SY(i * 15 + 3), Text);
+			m_dcBack.TextOut(SX(5), SY(i * ROW_HEIGHT + 3), Text);
+
+			unsigned int CurrentColor;
 
 			if (i == m_iHiglightLine || m_iHiglightLine == -1)
 				CurrentColor = ColText;
 			else
 				CurrentColor = DIM(ColText, 90);
 
-			for (int c = 0; c < ChannelCount; ++c) {
-				int Chan = c + m_iFirstChannel;
+			for (int j = 0; j < ChannelCount; ++j) {
+				int Chan = j + m_iFirstChannel;
 
 				// Dim patterns that are different from current
-				if (m_pDocument->GetPatternAtFrame(Nr, Chan) == m_pDocument->GetPatternAtFrame(ActiveFrame, Chan))
+				if (m_pDocument->GetPatternAtFrame(Frame, Chan) == m_pDocument->GetPatternAtFrame(ActiveFrame, Chan))
 					m_dcBack.SetTextColor(CurrentColor);
 				else
 					m_dcBack.SetTextColor(DIM(CurrentColor, 70));
 
-				//sprintf(Text, "%02X", m_pDocument->GetPatternAtFrame(Nr, Chan));
-				Text.Format(_T("%02X"), m_pDocument->GetPatternAtFrame(Nr, Chan));
-				m_dcBack.DrawText(Text, CRect(SX(30 + c * FRAME_ITEM_WIDTH), SY(i * 15 + 3), SX(28 + c * FRAME_ITEM_WIDTH + FRAME_ITEM_WIDTH), SY(i * 15 + 3 + 20)), DT_LEFT | DT_TOP | DT_NOCLIP);
+				Text.Format(_T("%02X"), m_pDocument->GetPatternAtFrame(Frame, Chan));
+				m_dcBack.DrawText(Text, CRect(SX(30 + j * FRAME_ITEM_WIDTH), SY(i * ROW_HEIGHT + 3), SX(28 + j * FRAME_ITEM_WIDTH + FRAME_ITEM_WIDTH), SY(i * ROW_HEIGHT + 3 + 20)), DT_LEFT | DT_TOP | DT_NOCLIP);
 			}
 
-			Nr++;
+			Frame++;
 		}
 	}
 
-	m_dcBack.FillSolidRect(SX(25), 0, SY(1), Height, 0x808080);
-
-	m_dcBack.Draw3dRect(SX(2), SY((ItemsToDraw / 2) * 15 + 4), SX(Width - 4), SY(14), ColCursor, ColCursor);
-	m_dcBack.Draw3dRect(SX(1), SY((ItemsToDraw / 2) * 15 + 3), SX(Width - 2), SY(16), ColCursor2, ColCursor2);
-
-	m_dcBack.SelectObject(OldBrush);
-	m_dcBack.SelectObject(OldPen);
+	// Row number separator
+	m_dcBack.FillSolidRect(SX(25), 0, SY(1), Height, 0x404040);
+	m_dcBack.FillSolidRect(SX(25) - 1, 0, SY(1), Height, 0x606060);
 
 	dc.BitBlt(0, 0, Width, Height, &m_dcBack, 0, 0, SRCCOPY);
 
-	m_dcBack.SelectObject(OldBmp);
-	m_dcBack.SelectObject(OldFont);
+	m_dcBack.SelectObject(pOldBmp);
+	m_dcBack.SelectObject(pOldFont);
 
 	if (FrameCount == 1)
 		SetScrollRange(SB_VERT, 0, 1);
@@ -366,7 +329,7 @@ void CFrameBoxWnd::OnLButtonUp(UINT nFlags, CPoint point)
 
 	ScaleMouse(point);
 
-	FrameDelta	= ((point.y - 3) / 15) - 4;
+	FrameDelta	= ((point.y - TOP_OFFSET) / ROW_HEIGHT) - 4;
 	Channel		= (point.x - 28) / 20;
 	NewFrame	= m_pView->GetSelectedFrame() + FrameDelta;
 
@@ -397,7 +360,7 @@ void CFrameBoxWnd::OnLButtonUp(UINT nFlags, CPoint point)
 void CFrameBoxWnd::OnMouseMove(UINT nFlags, CPoint point)
 {
 	ScaleMouse(point);
-	m_iHiglightLine = (point.y - 3) / 15;
+	m_iHiglightLine = (point.y - TOP_OFFSET) / ROW_HEIGHT;
 	RedrawWindow();
 	CWnd::OnMouseMove(nFlags, point);
 }
@@ -424,7 +387,7 @@ void CFrameBoxWnd::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 	ScaleMouse(point);
 
-	FrameDelta	= ((point.y - 3) / 15) - 4;
+	FrameDelta	= ((point.y - TOP_OFFSET) / ROW_HEIGHT) - 4;
 	Channel		= (point.x - 28) / 20;
 	NewFrame	= m_pView->GetSelectedFrame() + FrameDelta;
 
@@ -509,10 +472,10 @@ void CFrameBoxWnd::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 				m_pView->SetFocus();
 				break;
 			case VK_INSERT:
-				m_pView->OnFrameInsert();
+				m_pView->OnModuleFrameInsert();
 				break;
 			case VK_DELETE:
-				m_pView->OnFrameRemove();
+				m_pView->OnModuleFrameRemove();
 				break;
 		}
 
@@ -607,7 +570,7 @@ void CFrameBoxWnd::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	// Popup menu
 
-	// Todo: Move this to the context menu command
+	// TODO: Move this to the context menu command
 
 	CMenu *PopupMenu, PopupMenuBar;
 	int Item = 0;
@@ -617,7 +580,7 @@ void CFrameBoxWnd::OnRButtonUp(UINT nFlags, CPoint point)
 
 	ScaleMouse(point);
 
-	FrameDelta	= ((point.y - 3) / 15) - 4;
+	FrameDelta	= ((point.y - TOP_OFFSET) / ROW_HEIGHT) - 4;
 	Channel		= (point.x - 28) / 20;
 	NewFrame	= m_pView->GetSelectedFrame() + FrameDelta;
 

@@ -28,12 +28,19 @@
 #include "InstrumentEditor2A03.h"
 #include "MainFrm.h"
 
-LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[] = {_T("Volume"), _T("Arpeggio"), _T("Pitch"), _T("Hi-pitch"), _T("Duty / Noise")};
+LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[] = {
+	_T("Volume"), 
+	_T("Arpeggio"), 
+	_T("Pitch"), 
+	_T("Hi-pitch"), 
+	_T("Duty / Noise")
+};
 
 // CInstrumentSettings dialog
 
 IMPLEMENT_DYNAMIC(CInstrumentEditor2A03, CSequenceInstrumentEditPanel)
-CInstrumentEditor2A03::CInstrumentEditor2A03(CWnd* pParent) : CSequenceInstrumentEditPanel(CInstrumentEditor2A03::IDD, pParent),
+CInstrumentEditor2A03::CInstrumentEditor2A03(CWnd* pParent) 
+	: CSequenceInstrumentEditPanel(CInstrumentEditor2A03::IDD, pParent),
 	m_pParentWin(pParent),
 	m_pInstrument(NULL),
 	m_pSequence(NULL),
@@ -57,7 +64,6 @@ BEGIN_MESSAGE_MAP(CInstrumentEditor2A03, CInstrumentEditPanel)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, OnLvnItemchangedInstsettings)	
 	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
 	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
-	ON_BN_CLICKED(IDC_PARSE, OnBnClickedParse)
 END_MESSAGE_MAP()
 
 
@@ -153,7 +159,13 @@ void CInstrumentEditor2A03::OnBnClickedFreeSeq()
 	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
 }
 
-void CInstrumentEditor2A03::OnBnClickedParse()
+BOOL CInstrumentEditor2A03::DestroyWindow()
+{
+	m_pSequenceEditor->DestroyWindow();
+	return CDialog::DestroyWindow();
+}
+
+void CInstrumentEditor2A03::OnKeyReturn()
 {
 	// Translate the sequence text string to a sequence
 	CString Text;
@@ -176,17 +188,6 @@ void CInstrumentEditor2A03::OnBnClickedParse()
 			TranslateMML(Text, 3, 0);
 			break;
 	}
-}
-
-BOOL CInstrumentEditor2A03::DestroyWindow()
-{
-	m_pSequenceEditor->DestroyWindow();
-	return CDialog::DestroyWindow();
-}
-
-void CInstrumentEditor2A03::OnKeyReturn()
-{
-	OnBnClickedParse();	
 }
 
 void CInstrumentEditor2A03::SelectInstrument(int Instrument)

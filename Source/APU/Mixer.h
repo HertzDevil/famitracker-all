@@ -57,9 +57,9 @@ enum CHAN_IDS {
 	CHANID_VRC7_CH5,
 	CHANID_VRC7_CH6,
 
-	CHANID_5B_CH1,
-	CHANID_5B_CH2,
-	CHANID_5B_CH3,
+	CHANID_S5B_CH1,
+	CHANID_S5B_CH2,
+	CHANID_S5B_CH3,
 
 	CHANNELS		/* Total number of channels */
 };
@@ -93,21 +93,25 @@ class CMixer
 		inline double CalcPin1(double Val1, double Val2);
 		inline double CalcPin2(double Val1, double Val2, double Val3);
 
-		void MixInternal(int Value, int Time);
+		void MixInternal1(int Time);
+		void MixInternal2(int Time);
 		void MixN106(int Value, int Time);
 		void MixFDS(int Value, int Time);
 		void MixVRC6(int Value, int Time);
 		void MixMMC5(int Value, int Time);
+		void MixS5B(int Value, int Time);
 
 		void StoreChannelLevel(int Channel, int Value);
 
 		// Blip buffer synths
-		Blip_Synth<blip_good_quality, -500>		Synth2A03;
+		Blip_Synth<blip_good_quality, -500>		Synth2A03SS;
+		Blip_Synth<blip_good_quality, -500>		Synth2A03TND;
 		Blip_Synth<blip_good_quality, -500>		SynthVRC6;
 		Blip_Synth<blip_good_quality, -130>		SynthMMC5;	
-
 		Blip_Synth<blip_good_quality, -1600>	SynthN106;
 		Blip_Synth<blip_good_quality, -3500>	SynthFDS;
+		Blip_Synth<blip_good_quality, -2000>	SynthS5B;
+		
 
 		// Blip buffer object
 		Blip_Buffer	BlipBuffer;

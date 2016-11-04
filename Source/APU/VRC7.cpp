@@ -44,7 +44,7 @@ CVRC7::~CVRC7()
 void CVRC7::Reset()
 {
 	m_iBufferPtr = 0;
-	m_iFrameCycles = 0;
+	m_iTime = 0;
 }
 
 void CVRC7::SetSampleSpeed(uint32 SampleRate, double ClockRate, uint32 FrameRate)
@@ -84,9 +84,14 @@ void CVRC7::Write(uint16 Address, uint8 Value)
 	}
 }
 
+uint8 CVRC7::Read(uint16 Address, bool &Mapped)
+{
+	return 0;
+}
+
 void CVRC7::EndFrame()
 {
-	uint32 WantSamples = m_pMixer->GetMixSampleCount(m_iFrameCycles);
+	uint32 WantSamples = m_pMixer->GetMixSampleCount(m_iTime);
 
 	static int32 LastSample = 0;
 
@@ -100,11 +105,11 @@ void CVRC7::EndFrame()
 	m_pMixer->MixSamples((blip_sample_t*)m_pBuffer, WantSamples);
 
 	m_iBufferPtr -= WantSamples;
-	m_iFrameCycles = 0;
+	m_iTime = 0;
 }
 
 void CVRC7::Process(uint32 Time)
 {
 	// This cannot run in sync, fetch all samples at end of frame instead
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }

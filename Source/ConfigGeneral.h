@@ -48,9 +48,9 @@ protected:
 	bool	m_bNoDPCMReset;
 	bool	m_bNoStepMove;
 	int		m_iPageStepSize;
-	bool	m_bPatternColors;
 	bool	m_bPullUpDelete;
 	bool	m_bBackups;
+	bool	m_bSingleInstance;
 	int		m_iKeyNoteCut;
 	int		m_iKeyNoteRelease;
 	int		m_iKeyClear;
@@ -78,7 +78,7 @@ public:
 	afx_msg void OnCbnSelendokPagelength();
 	afx_msg void OnBnClickedOptNostepmove();
 	afx_msg void OnBnClickedOptPullupdelete();
-	afx_msg void OnBnClickedOptPattenrcolors();
 	afx_msg void OnBnClickedOptBackups();
+	afx_msg void OnBnClickedOptSingleInstance();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

@@ -57,9 +57,9 @@ BEGIN_MESSAGE_MAP(CConfigGeneral, CPropertyPage)
 	ON_CBN_EDITUPDATE(IDC_PAGELENGTH, OnCbnEditupdatePagelength)
 	ON_CBN_SELENDOK(IDC_PAGELENGTH, OnCbnSelendokPagelength)
 	ON_BN_CLICKED(IDC_OPT_NOSTEPMOVE, OnBnClickedOptNostepmove)
-	ON_BN_CLICKED(IDC_OPT_PATTENRCOLORS, OnBnClickedOptPattenrcolors)
 	ON_BN_CLICKED(IDC_OPT_PULLUPDELETE, OnBnClickedOptPullupdelete)
 	ON_BN_CLICKED(IDC_OPT_BACKUPS, OnBnClickedOptBackups)
+	ON_BN_CLICKED(IDC_OPT_SINGLEINSTANCE, OnBnClickedOptSingleInstance)
 END_MESSAGE_MAP()
 
 
@@ -79,9 +79,9 @@ BOOL CConfigGeneral::OnSetActive()
 	CheckDlgButton(IDC_STYLE1, m_iEditStyle == EDIT_STYLE1);
 	CheckDlgButton(IDC_STYLE2, m_iEditStyle == EDIT_STYLE2);
 	CheckDlgButton(IDC_STYLE3, m_iEditStyle == EDIT_STYLE3);
-	CheckDlgButton(IDC_OPT_PATTENRCOLORS, m_bPatternColors);
 	CheckDlgButton(IDC_OPT_PULLUPDELETE, m_bPullUpDelete);
 	CheckDlgButton(IDC_OPT_BACKUPS, m_bBackups);
+	CheckDlgButton(IDC_OPT_SINGLEINSTANCE, m_bSingleInstance);
 	SetDlgItemInt(IDC_PAGELENGTH, m_iPageStepSize, FALSE);
 	return CPropertyPage::OnSetActive();
 }
@@ -144,9 +144,9 @@ BOOL CConfigGeneral::OnApply()
 	theApp.GetSettings()->General.bNoDPCMReset		= m_bNoDPCMReset;
 	theApp.GetSettings()->General.bNoStepMove		= m_bNoStepMove;
 	theApp.GetSettings()->General.iPageStepSize		= m_iPageStepSize;
-	theApp.GetSettings()->General.bPatternColor		= m_bPatternColors;
 	theApp.GetSettings()->General.bPullUpDelete		= m_bPullUpDelete;
 	theApp.GetSettings()->General.bBackups			= m_bBackups;
+	theApp.GetSettings()->General.bSingleInstance	= m_bSingleInstance;
 
 	theApp.GetSettings()->Keys.iKeyNoteCut			= m_iKeyNoteCut;
 	theApp.GetSettings()->Keys.iKeyNoteRelease		= m_iKeyNoteRelease;
@@ -173,14 +173,14 @@ BOOL CConfigGeneral::OnInitDialog()
 	m_bNoDPCMReset		= theApp.GetSettings()->General.bNoDPCMReset;
 	m_bNoStepMove		= theApp.GetSettings()->General.bNoStepMove;
 	m_iPageStepSize		= theApp.GetSettings()->General.iPageStepSize;
-	m_bPatternColors	= theApp.GetSettings()->General.bPatternColor;
 	m_bPullUpDelete		= theApp.GetSettings()->General.bPullUpDelete;
 	m_bBackups			= theApp.GetSettings()->General.bBackups;
+	m_bSingleInstance	= theApp.GetSettings()->General.bSingleInstance;
 
-	m_iKeyNoteCut = theApp.GetSettings()->Keys.iKeyNoteCut; 
-	m_iKeyNoteRelease = theApp.GetSettings()->Keys.iKeyNoteRelease; 
-	m_iKeyClear = theApp.GetSettings()->Keys.iKeyClear; 
-	m_iKeyRepeat = theApp.GetSettings()->Keys.iKeyRepeat;
+	m_iKeyNoteCut		= theApp.GetSettings()->Keys.iKeyNoteCut; 
+	m_iKeyNoteRelease	= theApp.GetSettings()->Keys.iKeyNoteRelease; 
+	m_iKeyClear			= theApp.GetSettings()->Keys.iKeyClear; 
+	m_iKeyRepeat		= theApp.GetSettings()->Keys.iKeyRepeat;
 
 	GetKeyNameText(MapVirtualKey(m_iKeyNoteCut, MAPVK_VK_TO_VSC) << 16, Text, 64);
 	SetDlgItemText(IDC_KEY_NOTE_CUT, Text);
@@ -237,12 +237,6 @@ void CConfigGeneral::OnBnClickedOptNostepmove()
 	SetModified();
 }
 
-void CConfigGeneral::OnBnClickedOptPattenrcolors()
-{
-	m_bPatternColors = IsDlgButtonChecked(IDC_OPT_PATTENRCOLORS) != 0;
-	SetModified();
-}
-
 void CConfigGeneral::OnBnClickedOptPullupdelete()
 {
 	m_bPullUpDelete = IsDlgButtonChecked(IDC_OPT_PULLUPDELETE) != 0;
@@ -252,6 +246,12 @@ void CConfigGeneral::OnBnClickedOptPullupdelete()
 void CConfigGeneral::OnBnClickedOptBackups()
 {
 	m_bBackups = IsDlgButtonChecked(IDC_OPT_BACKUPS) != 0;
+	SetModified();
+}
+
+void CConfigGeneral::OnBnClickedOptSingleInstance()
+{
+	m_bSingleInstance = IsDlgButtonChecked(IDC_OPT_SINGLEINSTANCE) != 0;
 	SetModified();
 }
 
@@ -270,34 +270,30 @@ BOOL CConfigGeneral::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message == WM_KEYDOWN) {
 		char Text[64];
 		int id = GetFocus()->GetDlgCtrlID();
+		int key = pMsg->wParam;
 
-		if (pMsg->wParam == 27) {	// ESC
-			pMsg->wParam = 0;
-			pMsg->lParam = 0;
-		}
-
-		GetKeyNameText(pMsg->lParam, Text, 64);
+		if (key == 27)		// ESC
+			key = 0;
 
 		switch (id) {
 			case IDC_KEY_NOTE_CUT:
-				m_iKeyNoteCut = pMsg->wParam;
-				SetDlgItemText(id, Text);
+				m_iKeyNoteCut = key;
 				break;
 			case IDC_KEY_NOTE_RELEASE:
-				m_iKeyNoteRelease = pMsg->wParam;
-				SetDlgItemText(id, Text);
+				m_iKeyNoteRelease = key;
 				break;
 			case IDC_KEY_CLEAR:
-				m_iKeyClear = pMsg->wParam;
-				SetDlgItemText(id, Text);
+				m_iKeyClear = key;
 				break;
 			case IDC_KEY_REPEAT:
-				m_iKeyRepeat = pMsg->wParam;
-				SetDlgItemText(id, Text);
+				m_iKeyRepeat = key;
 				break;
 			default:
 				return CPropertyPage::PreTranslateMessage(pMsg);
 		}
+
+		GetKeyNameText(key ? pMsg->lParam : 0, Text, 64);
+		SetDlgItemText(id, Text);
 
 		SetModified();
 

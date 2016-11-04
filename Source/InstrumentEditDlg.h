@@ -36,7 +36,7 @@ public:
 	void ChangeNoteState(int Note);
 	void SetCurrentInstrument(int Index);
 
-	bool IsOpened();
+	bool IsOpened() const;
 
 	void EndDialog(int nResult);
 

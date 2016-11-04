@@ -20,18 +20,20 @@
 
 #pragma once
 
-class CInstrumentEditorN106 : public CInstrumentEditPanel
+class CInstrumentEditorN106 : public CSequenceInstrumentEditPanel
 {
 	DECLARE_DYNAMIC(CInstrumentEditorN106)
 
 public:
 	CInstrumentEditorN106(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorN106();
-	virtual int GetIDD() { return IDD; };
-	virtual TCHAR *GetTitle() { return _T("Namco N106"); };
+	virtual int GetIDD() const { return IDD; };
+	virtual TCHAR *GetTitle() const { return _T("Envelopes"); };
 
 	// Public
 	void SelectInstrument(int Instrument);
+	void SetSequenceString(CString Sequence, bool Changed);
+
 
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT_N106 };
@@ -39,5 +41,30 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
+	virtual void OnKeyReturn();
+
+	void SelectSequence(int Sequence, int Type);
+	void TranslateMML(CString String, int Max, int Min);
+
+	int m_iSelectedSetting;
+
+	CWnd				*m_pParentWin;
+	CSequenceEditor		*m_pSequenceEditor;
+	CInstrumentN106		*m_pInstrument;
+	CSequence 			*m_pSequence;
+
+protected:
+	static LPCTSTR INST_SETTINGS_N106[];
+
+	static const int MAX_VOLUME = 15;
+	static const int MAX_DUTY = 7;
+
 	DECLARE_MESSAGE_MAP()
+public:
+	virtual BOOL OnInitDialog();
+	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeSeqIndex();
+	afx_msg void OnBnClickedFreeSeq();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	virtual BOOL DestroyWindow();
 };

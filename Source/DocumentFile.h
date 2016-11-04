@@ -31,15 +31,15 @@ public:
 	bool		Finished() const;
 
 	// Write functions
-	void		BeginDocument();
-	void		EndDocument();
+	bool		BeginDocument();
+	bool		EndDocument();
 
 	void		CreateBlock(const char *ID, int Version);
 	void		WriteBlock(const void *Data, unsigned int Size);
 	void		WriteBlockInt(int Value);
 	void		WriteBlockChar(char Value);
 	void		WriteString(CString String);
-	void		FlushBlock();
+	bool		FlushBlock();
 
 	// Read functions
 	bool		CheckValidity();
@@ -60,6 +60,8 @@ public:
 
 	void		RollbackPointer(int count);	// avoid this
 
+	bool		IsFileIncomplete() const;
+
 public:
 	// Constants
 	static const unsigned int FILE_VER;
@@ -77,6 +79,7 @@ protected:
 protected:
 	unsigned int	m_iFileVersion;
 	bool			m_bFileDone;
+	bool			m_bIncomplete;
 
 	char			*m_cBlockID;
 	unsigned int	m_iBlockSize;

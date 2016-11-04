@@ -113,7 +113,7 @@ void CSequenceEditor::OnPaint()
 
 	dc.TextOut(120, rect.bottom - 19, LengthStr);
 
-	// Todo: For arpeggio, make this more general
+	// TODO: For arpeggio, make this more general
 #if 0
 	if (m_iSelectedSetting == SEQ_ARPEGGIO) {		// Temporarily disabled
 		dc.FillSolidRect(m_MenuRect, 0);
@@ -188,7 +188,7 @@ void CSequenceEditor::SequenceChangedMessage(bool Changed)
 	// Translate sequence to MML-like string
 	Text = "";
 
-	for (unsigned int i = 0; i < m_pSequence->GetItemCount(); i++) {
+	for (unsigned i = 0; i < m_pSequence->GetItemCount(); ++i) {
 		if (m_pSequence->GetLoopPoint() == i)
 			Text.Append(_T("| "));
 		else if (m_pSequence->GetReleasePoint() == i)
@@ -224,6 +224,11 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 		case SEQ_DUTYCYCLE:
 			m_pGraphEditor = new CBarGraphEditor(pSequence, m_iMaxDuty);
 			break;
+			/*
+		case SEQ_SUNSOFT_NOISE:
+			m_pGraphEditor = new CNoiseEditor(pSequence, 32);
+			break;
+			*/
 	}
 /*
 	m_pSetting->SelectSequence(pSequence, Type, InstrumentType);

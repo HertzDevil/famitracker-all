@@ -66,6 +66,13 @@ void CSampleWindow::NextState()
 
 // CSampleWindow message handlers
 
+void CSampleWindow::SetSampleRate(int SampleRate)
+{
+	if (m_hWnd) {
+		m_pStates[m_iCurrentState]->SetSampleRate(SampleRate);
+	}
+}
+
 void CSampleWindow::DrawSamples(int *Samples, int Count)
 {
 	if (m_hWnd) {
@@ -87,7 +94,7 @@ BOOL CSampleWindow::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lps
 	// This is saved
 	m_iCurrentState = theApp.GetSettings()->SampleWinState;
 
-	for (int i = 0; i < STATE_COUNT; i++) {
+	for (int i = 0; i < STATE_COUNT; ++i) {
 		m_pStates[i]->Activate();
 	}
 	
@@ -114,9 +121,10 @@ void CSampleWindow::OnPaint()
 
 void CSampleWindow::OnRButtonUp(UINT nFlags, CPoint point)
 {
-	CMenu *PopupMenu, PopupMenuBar;
+	CMenu PopupMenuBar;
 	PopupMenuBar.LoadMenu(IDR_SAMPLE_WND_POPUP);
-	PopupMenu = PopupMenuBar.GetSubMenu(0);
+
+	CMenu *pPopupMenu = PopupMenuBar.GetSubMenu(0);
 
 	CPoint menuPoint;
 	CRect rect;
@@ -126,7 +134,11 @@ void CSampleWindow::OnRButtonUp(UINT nFlags, CPoint point)
 	menuPoint.x = rect.left + point.x;
 	menuPoint.y = rect.top + point.y;
 
-	UINT Result = PopupMenu->TrackPopupMenu(TPM_RETURNCMD, menuPoint.x, menuPoint.y, this);
+	UINT menuIds[] = {ID_POPUP_SAMPLEGRAPH1, ID_POPUP_SAMPLEGRAPH2, ID_POPUP_SPECTRUMANALYZER, ID_POPUP_NOTHING};
+
+	pPopupMenu->CheckMenuItem(menuIds[m_iCurrentState], MF_BYCOMMAND | MF_CHECKED);
+
+	UINT Result = pPopupMenu->TrackPopupMenu(TPM_RETURNCMD, menuPoint.x, menuPoint.y, this);
 
 	switch (Result) {
 		case ID_POPUP_SAMPLEGRAPH1:

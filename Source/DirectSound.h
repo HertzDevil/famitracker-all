@@ -25,6 +25,7 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
+// Return values from WaitForDirectSoundEvent()
 enum {CUSTOM_EVENT = 1, BUFFER_IN_SYNC, BUFFER_OUT_OF_SYNC};
 
 // DirectSound channel
@@ -42,10 +43,11 @@ public:
 	void Clear();
 	void Reset();
 	void WriteSoundBuffer(void *Buffer, unsigned int Samples);
-	int WaitForDirectSoundEvent() const;
 	bool IsPlaying() const;
 	void ResetWritePointer();
 	void AdvanceWritePointer();
+
+	int  WaitForDirectSoundEvent() const;
 
 	int GetBlockSize() const	{ return m_iBlockSize; };
 	int GetBlockSamples() const	{ return m_iBlockSize >> ((m_iSampleSize >> 3) - 1); };
@@ -90,16 +92,17 @@ public:
 	void			Close();
 
 	CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
-	void			CloseChannel(CDSoundChannel *Channel);
+	void			CloseChannel(CDSoundChannel *pChannel);
+
+	int				CalculateBufferLenght(int BufferLen, int Samplerate, int Samplesize, int Channels) const;
 
 	// Enumeration
 	void			EnumerateDevices();
 	void			ClearEnumeration();
-	void			EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
-	unsigned int	GetDeviceCount();
-	char			*GetDeviceName(int iDevice);
-	int				MatchDeviceID(char *Name);
-	GUID			GetDeviceID(int iDevice);
+	BOOL			EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+	unsigned int	GetDeviceCount() const;
+	char			*GetDeviceName(int iDevice) const;
+	int				MatchDeviceID(char *Name) const;
 
 public:
 	static const unsigned int MAX_DEVICES = 256;
@@ -107,12 +110,16 @@ public:
 	static const unsigned int MAX_SAMPLE_RATE = 96000;
 	static const unsigned int MAX_BUFFER_LENGTH = 10000;
 
+protected:
+	static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+	static CDSound *pThisObject;
+
 private:
 	HWND			m_hWndTarget;
 	HANDLE			m_hNotificationHandle;
 	LPDIRECTSOUND	m_lpDirectSound;
 
-	// Available devices
+	// For enumeration
 	unsigned int	m_iDevices;
 	char			*m_pcDevice[MAX_DEVICES];
 	GUID			*m_pGUIDs[MAX_DEVICES];

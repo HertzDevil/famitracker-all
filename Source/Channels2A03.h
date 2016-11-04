@@ -26,12 +26,11 @@
 
 class CChannelHandler2A03 : public CChannelHandler {
 public:
-	CChannelHandler2A03(int ChanID) : CChannelHandler(ChanID) {};
+	CChannelHandler2A03();
 	virtual void ProcessChannel();
 	virtual void ResetChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
-	virtual int LimitFreq(int Freq);
 protected:
 	// 2A03 wave functions
 	void LoadInstrument(CInstrument2A03 *pInst);
@@ -43,7 +42,7 @@ protected:
 // Square 1
 class CSquare1Chan : public CChannelHandler2A03 {
 public:
-	CSquare1Chan() : CChannelHandler2A03(0) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CSquare1Chan() : CChannelHandler2A03() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	virtual void RefreshChannel();
 protected:
 	virtual void ClearRegisters();
@@ -52,7 +51,7 @@ protected:
 // Square 2
 class CSquare2Chan : public CChannelHandler2A03 {
 public:
-	CSquare2Chan() : CChannelHandler2A03(1) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CSquare2Chan() : CChannelHandler2A03() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	virtual void RefreshChannel();
 protected:
 	virtual void ClearRegisters();
@@ -61,7 +60,7 @@ protected:
 // Triangle
 class CTriangleChan : public CChannelHandler2A03 {
 public:
-	CTriangleChan() : CChannelHandler2A03(2) { m_bEnabled = false; };
+	CTriangleChan() : CChannelHandler2A03() { m_bEnabled = false; };
 	virtual void RefreshChannel();
 protected:
 	virtual void ClearRegisters();
@@ -70,7 +69,7 @@ protected:
 // Noise
 class CNoiseChan : public CChannelHandler2A03 {
 public:
-	CNoiseChan() : CChannelHandler2A03(3) { m_iDefaultDuty = 0; m_bEnabled = false; };
+	CNoiseChan() : CChannelHandler2A03() { m_iDefaultDuty = 0; m_bEnabled = false; };
 	virtual void RefreshChannel();
 protected:
 	virtual void ClearRegisters();
@@ -80,7 +79,7 @@ protected:
 // DPCM
 class CDPCMChan : public CChannelHandler2A03 {
 public:
-	CDPCMChan(CSampleMem *pSampleMem) : CChannelHandler2A03(4), m_pSampleMem(pSampleMem), m_iRetriggerCntr(0) { m_bEnabled = false; };
+	CDPCMChan(CSampleMem *pSampleMem) : CChannelHandler2A03(), m_pSampleMem(pSampleMem), m_iRetriggerCntr(0) { m_bEnabled = false; };
 	virtual void RefreshChannel();
 protected:
 	virtual void PlayChannelNote(stChanNote *NoteData, int EffColumns);
@@ -94,6 +93,5 @@ private:
 	unsigned char m_iSampleLength;
 	unsigned char m_iLoopOffset;
 	unsigned char m_iLoopLength;
-	bool m_bKeyRelease;
 	int m_iRetrigger, m_iRetriggerCntr;
 };

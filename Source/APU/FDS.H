@@ -31,7 +31,7 @@ public:
 //	void	Init(CMixer *pMixer);
 	void	Reset();
 	void	Write(uint16 Address, uint8 Value);
-	uint8	Read(uint16 Address);
+	uint8	Read(uint16 Address, bool &Mapped);
 	void	EndFrame();
 	void	Process(uint32 Time);
 private:

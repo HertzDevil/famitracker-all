@@ -57,21 +57,21 @@ void CVRC6_Pulse::Write(uint16 Address, uint8 Value)
 void CVRC6_Pulse::Process(int Time)
 {
 	if (!Enabled || Frequency == 0) {
-		m_iFrameCycles += Time;
+		m_iTime += Time;
 		return;
 	}
 
 	while (Time >= Counter) {
-		Time			-= Counter;
-		m_iFrameCycles	+= Counter;
-		Counter			= Frequency + 1;
+		Time    -= Counter;
+		m_iTime	+= Counter;
+		Counter	 = Frequency + 1;
 	
 		DutyCycleCounter = (DutyCycleCounter + 1) & 0x0F;
-		Mix((DutyCycleCounter >= DutyCycle || Gate) ? Volume : 0);
+		Mix((Gate || DutyCycleCounter >= DutyCycle) ? Volume : 0);
 	}
 
 	Counter -= Time;
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }
 
 void CVRC6_Sawtooth::Reset()
@@ -103,14 +103,14 @@ void CVRC6_Sawtooth::Write(uint16 Address, uint8 Value)
 void CVRC6_Sawtooth::Process(int Time)
 {
 	if (!Enabled || !Frequency) {
-		m_iFrameCycles += Time;
+		m_iTime += Time;
 		return;
 	}
 
 	while (Time >= Counter) {
-		Time		-= Counter;
-		m_iFrameCycles	+= Counter;
-		Counter		= Frequency;
+		Time 	-= Counter;
+		m_iTime	+= Counter;
+		Counter	 = Frequency;
 
 		if (ResetReg & 1)
 			PhaseAccumulator = (PhaseAccumulator + PhaseInput) & 0xFF;
@@ -122,18 +122,18 @@ void CVRC6_Sawtooth::Process(int Time)
 			ResetReg = 0;
 		}
 
-		// The 5 high bits of accumulator are sent to the mixer
+		// The 5 highest bits of accumulator are sent to the mixer
 		Mix(PhaseAccumulator >> 3);
 	}
 
 	Counter -= Time;
-	m_iFrameCycles += Time;
+	m_iTime += Time;
 }
 
 CVRC6::CVRC6(CMixer *pMixer)
 {
-	Pulse1	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE1);
-	Pulse2	 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE2);
+	Pulse1 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE1);
+	Pulse2 = new CVRC6_Pulse(pMixer, CHANID_VRC6_PULSE2);
 	Sawtooth = new CVRC6_Sawtooth(pMixer, CHANID_VRC6_SAWTOOTH);
 }
 
@@ -177,6 +177,12 @@ void CVRC6::Write(uint16 Address, uint8 Value)
 	}
 }
 
+uint8 CVRC6::Read(uint16 Address, bool &Mapped)
+{
+	Mapped = false;
+	return 0;
+}
+
 void CVRC6::EndFrame()
 {
 	Pulse1->EndFrame();
@@ -184,7 +190,7 @@ void CVRC6::EndFrame()
 	Sawtooth->EndFrame();
 }
 
-void CVRC6::Process(int Time)
+void CVRC6::Process(uint32 Time)
 {
 	Pulse1->Process(Time);
 	Pulse2->Process(Time);
