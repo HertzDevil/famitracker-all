@@ -6,34 +6,36 @@
 	<BODY>
 		<H2><FONT face="Verdana">NSF export</FONT></H2>
 		<FONT face="Verdana" size="2">
-			<P><FONT face="Verdana" size="2"><EM><STRONG>Important notice:</STRONG></EM>&nbsp;<EM>There 
-						is a limit on how large NSF's might be, and that is not limited by the tracker 
-						itself.&nbsp;<BR>
-						A&nbsp;track does not&nbsp;necessarily has to&nbsp;fit&nbsp;in&nbsp;a 
-						NSF-file,&nbsp;even&nbsp;if it does&nbsp;in the tracker.<BR>
-						To check the avaliable size, create a NSF and check the "Total size"-label in 
-						the text window.&nbsp;<BR>
-						Size may not exceed $8000&nbsp;(32768) bytes.</EM></FONT></P>
 			<P>
-			To create NSFs, select File/Create NSF to get the NSF export dialog.</FONT></P>
+				NSF (Nintendo Sound Format, invented by Kevin Horton) is a type of 
+				files&nbsp;used for NES music.</P>
+			<P>
+			To create NSFs, select File/Create NSF to open the NSF export dialog.</FONT></P>
 		<P><FONT face="Verdana" size="2">The three text-fields are the same as in the tracker 
-				main window.</FONT></P>
-		<P><FONT face="Verdana" size="2">Change <STRONG>Music data address</STRONG>&nbsp;if you 
-				want to use music in your NES app. It tells the compiler where the music data 
-				is to be stored in the NES's address space. Will not&nbsp;affect NSF's.</FONT></P>
-		<P><FONT face="Verdana" size="2"><STRONG>Enable bankswitch optimization </STRONG>will 
-				remove unused memory by setting the bank bits in the NSF-header. Only usable if 
-				DPCM is used. (Could be used&nbsp;to expand the available music 
-				and&nbsp;DPCM-space in&nbsp;future versions.)</FONT></P>
-		<P><FONT face="Verdana" size="2"><STRONG>Force PAL </STRONG>sets the PAL-bit in the 
-				NSF-header, should be enabled if you are doing a&nbsp;track for the&nbsp;PAL 
-				system. It is automatically checked if the tracker is set to PAL.</FONT></P>
+				main window, for setting <STRONG>song name</STRONG>, <STRONG>author</STRONG> and
+				<STRONG>copyright text</STRONG>.</FONT></P>
+		<P><FONT face="Verdana" size="2">Settings</FONT></P>
+		<UL>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>Force PAL </STRONG>sets the PAL only flag in 
+					NSF header, indicating that the tune is an exclusive PAL-system song.</FONT>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>Enable NSF bank switching</STRONG> creates a 
+					bankswitched song,&nbsp;for songs that&nbsp;are larger than 32 kB.</FONT>
+			<LI>
+				<FONT face="Verdana" size="2"><STRONG>Remove unused NSF banks</STRONG>&nbsp;decreases 
+					the&nbsp;file size&nbsp;by setting the bankswitch numbers. Only usable if DPCM 
+					samples are used and there is enough space between samples and music data.</FONT></LI></UL>
+		<P><FONT face="Verdana" size="2">Change <STRONG>Music data address</STRONG> &nbsp;if 
+				you want to use music in your NES app. It tells the compiler where the music 
+				data&nbsp;is&nbsp;stored in the NES's address space. Will not&nbsp;affect 
+				NSF's.</FONT></P>
 		<P><FONT face="Verdana" size="2">Press the&nbsp;<STRONG>Write NSF</STRONG> -button to 
-				create a NSF&nbsp;with your track, or <STRONG>Write BIN</STRONG> to create 
-				one&nbsp;file with binary music data and&nbsp;one file with DPCM data&nbsp;for 
-				use with the music driver&nbsp;when you want music in NES-apps. Finally, there 
-				is this option <STRONG>Write PRG</STRONG> that creates a 32 kB file ready to be 
-				burned on an EPROM/EEPROM or some other kind of memory for playback on a real 
-				NES.</FONT></P>
+				create a NSF&nbsp;from your song, or <STRONG>Write BIN</STRONG> to 
+				create&nbsp;one&nbsp;file with binary music data and&nbsp;one file with DPCM 
+				data&nbsp;for use with the music driver&nbsp;when you want music in NES-apps. 
+				Finally, there is this option <STRONG>Write PRG</STRONG> that creates a 32 kB 
+				file ready to be burned on an EPROM/EEPROM or some other kind of memory for 
+				playback on a real NES by using a NROM-compatible cart.</FONT></P>
 	</BODY>
 </HTML>

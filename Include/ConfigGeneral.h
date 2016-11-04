@@ -42,22 +42,24 @@ protected:
 	bool	m_bPreviewWAV;
 	bool	m_bKeyRepeat;
 	bool	m_bRowInHex;
-	bool	m_bKeySelect;
+	bool	m_bFramePreview;
 	int		m_iEditStyle;
-	
+	bool	m_bNoDPCMReset;
+
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnSetActive();
 	virtual void OnOK();
-	afx_msg void OnBnClickedOptWrapcursor();
 	virtual BOOL OnApply();
 	virtual BOOL OnInitDialog();
+	afx_msg void OnBnClickedOptWrapcursor();
 	afx_msg void OnBnClickedOptFreecursor();
 	afx_msg void OnBnClickedOptWavepreview();
 	afx_msg void OnBnClickedOptKeyrepeat();
 	afx_msg void OnBnClickedStyle1();
 	afx_msg void OnBnClickedStyle2();
 	afx_msg void OnBnClickedOptHexadecimal();
-	afx_msg void OnBnClickedOptKeyselect();
 	afx_msg void OnBnClickedSquarehack();
+	afx_msg void OnBnClickedOptFramepreview();
+	afx_msg void OnBnClickedOptNodpcmreset();
 };

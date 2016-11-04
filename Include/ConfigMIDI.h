@@ -46,4 +46,6 @@ public:
 	afx_msg void OnBnClickedKeyRelease();
 	afx_msg void OnBnClickedChanmap();
 	afx_msg void OnBnClickedVelocity();
+	afx_msg void OnBnClickedArpeggiate();
+	afx_msg void OnCbnSelchangeOutdevices();
 };

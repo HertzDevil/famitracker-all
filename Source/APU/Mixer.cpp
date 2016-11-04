@@ -25,9 +25,9 @@
 //
 
 #include "stdafx.h"
-#include "mixer.h"
-#include "apu.h"
-#include "blip buffer\\blip_buffer.h"
+#include "apu/mixer.h"
+#include "apu/apu.h"
+#include "blip_buffer.h"
 
 //#define LINEAR_MIXING
 
@@ -70,7 +70,7 @@ inline double CMixer::CalcPin2(double Val1, double Val2, double Val3)
 	//
 
 	if ((Val1 + Val2 + Val3) > 0)
-		return 159.79 / ((1.0 / ((Val1 / /*10227.0*/  8227.0 ) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
+		return 159.79 / ((1.0 / ((Val1 / 8227.0 ) + (Val2 / 12241.0) + (Val3 / 22638.0))) + 100.0);
 
 	return 0;
 }

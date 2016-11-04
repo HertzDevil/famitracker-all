@@ -52,36 +52,38 @@ CSettings::~CSettings()
 {
 }
 
-
 // CSettings member functions
 
 void CSettings::LoadSettings()
 {
 	// General 
-	General.bWrapCursor			= GetAppProfileInt("General", "Wrap cursor", 1) == 1;
-	General.bFreeCursorEdit		= GetAppProfileInt("General", "Free cursor edit", 0) == 1;
-	General.bWavePreview		= GetAppProfileInt("General", "Wave preview", 1) == 1;
-	General.bKeyRepeat			= GetAppProfileInt("General", "Key repeat", 1) == 1;
-	General.bRowInHex			= GetAppProfileInt("General", "Hex row display", 0) == 1;
-	General.iEditStyle			= GetAppProfileInt("General", "Edit style", EDIT_STYLE1);
-	General.strFont				= GetAppProfileString("General", "Pattern font", "Fixedsys");
-	General.bKeySelect			= GetAppProfileInt("General", "Keyboard select", 0) == 1;
+	General.bWrapCursor					= GetAppProfileInt("General", "Wrap cursor", 1) == 1;
+	General.bFreeCursorEdit				= GetAppProfileInt("General", "Free cursor edit", 0) == 1;
+	General.bWavePreview				= GetAppProfileInt("General", "Wave preview", 1) == 1;
+	General.bKeyRepeat					= GetAppProfileInt("General", "Key repeat", 1) == 1;
+	General.bRowInHex					= GetAppProfileInt("General", "Hex row display", 1) == 1;
+	General.iEditStyle					= GetAppProfileInt("General", "Edit style", EDIT_STYLE1);
+	General.strFont						= GetAppProfileString("General", "Pattern font", "Fixedsys");
+	General.bFramePreview				= GetAppProfileInt("General", "Frame preview", 1) == 1;
+	General.bNoDPCMReset				= GetAppProfileInt("General", "No DPCM reset", 0) == 1;
 
 	// Sound
-	strDevice				= GetAppProfileString("Sound", "Device", "");
-	Sound.iSampleRate		= GetAppProfileInt("Sound", "Sample rate", 44100);
-	Sound.iSampleSize		= GetAppProfileInt("Sound", "Sample size", 16);
-	Sound.iBufferLength		= GetAppProfileInt("Sound", "Buffer length", 40);
-	Sound.iBassFilter		= GetAppProfileInt("Sound", "Bass filter freq", 16);
-	Sound.iTrebleFilter		= GetAppProfileInt("Sound", "Treble filter freq", 12000);
-	Sound.iTrebleDamping	= GetAppProfileInt("Sound", "Treble filter damping", 24);
+	strDevice							= GetAppProfileString("Sound", "Device", "");
+	Sound.iSampleRate					= GetAppProfileInt("Sound", "Sample rate", 44100);
+	Sound.iSampleSize					= GetAppProfileInt("Sound", "Sample size", 16);
+	Sound.iBufferLength					= GetAppProfileInt("Sound", "Buffer length", 40);
+	Sound.iBassFilter					= GetAppProfileInt("Sound", "Bass filter freq", 16);
+	Sound.iTrebleFilter					= GetAppProfileInt("Sound", "Treble filter freq", 12000);
+	Sound.iTrebleDamping				= GetAppProfileInt("Sound", "Treble filter damping", 24);
 
 	// Midi
-	Midi.iMidiDevice		= GetAppProfileInt("MIDI", "Device", 0);
-	Midi.bMidiMasterSync	= GetAppProfileInt("MIDI", "Master sync", 0) == 1;
-	Midi.bMidiKeyRelease	= GetAppProfileInt("MIDI", "Key release", 0) == 1;
-	Midi.bMidiChannelMap	= GetAppProfileInt("MIDI", "Channel map", 0) == 1;
-	Midi.bMidiVelocity		= GetAppProfileInt("MIDI", "Velocity control", 0) == 1;
+	Midi.iMidiDevice					= GetAppProfileInt("MIDI", "Device", 0);
+	Midi.iMidiOutDevice					= GetAppProfileInt("MIDI", "Out Device", 0);
+	Midi.bMidiMasterSync				= GetAppProfileInt("MIDI", "Master sync", 0) == 1;
+	Midi.bMidiKeyRelease				= GetAppProfileInt("MIDI", "Key release", 0) == 1;
+	Midi.bMidiChannelMap				= GetAppProfileInt("MIDI", "Channel map", 0) == 1;
+	Midi.bMidiVelocity					= GetAppProfileInt("MIDI", "Velocity control", 0) == 1;
+	Midi.bMidiArpeggio					= GetAppProfileInt("MIDI", "Auto Arpeggio", 0) == 1;
 
 	// Appearance
 	Appearance.iColBackground			= GetAppProfileInt("Appearance", "Background", COLOR_SCHEME.BACKGROUND);
@@ -92,11 +94,18 @@ void CSettings::LoadSettings()
 	Appearance.iColCursor				= GetAppProfileInt("Appearance", "Cursor", COLOR_SCHEME.CURSOR);
 
 	// Windows position
-	WindowPos.iLeft			= GetAppProfileInt("Window position", "Left", 100);
-	WindowPos.iTop			= GetAppProfileInt("Window position", "Top", 100);
-	WindowPos.iRight		= GetAppProfileInt("Window position", "Right", 950);
-	WindowPos.iBottom		= GetAppProfileInt("Window position", "Bottom", 920);
-	WindowPos.iState		= GetAppProfileInt("Window position", "State", STATE_NORMAL);
+	WindowPos.iLeft						= GetAppProfileInt("Window position", "Left", 100);
+	WindowPos.iTop						= GetAppProfileInt("Window position", "Top", 100);
+	WindowPos.iRight					= GetAppProfileInt("Window position", "Right", 950);
+	WindowPos.iBottom					= GetAppProfileInt("Window position", "Bottom", 920);
+	WindowPos.iState					= GetAppProfileInt("Window position", "State", STATE_NORMAL);
+
+	// Paths
+	Paths[PATH_FTM]						= GetAppProfileString("Paths", "FTM path", "");
+	Paths[PATH_FTI]						= GetAppProfileString("Paths", "FTI path", "");
+	Paths[PATH_NSF]						= GetAppProfileString("Paths", "NSF path", "");
+	Paths[PATH_DMC]						= GetAppProfileString("Paths", "DMC path", "");
+	Paths[PATH_WAV]						= GetAppProfileString("Paths", "WAV path", "");
 }
 
 void CSettings::SaveSettings()
@@ -109,7 +118,8 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("General", "Hex row display",		General.bRowInHex);
 	WriteAppProfileInt("General", "Edit style",				General.iEditStyle);
 	WriteAppProfileString("General", "Pattern font",		General.strFont);
-	WriteAppProfileInt("General", "Keyboard select",		General.bKeySelect);
+	WriteAppProfileInt("General", "Frame preview",			General.bFramePreview);
+	WriteAppProfileInt("General", "No DPCM reset",			General.bNoDPCMReset);
 
 	// Sound
 	WriteAppProfileInt("Sound", "Sample rate",				Sound.iSampleRate);
@@ -121,11 +131,13 @@ void CSettings::SaveSettings()
 	WriteAppProfileString("Sound", "Device",				strDevice);
 
 	// Midi
-	WriteAppProfileInt("MIDI", "Device",			Midi.iMidiDevice);
-	WriteAppProfileInt("MIDI", "Master sync",		Midi.bMidiMasterSync);
-	WriteAppProfileInt("MIDI", "Key release",		Midi.bMidiKeyRelease);
-	WriteAppProfileInt("MIDI", "Channel map",		Midi.bMidiChannelMap);
-	WriteAppProfileInt("MIDI", "Velocity control",	Midi.bMidiVelocity);
+	WriteAppProfileInt("MIDI", "Device",					Midi.iMidiDevice);
+	WriteAppProfileInt("MIDI", "Out Device",				Midi.iMidiOutDevice);
+	WriteAppProfileInt("MIDI", "Master sync",				Midi.bMidiMasterSync);
+	WriteAppProfileInt("MIDI", "Key release",				Midi.bMidiKeyRelease);
+	WriteAppProfileInt("MIDI", "Channel map",				Midi.bMidiChannelMap);
+	WriteAppProfileInt("MIDI", "Velocity control",			Midi.bMidiVelocity);
+	WriteAppProfileInt("MIDI", "Auto Arpeggio",				Midi.bMidiArpeggio);
 
 	// Appearance
 	WriteAppProfileInt("Appearance", "Background",					Appearance.iColBackground);
@@ -136,11 +148,18 @@ void CSettings::SaveSettings()
 	WriteAppProfileInt("Appearance", "Cursor",						Appearance.iColCursor);
 
 	// Window position
-	WriteAppProfileInt("Window position", "Left",	WindowPos.iLeft);
-	WriteAppProfileInt("Window position", "Top",	WindowPos.iTop);
-	WriteAppProfileInt("Window position", "Right",	WindowPos.iRight);
-	WriteAppProfileInt("Window position", "Bottom", WindowPos.iBottom);
-	WriteAppProfileInt("Window position", "State",	WindowPos.iState);
+	WriteAppProfileInt("Window position", "Left",			WindowPos.iLeft);
+	WriteAppProfileInt("Window position", "Top",			WindowPos.iTop);
+	WriteAppProfileInt("Window position", "Right",			WindowPos.iRight);
+	WriteAppProfileInt("Window position", "Bottom",			WindowPos.iBottom);
+	WriteAppProfileInt("Window position", "State",			WindowPos.iState);
+
+	// Paths
+	WriteAppProfileString("Paths", "FTM path", Paths[PATH_FTM]);
+	WriteAppProfileString("Paths", "FTI path", Paths[PATH_FTI]);
+	WriteAppProfileString("Paths", "NSF path", Paths[PATH_NSF]);
+	WriteAppProfileString("Paths", "DMC path", Paths[PATH_DMC]);
+	WriteAppProfileString("Paths", "WAV path", Paths[PATH_WAV]);
 }
 
 void CSettings::DefaultSettings()
@@ -153,7 +172,8 @@ void CSettings::DefaultSettings()
 	General.bRowInHex			= 0;
 	General.strFont				= "Fixedsys";
 	General.iEditStyle			= EDIT_STYLE1;
-	General.bKeySelect			= false;
+	General.bFramePreview		= true;
+	General.bNoDPCMReset		= false;
 
 	// Sound
 	strDevice				= "";
@@ -166,9 +186,11 @@ void CSettings::DefaultSettings()
 
 	// Midi
 	Midi.iMidiDevice		= 0;
+	Midi.iMidiOutDevice		= 0;
 	Midi.bMidiMasterSync	= 0;
 	Midi.bMidiKeyRelease	= 0;
 	Midi.bMidiChannelMap	= 0;
+	Midi.bMidiArpeggio		= 0;
 
 	// Appearance
 	Appearance.iColBackground			= COLOR_SCHEME.BACKGROUND;
@@ -184,6 +206,9 @@ void CSettings::DefaultSettings()
 	WindowPos.iRight	= 950;
 	WindowPos.iBottom	= 920;
 	WindowPos.iState	= STATE_NORMAL;
+
+	for (int i = 0; i < PATH_COUNT; i++)
+		Paths[i] = "";
 }
 
 void CSettings::SetWindowPos(int Left, int Top, int Right, int Bottom, int State)
@@ -193,4 +218,21 @@ void CSettings::SetWindowPos(int Left, int Top, int Right, int Bottom, int State
 	WindowPos.iRight	= Right;
 	WindowPos.iBottom	= Bottom;
 	WindowPos.iState	= State;
+}
+
+CString CSettings::GetPath(unsigned int PathType)
+{
+	ASSERT(PathType < PATH_COUNT);
+	return Paths[PathType];
+}
+
+void CSettings::SetPath(CString PathName, unsigned int PathType)
+{
+	ASSERT(PathType < PATH_COUNT);
+
+	// Remove file name if there is a
+	if (PathName.Right(1) == "\\" || PathName.Find('\\') == -1)
+		Paths[PathType] = PathName;
+	else
+		Paths[PathType] = PathName.Left(PathName.ReverseFind('\\'));
 }

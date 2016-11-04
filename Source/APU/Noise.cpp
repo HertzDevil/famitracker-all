@@ -19,8 +19,8 @@
 */
 
 #include "stdafx.h"
-#include "apu.h"
-#include "noise.h"
+#include "apu/apu.h"
+#include "apu/noise.h"
 
 CNoise::CNoise(CMixer *pMixer, int ID)
 {
@@ -101,7 +101,7 @@ void CNoise::Process(int Time)
 		Counter		= Wavelength;
 		
 		ShiftReg = (((ShiftReg << 14) ^ (ShiftReg << SampleRate)) & 0x4000) | (ShiftReg >> 1);
-		
+
 		if (Output && LastSample != (ShiftReg & 0x01)) {
 			LastSample = (ShiftReg & 0x01);
 			AddMixer((LastSample && Output) ? Volume : 0);

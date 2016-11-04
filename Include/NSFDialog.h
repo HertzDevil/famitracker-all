@@ -53,4 +53,6 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedWriteBIN();
 	afx_msg void OnBnClickedWritePrg();
+	afx_msg void OnBnClickedBankswitch();
+	afx_msg void OnBnClickedBankoptimize();
 };

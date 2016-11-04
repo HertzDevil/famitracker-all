@@ -7,64 +7,78 @@
 	<BODY>
 		<H1><A NAME="main_index"></A><FONT face="Verdana">FamiTracker&nbsp;Help Index</FONT></H1>
 		<H2><FONT face="Verdana">Overview</FONT></H2>
-		<P><FONT face="Verdana" size="2"> This is a tracker for producing music using the 
-				hardware found in Famicom/NES. The chip&nbsp;used, called 2A03,&nbsp;contains 
-				a&nbsp;PSG that consists of four analog channels (oscillators) and one digital 
-				channel (for&nbsp;samples).<BR>
-				That means this tracker doesn't use samples as&nbsp;most trackers 
-				usually&nbsp;do. Instead, it is&nbsp;a synth with the 
-				same&nbsp;limitations&nbsp;as&nbsp;real Famicom/NES has. </FONT>
+		<P><FONT face="Verdana" size="2"> This is a sound tracker for producing music 
+				using&nbsp;the same limitations as the&nbsp;hardware found in Famicom/NES. </FONT>
 		</P>
-		<P><FONT face="Verdana" size="2"> It's&nbsp;possible to export music to 
+		<P><FONT face="Verdana" size="2">The&nbsp;CPU found in a NES&nbsp;(named 2A03) has a 
+				PSG that is capable of&nbsp;producing sound through 
+				five&nbsp;different&nbsp;channels. The first four resembles analog waveforms 
+				(two square waves, triangle wave and&nbsp;noise), while the last one is playing 
+				samples. That means this tracker doesn't use samples as most of them usually 
+				do, the sound is instead synthesized.</FONT></P>
+		<P><FONT face="Verdana" size="2"> You can&nbsp;export music to 
 				the&nbsp;NSF-format&nbsp;(Nintendo Sound Format). A NSF-file&nbsp;is simply 
-				a&nbsp;NES binary&nbsp;with the&nbsp;only&nbsp;task&nbsp;to&nbsp;play music, 
-				and&nbsp;that&nbsp;makes&nbsp;it possible to play them on a real 
-				NES.&nbsp;Using&nbsp;a&nbsp;NSF player&nbsp;is 
-				necessary&nbsp;to&nbsp;play&nbsp;them on a PC.</FONT></P>
+				a&nbsp;NES program that plays music, and&nbsp;that&nbsp;makes&nbsp;it possible 
+				to play them on&nbsp;real NES hardware.</FONT></P>
+		<P><FONT face="Verdana" size="2">A NSF player&nbsp;enables&nbsp;these files to be 
+				played on a PC. There are a lot of players available, but NSFplug (for Winamp) 
+				and NSFplay&nbsp;(standalone)&nbsp;are recommended.</FONT></P>
 		<H3><FONT face="Verdana">Some features:</FONT></H3>
 		<UL>
 			<LI>
-				<FONT face="Verdana" size="2">Full real-time emulation of all channels </FONT>
+				<FONT face="Verdana" size="2">Full real-time emulation of all channels, using 
+					blargg's band-limiting library for good quality </FONT>
 			<LI>
-				<FONT face="Verdana" size="2">Internal tool for PCM&nbsp;to DPCM conversion</FONT>
+				<FONT face="Verdana" size="2">Automatic PCM&nbsp;to DPCM conversion for DPCM 
+					samples</FONT>
 			<LI>
 				<FONT face="Verdana" size="2">64 instruments,&nbsp;each instrument&nbsp;have 
 					6&nbsp;different&nbsp;effects </FONT>
 			<LI>
-				<FONT face="Verdana" size="2">4 track-effect columns&nbsp;per channel</FONT>
+				<FONT face="Verdana" size="2">Three additional track-effect columns&nbsp;per 
+					channel are available</FONT>
 			<LI>
-				<FONT face="Verdana" size="2">NSF&nbsp;and&nbsp;music data export (makes it 
-					possible to use music in NES applications)</FONT>
+				<FONT face="Verdana" size="2">NSF&nbsp;and&nbsp;music data export, makes it 
+					possible to use music in NES applications</FONT>
 			<LI>
-				<FONT face="Verdana" size="2">MIDI devices input / MIDI file import</FONT>
-			<LI>
-				<FONT face="Verdana" size="2">Source is avaliable under the GNU General Public 
-					License (GPL)</FONT></LI></UL>
-		<P><FONT face="Verdana" size="2"> Please report any bugs/comments/suggestions</FONT><FONT face="Verdana" size="2">.</FONT></P>
-		<P><FONT face="Verdana" size="4"><STRONG>Topics</STRONG></FONT></P>
+				<FONT face="Verdana" size="2">MIDI devices input and output&nbsp;/ MIDI file import</FONT></LI>
+			<FONT face="Verdana" size="2">
+				<LI>
+					<FONT face="Verdana" size="2">It's possible to create multiple tracks NSFs</FONT></LI>
+				<LI>
+				Source is avaliable under the GNU General Public License (GPL)</FONT></LI></UL>
+		<P><FONT face="Verdana" size="2"> Please report any bugs/comments/suggestions.</FONT><FONT face="Verdana" size="2"><BR>
+				Is there anything you think is missing in these help files? Mail me.</FONT></P>
+		<P><FONT face="Verdana" size="4"><STRONG>Topics</STRONG></FONT>
+			<BR>
+		</P>
 		<MENU>
 			<LI>
 				<A href="tracker_field.htm" target=""><FONT face="Verdana" size="2">The&nbsp;pattern 
 						field</FONT></A><FONT face="Verdana" size="2"> </FONT>
 			<LI>
 				<A href="instruments.htm"><FONT face="Verdana" size="2">Instruments</FONT></A><FONT face="Verdana" size="2">
+				</FONT><FONT face="Verdana" size="2">
+					<LI>
+						<A href="shortcuts.htm" target=""><FONT face="Verdana" size="2">Key commands</FONT></A>
+					<LI>
+						<A href="nsf_export.htm"><FONT face="Verdana" size="2">Creating NSF's</FONT></A><A href="midi_settings.htm">
+						</A>
 				</FONT>
-			<LI>
-				<A href="midi_settings.htm"><FONT face="Verdana" size="2">MIDI configuration</FONT></A>
-			<LI>
-				<A href="shortcuts.htm" target=""><FONT face="Verdana" size="2">Key commands</FONT></A>
-			<LI>
-				<A href="nsf_export.htm"><FONT face="Verdana" size="2">Creating NSF's</FONT></A>
 			<LI>
 				<A href="configuration.htm"><FONT face="Verdana" size="2">Configuration</FONT></A></LI></MENU>
 		<P><FONT size="2"></FONT>
 		<P>
+		<P>
 			<HR>
-			<FONT face="Verdana" size="1"><EM>FamiTracker is Copyright (c) 2005-2006 jsr</EM></FONT>
-			<ADDRESS><FONT face="Verdana" size="1">E-mail: </FONT><A href="mailto:zxy965r@tninet.se">
-					<FONT face="Verdana" size="1">zxy965r@tninet.se</FONT></A></ADDRESS>
-			<ADDRESS><FONT face="Verdana" size="1">Web: </FONT><A href="http://user.tninet.se/~zxy965r/ft/">
-					<FONT face="Verdana" size="1">http://user.tninet.se/~zxy965r/ft/</FONT></A></ADDRESS>
-			<ADDRESS>&nbsp;</ADDRESS>
+			<FONT face="Verdana" size="1"><FONT face="Verdana" size="1"><EM>FamiTracker is Copyright 
+						(c) 2005-2006 jsr</EM></FONT>
+				<BR>
+				E-mail: </FONT><A href="mailto:zxy965r@tninet.se"><FONT face="Verdana" size="1"><A href="mailto:zxy965r@tninet.se&nbsp;">
+					zxy965r@tninet.se</FONT></A><FONT face="Verdana" size="1"><FONT face="Times New Roman" size="3">&nbsp;</FONT>
+			</FONT></A><FONT face="Verdana" size="1"><BR>
+				Web: </FONT><A href="http://famitracker.shoodot.net"><FONT face="Verdana" size="1"><A href="http://famitracker.shoodot.net">
+					http://famitracker.shoodot.net</FONT></A><FONT face="Verdana" size="1"><EM></EM></FONT></A>&nbsp;<BR>
+		</P>
 	</BODY>
 </HTML>

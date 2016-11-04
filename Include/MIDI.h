@@ -36,23 +36,27 @@ public:
 	CMIDI();
 	virtual ~CMIDI();
 	bool	OpenSelectedDevice();
-	void	OpenConfigDialog(void);
-	bool	ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Note, unsigned char & Octave, unsigned char & Velocity);
 	bool	CloseDevice(void);
-	int		GetNumDevices();
-	void	GetDeviceString(int Num, char *Text);
+
+	bool	ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Note, unsigned char & Octave, unsigned char & Velocity);
+	int		GetNumDevices(bool Input);
+	void	GetDeviceString(int Num, char *Text, bool Input);
 	void	SetDevice(int DeviceNr, bool MasterSync);
+	void	SetOutDevice(int DeviceNr);
 	void	Event(unsigned char Status, unsigned char Data1, unsigned char Data2);
 	void	Toggle();
+
+	void	WriteNote(unsigned char Channel, unsigned char Note, unsigned char Octave, unsigned char Velocity);
+	void	ResetOutput();
 
 	bool	IsOpened()		{ return m_bOpened; }
 	bool	IsAvailable()	{ return m_iDevice > 0; }
 
-	int		m_iDevice;
+	int		m_iDevice, m_iOutDevice;
 	bool	m_bMasterSync;
 
 private:
-	bool	m_bOpened;
+	bool	m_bOpened, m_bOutOpened;
 
 public:
 	bool	Init(void);

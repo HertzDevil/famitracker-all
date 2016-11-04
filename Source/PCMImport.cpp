@@ -97,14 +97,18 @@ stImportedPCM *CPCMImport::ShowDialog()
 {
 	// Return import parameters, 0 if cancel
 
-	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Microsft PCM files (*.wav)|*.wav|All files|*.*||");
+	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||");
 
 	Imported.Data = NULL;
 	Imported.Name = NULL;
 	Imported.Size = 0;
 
+	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_WAV);
+
 	if (OpenFileDialog.DoModal() == IDCANCEL)
 		return &Imported;
+
+	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_WAV);
 
 	m_strPath		= OpenFileDialog.GetPathName();
 	m_strFileName	= OpenFileDialog.GetFileName();

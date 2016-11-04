@@ -40,9 +40,14 @@ public:
 	BITMAPINFO	bmi;
 
 	void DrawSamples(int *Samples, int Count);
+	void SetTime(int Min, int Sec, int MSec);
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 
+private:
+	int m_iMin, m_iSec, m_iMSec;
+
 protected:
+	void DrawTime(CDC *pDC);
 	void DrawFFT(int *Samples, int Count, CDC *pDC);
 	void DrawGraph(int *Samples, int Count, CDC *pDC);
 

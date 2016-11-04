@@ -79,7 +79,7 @@ BOOL CSpeedDlg::OnInitDialog()
 	CSliderCtrl *Slider = (CSliderCtrl*)GetDlgItem(IDC_SPEED_SLD);
 	CString String;
 
-	Slider->SetRange(1, 200);
+	Slider->SetRange(10, 200);
 	Slider->SetPos(m_iSpeed);
 
 	String.Format("%i Hz", m_iSpeed);

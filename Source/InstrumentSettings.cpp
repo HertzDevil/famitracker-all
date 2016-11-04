@@ -22,7 +22,6 @@
 #include "FamiTracker.h"
 #include "InstrumentSettings.h"
 #include "SequenceEditor.h"
-#include "..\include\instrumentsettings.h"
 
 const int SEQUENCE_EDIT_WIDTH = 540;
 const int SEQUENCE_EDIT_HEIGHT = 230;
@@ -122,7 +121,7 @@ void CInstrumentSettings::SetCurrentInstrument(int Index)
 		sprintf(Text, "%i", InstConf->ModIndex[i]);
 		m_pSettingsListCtrl->SetCheck(i, InstConf->ModEnable[i]);
 		m_pSettingsListCtrl->SetItemText(i, 1, Text);
-	}
+	} 
 
 	int Item = pDoc->GetInstEffIndex(m_iInstrument, SelectedEffect);
 
@@ -137,6 +136,12 @@ void CInstrumentSettings::CompileSequence()
 {
 	SetDlgItemText(IDC_MML, SequenceEditor.CompileList());
 	TranslateMML();
+
+	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
+
+	m_pSettingsListCtrl->SetCheck(m_iCurrentEffect);
+
+	pDoc->SetInstEffect(m_iInstrument, m_iCurrentEffect, pDoc->GetInstEffIndex(m_iInstrument, m_iCurrentEffect), 1);
 }
 
 void CInstrumentSettings::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
@@ -153,6 +158,8 @@ void CInstrumentSettings::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *p
 
 	if (m_bInitializing)
 		return;
+
+	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
 
 	m_iCurrentEffect	= Setting;
 	SeqIndex			= pDoc->GetInstEffIndex(m_iInstrument, Setting);
@@ -199,6 +206,12 @@ void CInstrumentSettings::OnEnChangeSeqIndex()
 	m_pSettingsListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
 	Index				= GetDlgItemInt(IDC_SEQ_INDEX);
 	Setting				= m_iCurrentEffect;
+
+	if (Index < 0)
+		Index = 0;
+
+	if (Index >= MAX_SEQUENCES)
+		Index = MAX_SEQUENCES - 1;
 
 	Text.Format("%i", Index);
 	m_pSettingsListCtrl->SetItemText(Setting, 1, Text);
@@ -280,6 +293,10 @@ void CInstrumentSettings::TranslateMML()
 					m_SelectedSeq->Value[Items] = Value;
 
 					Items++;
+				}
+
+				if (Items >= 127) {
+					break; 
 				}
 
 				Negative = false;
@@ -423,7 +440,6 @@ BOOL CInstrumentSettings::PreTranslateMessage(MSG* pMsg)
 					m_bShiftPressed = true;
 					return TRUE;
 				default:
-				//	CString a;a.Format("%i", pMsg->wParam);AfxMessageBox(a);
 					if (GetDlgItem(IDC_MML) != GetFocus())
 						pView->PlayNote(int(pMsg->wParam));
 			}
@@ -458,6 +474,8 @@ void CInstrumentSettings::SelectSequence(int Sequence)
 {
 	// Selects the current sequence in the sequence editor
 
+	ASSERT(Sequence < MAX_SEQUENCES);
+
 	m_SelectedSeq		= pDoc->GetSequence(Sequence, m_iCurrentEffect);
 	m_iSelectedSequence = Sequence;
 
@@ -473,4 +491,12 @@ void CInstrumentSettings::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	this->SetFocus();
 	CDialog::OnLButtonDown(nFlags, point);
+}
+
+
+BOOL CInstrumentSettings::DestroyWindow()
+{
+	SequenceEditor.DestroyWindow();
+
+	return CDialog::DestroyWindow();
 }

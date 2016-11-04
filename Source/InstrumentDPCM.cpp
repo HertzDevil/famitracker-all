@@ -22,7 +22,6 @@
 #include "FamiTracker.h"
 #include "InstrumentDPCM.h"
 #include "PCMImport.h"
-#include "..\include\instrumentdpcm.h"
 
 const char *KEY_NAMES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
@@ -139,7 +138,13 @@ void CInstrumentDPCM::UpdateKey(int Index)
 	if (pDoc->GetInstDPCM(pView->GetInstrument(), Index, m_iOctave) > 0) {
 		Item = pDoc->GetInstDPCM(pView->GetInstrument(), Index, m_iOctave) - 1;
 		Pitch = pDoc->GetInstDPCMPitch(pView->GetInstrument(), Index, m_iOctave);
-		pDoc->GetSampleName(Item, Name);
+
+		if (pDoc->GetSampleSize(Item) == 0) {
+			strcpy(Name, "(n/a)");
+		}
+		else {
+			pDoc->GetSampleName(Item, Name);
+		}
 		m_pTableListCtrl->SetItemText(Index, 2, Name);
 		sprintf(Name, "%i", Pitch & 0x0F);
 		m_pTableListCtrl->SetItemText(Index, 1, Name);
@@ -185,20 +190,11 @@ void CInstrumentDPCM::BuildSampleList()
 	SetDlgItemText(IDC_SPACE, Text);
 }
 
-void CInstrumentDPCM::OnBnClickedLoad()
+void CInstrumentDPCM::LoadSample(char *FilePath, char *FileName)
 {
-	CString		Path, FileName, Name;
-	CFile		SampleFile;
+	CFile SampleFile;
 
-	CFileDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Delta modulation samples (*.dmc)|*.dmc|All files|*.*||");
-
-	if (OpenFileDialog.DoModal() == IDCANCEL)
-		return;
-
-	Path		= OpenFileDialog.GetPathName();
-	FileName	= OpenFileDialog.GetFileName();
-
-	if (!SampleFile.Open(Path, CFile::modeRead)) {
+	if (!SampleFile.Open(FilePath, CFile::modeRead)) {
 		MessageBox("Could not open file!");
 		return;
 	}
@@ -227,6 +223,38 @@ void CInstrumentDPCM::OnBnClickedLoad()
 	SampleFile.Close();
 
 	BuildSampleList();
+}
+
+void CInstrumentDPCM::OnBnClickedLoad()
+{
+	char *Path, *FileName;
+	char FileNameBuffer[MAX_PATH];
+
+	CFileDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER, "Delta modulation samples (*.dmc)|*.dmc|All files|*.*||");
+
+	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_DMC);
+
+	if (OpenFileDialog.DoModal() == IDCANCEL)
+		return;
+
+	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_DMC);
+
+	if (OpenFileDialog.GetFileName().GetLength() == 0) {
+
+		Path		= OpenFileDialog.m_pOFN->lpstrFile;
+		FileName	= OpenFileDialog.m_pOFN->lpstrFile + OpenFileDialog.m_pOFN->nFileOffset;
+
+		while (*FileName != 0) {
+			strcpy(FileNameBuffer, Path);
+			strcat(FileNameBuffer, "\\");
+			strcat(FileNameBuffer, FileName);
+			LoadSample(FileNameBuffer, FileName);
+			FileName += strlen(FileName) + 1;
+		}
+	}
+	else {
+		LoadSample(OpenFileDialog.GetPathName().GetBuffer(), OpenFileDialog.GetFileName().GetBuffer());
+	}
 }
 
 void CInstrumentDPCM::OnBnClickedUnload()
@@ -399,6 +427,8 @@ void CInstrumentDPCM::OnBnClickedSave()
 	char		Text[256];
 	int			Index;
 
+	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
+
 	Index = m_pSampleListCtrl->GetSelectionMark();
 
 	if (Index == -1)
@@ -414,8 +444,12 @@ void CInstrumentDPCM::OnBnClickedSave()
 
 	CFileDialog SaveFileDialog(FALSE, "dmc", (LPCSTR)DSample->Name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Delta modulation samples (*.dmc)|*.dmc|All files|*.*||");
 	
+	SaveFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_DMC);
+
 	if (SaveFileDialog.DoModal() == IDCANCEL)
 		return;
+
+	theApp.m_pSettings->SetPath(SaveFileDialog.GetPathName(), PATH_DMC);
 
 	Path = SaveFileDialog.GetPathName();
 

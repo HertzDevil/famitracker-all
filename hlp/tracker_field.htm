@@ -6,47 +6,53 @@
 	</HEAD>
 	<BODY>
 		<H2><FONT face="Verdana">The&nbsp;pattern field</FONT></H2>
-		<P><FONT face="Verdana" size="2"> The pattern field is&nbsp;made&nbsp;of all avaliable 
+		<P><FONT face="Verdana" size="2"> The pattern field&nbsp;consists&nbsp;of&nbsp;the 
 				channels, where&nbsp;each channel by default&nbsp;have&nbsp;four columns.</FONT></P>
 		<P><FONT face="Verdana" size="4"><STRONG>Columns</STRONG></FONT></P>
-		<UL>
+		<OL>
 			<LI>
-				<FONT face="Verdana" size="2"><STRONG>1. Note column<BR>
+				<FONT face="Verdana" size="2"><STRONG>Note column<BR>
 					</STRONG>The note and octave&nbsp;to play.<BR>
 				</FONT>
 			<LI>
-				<FONT face="Verdana" size="2"><STRONG>2. Instrument column<BR>
-					</STRONG>The instrument to use, range 00 - 3F. May be&nbsp;empty for no new 
-					instrument. It is possible to change instrument without retriggering the note.<BR>
+				<FONT face="Verdana" size="2"><STRONG>Instrument column<BR>
+					</STRONG>The instrument to use, ranges 00 - 3F. May be&nbsp;empty for no new 
+					instrument.
+					<BR>
+					It is possible to change the instrument without retriggering the note.<BR>
 				</FONT>
 			<LI>
-				<FONT face="Verdana" size="2"><STRONG>3. Volume column<BR>
-					</STRONG>The volume column, range: 1 - F. Only&nbsp;works for the square and 
+				<FONT face="Verdana" size="2"><STRONG>Volume column<BR>
+					</STRONG>The volume column, range: 1 - F. Only&nbsp;affects the&nbsp;square and 
 					noise channels.<BR>
 				</FONT>
 			<LI>
-				<FONT size="2"><FONT face="Verdana"><STRONG>4. (5, 6, 7)&nbsp;Effect columns<BR>
+				<FONT size="2"><FONT face="Verdana"><STRONG>(5, 6, 7)&nbsp;Effect columns<BR>
 						</STRONG>Used for track effects. Format is <STRONG>Yxx</STRONG>, where&nbsp; <STRONG>
 							Y</STRONG> = effect number and <STRONG>xx</STRONG> = effect parameter. A 
 						list of the effects is below.<BR>
 						Additional effect columns are available by clicking the arrows in channel 
-						headers.</FONT></FONT></LI></UL>
-		<P><FONT face="Verdana" size="2">Use the keyboard&nbsp;letters to enter notes, and 
-				function keys <STRONG>F2 - F9</STRONG> to select octave.</FONT></P>
+						headers.</FONT></FONT></LI></OL>
+		<P><FONT face="Verdana" size="2">Use the keyboard&nbsp;letters (<STRONG>Z </STRONG>= C, <STRONG>
+					S </STRONG>= C#,&nbsp;<STRONG>X </STRONG>= D...,&nbsp;<STRONG>Q</STRONG> = 
+				C +1 octave...)&nbsp;to enter notes</FONT><FONT face="Verdana" size="2"> and 
+				function keys <STRONG>F2 - F9</STRONG> to select octave.<BR>
+				The keys <STRONG>&lt;</STRONG>, <STRONG>1</STRONG>, and <STRONG>¨</STRONG> adds 
+				a note off.</FONT></P>
 		<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys"><FONT color="#000000">
 					C-4 01 F <STRONG>---</STRONG></FONT> </FONT><FONT face="Verdana" size="2">(Plays 
 				a <STRONG>C 4</STRONG> note&nbsp;using instrument <STRONG>1</STRONG> and volume <STRONG>
-					F</STRONG>, no effect is used. Note C is on the&nbsp;'Q'-key)</FONT></P>
+					F</STRONG>, no effect is used. Note C is on the&nbsp;'Z'-key)</FONT></P>
 		<H3><FONT face="Verdana">Channels</FONT></H3>
-		<P><FONT face="Verdana" size="2">Each channel got it name from what kind of sound the 
-				produce.<BR>
+		<P><FONT face="Verdana" size="2"> Each channel got it name from what kind of 
+				sound&nbsp;it produces.<BR>
 			</FONT><FONT face="Verdana" size="2">It is possible to disable channels by clicking 
-				its name on top of pattern.</FONT></P>
+				its name (on top of pattern).</FONT></P>
 		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Square 1 &amp; 2</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
-			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana"><FONT size="2">Produces&nbsp;square-shaped&nbsp;waveforms.&nbsp;The 
-						lowest&nbsp;note&nbsp;that&nbsp;is possible to play is A-0 (G-0 for PAL). Both 
-						channels are identical.<STRONG></P>
+			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana"><FONT size="2">Produces&nbsp;square-shaped&nbsp;waveforms.&nbsp;<BR>
+						The lowest&nbsp;possible note is A-0 (G-0 for PAL). Both channels are 
+						identical.<STRONG></P>
 		</BLOCKQUOTE></STRONG></FONT></FONT>
 		<H3 dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2">Triangle</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
@@ -66,12 +72,10 @@
 		<H3 dir="ltr"><FONT face="Verdana" size="2">DPCM</FONT></H3>
 		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
 			<P dir="ltr" style="MARGIN-RIGHT: 0px"><FONT face="Verdana" size="2"> This 
-					one&nbsp;plays&nbsp;samples that are&nbsp;loaded from files,&nbsp;instrument 
-					effects are not used at all. It is not possible to set volume for this channel 
-					either.<BR>
-					It is only able to play samples at&nbsp;16&nbsp;different pitches, defined in 
-					the instrument settings (DPCM samples-tab).<BR>
-				</FONT>
+					one&nbsp;plays&nbsp;samples that are&nbsp;loaded from 
+					DMC-files,&nbsp;instrument effects are not used at all.
+					<BR>
+					It is not possible to set volume for this channel. </FONT>
 			</P>
 		</BLOCKQUOTE>
 		<H3><FONT face="Verdana">Channel effect codes</FONT></H3>
@@ -81,60 +85,71 @@
 					- Effect parameter)</FONT></P>
 			<P><FONT face="Verdana" size="2">Example:</FONT> <FONT face="Fixedsys">C-4&nbsp;-- - 
 					047</FONT><FONT face="Verdana" size="2">, plays a C-note with 047-arpeggio. 
-					(Commonly used for "C-major"-chords)</FONT></P>
+					(Commonly used&nbsp;as "C-major"-chords)</FONT></P>
 			<UL>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">0xy</FONT>&nbsp;- Arpeggio, <STRONG>
-							x</STRONG> and <STRONG>y</STRONG> halfnotes above the row-note</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">0xy</FONT>&nbsp;- Arpeggio, 
+						fast note shifting. <STRONG>x</STRONG> and <STRONG>y</STRONG> notes above the 
+						row-note.</FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">1xx</FONT> - Portamento on 
-						(slide to new notes), <STRONG>xx</STRONG> = speed</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">1xx</FONT> - Portamento on, 
+						slide to new notes. <STRONG>xx</STRONG> = speed.</FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">2xx</FONT> - Portamento off (<STRONG>xx</STRONG>
-						doesn't do anything)</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">2xx</FONT> - Portamento off.<STRONG>xx</STRONG>
+						doesn't do anything.</FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">4xy</FONT> - Vibrato (alters 
-						the frequency from a sine wave), <STRONG>x</STRONG> = speed <EM>(0 - disable),</EM>
-						<STRONG>y </STRONG>= depth</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">4xy</FONT> - Vibrato. <STRONG>x</STRONG>
+						= speed <EM>(0&nbsp;= disable),</EM> <STRONG>y </STRONG>= depth.</FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">7xy</FONT> - Tremolo (alters 
-						the&nbsp;volume from a sine wave), <STRONG>x</STRONG> = speed <EM>(0 - disable),</EM>
-						<STRONG>y </STRONG>= depth</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">7xy</FONT> - Tremolo. <STRONG>x</STRONG>
+						= speed <EM>(0&nbsp;= disable),</EM> <STRONG>y </STRONG>= depth.</FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Bxx</FONT> - Jump to frame <STRONG>xx</STRONG></FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Bxx</FONT> - Jump to frame <STRONG>xx.</STRONG></FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Cxx</FONT> - Halt (<STRONG>xx</STRONG>
-						doesn't do anything)</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Cxx</FONT> - Halt.<STRONG>xx</STRONG>
+						doesn't do anything.</FONT>
 				<LI>
 					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Dxx</FONT> - Skip to next frame 
-						and start at row <STRONG>xx</STRONG></FONT>
+						and start at row <STRONG>xx.</STRONG></FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Exx</FONT> - Set volume (<STRONG>xx </STRONG>
-						= <EM>0 - 15</EM> ) <EM>Obsolete, use the volume column instead</EM></FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Exx</FONT> - Set volume.<STRONG>xx </STRONG>
+						= <EM>0 - 15.</EM>
+						<BR>
+						<EM>Obsolete, use the volume column!</EM></FONT>
 				<LI>
-					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Fxx</FONT> - Set speed/tempo to <STRONG>
-							xx</STRONG> (<STRONG>xx</STRONG> &lt; 20 sets the speed, <STRONG>xx</STRONG>
-						&gt; 20 sets the tempo)</FONT>
+					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Fxx</FONT> - Set speed/tempo. 0 
+						&lt; <STRONG>xx</STRONG> &lt; 20 sets the speed, 20 &lt;&nbsp; <STRONG>xx</STRONG>
+						&lt;&nbsp;FF sets the tempo.</FONT>
+				<LI>
+					<FONT face="Fixedsys">Gxx</FONT><FONT face="Verdana" size="2"> - Note delay. <STRONG>xx&nbsp;</STRONG>in 
+						frames.</FONT>
 				<LI>
 					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Hxy</FONT> - Trigger hardware 
-						sweep up, <STRONG>x</STRONG> = period (<EM>0 - 7</EM> ), <STRONG>y</STRONG> = 
-						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT>
+						sweep up. <STRONG>x</STRONG> = period (<EM>0 - 7</EM> ), <STRONG>y</STRONG> = 
+						shift (<EM>1 - 7</EM>).
+						<BR>
+						<EM>This feature is only avaliable for the square channels.</EM></FONT><EM> </EM>
 				<LI>
 					<FONT face="Verdana" size="2"><FONT face="Fixedsys">Ixy</FONT> - Trigger hardware 
-						sweep down, <STRONG>x</STRONG> = period (<EM>0 - 7</EM>), <STRONG>y</STRONG> = 
-						shift (<EM>1 - 7</EM>). This feature is only avaliable for the square channels.</FONT>
+						sweep down. <STRONG>x</STRONG> = period (<EM>0 - 7</EM>), <STRONG>y</STRONG> = 
+						shift (<EM>1 - 7</EM>).
+						<BR>
+						<EM>This feature is only avaliable for the square channels.</EM></FONT><EM> </EM>
 				<LI>
 					<FONT face="Fixedsys" size="2">Pxx<FONT face="Verdana"> - Fine pitch setting. Default <STRONG>
-								xx</STRONG> = 80, <STRONG>xx</STRONG> &gt; 80 increase pitch, <STRONG>xx</STRONG>
-							&lt; 80 decrease pitch.</FONT></FONT></LI></UL>
+								xx</STRONG>&nbsp;is 80, <STRONG>xx</STRONG> &gt; 80 to&nbsp;increase pitch, 
+							and <STRONG>xx</STRONG> &lt; 80 to&nbsp;decrease pitch.</FONT></FONT>
+				<LI>
+					<FONT face="Fixedsys" size="2">Zxx<FONT face="Verdana"> - Set the DPCM's delta counter. 
+							Affects volume of triangle and noise.&nbsp;0 &lt; <STRONG>xx</STRONG> &lt; 80</FONT></FONT></LI></UL>
 		</BLOCKQUOTE><EM><STRONG></STRONG>
 			<DL>
 		</EM>
 		<DD>
-			<FONT face="Verdana"><FONT size="2"><EM>Notes: E will not&nbsp;work if an instrument volume 
-						effect loop is used.&nbsp;1 </EM><EM>will not&nbsp;work if an 
-						instrument&nbsp;frequency effect loop is used. (Pitch, Hi-pitch&nbsp;and 
-						Arpeggio)</EM> </FONT></FONT>
+			<FONT face="Verdana"><FONT size="2"><EM>Notes: <STRONG>E</STRONG> will not&nbsp;work if an 
+						instrument volume effect loop is used.&nbsp;<STRONG>1</STRONG> </EM><EM>will 
+						not&nbsp;work if an instrument&nbsp;frequency effect loop is used. (Pitch, 
+						Hi-pitch&nbsp;and Arpeggio)</EM> </FONT></FONT>
 			<DD>
 				&nbsp;</DD></DL>
 	</BODY>

@@ -21,7 +21,6 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ConfigGeneral.h"
-#include "..\include\configgeneral.h"
 
 // CConfigGeneral dialog
 
@@ -49,7 +48,8 @@ BEGIN_MESSAGE_MAP(CConfigGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_STYLE1, OnBnClickedStyle1)
 	ON_BN_CLICKED(IDC_STYLE2, OnBnClickedStyle2)
 	ON_BN_CLICKED(IDC_OPT_HEXROW, OnBnClickedOptHexadecimal)
-	ON_BN_CLICKED(IDC_OPT_KEYSELECT, OnBnClickedOptKeyselect)
+	ON_BN_CLICKED(IDC_OPT_FRAMEPREVIEW, OnBnClickedOptFramepreview)
+	ON_BN_CLICKED(IDC_OPT_NODPCMRESET, OnBnClickedOptNodpcmreset)
 END_MESSAGE_MAP()
 
 
@@ -62,7 +62,8 @@ BOOL CConfigGeneral::OnSetActive()
 	CheckDlgButton(IDC_OPT_WAVEPREVIEW, m_bPreviewWAV);
 	CheckDlgButton(IDC_OPT_KEYREPEAT, m_bKeyRepeat);
 	CheckDlgButton(IDC_OPT_HEXROW, m_bRowInHex);
-	CheckDlgButton(IDC_OPT_KEYSELECT, m_bKeySelect);
+	CheckDlgButton(IDC_OPT_FRAMEPREVIEW, m_bFramePreview);
+	CheckDlgButton(IDC_OPT_NODPCMRESET, m_bNoDPCMReset);
 	CheckDlgButton(IDC_STYLE1, m_iEditStyle == EDIT_STYLE1);
 	CheckDlgButton(IDC_STYLE2, m_iEditStyle == EDIT_STYLE2);
 
@@ -106,7 +107,8 @@ BOOL CConfigGeneral::OnApply()
 	theApp.m_pSettings->General.bKeyRepeat			= m_bKeyRepeat;
 	theApp.m_pSettings->General.bRowInHex			= m_bRowInHex;
 	theApp.m_pSettings->General.iEditStyle			= m_iEditStyle;
-	theApp.m_pSettings->General.bKeySelect			= m_bKeySelect;
+	theApp.m_pSettings->General.bFramePreview		= m_bFramePreview;
+	theApp.m_pSettings->General.bNoDPCMReset		= m_bNoDPCMReset;
 
 	return CPropertyPage::OnApply();
 }
@@ -121,7 +123,8 @@ BOOL CConfigGeneral::OnInitDialog()
 	m_bKeyRepeat		= theApp.m_pSettings->General.bKeyRepeat;
 	m_bRowInHex			= theApp.m_pSettings->General.bRowInHex;
 	m_iEditStyle		= theApp.m_pSettings->General.iEditStyle;
-	m_bKeySelect		= theApp.m_pSettings->General.bKeySelect;
+	m_bFramePreview		= theApp.m_pSettings->General.bFramePreview;
+	m_bNoDPCMReset		= theApp.m_pSettings->General.bNoDPCMReset;
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -145,8 +148,14 @@ void CConfigGeneral::OnBnClickedOptHexadecimal()
 	SetModified();
 }
 
-void CConfigGeneral::OnBnClickedOptKeyselect()
+void CConfigGeneral::OnBnClickedOptFramepreview()
 {
-	m_bKeySelect = IsDlgButtonChecked(IDC_OPT_KEYSELECT) != 0;
+	m_bFramePreview = IsDlgButtonChecked(IDC_OPT_FRAMEPREVIEW) != 0;
+	SetModified();
+}
+
+void CConfigGeneral::OnBnClickedOptNodpcmreset()
+{
+	m_bNoDPCMReset = IsDlgButtonChecked(IDC_OPT_NODPCMRESET) != 0;
 	SetModified();
 }

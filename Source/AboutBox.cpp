@@ -45,6 +45,12 @@ void CAboutBox::DoDataExchange(CDataExchange* pDX)
 BOOL CAboutBox::OnInitDialog()
 {
 	CDHtmlDialog::OnInitDialog();
+
+	CDataExchange DE(this, FALSE);
+	CString str;
+	str = "test";
+	DDX_DHtml_ElementValue(&DE, "Text1", str);
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -78,6 +84,4 @@ void CAboutBox::OnPaint()
 	CPaintDC dc(this); // device context for painting
 	// TODO: Add your message handler code here
 	// Do not call CDHtmlDialog::OnPaint() for painting messages
-
-	dc.TextOut(10, 50, "hej");
 }

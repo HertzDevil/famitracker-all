@@ -57,20 +57,30 @@ public:
 	void		DrawSamples(int *Samples, int Count);
 	void		ChangeNoteState(int Note);
 	void		CloseInstrumentSettings();
+	
+	void		UpdateTrackBox();
 
 protected:
+	bool		CreateInstrumentToolbar();
+	bool		CreateSampleWindow();
 	void		OpenInstrumentSettings();
+	void		SetTempo(unsigned int Value);
 
 protected:  // control bar embedded members
-	CStatusBar	m_wndStatusBar;
-	CToolBar	m_wndToolBar;
-	CPatternWnd	m_wndPatternWindow;
-	CDialogBar	m_wndDialogBar;
+	CStatusBar		m_wndStatusBar;
+	CToolBar		m_wndToolBar;
+	CPatternWnd		m_wndPatternWindow;
+	CDialogBar		m_wndDialogBar;
+	CReBar			m_wndToolBarReBar;
 
-	CListCtrl	*InstrumentList;
-	CListCtrl	*InstSettingsList;
-	CListCtrl	*ModifierList;
-	CImageList	*m_pImageList;
+	CToolBarCtrl	m_wndInstToolBar;
+	CWnd			m_wndInstToolBarWnd;
+	CReBarCtrl		m_wndInstToolReBar;
+
+	CListCtrl		*InstrumentList;
+	CListCtrl		*InstSettingsList;
+	CListCtrl		*ModifierList;
+	CImageList		*m_pImageList;
 
 	CInstrumentEditDlg	m_InstEdit;
 	CPerformanceDlg		m_PerformanceDlg;
@@ -96,7 +106,6 @@ public:
 	afx_msg void OnClickInstruments(NMHDR *pNotifyStruct, LRESULT *result);
 	afx_msg void OnDblClkInstruments(NMHDR *pNotifyStruct, LRESULT *result);
 	afx_msg void OnInstNameChange();
-	afx_msg void OnTrackerTogglePlay();
 	afx_msg void OnEnFramesChange();
 	afx_msg void OnDeltaposTempoSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnTempoChange();
@@ -111,9 +120,6 @@ public:
 	afx_msg void OnPaint();
 	afx_msg void OnBnClickedIncFrame();
 	afx_msg void OnBnClickedDecFrame();
-	afx_msg void OnBnClickedAddInst();
-	afx_msg void OnBnClickedRemoveInst();
-	afx_msg void OnBnClickedEditInst();
 	afx_msg void OnKeyRepeat();
 	afx_msg void OnDeltaposKeyStepSpin(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnEnKeyStepChange();
@@ -140,6 +146,13 @@ public:
 	afx_msg void OnEnKillfocusTempo();
 	virtual BOOL DestroyWindow();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnModuleModuleproperties();
+	afx_msg void OnLoadInstrument();
+	afx_msg void OnSaveInstrument();
+	afx_msg void OnAddInstrument();
+	afx_msg void OnRemoveInstrument();
+	afx_msg void OnBnClickedEditInst();
+	afx_msg void OnCbnSelchangeSong();
 };
 
 

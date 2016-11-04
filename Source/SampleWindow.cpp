@@ -24,13 +24,14 @@
 #include "..\fft\fft.h"
 #include "resource.h"
 
-enum {GRAPH, GRAPH_BLUR, FFT, LOGO};
+enum {GRAPH, GRAPH_BLUR, FFT, TIME, LOGO};
 
 // CSampleWindow
 
 IMPLEMENT_DYNAMIC(CSampleWindow, CWnd)
 CSampleWindow::CSampleWindow()
 {
+	m_iMin = m_iSec = m_iMSec = 0;
 }
 
 CSampleWindow::~CSampleWindow()
@@ -68,9 +69,8 @@ BOOL CSampleWinProc::InitInstance()
 
 int CSampleWinProc::Run()
 {
-	bool Running = true;
-
 	MSG msg;
+	bool Running = true;
 
 	while (Running) {
 		while (GetMessage(&msg, NULL, 0, 0)) {
@@ -90,8 +90,6 @@ int CSampleWinProc::Run()
 
 void CSampleWindow::DrawSamples(int *Samples, int Count)
 {
-	//this was made quickly and dirty
-
 	if (!Active)
 		return;
 
@@ -110,6 +108,9 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 		case FFT:
 			DrawFFT(Samples, Count, pDC);
 			break;
+		//case TIME:
+		//	DrawTime(pDC);
+		//	break;
 		case LOGO:
 			break;
 	}
@@ -117,6 +118,56 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 	ReleaseDC(pDC);
 
 	delete [] Samples;
+}
+
+void CSampleWindow::SetTime(int Min, int Sec, int MSec)
+{
+	if (!Active || m_iStyle != TIME)
+		return;
+
+	if (m_hWnd == NULL)
+		return;
+
+	CDC *pDC = GetDC();
+
+	m_iMin = Min;
+	m_iSec = Sec;
+	m_iMSec = MSec;
+
+	DrawTime(pDC);
+
+	ReleaseDC(pDC);
+}
+
+void CSampleWindow::DrawTime(CDC *pDC)
+{
+	const char *FontName = "Verdana";
+
+	CString TimeText;
+	
+	LOGFONT LogFont;
+	CFont Font, *OldFont;
+
+	TimeText.Format("%02i:%02i:%01i0", m_iMin, m_iSec, m_iMSec);
+
+	// Create the font
+	memset(&LogFont, 0, sizeof LOGFONT);
+	memcpy(LogFont.lfFaceName, FontName, strlen(FontName));
+
+	LogFont.lfHeight = -20;
+	LogFont.lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
+
+	Font.CreateFontIndirect(&LogFont);
+
+	OldFont = pDC->SelectObject(&Font);
+
+	pDC->SetTextColor(0xFFFFFF);
+	pDC->SetBkColor(0x0);
+	pDC->SetBkMode(TRANSPARENT);
+	pDC->FillSolidRect(0, 0, WIN_WIDTH, WIN_HEIGHT, 0);
+	pDC->TextOut(20, 5, TimeText);
+
+	pDC->SelectObject(OldFont);
 }
 
 void CSampleWindow::DrawFFT(int *Samples, int Count, CDC *pDC)
@@ -205,10 +256,10 @@ void CSampleWindow::DrawGraph(int *Samples, int Count, CDC *pDC)
 						}
 						else {
 							if (y > 2)
-								BlitBuffer[(y - 2) * WIN_WIDTH + x] = /*0x508040*/ GraphColor2;
+								BlitBuffer[(y - 2) * WIN_WIDTH + x] = GraphColor2;
 							if (y > 1)
-								BlitBuffer[(y - 1) * WIN_WIDTH + x] = /*0x80F070*/ GraphColor;
-							BlitBuffer[(y + 0) * WIN_WIDTH + x] = /*0x508040*/ GraphColor2;
+								BlitBuffer[(y - 1) * WIN_WIDTH + x] = GraphColor;
+							BlitBuffer[(y + 0) * WIN_WIDTH + x] = GraphColor2;
 						}
 					}
 					else {
@@ -247,11 +298,13 @@ void CSampleWindow::DrawGraph(int *Samples, int Count, CDC *pDC)
 								BlitBuffer[y * WIN_WIDTH + x] = (r << 16) + (g << 8) + b;
 								//BlitBuffer[y * WIN_WIDTH + x] = DIM(BlitBuffer[y * WIN_WIDTH + x], 70);
 							}
-							else
+							else {
 								BlitBuffer[y * WIN_WIDTH + x] = GraphBgColor;
+							}
 						}
 						else {
-							BlitBuffer[y * WIN_WIDTH + x] = GraphBgColor;
+							//BlitBuffer[y * WIN_WIDTH + x] = GraphBgColor;
+							BlitBuffer[y * WIN_WIDTH + x] = DIM(GraphColor, (int)(sinf( (((y * 100) / WIN_HEIGHT) * 2 * 3.14f) / 100 + 1.8f) * 15 + 15));
 						}
 					}
 				}
@@ -313,6 +366,10 @@ void CSampleWindow::OnLButtonDown(UINT nFlags, CPoint point)
 			m_iStyle = FFT;
 			break;
 		case FFT: 
+			m_iStyle = TIME;
+			RedrawWindow();
+			break;
+		case TIME:
 			m_iStyle = LOGO;
 			RedrawWindow();
 			break;
@@ -339,6 +396,9 @@ void CSampleWindow::OnPaint()
 		dc.BitBlt(0, 0, WIN_WIDTH, WIN_HEIGHT, &BitmapDC, 0, 0, SRCCOPY);
 
 		BitmapDC.SelectObject(OldBmp);
+	}
+	else if (m_iStyle == TIME) {
+		DrawTime(&dc);
 	}
 }
 

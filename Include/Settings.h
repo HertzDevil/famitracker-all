@@ -30,6 +30,16 @@ enum WIN_STATES {
 	STATE_MAXIMIZED
 };
 
+enum PATHS {
+	PATH_FTM,
+	PATH_FTI,
+	PATH_NSF,
+	PATH_DMC,
+	PATH_WAV,
+	
+	PATH_COUNT
+};
+
 class CSettings : public CObject
 {
 public:
@@ -41,14 +51,18 @@ public:
 	void DefaultSettings();
 	void SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
 
+	CString GetPath(unsigned int PathType);
+	void	SetPath(CString PathName, unsigned int PathType);
+
 	struct {
 		bool	bWrapCursor;
 		bool	bFreeCursorEdit;
 		bool	bWavePreview;
 		bool	bKeyRepeat;
 		bool	bRowInHex;
-		bool	bKeySelect;
+		bool	bFramePreview;
 		int		iEditStyle;
+		bool	bNoDPCMReset;
 		CString	strFont;
 	} General;
 
@@ -65,10 +79,12 @@ public:
 
 	struct {
 		int		iMidiDevice;
+		int		iMidiOutDevice;
 		bool	bMidiMasterSync;
 		bool	bMidiKeyRelease;
 		bool	bMidiChannelMap;
 		bool	bMidiVelocity;
+		bool	bMidiArpeggio;
 	} Midi;
 
 	struct {
@@ -87,6 +103,9 @@ public:
 		int		iBottom;
 		int		iState;
 	} WindowPos;
+
+private:
+	CString Paths[PATH_COUNT];
 };
 
 

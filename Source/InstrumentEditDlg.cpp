@@ -23,8 +23,10 @@
 #include "InstrumentEditDlg.h"
 #include "..\include\instrumenteditdlg.h"
 
-const int KEYBOARD_TOP	= 313;
-const int KEYBOARD_LEFT	= 12;
+const int KEYBOARD_TOP		= 313;
+const int KEYBOARD_LEFT		= 12;
+const int KEYBOARD_WIDTH	= 561;
+const int KEYBOARD_HEIGHT	= 58;
 
 // CInstrumentEditDlg dialog
 
@@ -66,8 +68,10 @@ void CInstrumentEditDlg::OnBnClickedClose()
 
 BOOL CInstrumentEditDlg::OnInitDialog()
 {
+	/*
 	const int TAB_WND_WIDTH = 559;
 	const int TAB_WND_HEIGHT = 269;
+	*/
 
 	CDialog::OnInitDialog();
 
@@ -76,11 +80,23 @@ BOOL CInstrumentEditDlg::OnInitDialog()
 	pTabControl->InsertItem(0, "Instrument settings");
 	pTabControl->InsertItem(1, "DPCM samples");
 
+	CRect Rect, ParentRect;
+
+	GetDlgItem(IDC_INST_TAB)->GetWindowRect(&ParentRect);
+
 	InstrumentSettings.Create(IDD_INSTRUMENT_INTERNAL, this);
-	InstrumentSettings.MoveWindow(12, 32, TAB_WND_WIDTH, TAB_WND_HEIGHT);
+	InstrumentSettings.GetWindowRect(&Rect);
+	Rect.MoveToXY(ParentRect.left - Rect.left + 1, ParentRect.top - Rect.top + 21);
+	Rect.bottom -= 2;
+	Rect.right += 1;
+	InstrumentSettings.MoveWindow(Rect);
 
 	InstrumentDPCM.Create(IDD_INSTRUMENT_DPCM, this);
-	InstrumentDPCM.MoveWindow(12, 32, TAB_WND_WIDTH, TAB_WND_HEIGHT);
+	InstrumentDPCM.GetWindowRect(&Rect);
+	Rect.MoveToXY(ParentRect.left - Rect.left + 1, ParentRect.top - Rect.top + 21);
+	Rect.bottom -= 2;
+	Rect.right += 1;
+	InstrumentDPCM.MoveWindow(Rect);
 
 	InstrumentSettings.ShowWindow(SW_SHOW);
 	InstrumentDPCM.ShowWindow(SW_HIDE);
@@ -106,7 +122,6 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 	InstrumentSettings.RedrawWindow();
 
 	InstrumentDPCM.SetCurrentInstrument(Index);
-	//InstrumentDPCM.RedrawWindow();
 }
 
 void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
@@ -142,6 +157,14 @@ void CInstrumentEditDlg::OnPaint()
 	CBitmap WhiteKeyMarkBmp, BlackKeyMarkBmp, *OldBlack;
 
 	CDC WhiteKey, BlackKey;
+	CDC BackDC;
+
+	CBitmap Bmp, *OldBmp;
+
+	Bmp.CreateCompatibleBitmap(&dc, 800, 800);
+//	BackDC->CreateCompatibleDC(pDC);
+	BackDC.CreateCompatibleDC(&dc);
+	OldBmp = BackDC.SelectObject(&Bmp);
 
 	WhiteKeyBmp.LoadBitmap(IDB_KEY_WHITE);
 	BlackKeyBmp.LoadBitmap(IDB_KEY_BLACK);
@@ -167,7 +190,7 @@ void CInstrumentEditDlg::OnPaint()
 	int Octave	= m_iLightNote / 12;
 
 	for (j = 0; j < 8; j++) {
-		Pos = KEYBOARD_LEFT + ((WHITE_KEY_W * 7) * j);
+		Pos = /*KEYBOARD_LEFT +*/ ((WHITE_KEY_W * 7) * j);
 
 		for (i = 0; i < 7; i++) {
 			NoteIndex = (j * 7 + i);
@@ -176,7 +199,7 @@ void CInstrumentEditDlg::OnPaint()
 			else
 				WhiteKey.SelectObject(WhiteKeyBmp);
 
-			dc.BitBlt(i * WHITE_KEY_W + Pos, KEYBOARD_TOP, 100, 100, &WhiteKey, 0, 0, SRCCOPY);
+			BackDC.BitBlt(i * WHITE_KEY_W + Pos, 0, 100, 100, &WhiteKey, 0, 0, SRCCOPY);
 		}
 
 		for (i = 0; i < 2; i++) {
@@ -186,7 +209,7 @@ void CInstrumentEditDlg::OnPaint()
 			else
 				BlackKey.SelectObject(BlackKeyBmp);
 
-			dc.BitBlt(i * WHITE_KEY_W + WHITE_KEY_W / 2 + 1 + Pos, KEYBOARD_TOP, 100, 100, &BlackKey, 0, 0, SRCCOPY);
+			BackDC.BitBlt(i * WHITE_KEY_W + WHITE_KEY_W / 2 + 1 + Pos, 0, 100, 100, &BlackKey, 0, 0, SRCCOPY);
 		}
 
 		for (i = 0; i < 3; i++) {
@@ -195,12 +218,16 @@ void CInstrumentEditDlg::OnPaint()
 			else
 				BlackKey.SelectObject(BlackKeyBmp);
 
-			dc.BitBlt((i + 3) * WHITE_KEY_W + WHITE_KEY_W / 2 + 1 + Pos, KEYBOARD_TOP, 100, 100, &BlackKey, 0, 0, SRCCOPY);
+			BackDC.BitBlt((i + 3) * WHITE_KEY_W + WHITE_KEY_W / 2 + 1 + Pos, 0, 100, 100, &BlackKey, 0, 0, SRCCOPY);
 		}
 	}
 
 	WhiteKey.SelectObject(OldWhite);
 	BlackKey.SelectObject(OldBlack);
+
+	dc.BitBlt(KEYBOARD_LEFT, KEYBOARD_TOP, KEYBOARD_WIDTH, KEYBOARD_HEIGHT, &BackDC, 0, 0, SRCCOPY);
+
+	BackDC.SelectObject(OldBmp);
 }
 
 void CInstrumentEditDlg::ChangeNoteState(int Note)
@@ -349,20 +376,22 @@ void CInstrumentEditDlg::OnLButtonDblClk(UINT nFlags, CPoint point)
 
 BOOL CInstrumentEditDlg::DestroyWindow()
 {
+	if (m_bOpened)
+		InstrumentSettings.DestroyWindow();
+	
 	m_bOpened = false;
+	
 	return CDialog::DestroyWindow();
 }
 
 void CInstrumentEditDlg::OnOK()
 {
-	m_bOpened = false;
 	DestroyWindow();
 	CDialog::OnOK();
 }
 
 void CInstrumentEditDlg::OnCancel()
 {
-	m_bOpened = false;
 	DestroyWindow();
 	//CDialog::OnCancel();
 }

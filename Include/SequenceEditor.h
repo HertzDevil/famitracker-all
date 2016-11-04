@@ -20,11 +20,13 @@
 
 #pragma once
 
-const int MAX_ITEMS = MAX_SEQ_ITEMS * 2;
+const int MAX_ITEMS = MAX_SEQ_ITEMS * 3;
 
 class CInstrumentSettings;
 
 // CSequenceEditor
+
+enum {BUTTON_PRESET = 1, BUTTON_ADD, BUTTON_REMOVE, BUTTON_LENGTH, BUTTON_DONE, BUTTON_CANCEL};
 
 class CSequenceEditor : public CWnd
 {
@@ -61,6 +63,38 @@ private:
 	int		m_iStartLineX, m_iStartLineY;
 	int		m_iEndLineX, m_iEndLineY;
 
+	int		m_iWidth, m_iHeight;
+
+	CDC		*m_pBackDC;
+	CFont	m_Font, m_ButtonFont, m_SmallFont, *m_pOldFont;
+	CBitmap	m_Bitmap, *m_pOldBitmap;
+
+	int		m_iButtonPressed;
+	bool	m_bShowPresets;
+	int		m_iSwitchGroup1;
+	int		m_iSwitchGroup2;
+	int		m_iSwitchGroup3;
+
+private:
+	void	HandleScrollBar(int x, int y, int Width, int Height, int PosX, int PosY);
+	bool	HandleButton(int x, int y, int Width, int Name, int PosX, int PosY);
+	void	HandleSwitchButton(int x, int y, int Width, int PosX, int PosY, int &Switch, int Nr);
+
+	void	DisplayArea(CDC *pDC);
+	void	ClearBackground();
+	void	DrawLine(int x1, int y1, int x2, int y2);
+	void	DrawScrollBar(int x, int y, int Width, int Height);
+	void	DrawButton(int x, int y, int Width, CString Text, int Name);
+	void	DrawSwitch(int x, int y, int Width, CString Text, bool Pressed);
+	void	CreateBackground(int Space);
+	void	DrawVolumeEditor();
+	void	DrawArpeggioEditor();
+	void	DrawPitchEditor();
+//	void	DrawHiPitchEditor();
+	void	DrawDutyEditor();
+
+	void	LoadPreset();
+
 protected:
 	CInstrumentSettings	*m_pParent;
 	DECLARE_MESSAGE_MAP()
@@ -77,6 +111,8 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	virtual BOOL DestroyWindow();
+	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, LPVOID lpParam = NULL);
 };
 
 

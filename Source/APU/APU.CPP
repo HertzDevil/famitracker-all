@@ -28,11 +28,11 @@
 #include "stdafx.h"
 #include <cstdio>
 #include <memory>
-#include "apu.h"
-#include "square.h"
-#include "triangle.h"
-#include "noise.h"
-#include "dpcm.h"
+#include "apu/apu.h"
+#include "apu/square.h"
+#include "apu/triangle.h"
+#include "apu/noise.h"
+#include "apu/dpcm.h"
 
 #include "FamiTracker.h"
 

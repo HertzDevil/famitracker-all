@@ -21,8 +21,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "ConfigSound.h"
-#include "../sound driver/SoundGen.h"
-#include ".\configsound.h"
+#include "SoundGen.h"
 
 
 // CConfigSound dialog

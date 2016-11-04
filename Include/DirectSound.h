@@ -35,7 +35,7 @@ class CDSoundChannel
 		void Pause();
 		void Clear();
 		void Reset();
-		void WriteSoundBuffer(void *Buffer, uint32 Samples);
+		void WriteSoundBuffer(void *Buffer, unsigned int Samples);
 		bool IsInSync();
 
 		void SetNotification();
@@ -80,9 +80,9 @@ class CDSoundChannel
 		bool	SyncProblem;
 		bool	ManualEvent;
 
-		uint32	SoundBufferSize;		// in bytes
-		uint32	BlockSize;				// in bytes
-		uint8	CurrentWriteBlock;
+		unsigned int	SoundBufferSize;		// in bytes
+		unsigned int	BlockSize;				// in bytes
+		unsigned char	CurrentWriteBlock;
 };
 
 class CDSound

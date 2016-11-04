@@ -19,8 +19,8 @@
 */
 
 #include "stdafx.h"
-#include "apu.h"
-#include "dpcm.h"
+#include "apu/apu.h"
+#include "apu/dpcm.h"
 
 CDPCM::CDPCM(CMixer *pMixer, int ID)
 {

@@ -44,11 +44,13 @@ void CConfigMIDI::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CConfigMIDI, CPropertyPage)
-	ON_CBN_SELCHANGE(IDC_DEVICES, OnCbnSelchangeDevices)
+	ON_CBN_SELCHANGE(IDC_INDEVICES, OnCbnSelchangeDevices)
 	ON_BN_CLICKED(IDC_MASTER_SYNC, OnBnClickedMasterSync)
 	ON_BN_CLICKED(IDC_KEY_RELEASE, OnBnClickedKeyRelease)
 	ON_BN_CLICKED(IDC_CHANMAP, OnBnClickedChanmap)
 	ON_BN_CLICKED(IDC_VELOCITY, OnBnClickedVelocity)
+	ON_BN_CLICKED(IDC_ARPEGGIATE, OnBnClickedArpeggiate)
+	ON_CBN_SELCHANGE(IDC_OUTDEVICES, OnCbnSelchangeOutdevices)
 END_MESSAGE_MAP()
 
 
@@ -62,23 +64,36 @@ BOOL CConfigMIDI::OnInitDialog()
 	int		NumDev, i;
 	char	Text[256];
 
-	CComboBox *Devices = (CComboBox*)GetDlgItem(IDC_DEVICES);
+	CComboBox *InDevices = (CComboBox*)GetDlgItem(IDC_INDEVICES);
+	CComboBox *OutDevices = (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
 
-	NumDev = pMIDI->GetNumDevices();
+	InDevices->AddString("<none>");
+	OutDevices->AddString("<none>");
 
-	Devices->AddString("<none>");
+	// Input
+	NumDev = pMIDI->GetNumDevices(true);
 
 	for (i = 0; i < NumDev; i++) {
-		pMIDI->GetDeviceString(i, Text);
-		Devices->AddString(Text);
+		pMIDI->GetDeviceString(i, Text, true);
+		InDevices->AddString(Text);
 	}
 
-	Devices->SetCurSel(pMIDI->m_iDevice);
+	// Output
+	NumDev = pMIDI->GetNumDevices(false);
+
+	for (i = 0; i < NumDev; i++) {
+		pMIDI->GetDeviceString(i, Text, false);
+		OutDevices->AddString(Text);
+	}
+
+	InDevices->SetCurSel(pMIDI->m_iDevice);
+	OutDevices->SetCurSel(pMIDI->m_iOutDevice);
 
 	CheckDlgButton(IDC_MASTER_SYNC, theApp.m_pSettings->Midi.bMidiMasterSync	? 1 : 0);
 	CheckDlgButton(IDC_KEY_RELEASE, theApp.m_pSettings->Midi.bMidiKeyRelease	? 1 : 0);
 	CheckDlgButton(IDC_CHANMAP,		theApp.m_pSettings->Midi.bMidiChannelMap	? 1 : 0);
 	CheckDlgButton(IDC_VELOCITY,	theApp.m_pSettings->Midi.bMidiVelocity		? 1 : 0);
+	CheckDlgButton(IDC_ARPEGGIATE,	theApp.m_pSettings->Midi.bMidiArpeggio		? 1 : 0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -86,15 +101,18 @@ BOOL CConfigMIDI::OnInitDialog()
 
 BOOL CConfigMIDI::OnApply()
 {
-	CComboBox	*Devices	= (CComboBox*)GetDlgItem(IDC_DEVICES);
+	CComboBox	*InDevices	= (CComboBox*)GetDlgItem(IDC_INDEVICES);
+	CComboBox	*OutDevices	= (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
 	CMIDI		*pMIDI		= theApp.GetMIDI();
 	
-	pMIDI->SetDevice(Devices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
+	pMIDI->SetDevice(InDevices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
+	pMIDI->SetOutDevice(OutDevices->GetCurSel());
 	
 	theApp.m_pSettings->Midi.bMidiMasterSync	= IsDlgButtonChecked(IDC_MASTER_SYNC)	== 1;
 	theApp.m_pSettings->Midi.bMidiKeyRelease	= IsDlgButtonChecked(IDC_KEY_RELEASE)	== 1;
 	theApp.m_pSettings->Midi.bMidiChannelMap	= IsDlgButtonChecked(IDC_CHANMAP)		== 1;
 	theApp.m_pSettings->Midi.bMidiVelocity		= IsDlgButtonChecked(IDC_VELOCITY)		== 1;
+	theApp.m_pSettings->Midi.bMidiArpeggio		= IsDlgButtonChecked(IDC_ARPEGGIATE)	== 1;
 
 	return CPropertyPage::OnApply();
 }
@@ -120,6 +138,16 @@ void CConfigMIDI::OnBnClickedChanmap()
 }
 
 void CConfigMIDI::OnBnClickedVelocity()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnBnClickedArpeggiate()
+{
+	SetModified();
+}
+
+void CConfigMIDI::OnCbnSelchangeOutdevices()
 {
 	SetModified();
 }

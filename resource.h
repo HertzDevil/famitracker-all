@@ -22,8 +22,20 @@
 #define ID_INDICATOR_TIME               130
 #define IDD_MAINFRAME                   131
 #define ID_INDICATOR_POSITION           131
+#define IDS_CLIPBOARD_ERROR             131
+#define IDS_FILE_OPEN_ERROR             132
+#define IDS_FILE_VALID_ERROR            133
+#define IDS_FILE_VERSION_ERROR          134
+#define IDS_INST_LIMIT                  135
+#define IDS_CLIPBOARD_OPEN_ERROR        136
 #define IDD_NSF                         137
 #define IDD_EXPORTNSF                   137
+#define IDS_CLIPBOARD_NOT_AVALIABLE     137
+#define IDS_SAVE_ERROR                  138
+#define IDS_INSTRUMENT_FILE_FAIL        139
+#define IDS_SAMPLES_NEEDED              140
+#define IDS_OPEN                        141
+#define IDS_SAVE_ERROR_REASON           142
 #define IDD_PERFORMANCE                 145
 #define IDD_SPEED                       146
 #define IDD_PCMIMPORT                   147
@@ -45,14 +57,16 @@
 #define IDD_PROPERTIES                  185
 #define IDD_DIALOG1                     194
 #define IDD_CONFIG_MIDI                 194
-#define IDI_ARROW_RIGHT                 195
-#define IDI_ARROW_LEFT                  196
-#define IDB_BITMAP2                     197
 #define IDR_POPUP                       198
 #define IDI_ICON2                       199
 #define IDI_MAINFRAME                   199
 #define IDD_CONFIG_SOUND                201
 #define IDD_ABOUT                       203
+#define IDS_FILE_LOAD_ERROR             204
+#define IDS_CONFIG_WINDOW               205
+#define IDR_INSTRUMENT                  205
+#define IDS_WELCOME                     206
+#define IDB_INSTRUMENT_TOOLS            208
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_MODIFIER                    1003
@@ -135,6 +149,7 @@
 #define IDC_OPT_FREECURSOR              1063
 #define IDC_DEVICES                     1063
 #define IDC_OPT_WAVEPREVIEW             1064
+#define IDC_DEVICES2                    1064
 #define IDC_MASTER_SYNC                 1065
 #define IDC_OPT_KEYREPEAT               1065
 #define IDC_KEY_RELEASE                 1066
@@ -145,8 +160,11 @@
 #define IDC_SONG_ARTIST                 1068
 #define IDC_MML                         1068
 #define IDC_VELOCITY                    1068
+#define IDC_OPT_FRAMEPREVIEW            1068
 #define IDC_SONG_COPYRIGHT              1069
 #define IDC_DPCM_NAME                   1069
+#define IDC_OPT_NODPCMRESET             1069
+#define IDC_ARPEGGIATE                  1069
 #define IDC_GRAPH                       1070
 #define IDC_FONT                        1071
 #define IDC_ABOUT                       1072
@@ -187,11 +205,19 @@
 #define IDC_RADIO3                      1112
 #define IDC_PAL                         1112
 #define IDC_EFFECT                      1113
+#define IDC_BANKOPTIMIZE                1113
 #define IDC_RADIO4                      1114
 #define IDC_LOOP                        1118
 #define IDC_WRITE_NSF                   1119
 #define IDC_SLIDER1                     1120
 #define IDC_CHECK1                      1121
+#define IDC_SLIDER2                     1121
+#define IDC_DEVICES3                    1124
+#define IDC_OUTDEVICES                  1124
+#define IDC_EXPANSION                   1125
+#define IDC_INDEVICES                   1126
+#define IDC_SUBTUNE                     1127
+#define IDC_SUBTUNES                    1128
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -243,6 +269,22 @@
 #define ID_BUTTON32872                  32872
 #define ID_VIEW_MAINFRAME               32891
 #define ID_BUTTON32892                  32892
+#define ID_SPEED_DEFAULT                32893
+#define ID_MODULE_MODULEPROPERTIES      32895
+#define ID_EDIT_PASTEMIX                32899
+#define ID_MODULE_MOVEFRAMEDOWN         32902
+#define ID_MODULE_MOVEFRAMEUP           32903
+#define ID_BUTTON32905                  32905
+#define ID_BUTTON32906                  32906
+#define ID_BUTTON32907                  32907
+#define ID_BUTTON32908                  32908
+#define ID_MODULE_SAVEINSTRUMENT        32909
+#define ID_MODULE_LOADINSTRUMENT        32911
+#define ID_EDIT_CLEAREVERYTHING         32912
+#define IDC_MODULE_ADD_INSTRUMENT       32913
+#define IDC_MODULE_REMOVE_INSTRUMENT    32914
+#define ID_MODULE_ADDINSTRUMENT         32915
+#define ID_MODULE_REMOVEINSTRUMENT      32916
 #define ID_INDICATOR_INSTRUMENT         61204
 #define ID_INDICATOR_PATTERN            61205
 #define ID_INDICATOR_TEMPO              61205
@@ -251,9 +293,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        204
-#define _APS_NEXT_COMMAND_VALUE         32893
-#define _APS_NEXT_CONTROL_VALUE         1124
+#define _APS_NEXT_RESOURCE_VALUE        210
+#define _APS_NEXT_COMMAND_VALUE         32920
+#define _APS_NEXT_CONTROL_VALUE         1129
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

@@ -19,7 +19,7 @@
 */
 
 #include <memory>
-#include "apu.h"
+#include "apu/apu.h"
 
 // VRC6 external sound chip emulation
 

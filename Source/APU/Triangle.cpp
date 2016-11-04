@@ -19,8 +19,8 @@
 */
 
 #include "stdafx.h"
-#include "apu.h"
-#include "triangle.h"
+#include "apu/apu.h"
+#include "apu/triangle.h"
 
 CTriangle::CTriangle(CMixer *pMixer, int ID)
 {

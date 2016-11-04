@@ -40,6 +40,7 @@ protected:
 	void		BuildKeyList();
 	void		BuildSampleList();
 	void		UpdateKey(int Index);
+	void		LoadSample(char *FilePath, char *FileName);
 
 	CListCtrl	*m_pTableListCtrl;
 	CListCtrl	*m_pSampleListCtrl;

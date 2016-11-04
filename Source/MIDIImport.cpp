@@ -267,8 +267,8 @@ bool CMIDIImport::ParseTrack()
 				case MIDI_MSG_PITCH_WHEEL:
 					//
 					break;
-				default:
-					Text.Format("Unimplemented MIDI event %X", Status >> 4);
+//				default:
+//					Text.Format("Unimplemented MIDI event %X", Status >> 4);
 //					AfxMessageBox(Text);
 			}
 		}

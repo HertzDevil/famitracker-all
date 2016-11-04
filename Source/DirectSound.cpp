@@ -40,10 +40,37 @@
 #include "stdafx.h"
 #include <cstdio>
 #include "common.h"
-#include "dsound.h"
+#include "DirectSound.h"
 #include "resource.h"
 
 //#define SYNC_MESSAGES
+
+enum {
+	MSG_DX_ERROR_INIT,
+	MSG_DX_ERROR_BLOCKS,
+	MSG_DX_ERROR_SAMPLERATE,
+	MSG_DX_ERROR_LENGTH,
+	MSG_DX_ERROR_BUFFER,
+	MSG_DX_ERROR_QUERY,
+	MSG_DX_ERROR_NOTIFICATION,
+	MSG_DX_ERROR_PLAY,
+	MSG_DX_ERROR_LOCK,
+	MSG_DX_ERROR_UNLOCK
+
+};
+
+static const char *MESSAGE_TITLE = "DirectX Error";
+
+static const char *DX_MESSAGES[] = {"Error: DirectSound initialization failed!",
+		   							"DirectSound::OpenChannel - A maximum of %i blocks is allowed!",
+									"DirectSound::OpenChannel - Sample rate above %i kHz is not supported!",
+									"DirectSound::OpenChannel - Buffer length above %i seconds is not supported!",
+									"DirectSound::OpenChannel - Initialization failed: Could not create the buffer, following error was returned: ",
+									"DirectSound::OpenChannel - Initialization failed: Could not query IID_IDirectSoundNotify!",
+									"DirectSound::OpenChannel - Initialization failed: Could not set notification positions!",
+									"Error: Could not start playback of sound buffer",
+									"Error: Could not lock sound buffer",
+									"Error: Could not unlock sound buffer"};
 
 const int CDSound::MAX_BLOCKS = 16;
 
@@ -77,14 +104,14 @@ bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 	hRes = DirectSoundCreate((LPCGUID)m_pGUIDs[Device], &lpDirectSound, NULL);
 
 	if FAILED(hRes) {
-		MessageBox(hWnd, "Error: DirectSound initialization failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWnd, DX_MESSAGES[MSG_DX_ERROR_INIT], MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 
 	hRes = lpDirectSound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY);
 
 	if FAILED(hRes) {
-		MessageBox(hWnd, "Error: DirectSound initialization failed!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWnd, DX_MESSAGES[MSG_DX_ERROR_INIT], MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 	
@@ -164,20 +191,20 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	char				Text[256];
 
 	if (Blocks > MAX_BLOCKS) {
-		sprintf(Text, "DirectSound::OpenChannel - Max %i blocks allowed!", MAX_BLOCKS);
-		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
+		sprintf(Text, DX_MESSAGES[MSG_DX_ERROR_BLOCKS], MAX_BLOCKS);
+		MessageBox(hWndTarget, Text, MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
 
 	if (SampleRate > 96000) {
-		sprintf(Text, "DirectSound::OpenChannel - Samplerate above 96kHz is not supported!", MAX_BLOCKS);
-		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
+		sprintf(Text, DX_MESSAGES[MSG_DX_ERROR_SAMPLERATE], 96);
+		MessageBox(hWndTarget, Text, MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
 
 	if (BufferLength > 10000) {
-		sprintf(Text, "DirectSound::OpenChannel - Buffer length above 10 seconds is not supported!", MAX_BLOCKS);
-		MessageBox(hWndTarget, Text, "DirectSound Error", MB_OK | MB_ICONEXCLAMATION);
+		sprintf(Text, DX_MESSAGES[MSG_DX_ERROR_LENGTH], 10);
+		MessageBox(hWndTarget, Text, MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		return NULL;
 	}
 
@@ -233,7 +260,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	if FAILED(hRes) {
 		char ErrText[256];
 
-		strcpy(ErrText, "Error: DirectSound initialization failed: Could not create a buffer, following error was returned: ");
+		strcpy(ErrText, DX_MESSAGES[MSG_DX_ERROR_BUFFER]);
 
 		switch (hRes) {			
 			case DSERR_ALLOCATED:		strcat(ErrText, "DSERR_ALLOCATED");			break;
@@ -250,7 +277,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 				break;
 		}
 
-		MessageBox(hWndTarget, ErrText, "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWndTarget, ErrText, MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 
 		delete Channel;
 		return NULL;
@@ -259,7 +286,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	hRes = Channel->lpDirectSoundBuffer->QueryInterface(IID_IDirectSoundNotify, (void**)&Channel->lpDirectSoundNotify);
 
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Error: DirectSound initialization failed, could not query IID_IDirectSoundNotify!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWndTarget, DX_MESSAGES[MSG_DX_ERROR_QUERY], MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		delete Channel;
 		return NULL;
 	}
@@ -267,7 +294,7 @@ CDSoundChannel *CDSound::OpenChannel(int SampleRate, int SampleSize, int Channel
 	hRes = Channel->lpDirectSoundNotify->SetNotificationPositions(Blocks, PositionNotify);
 
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Error: DirectSound initialization failed, could not set notification positions!", "DirectX Error", MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(hWndTarget, DX_MESSAGES[MSG_DX_ERROR_NOTIFICATION], MESSAGE_TITLE, MB_OK | MB_ICONEXCLAMATION);
 		delete Channel;
 		return NULL;
 	}
@@ -288,12 +315,11 @@ void CDSound::CloseChannel(CDSoundChannel *Channel)
 void CDSoundChannel::Play()
 {
 	// Begin playback of buffer
-
 	HRESULT hRes;
 	hRes = lpDirectSoundBuffer->Play(NULL, NULL, DSBPLAY_LOOPING);
 
 	if FAILED(hRes) {
-		MessageBox(NULL, "Error: Could not play sound buffer!", "Error", 0);
+		MessageBox(NULL, DX_MESSAGES[MSG_DX_ERROR_PLAY], MESSAGE_TITLE, 0);
 		return;
 	}
 }
@@ -301,7 +327,6 @@ void CDSoundChannel::Play()
 void CDSoundChannel::Stop()
 {
 	// Stop playback
-
 	lpDirectSoundBuffer->Stop();
 	Reset();
 }
@@ -309,7 +334,6 @@ void CDSoundChannel::Stop()
 void CDSoundChannel::Pause()
 {
 	// Pause playback of buffer, doesn't reset cursors
-
 	lpDirectSoundBuffer->Stop();
 }
 
@@ -325,16 +349,15 @@ void CDSoundChannel::Clear()
 	lpDirectSoundBuffer->GetStatus(&Status);
 
 	// Clearing a buffer will stop playback.
-	if (Status & DSBSTATUS_PLAYING) {
+	if (Status & DSBSTATUS_PLAYING)
 		Stop();
-	}
 
 	lpDirectSoundBuffer->SetCurrentPosition(0);
-	
+
 	hRes = lpDirectSoundBuffer->Lock(0, SoundBufferSize, (void**)&AudioPtr1, &AudioBytes1, (void**)&AudioPtr2, &AudioBytes2, 0);
 	
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Could not lock sound buffer.", "Error", MB_OK);
+		MessageBox(hWndTarget, DX_MESSAGES[MSG_DX_ERROR_LOCK], MESSAGE_TITLE, MB_OK);
 		return;
 	}
 
@@ -354,14 +377,14 @@ void CDSoundChannel::Clear()
 	hRes = lpDirectSoundBuffer->Unlock((void*)AudioPtr1, AudioBytes1, (void*)AudioPtr2, AudioBytes2);
 
 	if FAILED(hRes) {
-		MessageBox(hWndTarget, "Could not unlock sound buffer.", "Error", MB_OK);
+		MessageBox(hWndTarget, DX_MESSAGES[MSG_DX_ERROR_UNLOCK], MESSAGE_TITLE, MB_OK);
 		return;
 	}
 
 	lpDirectSoundBuffer->SetCurrentPosition(0);
 }
 
-void CDSoundChannel::WriteSoundBuffer(void *Buffer, uint32 Samples)
+void CDSoundChannel::WriteSoundBuffer(void *Buffer, unsigned int Samples)
 {
 	// Fill sound buffer
 	//
@@ -369,12 +392,12 @@ void CDSoundChannel::WriteSoundBuffer(void *Buffer, uint32 Samples)
 	// Samples	- Number of samples, in bytes
 	//
 
-	HRESULT		hRes;
-	DWORD		*AudioPtr1;
-	DWORD		*AudioPtr2;
-	DWORD		AudioBytes1;
-	DWORD		AudioBytes2;
-	uint8		CurrentBlock;
+	HRESULT	hRes;
+	DWORD	*AudioPtr1;
+	DWORD	*AudioPtr2;
+	DWORD	AudioBytes1;
+	DWORD	AudioBytes2;
+	DWORD	CurrentBlock;
 
 	if (BlockSize != Samples)
 		return;
@@ -393,7 +416,7 @@ void CDSoundChannel::WriteSoundBuffer(void *Buffer, uint32 Samples)
 	memcpy(AudioPtr1, Buffer, AudioBytes1);
 
 	if (AudioPtr2)
-		memcpy(AudioPtr2, (uint8*)Buffer + AudioBytes1, AudioBytes2);
+		memcpy(AudioPtr2, (unsigned char*)Buffer + AudioBytes1, AudioBytes2);
 
 	lpDirectSoundBuffer->Unlock((void*)AudioPtr1, AudioBytes1, (void*)AudioPtr2, AudioBytes2);
 }

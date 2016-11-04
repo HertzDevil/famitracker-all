@@ -34,6 +34,10 @@ const struct {
 	const static int CURSOR				= 0x000000FF;
 } COLOR_SCHEME;
 
+const unsigned int DEFAULT_TEMPO_NTSC	= 150;
+const unsigned int DEFAULT_TEMPO_PAL	= 125;
+const unsigned int DEFAULT_SPEED		= 6;
+
 const static char *FONT_FACE = "Fixedsys";
 
 const int UNDO_LEVELS = 30;
@@ -46,6 +50,20 @@ enum eCOLUMNS {C_NOTE,
 			   C_EFF3_NUM, C_EFF3_PARAM1, C_EFF3_PARAM2, 
 			   C_EFF4_NUM, C_EFF4_PARAM1, C_EFF4_PARAM2};
 
+enum {
+	CMD_STEP_DOWN = 1,
+	CMD_HALT,
+	CMD_JUMP_TO,
+	CMD_SKIP_TO,
+	CMD_MOVE_TO_TOP,
+	CMD_IS_PLAYING,
+	CMD_UPDATE_ROW,
+	CMD_GET_TEMPO,
+	CMD_GET_SPEED,
+	CMD_TIME,
+	CMD_TICK,
+};
+
 struct stUndoBlock {
 	stChanNote ChannelData[MAX_PATTERN_LENGTH];
 	int Pattern;
@@ -55,6 +73,8 @@ struct stUndoBlock {
 };
 
 const unsigned int COLUMNS = 7;
+
+class CSoundGen;
 
 class CFamiTrackerView : public CView
 {
@@ -78,6 +98,8 @@ public:
 
 	unsigned int		GetOctave() const { return m_iOctave; };
 	
+	void				SetSoundGen(CSoundGen* pSoundGen) { m_pSoundGenerator = pSoundGen; };
+
 	// Scrolling/viewing no-editing functions
 	void				MoveCursorUp();
 	void				MoveCursorDown();
@@ -116,7 +138,10 @@ public:
 	void				DecreaseCurrentPattern();
 
 	// Player
-	void				PlaybackTick(CFamiTrackerDoc *pDoc);
+//	void				PlaybackTick(CFamiTrackerDoc *pDoc);
+	int					PlayerCommand(char Command, int Value);
+	void 				GetRow(CFamiTrackerDoc *pDoc);
+
 
 protected:
 	// Drawing functions
@@ -125,6 +150,7 @@ protected:
 	void				DrawMeters(CDC *pDC);
 	void				PrepareBackground(CDC *dc);
 	void				DrawPatternField(CDC *dc);
+	void				DrawChannelHeaders(CDC *pDC);
 
 	unsigned int		GetChannelAtPoint(unsigned int PointX);
 	unsigned int		GetColumnAtPoint(unsigned int PointX, unsigned int MaxColumns);
@@ -141,6 +167,9 @@ protected:
 	unsigned int		GetSelectColStart() const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColStart : m_iSelectColEnd); };
 	unsigned int		GetSelectColEnd()	const { return (m_iSelectColEnd > m_iSelectColStart ? m_iSelectColEnd : m_iSelectColStart); };
 
+	void				ScanActualLengths();
+	unsigned int		GetCurrentPatternLength();
+
 	// Player
 	void				GetStartSpeed();
 
@@ -151,7 +180,15 @@ protected:
 	bool				PreventRepeat(int Key);
 	stChanNote			TranslateKey(int Key);
 
+	void				CheckSelectionBeforeMove();
+	void				CheckSelectionAfterMove();
+
 	void				RemoveWithoutDelete();
+
+	// MIDI note functions
+	void				TriggerMIDINote(unsigned int Channel, unsigned int MidiNote, unsigned int Velocity, bool Insert);
+	void				ReleaseMIDINote(unsigned int Channel, unsigned int MidiNote);
+
 
 //
 // Important View variables
@@ -170,6 +207,7 @@ protected:
 
 	bool				m_bChangeAllPattern;
 	bool				m_bPasteOverwrite;
+	bool				m_bPasteMix;
 	bool				m_bEditEnable;
 
 	// General
@@ -177,11 +215,13 @@ protected:
 	bool				m_bShiftPressed;
 	bool				m_bHasFocus;
 	UINT				m_iClipBoard;
+	unsigned int		m_iActualLengths[MAX_FRAMES];
+	unsigned int		m_iNextPreviewFrame[MAX_FRAMES];
 
 	// Playing
 	bool				m_bPlaying, m_bPlayLooped;
 	bool				m_bFirstTick;
-	bool				m_bMuteChannels[5];
+	bool				m_bMuteChannels[MAX_CHANNELS];
 	unsigned int		m_iPlayTime;
 	unsigned int		m_iTickPeriod;
 	unsigned int		m_iPlayerSyncTick;
@@ -204,7 +244,7 @@ protected:
 	unsigned int		m_iChannelsVisible;
 	unsigned int		m_iChannelWidths[MAX_CHANNELS];
 	unsigned int		m_iChannelColumns[MAX_CHANNELS];
-	unsigned int		m_iVolLevels[5];
+	unsigned int		m_iVolLevels[MAX_CHANNELS];
 
 	// Undo
 	unsigned int		m_iUndoLevel, m_iRedoLevel;
@@ -219,6 +259,10 @@ protected:
 	unsigned int		m_iKeyboardNote;
 	unsigned int		m_iSoloChannel;
 
+	CSoundGen			*m_pSoundGenerator;
+
+	// MIDI
+	unsigned int		m_iLastMIDINote;
 
 
 // ---------------------------
@@ -231,9 +275,10 @@ public:
 	void	KeyReleased(int Key);
 	void	RegisterKeyState(int Channel, int Note);
 
-/////////7
+/////////7 if my teacher in programming saw this then my head would roll :)
 	stChanNote	CurrentNotes[MAX_CHANNELS];
 	bool		NewNoteData[MAX_CHANNELS];
+	unsigned int Arpeggiate[MAX_CHANNELS];
 ////////7777777
 
 
@@ -254,9 +299,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual void OnDraw(CDC* /*pDC*/);
 public:
-	void TogglePlayback(void);
-	void PlayPattern(void);
-	bool IsPlaying(void);
 	void SetSpeed(int Speed);
 	void ForceRedraw();
 
@@ -272,7 +314,7 @@ protected:
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
 	virtual void PostNcDestroy();
 
-private:
+public:
 	void SetMessageText(LPCSTR lpszText);
 
 public:
@@ -292,22 +334,16 @@ public:
 	afx_msg void OnUpdateEditPaste(CCmdUI *pCmdUI);
 	afx_msg void OnEditDelete();
 	afx_msg void OnUpdateEditDelete(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateTrackerStop(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateTrackerPlay(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI);
-	afx_msg void OnTrackerPlay();
-	afx_msg void OnTrackerPlaypattern();
-	afx_msg void OnTrackerStop();
 	afx_msg void OnTrackerEdit();
 	afx_msg void OnUpdateTrackerEdit(CCmdUI *pCmdUI);
 	afx_msg void OnTrackerPal();
 	afx_msg void OnTrackerNtsc();
 	afx_msg void OnUpdateTrackerPal(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateTrackerNtsc(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateSpeedDefalut(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateSpeedDefault(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateSpeedCustom(CCmdUI *pCmdUI);
 	afx_msg void OnSpeedCustom();
-	afx_msg void OnSpeedDefalut();
+	afx_msg void OnSpeedDefault();
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnEditPasteoverwrite();
 	afx_msg void OnUpdateEditPasteoverwrite(CCmdUI *pCmdUI);
@@ -334,6 +370,12 @@ public:
 	afx_msg void OnUpdateFrameRemove(CCmdUI *pCmdUI);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnEditPastemix();
+	afx_msg void OnUpdateEditPastemix(CCmdUI *pCmdUI);
+	afx_msg void OnModuleMoveframedown();
+	afx_msg void OnModuleMoveframeup();
+	afx_msg void OnUpdateModuleMoveframedown(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateModuleMoveframeup(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in FamiTrackerView.cpp

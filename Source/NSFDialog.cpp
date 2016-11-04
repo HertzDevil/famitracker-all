@@ -50,6 +50,8 @@ BEGIN_MESSAGE_MAP(CNSFDialog, CDialog)
 	ON_BN_CLICKED(IDCANCEL, OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_WRITE_BIN, OnBnClickedWriteBIN)
 	ON_BN_CLICKED(IDC_WRITE_PRG, OnBnClickedWritePrg)
+	ON_BN_CLICKED(IDC_BANKSWITCH, OnBnClickedBankswitch)
+	ON_BN_CLICKED(IDC_BANKOPTIMIZE, OnBnClickedBankoptimize)
 END_MESSAGE_MAP()
 
 // CNSFDialog message handlers
@@ -61,7 +63,7 @@ void CNSFDialog::OnBnClickedWriteNSF()
 	CString DefFileName = pDoc->GetTitle();
 	CCompile Compiler;
 	unsigned int InitOrg;
-	bool BankSwitch = false, ForcePAL = false;
+	bool BankSwitch = false, BankOptimize = false, ForcePAL = false;
 
 	InitOrg = MUSIC_ORIGIN;
 
@@ -71,6 +73,11 @@ void CNSFDialog::OnBnClickedWriteNSF()
 	};
 
 	CFileDialog FileDialog(FALSE, "nsf", DefFileName, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "NSF song (*.nsf)|*.nsf|All files|*.*||");
+
+	FileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_NSF);
+
+	if (IsDlgButtonChecked(IDC_BANKOPTIMIZE) != 0)
+		BankOptimize = true;
 
 	if (IsDlgButtonChecked(IDC_BANKSWITCH) != 0)
 		BankSwitch = true;
@@ -83,10 +90,12 @@ void CNSFDialog::OnBnClickedWriteNSF()
 
 	SaveInfo();
 
-	Compiler.BuildMusicData(InitOrg, pDoc);
-	Compiler.CreateNSF(FileDialog.GetPathName(), pDoc, BankSwitch, ForcePAL);
+	Compiler.BuildMusicData(InitOrg, BankSwitch, pDoc);
+	Compiler.CreateNSF(FileDialog.GetPathName(), pDoc, BankOptimize, ForcePAL);
 
 	EditLog->SetWindowText(Compiler.GetLogOutput());
+
+	theApp.m_pSettings->SetPath(FileDialog.GetPathName(), PATH_NSF);
 }
 
 void CNSFDialog::OnBnClickedCancel()
@@ -159,7 +168,7 @@ void CNSFDialog::OnBnClickedWriteBIN()
 	if ((FileDialogBin.DoModal() == IDCANCEL) || (FileDialogDmc.DoModal() == IDCANCEL))
 		return;
 
-	Compiler.BuildMusicData(InitOrg, pDoc);
+	Compiler.BuildMusicData(InitOrg, false, pDoc);
 	Compiler.CreateBIN(FileDialogBin.GetPathName(), FileDialogDmc.GetPathName(), pDoc);
 
 	EditLog->SetWindowText(Compiler.GetLogOutput());
@@ -200,8 +209,24 @@ void CNSFDialog::OnBnClickedWritePrg()
 	if (IsDlgButtonChecked(IDC_PAL) != 0)
 		ForcePAL = true;
 
-	Compiler.BuildMusicData(InitOrg, pDoc);
+	Compiler.BuildMusicData(InitOrg, false, pDoc);
 	Compiler.CreatePRG(FileDialog.GetPathName(), pDoc, ForcePAL);
 
 	EditLog->SetWindowText(Compiler.GetLogOutput());
+}
+
+void CNSFDialog::OnBnClickedBankswitch()
+{
+	if (IsDlgButtonChecked(IDC_BANKSWITCH))
+		GetDlgItem(IDC_BANKOPTIMIZE)->EnableWindow(FALSE);
+	else
+		GetDlgItem(IDC_BANKOPTIMIZE)->EnableWindow(TRUE);
+}
+
+void CNSFDialog::OnBnClickedBankoptimize()
+{
+	if (IsDlgButtonChecked(IDC_BANKOPTIMIZE))
+		GetDlgItem(IDC_BANKSWITCH)->EnableWindow(FALSE);
+	else
+		GetDlgItem(IDC_BANKSWITCH)->EnableWindow(TRUE);
 }

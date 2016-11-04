@@ -19,10 +19,10 @@
 */
 
 #include "stdafx.h"
-#include "apu.h"
-#include "square.h"
+#include "apu/apu.h"
+#include "apu/square.h"
 
-// This is also shared by MMC5
+// This is also shared with MMC5
 
 CSquare::CSquare(CMixer *pMixer, int ID)
 {

@@ -87,4 +87,5 @@ protected:
 public:
 	afx_msg void OnBnClickedFreeSeq();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	virtual BOOL DestroyWindow();
 };

@@ -19,6 +19,7 @@
 */
 
 #include "stdafx.h"
+#include <cmath>
 #include "FamiTracker.h"
 #include "PatternWnd.h"
 
@@ -42,6 +43,8 @@ BEGIN_MESSAGE_MAP(CPatternWnd, CWnd)
 	ON_WM_VSCROLL()
 	ON_WM_HSCROLL()
 	ON_WM_LBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_WM_NCMOUSEMOVE()
 END_MESSAGE_MAP()
 
 // CPatternWnd message handlers
@@ -73,13 +76,17 @@ void CPatternWnd::OnPaint()
 	int ColCursor		= theApp.m_pSettings->Appearance.iColCursor;
 	int ColCursor2		= DIM(theApp.m_pSettings->Appearance.iColCursor, 70);
 
+	unsigned int i;
+
 	int ItemsToDraw;
 	int FrameCount, ChannelCount;
 	int ActiveFrame, ActiveChannel;
 	int Nr;
 
 	char Text[256];
-	int i, c;
+	int c;
+
+	DWORD dwVersion = GetVersion();
 
 	GetWindowRect(&WinRect);
 
@@ -87,6 +94,9 @@ void CPatternWnd::OnPaint()
 		dc.FillSolidRect(WinRect, 0);
 		return;
 	}
+
+	if (!pDoc->IsFileLoaded())
+		return;
 
 	Width	= WinRect.right - WinRect.left - 19;
 	Height	= WinRect.bottom - WinRect.top - 19;
@@ -112,10 +122,19 @@ void CPatternWnd::OnPaint()
 	Brush.CreateSolidBrush(ColBackground);
 	Pen.CreatePen(0, 0, ColBackground);
 
-	OldBrush	= dcBack.SelectObject(&Brush);
-	OldPen		= dcBack.SelectObject(&Pen);
+	OldBrush = dcBack.SelectObject(&Brush);
+	OldPen	 = dcBack.SelectObject(&Pen);
 
-	dcBack.Rectangle(OFFSET_LEFT, OFFSET_TOP, Width, Height);
+	dcBack.SetBkMode(TRANSPARENT);
+
+	for (i = 0; i < Height; i++) {
+		float Angle = (float) ((i * 100) / Height) * 3.14f * 2;
+		int Level = (int)(cosf(Angle / 100.0f) * 20.0f);
+		if (Level < 0)
+			Level = 0;
+		dcBack.FillSolidRect(0, i, Width, 1, DIM_TO(ColTextHilite, ColBackground, Level));
+	}
+	
 	dcBack.SetBkColor(ColBackground);
 
 	OldFont = dcBack.SelectObject(&Font);
@@ -127,29 +146,42 @@ void CPatternWnd::OnPaint()
 	
 	dcBack.FillSolidRect(26 + (ActiveChannel * 20), (ItemsToDraw / 2) * 15 + 5, 20, 12, ColCursor);
 
-	for (i = 0; i < ItemsToDraw; i++) {
+	unsigned int CurrentColor;
 
-		if ((ActiveFrame - (ItemsToDraw / 2) + i) >= 0 && 
-			(ActiveFrame - (ItemsToDraw / 2) + i) < FrameCount) {
+	for (i = 0; i < (unsigned)ItemsToDraw; i++) {
+
+		if ((ActiveFrame - (ItemsToDraw / 2) + (signed)i) >= 0 && 
+			(ActiveFrame - (ItemsToDraw / 2) + (signed)i) < FrameCount) {
 
 			if (theApp.m_pSettings->General.bRowInHex)
 				sprintf(Text, "%02X", Nr);
 			else
 				sprintf(Text, "%02i", Nr);
 
+			/*
+			if (i == m_iHiglightLine || m_iHiglightLine == -1)
+				dcBack.SetTextColor(ColTextHilite);
+			else
+				dcBack.SetTextColor(DIM(ColTextHilite, 90));
+				*/
+
 			dcBack.SetTextColor(ColTextHilite);
-			dcBack.SetBkColor(ColBackground);
+
 			dcBack.TextOut(4, i * 15 + 3, Text);
 
-			dcBack.SetTextColor(ColText);
+			if (i == m_iHiglightLine || m_iHiglightLine == -1)
+				CurrentColor = ColText;
+			else
+				CurrentColor = DIM(ColText, 90);
 
 			for (c = 0; c < ChannelCount; c++) {
-				if (Nr == ActiveFrame && c == ActiveChannel)
-					dcBack.SetBkColor(ColCursor);
+				if (pDoc->GetPatternAtFrame(Nr, c) == pDoc->GetPatternAtFrame(ActiveFrame, c))
+					dcBack.SetTextColor(CurrentColor);
 				else
-					dcBack.SetBkColor(ColBackground);
-				sprintf(Text, "%02i", pDoc->GetPatternAtFrame(Nr, c));
-				dcBack.TextOut(28 + c * 20, i * 15 + 3, Text);
+					dcBack.SetTextColor(DIM(CurrentColor, 80));
+
+				sprintf(Text, "%02X", pDoc->GetPatternAtFrame(Nr, c));
+				dcBack.DrawText(Text, CRect(28 + c * 20, i * 15 + 3, 28 + c * 20 + 20, i * 15 + 3 + 20), DT_LEFT | DT_TOP | DT_NOCLIP);
 			}
 			Nr++;
 		}
@@ -242,7 +274,7 @@ void CPatternWnd::OnLButtonUp(UINT nFlags, CPoint point)
 	int FrameDelta, Channel;
 	int NewFrame;
 
-	FrameDelta	= (point.y / 15) - 4;
+	FrameDelta	= ((point.y - 3) / 15) - 4;
 	Channel		= (point.x - 28) / 20;
 	NewFrame	= pView->GetSelectedFrame() + FrameDelta;
 
@@ -255,4 +287,18 @@ void CPatternWnd::OnLButtonUp(UINT nFlags, CPoint point)
 		pView->SelectChannel(Channel);
 
 	CWnd::OnLButtonDown(nFlags, point);
+}
+
+void CPatternWnd::OnMouseMove(UINT nFlags, CPoint point)
+{
+	m_iHiglightLine = point.y / 15;
+	RedrawWindow();
+	CWnd::OnMouseMove(nFlags, point);
+}
+
+void CPatternWnd::OnNcMouseMove(UINT nHitTest, CPoint point)
+{
+	m_iHiglightLine = -1;
+	RedrawWindow();
+	CWnd::OnNcMouseMove(nHitTest, point);
 }

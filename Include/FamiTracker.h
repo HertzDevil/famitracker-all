@@ -27,13 +27,26 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 2;
-const int VERSION_REV = 5;
+const int VERSION_REV = 6;
 
-const int VERSION_WIP = 2;
+const int VERSION_WIP = 0;
 
 #define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 
-#define DIM(c, l) ( (((c & 0xFF) * l) / 100) + (((((c >> 8) & 0xFF) * l) / 100) << 8) + (((((c >> 16) & 0xFF) * l) / 100) << 16))
+// Color macros
+
+#define RED(x)		((x >> 16) & 0xFF)
+#define GREEN(x)	((x >> 8) & 0xFF)
+#define BLUE(x)		(x & 0xFF)
+
+#define COMBINE(r, g, b) (((r) << 16) | ((g) << 8) | b)
+
+//#define DIM(c, l) ( (((c & 0xFF) * l) / 100) + (((((c >> 8) & 0xFF) * l) / 100) << 8) + (((((c >> 16) & 0xFF) * l) / 100) << 16))
+#define DIM(c, l) (COMBINE((RED(c) * l) / 100, (GREEN(c) * l) / 100, (BLUE(c) * l) / 100))
+
+#define DIM_TO(c1, c2, level) (COMBINE((RED(c1) * level) / 100 + (RED(c2) * (100 - level)) / 100, \
+									   (GREEN(c1) * level) / 100 + (GREEN(c2) * (100 - level)) / 100, \
+									   (BLUE(c1) * level) / 100 + (BLUE(c2) * (100 - level)) / 100)) \
 
 #ifndef __AFXWIN_H__
 	#error include 'stdafx.h' before including this file for PCH
@@ -58,6 +71,7 @@ class CFamiTrackerApp : public CWinApp
 {
 public:
 	CFamiTrackerApp();
+	void DisplayError(int Message);
 	void SilentEverything();
 	void LoadSoundConfig();
 	void SetMachineType(int Type, int Rate);
@@ -73,6 +87,11 @@ public:
 	int GetUnderruns();
 
 	void StepFrame();
+
+	void StopPlayer();
+//	void PlayTracker();
+//	void StopTracker();
+	int GetTempo();
 
 	char m_cAppPath[MAX_PATH];
 
@@ -103,6 +122,14 @@ public:
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
 	virtual int ExitInstance();
+	afx_msg void OnTrackerPlay();
+	afx_msg void OnTrackerStop();
+	afx_msg void OnUpdateTrackerPlay(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateTrackerStop(CCmdUI *pCmdUI);
+	afx_msg void OnTrackerTogglePlay();
+	afx_msg void OnTrackerPlaypattern();
+	afx_msg void OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI);
+	afx_msg void OnFileOpen();
 };
 
 extern CFamiTrackerApp theApp;

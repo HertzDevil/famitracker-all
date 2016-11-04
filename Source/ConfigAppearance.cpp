@@ -407,7 +407,7 @@ void CConfigAppearance::OnCbnSelchangeScheme()
 			m_iColText				= 0x00FBF4F0;
 			m_iColTextHilite		= 0x00FFD6B9;
 			m_iColSelection			= 0x00355D93;
-			m_iColCursor			= 0x00464646;
+			m_iColCursor			= 0x00707070;
 			m_strFont				= "Fixedsys";
 			FontList->SelectString(0, m_strFont);
 			break;
