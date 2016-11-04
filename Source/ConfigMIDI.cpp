@@ -64,8 +64,8 @@ BOOL CConfigMIDI::OnInitDialog()
 	int		NumDev, i;
 	CString Text;
 
-	CComboBox *pInDevices = (CComboBox*)GetDlgItem(IDC_INDEVICES);
-	CComboBox *pOutDevices = (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
+	CComboBox *pInDevices = static_cast<CComboBox*>(GetDlgItem(IDC_INDEVICES));
+	CComboBox *pOutDevices = static_cast<CComboBox*>(GetDlgItem(IDC_OUTDEVICES));
 
 	pInDevices->AddString(_T("<none>"));
 	pOutDevices->AddString(_T("<none>"));
@@ -101,12 +101,12 @@ BOOL CConfigMIDI::OnInitDialog()
 
 BOOL CConfigMIDI::OnApply()
 {
-	CComboBox	*InDevices	= (CComboBox*)GetDlgItem(IDC_INDEVICES);
-	CComboBox	*OutDevices	= (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
-	CMIDI		*pMIDI		= theApp.GetMIDI();
+	CComboBox	*pInDevices	 = static_cast<CComboBox*>(GetDlgItem(IDC_INDEVICES));
+	CComboBox	*pOutDevices = static_cast<CComboBox*>(GetDlgItem(IDC_OUTDEVICES));
+	CMIDI		*pMIDI		 = theApp.GetMIDI();
 	
-	pMIDI->SetInputDevice(InDevices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
-	pMIDI->SetOutputDevice(OutDevices->GetCurSel());
+	pMIDI->SetInputDevice(pInDevices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
+	pMIDI->SetOutputDevice(pOutDevices->GetCurSel());
 	
 	theApp.GetSettings()->Midi.bMidiMasterSync	= IsDlgButtonChecked(IDC_MASTER_SYNC)	== 1;
 	theApp.GetSettings()->Midi.bMidiKeyRelease	= IsDlgButtonChecked(IDC_KEY_RELEASE)	== 1;

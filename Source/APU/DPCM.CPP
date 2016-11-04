@@ -18,8 +18,8 @@
 ** must bear this legend.
 */
 
-#include "apu.h"
-#include "dpcm.h"
+#include "APU.h"
+#include "DPCM.h"
 
 const uint16 CDPCM::DMC_PERIODS_NTSC[] = {
 	428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54
@@ -32,6 +32,8 @@ const uint16 CDPCM::DMC_PERIODS_PAL[]  = {
 CDPCM::CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE), m_pSampleMem(pSampleMem)
 {
 	PERIOD_TABLE = DMC_PERIODS_NTSC;
+
+	Reset();
 }
 
 CDPCM::~CDPCM()

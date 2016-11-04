@@ -25,9 +25,10 @@
 #include "MIDI.h"
 #include "Settings.h"
 
-//
-// CMIDI - Wrapper class for input and output MIDI devices
-//
+/*
+ * CMIDI - Wrapper class for input and output MIDI devices
+ *
+ */
 
 #define ASSEMBLE_STATUS(Message, Channel) (((Message) << 4) | (Channel))
 #define ASSEMBLE_PARAM(Status, Byte1, Byte2) ((Status) | ((Byte1) << 8) | ((Byte2) << 16))
@@ -40,12 +41,10 @@ void CALLBACK CMIDI::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD dwInstance, DW
 {
 	// MIDI input callback function
 
-	unsigned char Status, Data1, Data2;
-
 	if (wMsg == MIM_DATA) {
-		Status	= (char)(dwParam1 & 0xFF);
-		Data1	= (char)(dwParam1 >> 8) & 0xFF;
-		Data2	= (char)(dwParam1 >> 16) & 0xFF;
+		unsigned char Status = (char)(dwParam1 & 0xFF);
+		unsigned char Data1	 = (char)(dwParam1 >> 8) & 0xFF;
+		unsigned char Data2	 = (char)(dwParam1 >> 16) & 0xFF;
 		m_pInstance->Event(Status, Data1, Data2);
 	}
 }
@@ -236,7 +235,7 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 				if (++m_iTimingCounter == 6) {
 					m_iTimingCounter = 0;
 					Enqueue(MsgType, MsgChannel, Data1, Data2);
-					CFamiTrackerView::GetView()->PostMessage(MSG_MIDI_EVENT);
+					CFamiTrackerView::GetView()->PostMessage(WM_USER_MIDI_EVENT);
 				}
 			}
 			break;
@@ -252,7 +251,7 @@ void CMIDI::Event(unsigned char Status, unsigned char Data1, unsigned char Data2
 				case MIDI_MSG_NOTE_ON: 
 				case MIDI_MSG_PITCH_WHEEL:
 					Enqueue(MsgType, MsgChannel, Data1, Data2);
-					CFamiTrackerView::GetView()->PostMessage(MSG_MIDI_EVENT);
+					CFamiTrackerView::GetView()->PostMessage(WM_USER_MIDI_EVENT);
 					break;
 			}
 	}
@@ -295,7 +294,7 @@ void CMIDI::ToggleInput()
 void CMIDI::WriteNote(unsigned char Channel, unsigned char Note, unsigned char Octave, unsigned char Velocity)
 {
 	static unsigned int LastNote[MAX_CHANNELS];	// Quick hack
-	static unsigned int LastVolume[MAX_CHANNELS];
+//	static unsigned int LastVolume[MAX_CHANNELS];
 
 	if (/*!m_bOpened ||*/ m_iOutDevice == 0 || m_hMIDIOut == NULL)
 		return;

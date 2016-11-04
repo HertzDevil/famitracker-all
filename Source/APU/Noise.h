@@ -23,10 +23,10 @@
  *
  */
 
-#ifndef _NOISE_H_
-#define _NOISE_H_
+#ifndef NOISE_H
+#define NOISE_H
 
-#include "channel.h"
+#include "Channel.h"
 
 class CNoise : public CChannel {
 public:
@@ -57,4 +57,4 @@ private:
 	uint16	m_iShiftReg;
 };
 
-#endif /* _NOISE_H_ */
+#endif /* NOISE_H */

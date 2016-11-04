@@ -85,6 +85,37 @@ void CLinkLabel::OnMouseMove(UINT nFlags, CPoint point)
 	CStatic::OnMouseMove(nFlags, point);
 }
 
+class CHead : public CStatic
+{
+public:
+	CHead();
+protected:
+	DECLARE_MESSAGE_MAP()
+public:
+	virtual void CHead::DrawItem(LPDRAWITEMSTRUCT);
+};
+
+BEGIN_MESSAGE_MAP(CHead, CStatic)
+END_MESSAGE_MAP()
+
+CHead::CHead()
+{
+}
+
+void CHead::DrawItem(LPDRAWITEMSTRUCT lpDraw)
+{
+	CDC *pDC = CDC::FromHandle(lpDraw->hDC);
+
+	CBitmap bmp;
+	bmp.LoadBitmap(IDB_ABOUT);
+
+	CDC dcImage;
+	dcImage.CreateCompatibleDC(pDC);
+	dcImage.SelectObject(bmp);
+
+	pDC->BitBlt(0, 0, 434, 80, &dcImage, 0, 0, SRCCOPY);
+}
+
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
 
@@ -112,6 +143,8 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 }
 
+CHead *m_pHead;
+
 BOOL CAboutDlg::OnInitDialog()
 {
 	CString aboutString;
@@ -119,7 +152,9 @@ BOOL CAboutDlg::OnInitDialog()
 #ifdef WIP
 	aboutString.Format(_T("FamiTracker version %i.%i.%i beta %i"), VERSION_MAJ, VERSION_MIN, VERSION_REV, VERSION_WIP);
 #else
-	aboutString.Format(_T("FamiTracker version %i.%i.%i"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+	CString str;
+	str.Format(_T("%i.%i.%i"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+	AfxFormatString1(aboutString, IDS_ABOUT_VERSION_FORMAT, str);
 #endif
 
 	SetDlgItemText(IDC_ABOUT1, aboutString);
@@ -130,6 +165,9 @@ BOOL CAboutDlg::OnInitDialog()
 	m_pMail->SubclassDlgItem(IDC_MAIL, this);
 	m_pWeb->SubclassDlgItem(IDC_WEBPAGE, this);
 
+	m_pHead = new CHead();
+	m_pHead->SubclassDlgItem(IDC_HEAD, this);
+
 	LOGFONT LogFont;
 	CFont *pFont;
 	
@@ -138,8 +176,8 @@ BOOL CAboutDlg::OnInitDialog()
 	m_wndToolTip.Create(this, TTS_ALWAYSTIP);
 	m_wndToolTip.Activate(TRUE);
 
-	m_wndToolTip.AddTool(m_pMail, _T("Send mail to jsr@famitracker.com"));
-	m_wndToolTip.AddTool(m_pWeb, _T("Go to http://www.famitracker.com"));
+	m_wndToolTip.AddTool(m_pMail, IDS_ABOUT_TOOLTIP_MAIL);
+	m_wndToolTip.AddTool(m_pWeb, IDS_ABOUT_TOOLTIP_WEB);
 
 	pFont = m_pMail->GetFont();
 	pFont->GetLogFont(&LogFont);
@@ -149,7 +187,8 @@ BOOL CAboutDlg::OnInitDialog()
 	m_pMail->SetFont(m_pLinkFont);
 	m_pWeb->SetFont(m_pLinkFont);
 
-	CStatic *pStatic = (CStatic*)GetDlgItem(IDC_ABOUT1);
+	
+	CStatic *pStatic = static_cast<CStatic*>(GetDlgItem(IDC_ABOUT1));
 	CFont *pOldFont = pStatic->GetFont();
 	LOGFONT NewLogFont;
 	pOldFont->GetLogFont(&NewLogFont);
@@ -157,13 +196,13 @@ BOOL CAboutDlg::OnInitDialog()
 	m_pBoldFont = new CFont();
 	m_pTitleFont = new CFont();
 	m_pBoldFont->CreateFontIndirect(&NewLogFont);
-	NewLogFont.lfHeight = 16;
+	NewLogFont.lfHeight = 18;
 //	NewLogFont.lfUnderline = TRUE;
 	m_pTitleFont->CreateFontIndirect(&NewLogFont);
-	((CStatic*)GetDlgItem(IDC_ABOUT1))->SetFont(m_pTitleFont);
-	((CStatic*)GetDlgItem(IDC_ABOUT2))->SetFont(m_pBoldFont);
-	((CStatic*)GetDlgItem(IDC_ABOUT3))->SetFont(m_pBoldFont);
-
+	static_cast<CStatic*>(GetDlgItem(IDC_ABOUT1))->SetFont(m_pTitleFont);
+	static_cast<CStatic*>(GetDlgItem(IDC_ABOUT2))->SetFont(m_pBoldFont);
+	static_cast<CStatic*>(GetDlgItem(IDC_ABOUT3))->SetFont(m_pBoldFont);
+	
 	return TRUE;
 }
 

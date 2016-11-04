@@ -51,8 +51,9 @@ public:
 	SIZE_T GetAllocSize() const;	// Get memory size in bytes
 	void ToMem(HGLOBAL hMem);		// Copy structures to memory
 	void FromMem(HGLOBAL hMem);		// Copy structures from memory
-
-	int *GetFrame(int Frame, int Channel);
+	
+	int  GetFrame(int Frame, int Channel) const;
+	void SetFrame(int Frame, int Channel, int Pattern);
 
 public:
 	// Clip info
@@ -74,8 +75,9 @@ public:
 class CFrameEditorDropTarget : public COleDropTarget
 {
 public:
+	CFrameEditorDropTarget(CFrameEditor *pParent) 
+		: m_pParent(pParent), m_nDropEffect(DROPEFFECT_NONE), m_iClipBoard(0), m_bCopyNewPatterns(false) {};
 	void SetClipBoardFormat(UINT iClipBoard);
-	CFrameEditorDropTarget(CFrameEditor *pParent) : m_pParent(pParent), m_nDropEffect(DROPEFFECT_NONE) {};
 	DROPEFFECT OnDragEnter(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point);
 	DROPEFFECT OnDragOver(CWnd* pWnd, COleDataObject* pDataObject, DWORD dwKeyState, CPoint point);
 	BOOL OnDrop(CWnd* pWnd, COleDataObject* pDataObject, DROPEFFECT dropEffect, CPoint point);
@@ -120,6 +122,8 @@ public:
 
 	void GetSelectInfo(stSelectInfo &Info) const;
 	void SetSelectInfo(stSelectInfo &Info);
+
+	bool IsClipboardAvailable() const;
 
 private:
 	void CreateGdiObjects();

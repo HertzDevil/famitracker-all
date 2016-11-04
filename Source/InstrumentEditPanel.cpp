@@ -99,22 +99,25 @@ BOOL CInstrumentEditPanel::PreTranslateMessage(MSG* pMsg)
 					OnKeyReturn();
 					return TRUE;
 				case VK_ESCAPE:	// Esc, close the dialog
-					((CInstrumentEditDlg*)GetParent())->DestroyWindow();
+					static_cast<CInstrumentEditDlg*>(GetParent())->DestroyWindow();
 					return TRUE;
+				case VK_TAB:
+				case VK_DOWN:
+				case VK_UP:
+				case VK_LEFT:
+				case VK_RIGHT:
+				case VK_SPACE:
+					// Do nothing
+					break;
 				default:	// Note keys
 					// Make sure the dialog is selected when previewing
 					GetClassName(pMsg->hwnd, ClassName, 256);
 					if (_tcscmp(ClassName, _T("Edit"))) {
-					//if (GetFocus() == this || GetFocus() == GetParent()) {
-					//if (!CDialog::PreTranslateMessage(pMsg)) {
-					
-					//if (DYNAMIC_DOWNCAST(CEdit, GetFocus()) == NULL) {
 						// Remove repeated keys
 						if ((pMsg->lParam & (1 << 30)) == 0)
 							PreviewNote((unsigned char)pMsg->wParam);
 						return TRUE;
 					}
-					
 			}
 			break;
 		case WM_KEYUP:
@@ -247,11 +250,10 @@ void CSequenceInstrumentEditPanel::OnRClickInstSettings(NMHDR* pNMHDR, LRESULT* 
 	if (m_pSequence == NULL)
 		return;
 
-	// Create a clone option
+	// Display clone menu
 	CMenu contextMenu;
-	contextMenu.CreatePopupMenu();
-	contextMenu.AppendMenu(MF_STRING, ID_CLONE_SEQUENCE, _T("Clone sequence"));
-	contextMenu.EnableMenuItem(ID_CLONE_SEQUENCE, (m_pSequence->GetItemCount() != 0) ? FALSE : TRUE);
-	contextMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, oPoint.x, oPoint.y, this);
-	contextMenu.DestroyMenu();
+	contextMenu.LoadMenu(IDR_SEQUENCE_POPUP);
+	CMenu *pMenu = contextMenu.GetSubMenu(0);
+	pMenu->EnableMenuItem(ID_CLONE_SEQUENCE, (m_pSequence->GetItemCount() != 0) ? FALSE : TRUE);
+	pMenu->TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, oPoint.x, oPoint.y, this);
 }

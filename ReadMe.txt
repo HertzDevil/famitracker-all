@@ -44,5 +44,3 @@ A quick file guide for beginners:
  
  E-mail: jsr@famitracker.com
  IRC: #famitracker on espernet
-
------------------------------------

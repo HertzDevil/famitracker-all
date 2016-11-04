@@ -19,8 +19,8 @@
 */
 
 #include <cstdio>
-#include "apu.h"
-#include "s5b.h"
+#include "APU.h"
+#include "S5B.h"
 #include "emu2149.h"
 
 // Sunsoft 5B (YM2149)
@@ -29,7 +29,7 @@ PSG *psg;
 
 float CS5B::AMPLIFY = 2.0f;
 
-CS5B::CS5B(CMixer *pMixer)
+CS5B::CS5B(CMixer *pMixer) : m_iRegister(0), m_iTime(0)
 {
 	m_pMixer = pMixer;
 

@@ -25,8 +25,8 @@
 
 #include "version.h"
 
-// Enable export verification
-//#define EXPORT_TEST
+// Support DLL translations
+#define SUPPORT_TRANSLATIONS
 
 //#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 #define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));//  if (v > max) v = max; else if (v < min) v = min;
@@ -43,6 +43,11 @@ enum {
 	IPC_LOAD_PLAY
 };
 
+#ifdef SVN_BUILD
+// Always disable export test for release builds
+#undef EXPORT_TEST
+#endif
+
 // Custom command line reader
 class CFTCommandLineInfo : public CCommandLineInfo
 {
@@ -53,6 +58,10 @@ public:
 	bool m_bLog;
 	bool m_bExport;
 	bool m_bPlay;
+#ifdef EXPORT_TEST
+	bool m_bVerifyExport;
+	CString m_strVerifyFile;
+#endif
 	CString m_strExportFile;
 	CString m_strExportLogFile;
 	CString m_strExportDPCMFile;
@@ -83,33 +92,36 @@ public:
 	//
 public:
 	void			LoadSoundConfig();
-	void			ReloadColorScheme(void);
+	void			ReloadColorScheme();
 	int				GetCPUUsage() const;
 	bool			IsThemeActive() const;
-	void			CheckSynth();
 	void			RemoveSoundGenerator();
+	void			ThreadDisplayMessage(LPCTSTR lpszText, UINT nType = 0, UINT nIDHelp = 0);
+	void			ThreadDisplayMessage(UINT nIDPrompt, UINT nType = 0, UINT nIDHelp = 0);
 
 	// Tracker player functions
+	void			StartPlayer(int Mode);
+	void			StopPlayer();
+	void			StopPlayerAndWait();
+	void			TogglePlayer();
 	bool			IsPlaying() const;
 	void			ResetPlayer();
 	void			SilentEverything();
 	void			WaitUntilStopped() const;
 
 	// Get-functions
-	CAccelerator	*GetAccelerator() const { return m_pAccel; };
-	CSoundGen		*GetSoundGenerator() const { return m_pSoundGenerator; };
-	CMIDI			*GetMIDI() const { return m_pMIDI; };
-	CSettings		*GetSettings() const { return m_pSettings; };
-	CChannelMap		*GetChannelMap() const { return m_pChannelMap; };
+	CAccelerator	*GetAccelerator() const		{ ASSERT(m_pAccel); return m_pAccel; }
+	CSoundGen		*GetSoundGenerator() const	{ ASSERT(m_pSoundGenerator); return m_pSoundGenerator; }
+	CMIDI			*GetMIDI() const			{ ASSERT(m_pMIDI); return m_pMIDI; }
+	CSettings		*GetSettings() const		{ ASSERT(m_pSettings); return m_pSettings; }
+	CChannelMap		*GetChannelMap() const		{ ASSERT(m_pChannelMap); return m_pChannelMap; }
 	
 	CCustomExporters *GetCustomExporters() const;
 
-	// Try to avoid these
-//	CDocument		*GetActiveDocument() const;
-//	CView			*GetActiveView() const;
-
 #ifdef EXPORT_TEST
-	void			VerifyExport();
+	void			VerifyExport() const;
+	void			VerifyExport(LPCTSTR File) const;
+	bool			IsExportTest() const;
 #endif /* EXPORT_TEST */
 
 	//
@@ -122,7 +134,7 @@ private:
 	void RegisterSingleInstance();
 	void UnregisterSingleInstance();
 	void CheckNewVersion();
-	void CommandLineExport(const CString& fileIn, const CString& fileOut, const CString& fileLog, const CString& fileDPCM);
+	void LoadLocalization();
 
 protected:
 	BOOL DoPromptFileName(CString& fileName, CString& filePath, UINT nIDSTitle, DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate);
@@ -144,6 +156,14 @@ private:
 
 	bool			m_bThemeActive;
 
+#ifdef EXPORT_TEST
+	bool			m_bExportTesting;
+#endif
+
+#ifdef SUPPORT_TRANSLATIONS
+	HINSTANCE		m_hInstResDLL;
+#endif
+
 	// Overrides
 public:
 	virtual BOOL InitInstance();
@@ -153,17 +173,16 @@ public:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnAppAbout();
-	afx_msg void OnTrackerTogglePlay();
-	afx_msg void OnTrackerPlay();
-	afx_msg void OnTrackerPlayStart();
-	afx_msg void OnTrackerPlayCursor();
-	afx_msg void OnTrackerPlaypattern();
-	afx_msg void OnTrackerStop();
 	afx_msg void OnFileOpen();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnTestExport();
 };
 
 extern CFamiTrackerApp theApp;
 
 // Global helper functions
 CString LoadDefaultFilter(LPCTSTR Name, LPCTSTR Ext);
+CString LoadDefaultFilter(UINT nID, LPCTSTR Ext);
+void AfxFormatString3(CString &rString, UINT nIDS, LPCTSTR lpsz1, LPCTSTR lpsz2, LPCTSTR lpsz3);
+CString MakeIntString(int val);
+CString MakeFloatString(float val);

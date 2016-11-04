@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+//#define DITHERING
+
 /* Copyright (C) 2003-2006 Shay Green. This module is free software; you
 can redistribute it and/or modify it under the terms of the GNU Lesser
 General Public License as published by the Free Software Foundation; either
@@ -345,6 +347,24 @@ void Blip_Synth_::volume_unit( double new_unit )
 	}
 }
 
+#ifdef DITHERING
+int dither(long size)
+{
+	static unsigned int lfsr = 0xACE1u;
+	unsigned bit;
+	unsigned period = 0;
+ 
+	bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
+	lfsr =  (lfsr >> 1) | (bit << 15);
+
+	switch (lfsr % 3) {
+		case 1: return size * 1;
+		case 2: return size * -1;
+	}
+	return 0;
+}
+#endif
+
 long Blip_Buffer::read_samples( blip_sample_t* out, long max_samples, int stereo )
 {
 	long count = samples_avail();
@@ -362,7 +382,11 @@ long Blip_Buffer::read_samples( blip_sample_t* out, long max_samples, int stereo
 		{
 			for ( long n = count; n--; )
 			{
+#ifdef DITHERING
+				long s = (accum + dither(1 << sample_shift)) >> sample_shift;
+#else
 				long s = accum >> sample_shift;
+#endif
 				accum -= accum >> bass_shift;
 				accum += *in++;
 				*out++ = (blip_sample_t) s;

@@ -18,15 +18,21 @@
 ** must bear this legend.
 */
 
-#ifndef _DSOUND_H_
-#define _DSOUND_H_
+#ifndef DSOUND_H
+#define DSOUND_H
 
 #include <windows.h>
 #include <mmsystem.h>
 #include <dsound.h>
 
 // Return values from WaitForDirectSoundEvent()
-enum {BUFFER_CUSTOM_EVENT = 1, BUFFER_TIMEOUT, BUFFER_IN_SYNC, BUFFER_OUT_OF_SYNC};
+enum buffer_event_t {
+	BUFFER_NONE = 0,
+	BUFFER_CUSTOM_EVENT = 1, 
+	BUFFER_TIMEOUT, 
+	BUFFER_IN_SYNC, 
+	BUFFER_OUT_OF_SYNC
+};
 
 // DirectSound channel
 class CDSoundChannel 
@@ -37,17 +43,13 @@ public:
 	CDSoundChannel();
 	~CDSoundChannel();
 
-	void Play() const;
-	void Stop();
-	void Pause() const;
-	void Clear();
-	void Reset();
-	void WriteSoundBuffer(void *Buffer, unsigned int Samples);
+	bool Play() const;
+	bool Stop() const;
 	bool IsPlaying() const;
-	void ResetWritePointer();
-	void AdvanceWritePointer();
+	bool ClearBuffer();
+	bool WriteBuffer(char *pBuffer, unsigned int Samples);
 
-	int  WaitForDirectSoundEvent(DWORD dwTimeout) const;
+	buffer_event_t WaitForSyncEvent(DWORD dwTimeout) const;
 
 	int GetBlockSize() const	{ return m_iBlockSize; };
 	int GetBlockSamples() const	{ return m_iBlockSize >> ((m_iSampleSize >> 3) - 1); };
@@ -60,6 +62,8 @@ public:
 private:
 	int GetPlayBlock() const;
 	int GetWriteBlock() const;
+
+	void AdvanceWritePointer();
 
 private:
 	LPDIRECTSOUNDBUFFER	m_lpDirectSoundBuffer;
@@ -88,8 +92,8 @@ public:
 	CDSound(HWND hWnd, HANDLE hNotification);
 	~CDSound();
 
-	bool			Init(int Device);
-	void			Close();
+	bool			SetupDevice(int iDevice);
+	void			CloseDevice();
 
 	CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
 	void			CloseChannel(CDSoundChannel *pChannel);
@@ -99,10 +103,10 @@ public:
 	// Enumeration
 	void			EnumerateDevices();
 	void			ClearEnumeration();
-	BOOL			EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
+	BOOL			EnumerateCallback(LPGUID lpGuid, LPCTSTR lpcstrDescription, LPCTSTR lpcstrModule, LPVOID lpContext);
 	unsigned int	GetDeviceCount() const;
-	char			*GetDeviceName(int iDevice) const;
-	int				MatchDeviceID(char *Name) const;
+	LPCTSTR			GetDeviceName(int iDevice) const;
+	int				MatchDeviceID(LPCTSTR Name) const;
 
 public:
 	static const unsigned int MAX_DEVICES = 256;
@@ -121,8 +125,8 @@ private:
 
 	// For enumeration
 	unsigned int	m_iDevices;
-	char			*m_pcDevice[MAX_DEVICES];
+	LPCTSTR			m_pcDevice[MAX_DEVICES];
 	GUID			*m_pGUIDs[MAX_DEVICES];
 };
 
-#endif /* _DSOUND_H_ */
+#endif /* DSOUND_H */

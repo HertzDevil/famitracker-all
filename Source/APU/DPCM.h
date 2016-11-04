@@ -18,10 +18,10 @@
 ** must bear this legend.
 */
 
-#ifndef _DPCM_H_
-#define _DPCM_H_
+#ifndef DPCM_H
+#define DPCM_H
 
-#include "channel.h"
+#include "Channel.h"
 
 class CDPCM : public CChannel {
 public:
@@ -64,4 +64,4 @@ private:
 	CSampleMem	*m_pSampleMem;
 };
 
-#endif /* _DPCM_H_ */
+#endif /* DPCM_H */

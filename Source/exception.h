@@ -26,5 +26,6 @@
 #endif /* _DEBUG */
 
 #ifdef ENABLE_CRASH_HANDLER
-LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep);
+void InstallExceptionHandler();
+void UninstallExceptionHandler();
 #endif /* ENABLE_CRASH_HANDLER */

@@ -2,6 +2,30 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.3
+
+ New stuff:
+  - Added names to the built in VRC7 patches
+  - Added option to preview full row when editing notes
+  - Added option to display flat notes instead of sharps
+  - Added an audio level mixer
+  - Removed MIDI import
+
+ Fixed bugs:
+  - Added a fix for TNS-HFC carts when DPCM bankswitching is used
+  - Corrected VRC7 tuning table
+  - Fixed DPCM instrument editor keyboard bug
+  - Fixed NSF export when using sequences with hidden loop points
+  - Fixed NSF code crash when using too many assigned DPCM samples
+  - Fixed crash on startup when NSFplay is located in the same folder
+  - Fixed a problem with N163 and FDS waves that appeared when playing a module
+  - Fixed some DPCM sample editor bugs
+  - Fixed duplicated paste bug in the frame editor
+  - Fixed some noise pitch slide effect bugs
+  - Fixed the tremolo effect command (7xx) on VRC7 channels
+  - Fixed note slide effects on VRC7
+  
+  
 Version 0.4.2
 
  New stuff:

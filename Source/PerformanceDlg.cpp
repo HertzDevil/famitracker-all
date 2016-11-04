@@ -67,19 +67,18 @@ BOOL CPerformanceDlg::OnInitDialog()
 void CPerformanceDlg::OnTimer(UINT nIDEvent)
 {
 	CProgressCtrl *pBar = static_cast<CProgressCtrl*>(GetDlgItem(IDC_CPU_BAR));
-	CString Text;
-
 	unsigned int Usage = theApp.GetCPUUsage();
 	unsigned int Rate = theApp.GetSoundGenerator()->GetFrameRate();
 	unsigned int Underruns = theApp.GetSoundGenerator()->GetUnderruns();
+	CString Text;
 
-	Text.Format("%i%%", Usage / 100);
+	Text.Format(_T("%i%%"), Usage / 100);
 	SetDlgItemText(IDC_CPU, Text);
 
-	Text.Format("Frame rate: %i Hz", Rate);
+	AfxFormatString1(Text, IDS_PERFORMANCE_FRAMERATE_FORMAT, MakeIntString(Rate));
 	SetDlgItemText(IDC_FRAMERATE, Text);
 
-	Text.Format("Underruns: %i", Underruns);
+	AfxFormatString1(Text, IDS_PERFORMANCE_UNDERRUN_FORMAT, MakeIntString(Underruns));
 	SetDlgItemText(IDC_UNDERRUN, Text);
 
 	pBar->SetRange(0, 100);

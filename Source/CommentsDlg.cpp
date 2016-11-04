@@ -37,7 +37,6 @@ IMPLEMENT_DYNAMIC(CCommentsDlg, CDialog)
 CCommentsDlg::CCommentsDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CCommentsDlg::IDD, pParent), m_pFont(NULL)
 {
-
 }
 
 CCommentsDlg::~CCommentsDlg()
@@ -56,6 +55,8 @@ BEGIN_MESSAGE_MAP(CCommentsDlg, CDialog)
 	ON_BN_CLICKED(IDCANCEL, &CCommentsDlg::OnBnClickedCancel)
 	ON_WM_SIZE()
 	ON_EN_CHANGE(IDC_COMMENTS, &CCommentsDlg::OnEnChangeComments)
+	ON_BN_CLICKED(IDC_SHOWONOPEN, &CCommentsDlg::OnBnClickedShowonopen)
+	ON_WM_GETMINMAXINFO()
 END_MESSAGE_MAP()
 
 
@@ -63,8 +64,7 @@ END_MESSAGE_MAP()
 
 void CCommentsDlg::SaveComment()
 {
-	CMainFrame *pMainFrame = (CMainFrame*)GetParentFrame();
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)pMainFrame->GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 	CString comment;
 
 	GetDlgItemText(IDC_COMMENTS, comment);
@@ -120,8 +120,7 @@ BOOL CCommentsDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	CMainFrame *pMainFrame = (CMainFrame*)GetParentFrame();
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)pMainFrame->GetActiveDocument();
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
 	CString comment = pDoc->GetComment();
 
 	SetDlgItemText(IDC_COMMENTS, comment);
@@ -156,4 +155,19 @@ BOOL CCommentsDlg::DestroyWindow()
 void CCommentsDlg::OnEnChangeComments()
 {
 	m_bChanged = true;
+}
+
+void CCommentsDlg::OnBnClickedShowonopen()
+{
+	m_bChanged = true;
+}
+
+void CCommentsDlg::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	lpMMI->ptMinTrackSize.x = 400;
+	lpMMI->ptMinTrackSize.y = 200;
+
+	CDialog::OnGetMinMaxInfo(lpMMI);
 }

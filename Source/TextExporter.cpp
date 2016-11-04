@@ -669,7 +669,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 				{
 					CString sComment = pDoc->GetComment();
 					if (sComment.GetLength() > 0)
-						sComment = sComment + _T("\n");
+						sComment = sComment + _T("\r\n");
 					sComment += t.ReadToken();
 					pDoc->SetComment(sComment, pDoc->ShowCommentOnOpen());
 					CHECK(t.ReadEOL(&sResult));
@@ -692,7 +692,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 				break;
 			case CT_VIBRATO:
 				CHECK(t.ReadInt(i,0,VIBRATO_NEW,&sResult));
-				pDoc->SetVibratoStyle(i);
+				pDoc->SetVibratoStyle((vibrato_t)i);
 				CHECK(t.ReadEOL(&sResult));
 				break;
 			case CT_SPLIT:
@@ -750,7 +750,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 					dpcm_pos = 0;
 
 					CHECK(t.ReadInt(i,0,CDSample::MAX_SIZE,&sResult));
-					CDSample* pSample = pDoc->GetDSample(dpcm_index);
+					CDSample* pSample = pDoc->GetSample(dpcm_index);
 					pSample->Allocate(i, NULL);
 					::memset(pSample->SampleData, 0, i);
 
@@ -761,7 +761,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 				break;
 			case CT_DPCM:
 				{
-					CDSample* pSample = pDoc->GetDSample(dpcm_index);
+					CDSample* pSample = pDoc->GetSample(dpcm_index);
 					CHECK_COLON();
 					while (!t.IsEOL())
 					{
@@ -1015,7 +1015,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 				{
 					if (track != 0)
 					{
-						if(!pDoc->AddTrack())
+						if(pDoc->AddTrack() == -1)
 						{
 							sResult.Format(_T("Line %d column %d: unable to add new track."), t.line, t.GetColumn());
 							return sResult;
@@ -1135,14 +1135,14 @@ const CString& CTextExport::ExportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 	bool bCommentLines = false;
 	do
 	{
-		int nPos = sComment.Find(TCHAR('\n'));
+		int nPos = sComment.Find(TCHAR('\r'));
 		bCommentLines = (nPos >= 0);
 		if (bCommentLines)
 		{
 			CString sLine = sComment.Left(nPos);
 			s.Format(_T("%s %s\n"), CT[CT_COMMENT], ExportString(sLine));
 			f.WriteString(s);
-			sComment = sComment.Mid(nPos+1);
+			sComment = sComment.Mid(nPos+2); // +2 skips \r\n
 		}
 		else
 		{
@@ -1209,7 +1209,7 @@ const CString& CTextExport::ExportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 	f.WriteString(_T("# DPCM samples\n"));
 	for (int smp=0; smp < MAX_DSAMPLES; ++smp)
 	{
-		CDSample* pSample = pDoc->GetDSample(smp);
+		CDSample* pSample = pDoc->GetSample(smp);
 		if (pSample && pSample->SampleSize > 0)
 		{
 			s.Format(_T("%s %3d %5d %s\n"),

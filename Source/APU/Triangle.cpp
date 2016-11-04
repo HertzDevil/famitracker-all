@@ -18,8 +18,8 @@
 ** must bear this legend.
 */
 
-#include "apu.h"
-#include "triangle.h"
+#include "APU.h"
+#include "Triangle.h"
 
 const uint8 CTriangle::TRIANGLE_WAVE[] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 
@@ -29,6 +29,10 @@ const uint8 CTriangle::TRIANGLE_WAVE[] = {
 CTriangle::CTriangle(CMixer *pMixer, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE)
 {
 	m_iStepGen = 0;
+	m_iLoop = 0;
+	m_iLinearLoad = 0;
+	m_iHalt = 0;
+	m_iLinearCounter = 0;
 }
 
 CTriangle::~CTriangle()

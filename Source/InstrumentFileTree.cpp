@@ -65,7 +65,7 @@ bool CInstrumentFileTree::ShouldRebuild() const
 
 bool CInstrumentFileTree::BuildMenuTree(CString instrumentPath)
 {
-	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
+	CWaitCursor wait;
 
 	DeleteMenuObjects();
 	m_fileList.RemoveAll();
@@ -96,7 +96,7 @@ bool CInstrumentFileTree::BuildMenuTree(CString instrumentPath)
 			m_fileList.FreeExtra();
 			m_menuArray.FreeExtra();
 
-			m_iTimeout = GetTickCount() + 60000;
+			m_iTimeout = GetTickCount() + CACHE_TIMEOUT;
 			m_bShouldRebuild = false;
 		}
 	}

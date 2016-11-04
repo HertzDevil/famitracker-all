@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2012  Jonathan Liss
+** Copyright (C) 2005-2014  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 ** must bear this legend.
 */
 
-
-#include <vector> // needed for Complier.h > Chunk.h
 #include "stdafx.h"
 #include "Exception.h"
 #include "FamiTracker.h"
@@ -34,8 +32,7 @@
 #include "Settings.h"
 #include "ChannelMap.h"
 #include "CustomExporters.h"
-#include "Compiler.h"
-#include "TextExporter.h"
+#include "CommandLineExport.h"
 
 #ifdef EXPORT_TEST
 #include "ExportTest/ExportTest.h"
@@ -51,7 +48,7 @@ const DWORD	SHARED_MEM_SIZE			= 256;
 #endif
 
 #ifdef SVN_BUILD
-#pragma message("Building SVN build...")
+#pragma message("Building SVN release build...")
 #endif /* SVN_BUILD */
 
 // CFamiTrackerApp
@@ -61,15 +58,11 @@ BEGIN_MESSAGE_MAP(CFamiTrackerApp, CWinApp)
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, CWinApp::OnFileNew)
 	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
-	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
-	ON_COMMAND(ID_TRACKER_PLAY_START, OnTrackerPlayStart)
-	ON_COMMAND(ID_TRACKER_PLAY_CURSOR, OnTrackerPlayCursor)
-//	ON_COMMAND(ID_TRACKER_PLAY, OnTrackerPlay)
-	ON_COMMAND(ID_TRACKER_STOP, OnTrackerStop)
-	ON_COMMAND(ID_TRACKER_TOGGLE_PLAY, OnTrackerTogglePlay)
-	ON_COMMAND(ID_TRACKER_PLAYPATTERN, OnTrackerPlaypattern)
 #ifdef UPDATE_CHECK
 	ON_COMMAND(ID_HELP_CHECKFORNEWVERSIONS, CheckNewVersion)
+#endif
+#ifdef EXPORT_TEST
+	ON_COMMAND(ID_MODULE_TEST_EXPORT, OnTestExport)
 #endif
 END_MESSAGE_MAP()
 
@@ -87,6 +80,12 @@ CFamiTrackerApp::CFamiTrackerApp() :
 	m_pChannelMap(NULL),
 	m_customExporters(NULL),
 	m_hWndMapFile(NULL),
+#ifdef SUPPORT_TRANSLATIONS
+	m_hInstResDLL(NULL),
+#endif
+#ifdef EXPORT_TEST
+	m_bExportTesting(false),
+#endif
 	m_pInstanceMutex(NULL)
 {
 	// Place all significant initialization in InitInstance
@@ -94,7 +93,7 @@ CFamiTrackerApp::CFamiTrackerApp() :
 
 #ifdef ENABLE_CRASH_HANDLER
 	// This will cover the whole process
-	SetUnhandledExceptionFilter(ExceptionHandler);
+	InstallExceptionHandler();
 #endif /* ENABLE_CRASH_HANDLER */
 }
 
@@ -110,8 +109,12 @@ BOOL CFamiTrackerApp::InitInstance()
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.
 	InitCommonControls();
-
+#ifdef SUPPORT_TRANSLATIONS
+	LoadLocalization();
+#endif
 	CWinApp::InitInstance();
+
+	TRACE("App: InitInstance\n");
 
 	if (!AfxOleInit()) {
 		TRACE0("OLE initialization failed\n");
@@ -128,7 +131,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	LoadStdProfileSettings(8);  // Load standard INI file options (including MRU)
 
 	// Load program settings
-	m_pSettings = new CSettings();
+	m_pSettings = CSettings::GetObject();
 	m_pSettings->LoadSettings();
 
 	// Parse command line for standard shell commands, DDE, file open + some custom ones
@@ -171,15 +174,20 @@ BOOL CFamiTrackerApp::InitInstance()
 		return FALSE;
 	}
 
+	// Check if the application is themed
+	CheckAppThemed();
+
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views
-	CSingleDocTemplate* pDocTemplate;
-	
-	pDocTemplate = new CSingleDocTemplate(IDR_MAINFRAME, RUNTIME_CLASS(CFamiTrackerDoc), RUNTIME_CLASS(CMainFrame), RUNTIME_CLASS(CFamiTrackerView));
+	CSingleDocTemplate* pDocTemplate = new CSingleDocTemplate(
+		IDR_MAINFRAME, 
+		RUNTIME_CLASS(CFamiTrackerDoc), 
+		RUNTIME_CLASS(CMainFrame), 
+		RUNTIME_CLASS(CFamiTrackerView));
 
 	if (!pDocTemplate)
 		return FALSE;
-
+	
 	AddDocTemplate(pDocTemplate);
 
 	// Determine windows version
@@ -195,7 +203,7 @@ BOOL CFamiTrackerApp::InitInstance()
 		HKEY HKCU;
 		long res_reg = ::RegOpenKey(HKEY_CURRENT_USER, _T("Software\\Classes"), &HKCU);
 		if(res_reg == ERROR_SUCCESS)
-			res_reg = RegOverridePredefKey(HKEY_CLASSES_ROOT, HKCU);
+			RegOverridePredefKey(HKEY_CLASSES_ROOT, HKCU);
 	}
 
 	// Enable DDE Execute open
@@ -217,9 +225,9 @@ BOOL CFamiTrackerApp::InitInstance()
 #endif
 
 	// Handle command line export
-	if (cmdInfo.m_bExport)
-	{
-		CommandLineExport(cmdInfo.m_strFileName, cmdInfo.m_strExportFile, cmdInfo.m_strExportLogFile, cmdInfo.m_strExportDPCMFile);
+	if (cmdInfo.m_bExport) {
+		CCommandLineExport exporter;
+		exporter.CommandLineExport(cmdInfo.m_strFileName, cmdInfo.m_strExportFile, cmdInfo.m_strExportLogFile, cmdInfo.m_strExportDPCMFile);
 		ExitProcess(0);
 	}
 
@@ -239,7 +247,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	}
 
 	// The one and only window has been initialized, so show and update it
-	m_pMainWnd->ShowWindow(SW_SHOW);
+	m_pMainWnd->ShowWindow(m_nCmdShow);
 	m_pMainWnd->UpdateWindow();
 	// call DragAcceptFiles only if there's a suffix
 	//  In an SDI app, this should occur after ProcessShellCommand
@@ -255,18 +263,24 @@ BOOL CFamiTrackerApp::InitInstance()
 		AfxMessageBox(IDS_START_ERROR, MB_ICONERROR);
 		return FALSE;
 	}
-
+	
 	// Initialize midi unit
 	m_pMIDI->Init();
-
-	// Check if the application is themed
-	CheckAppThemed();
 	
 	if (cmdInfo.m_bPlay)
-		theApp.OnTrackerPlay();
+		theApp.StartPlayer(MODE_PLAY);
 
-	// Initialization is done
-	TRACE0("App: InitInstance done\n");
+#ifdef EXPORT_TEST
+	if (cmdInfo.m_bVerifyExport) {
+		m_bExportTesting = true;
+		VerifyExport(cmdInfo.m_strVerifyFile);
+	}
+	else {
+		// Append menu option
+		m_pMainWnd->GetMenu()->GetSubMenu(2)->AppendMenu(MF_SEPARATOR);
+		m_pMainWnd->GetMenu()->GetSubMenu(2)->AppendMenu(MF_STRING, ID_MODULE_TEST_EXPORT, _T("Test exporter"));
+	}
+#endif
 
 	// Save the main window handle
 	RegisterSingleInstance();
@@ -274,8 +288,10 @@ BOOL CFamiTrackerApp::InitInstance()
 #ifndef _DEBUG
 	// WIP
 	m_pMainWnd->GetMenu()->GetSubMenu(2)->RemoveMenu(ID_MODULE_CHANNELS, MF_BYCOMMAND);
-//	m_pMainWnd->GetMenu()->GetSubMenu(2)->RemoveMenu(ID_MODULE_COMMENTS, MF_BYCOMMAND);
 #endif
+
+	// Initialization is done
+	TRACE0("App: InitInstance done\n");
 
 	return TRUE;
 }
@@ -285,7 +301,7 @@ int CFamiTrackerApp::ExitInstance()
 	// Close program
 	// The document is already closed at this point (and detached from sound player)
 
-	TRACE("App: ExitInstance started\n");
+	TRACE("App: Begin ExitInstance\n");
 
 	UnregisterSingleInstance();
 
@@ -306,7 +322,6 @@ int CFamiTrackerApp::ExitInstance()
 
 	if (m_pSettings) {
 		m_pSettings->SaveSettings();
-		delete m_pSettings;
 		m_pSettings = NULL;
 	}
 
@@ -320,7 +335,17 @@ int CFamiTrackerApp::ExitInstance()
 		m_pChannelMap = NULL;
 	}
 
-	TRACE0("App: ExitInstance done\n");
+#ifdef SUPPORT_TRANSLATIONS
+	if (m_hInstResDLL) {
+		// Revert back to internal resources
+		AfxSetResourceHandle(m_hInstance);
+		// Unload DLL
+		::FreeLibrary(m_hInstResDLL);
+		m_hInstResDLL = NULL;
+	}
+#endif
+
+	TRACE0("App: End ExitInstance\n");
 
 	return CWinApp::ExitInstance();
 }
@@ -337,14 +362,6 @@ BOOL CFamiTrackerApp::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return FALSE;
-	
-	/*
-	if (m_pAccel->Translate(m_pMainWnd->m_hWnd, pMsg)) {
-		return TRUE;
-	}
-
-	return CWinApp::PreTranslateMessage(pMsg);
-	*/
 }
 
 void CFamiTrackerApp::CheckAppThemed()
@@ -365,8 +382,64 @@ void CFamiTrackerApp::CheckAppThemed()
 
 bool CFamiTrackerApp::IsThemeActive() const
 { 
-	return m_bThemeActive; 
+	return m_bThemeActive;
 }
+
+bool GetFileVersion(LPCTSTR Filename, WORD &Major, WORD &Minor, WORD &Revision, WORD &Build)
+{
+	DWORD Handle;
+	DWORD Size = GetFileVersionInfoSize(Filename, &Handle);
+	bool Success = true;
+
+	Major = 0;
+	Minor = 0;
+	Revision = 0;
+	Build = 0;
+
+	if (Size > 0) {
+		TCHAR *pData = new TCHAR[Size];
+		if (GetFileVersionInfo(Filename, NULL, Size, pData) != 0) {
+			UINT size;
+			VS_FIXEDFILEINFO *pFileinfo;
+			if (VerQueryValue(pData, _T("\\"), (LPVOID*)&pFileinfo, &size) != 0) {
+				Major = pFileinfo->dwProductVersionMS >> 16;
+				Minor = pFileinfo->dwProductVersionMS & 0xFFFF;
+				Revision = pFileinfo->dwProductVersionLS >> 16;
+				Build = pFileinfo->dwProductVersionLS & 0xFFFF;
+			}
+			else
+				Success = false;
+		}
+		else 
+			Success = false;
+
+		SAFE_RELEASE_ARRAY(pData);
+	}
+	else
+		Success = false;
+
+	return Success;
+}
+
+#ifdef SUPPORT_TRANSLATIONS
+void CFamiTrackerApp::LoadLocalization()
+{
+	LPCTSTR DLL_NAME = _T("language.dll");
+	WORD Major, Minor, Build, Revision;
+
+	if (GetFileVersion(DLL_NAME, Major, Minor, Revision, Build)) {
+		if (Major != VERSION_MAJ || Minor != VERSION_MIN || Revision != VERSION_REV)
+			return;
+
+		m_hInstResDLL = ::LoadLibrary(DLL_NAME);
+
+		if (m_hInstResDLL != NULL) {
+			TRACE0("App: Loaded localization DLL\n");
+			AfxSetResourceHandle(m_hInstResDLL);
+		}
+	}
+}
+#endif
 
 void CFamiTrackerApp::ShutDownSynth()
 {
@@ -383,9 +456,11 @@ void CFamiTrackerApp::ShutDownSynth()
 		// Object was found but thread not created
 		delete m_pSoundGenerator;
 		m_pSoundGenerator = NULL;
-		TRACE0("App: Sound generator object was found but no thread created");
+		TRACE0("App: Sound generator object was found but no thread created\n");
 		return;
 	}
+
+	TRACE0("App: Waiting for sound player thread to close\n");
 
 	// Resume if thread was suspended
 	if (m_pSoundGenerator->ResumeThread() == 0) {
@@ -485,7 +560,7 @@ bool CFamiTrackerApp::CheckSingleInstance(CFTCommandLineInfo &cmdInfo)
 					SendMessageTimeout(hWnd, WM_COPYDATA, NULL, (LPARAM)&data, SMTO_NORMAL, 100, &result);
 					UnmapViewOfFile(pBuf);
 					CloseHandle(hMapFile);
-					TRACE("Found another instance, shutting down\n");
+					TRACE("App: Found another instance, shutting down\n");
 					// Then close the program
 					return true;
 				}
@@ -497,183 +572,6 @@ bool CFamiTrackerApp::CheckSingleInstance(CFTCommandLineInfo &cmdInfo)
 	}
 	
 	return false;
-}
-
-// Command line export logger
-class CCommandLineLog : public CCompilerLog
-{
-public:
-	CCommandLineLog(CStdioFile *pFile) : m_pFile(pFile) {};
-	void WriteLog(char *text) {
-		m_pFile->WriteString(text);
-	};
-	void Clear() {};
-private:
-	CStdioFile *m_pFile;
-};
-
-void CFamiTrackerApp::CommandLineExport(const CString& fileIn, const CString& fileOut, const CString& fileLog,  const CString& fileDPCM)
-{
-	// open log
-	bool bLog = false;
-	CStdioFile fLog;
-	if (fileLog.GetLength() > 0)
-	{
-		if(fLog.Open(fileLog, CFile::modeCreate | CFile::modeWrite | CFile::typeText, NULL))
-			bLog = true;
-	}
-
-	// create CFamiTrackerDoc for export
-	CRuntimeClass* pRuntimeClass = RUNTIME_CLASS(CFamiTrackerDoc);
-	CObject* pObject = pRuntimeClass->CreateObject();
-	if (pObject == NULL || !pObject->IsKindOf(RUNTIME_CLASS(CFamiTrackerDoc)))
-	{
-		if (bLog) fLog.WriteString(_T("Error: unable to create CFamiTrackerDoc\n"));
-		return;
-	}
-	CFamiTrackerDoc* pExportDoc = (CFamiTrackerDoc*)pObject;
-
-	// open file
-	if(!pExportDoc->OnOpenDocument(fileIn))
-	{
-		if (bLog)
-		{
-			fLog.WriteString(_T("Error: unable to open document: "));
-			fLog.WriteString(fileIn);
-			fLog.WriteString(_T("\n"));
-		}
-		return;
-	}
-	if (bLog)
-	{
-		fLog.WriteString(_T("Opened: "));
-		fLog.WriteString(fileIn);
-		fLog.WriteString(_T("\n"));
-	}
-
-	// find extension
-	int nPos = fileOut.ReverseFind(TCHAR('.'));
-	if (nPos < 0)
-	{
-		if (bLog)
-		{
-			fLog.WriteString(_T("Error: export filename has no extension: "));
-			fLog.WriteString(fileOut);
-			fLog.WriteString(_T("\n"));
-		}
-		return;
-	}
-	CString ext = fileOut.Mid(nPos);
-
-	CFamiTrackerDoc::OverrideDoc(pExportDoc);
-	m_pSoundGenerator->GenerateVibratoTable(pExportDoc->GetVibratoStyle());
-
-	// export
-	if      (0 == ext.CompareNoCase(_T(".nsf")))
-	{
-		CCompiler compiler(pExportDoc, bLog ? new CCommandLineLog(&fLog) : NULL);
-		compiler.ExportNSF(fileOut, pExportDoc->GetMachine() );
-		if (bLog)
-		{
-			fLog.WriteString(_T("\nNSF export complete.\n"));
-		}
-		return;
-	}
-	else if (0 == ext.CompareNoCase(_T(".nes")))
-	{
-		CCompiler compiler(pExportDoc, bLog ? new CCommandLineLog(&fLog) : NULL);
-		compiler.ExportNES(fileOut, pExportDoc->GetMachine() == PAL);
-		if (bLog)
-		{
-			fLog.WriteString(_T("\nNES export complete.\n"));
-		}
-		return;
-	}
-	// BIN export requires two files
-	else if (0 == ext.CompareNoCase(_T(".bin")))
-	{
-		CCompiler compiler(pExportDoc, bLog ? new CCommandLineLog(&fLog) : NULL);
-		compiler.ExportBIN(fileOut, fileDPCM);
-		if (bLog)
-		{
-			fLog.WriteString(_T("\nBIN export complete.\n"));
-		}
-		return;
-	}
-	else if (0 == ext.CompareNoCase(_T(".prg")))
-	{
-		CCompiler compiler(pExportDoc, bLog ? new CCommandLineLog(&fLog) : NULL);
-		compiler.ExportPRG(fileOut, pExportDoc->GetMachine() == PAL);
-		if (bLog)
-		{
-			fLog.WriteString(_T("\nPRG export complete.\n"));
-		}
-		return;
-	}
-	else if (0 == ext.CompareNoCase(_T(".asm")))
-	{
-		CCompiler compiler(pExportDoc, bLog ? new CCommandLineLog(&fLog) : NULL);
-		compiler.ExportASM(fileOut);
-		if (bLog)
-		{
-			fLog.WriteString(_T("\nASM export complete.\n"));
-		}
-		return;
-	}
-	else if (0 == ext.CompareNoCase(_T(".txt")))
-	{
-		CTextExport textExport;
-		CString result = textExport.ExportFile(fileOut, pExportDoc);
-		if (result.GetLength() > 0)
-		{
-			if (bLog)
-			{
-				fLog.WriteString(_T("Error: "));
-				fLog.WriteString(result);
-				fLog.WriteString(_T("\n"));
-			}
-		}
-		else if (bLog)
-		{
-			fLog.WriteString(_T("Exported: "));
-			fLog.WriteString(fileOut);
-			fLog.WriteString(_T("\n"));
-		}
-		return;
-	}
-	else // use first custom exporter
-	{
-		CCustomExporters* pExporters = GetCustomExporters();
-		if (pExporters)
-		{
-			CStringArray sNames;
-			pExporters->GetNames(sNames);
-			if (sNames.GetCount())
-			{
-				pExporters->SetCurrentExporter(sNames[0]);
-				bool bResult = (pExporters->GetCurrentExporter().Export(pExportDoc, fileOut));
-				if (bLog)
-				{
-					fLog.WriteString(_T("Custom exporter: "));
-					fLog.WriteString(sNames[0]);
-					fLog.WriteString(_T("\n"));
-					fLog.WriteString(_T("Export "));
-					fLog.WriteString(bResult ? _T("succesful: ") : _T("failed: "));
-					fLog.WriteString(fileOut);
-					fLog.WriteString(_T("\n"));
-				}
-				return;
-			}
-		}
-	}
-
-	if (bLog)
-	{
-		fLog.WriteString("Error: unable to find matching export extension for: ");
-		fLog.WriteString(fileOut);
-		fLog.WriteString(_T("\n"));
-	}
-	return;
 }
 
 ////////////////////////////////////////////////////////
@@ -693,34 +591,6 @@ void CFamiTrackerApp::SilentEverything()
 {
 	GetSoundGenerator()->SilentAll();
 	CFamiTrackerView::GetView()->MakeSilent();
-}
-
-void CFamiTrackerApp::CheckSynth() 
-{
-	// Monitor performance
-//	static DWORD LastTime;
-	static BOOL WasTimedOut;
-
-//	if (LastTime == 0)
-//		LastTime = GetTickCount();
-
-	// Wait for signals from the player thread
-	if (m_pSoundGenerator->GetSoundTimeout()) {
-		// Timeout after 1 s
-//		if ((GetTickCount() - LastTime) > 1000) {
-			// Display message
-			((CMainFrame*) GetMainWnd())->SetMessageText(IDS_SOUND_FAIL);
-			WasTimedOut = TRUE;
-//		}
-	}
-	else {
-//		if ((GetTickCount() - LastTime) > 1000) {
-		if (WasTimedOut == TRUE)
-			((CMainFrame*) GetMainWnd())->SetMessageText(AFX_IDS_IDLEMESSAGE);
-//		}
-//		LastTime = GetTickCount();
-		WasTimedOut = FALSE;
-	}
 }
 
 int CFamiTrackerApp::GetCPUUsage() const
@@ -743,15 +613,9 @@ int CFamiTrackerApp::GetCPUUsage() const
 	return TotalTime;
 }
 
-void CFamiTrackerApp::ReloadColorScheme(void)
+void CFamiTrackerApp::ReloadColorScheme()
 {
-	// Main window
-	CMainFrame *pMainFrm = dynamic_cast<CMainFrame*>(GetMainWnd());
-
-	if (pMainFrm != NULL)
-		pMainFrm->SetupColors();
-
-	// Notify all views	
+	// Notify all views
 	POSITION TemplatePos = GetFirstDocTemplatePosition();
 	CDocTemplate *pDocTemplate = GetNextDocTemplate(TemplatePos);
 	POSITION DocPos = pDocTemplate->GetFirstDocPosition();
@@ -759,8 +623,17 @@ void CFamiTrackerApp::ReloadColorScheme(void)
 	while (CDocument* pDoc = pDocTemplate->GetNextDoc(DocPos)) {
 		POSITION ViewPos = pDoc->GetFirstViewPosition();
 		while (CView *pView = pDoc->GetNextView(ViewPos)) {
-			static_cast<CFamiTrackerView*>(pView)->SetupColors();
+			if (pView->IsKindOf(RUNTIME_CLASS(CFamiTrackerView)))
+				static_cast<CFamiTrackerView*>(pView)->SetupColors();
 		}
+	}
+
+	// Main window
+	CMainFrame *pMainFrm = dynamic_cast<CMainFrame*>(GetMainWnd());
+
+	if (pMainFrm != NULL) {
+		pMainFrm->SetupColors();
+		pMainFrm->RedrawWindow();
 	}
 }
 
@@ -773,51 +646,38 @@ void CFamiTrackerApp::OnAppAbout()
 
 // CFamiTrackerApp message handlers
 
-void CFamiTrackerApp::OnTrackerPlay()
+void CFamiTrackerApp::StartPlayer(int Mode)
 {
-	// Play
 	if (m_pSoundGenerator)
-		m_pSoundGenerator->StartPlayer(MODE_PLAY);
+		m_pSoundGenerator->StartPlayer(Mode);
 }
 
-void CFamiTrackerApp::OnTrackerPlaypattern()
+void CFamiTrackerApp::StopPlayer()
 {
-	// Loop pattern
-	if (m_pSoundGenerator)
-		m_pSoundGenerator->StartPlayer(MODE_PLAY_REPEAT);
-}
-
-void CFamiTrackerApp::OnTrackerPlayStart()
-{
-	// Play from start of song
-	if (m_pSoundGenerator)
-		m_pSoundGenerator->StartPlayer(MODE_PLAY_START);
-}
-
-void CFamiTrackerApp::OnTrackerPlayCursor()
-{
-	// Play from cursor
-	if (m_pSoundGenerator)
-		m_pSoundGenerator->StartPlayer(MODE_PLAY_CURSOR);
-}
-
-void CFamiTrackerApp::OnTrackerTogglePlay()
-{
-	if (m_pSoundGenerator) {
-		if (m_pSoundGenerator->IsPlaying())
-			OnTrackerStop();
-		else
-			OnTrackerPlay();
-	}
-}
-
-void CFamiTrackerApp::OnTrackerStop()
-{
-	// Stop tracker
 	if (m_pSoundGenerator)
 		m_pSoundGenerator->StopPlayer();
 
 	m_pMIDI->ResetOutput();
+}
+
+void CFamiTrackerApp::StopPlayerAndWait()
+{
+	// Synchronized stop
+	if (m_pSoundGenerator) {
+		m_pSoundGenerator->StopPlayer();
+		m_pSoundGenerator->WaitForStop();
+	}
+	m_pMIDI->ResetOutput();
+}
+
+void CFamiTrackerApp::TogglePlayer()
+{
+	if (m_pSoundGenerator) {
+		if (m_pSoundGenerator->IsPlaying())
+			StopPlayer();
+		else
+			StartPlayer(MODE_PLAY);
+	}
 }
 
 // Player interface
@@ -832,6 +692,7 @@ bool CFamiTrackerApp::IsPlaying() const
 
 void CFamiTrackerApp::ResetPlayer()
 {
+	// Called when changing song
 	if (m_pSoundGenerator)
 		m_pSoundGenerator->ResetPlayer();
 }
@@ -856,12 +717,12 @@ void CFamiTrackerApp::OnFileOpen()
 	m_pSettings->SetPath(newName, PATH_FTM);
 	
 	if (pFrameWnd)
-		pFrameWnd->SetMessageText(_T("Loading file..."));
+		pFrameWnd->SetMessageText(IDS_LOADING_FILE);
 	
 	AfxGetApp()->OpenDocumentFile(newName);
 
 	if (pFrameWnd)
-		pFrameWnd->SetMessageText(_T("Done"));
+		pFrameWnd->SetMessageText(IDS_LOADING_DONE);
 }
 
 BOOL CFamiTrackerApp::DoPromptFileName(CString& fileName, CString& filePath, UINT nIDSTitle, DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate)
@@ -922,15 +783,55 @@ BOOL CFamiTrackerApp::DoPromptFileName(CString& fileName, CString& filePath, UIN
 
 #ifdef EXPORT_TEST
 
-void CFamiTrackerApp::VerifyExport()
+void CFamiTrackerApp::OnTestExport()
+{
+	VerifyExport();
+}
+
+void CFamiTrackerApp::VerifyExport() const
 {
 	CExportTest *pExportTest = new CExportTest();
-	pExportTest->Setup();
-	pExportTest->RunInit(0);
-	GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, 0);
+	if (pExportTest->Setup()) {
+		const CMainFrame *pMainFrame = static_cast<CMainFrame*>(m_pMainWnd);
+		pExportTest->RunInit(pMainFrame->GetSelectedTrack());
+		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, 0);
+	}
+	else
+		delete pExportTest;
+}
+
+void CFamiTrackerApp::VerifyExport(LPCTSTR File) const
+{
+	CExportTest *pExportTest = new CExportTest();
+
+	printf("Verifying export for file %s\n", File);
+
+	if (pExportTest->Setup(File)) {
+		const CMainFrame *pMainFrame = static_cast<CMainFrame*>(m_pMainWnd);
+		pExportTest->RunInit(pMainFrame->GetSelectedTrack());
+		GetSoundGenerator()->PostThreadMessage(WM_USER_VERIFY_EXPORT, (WPARAM)pExportTest, 0);
+	}
+	else
+		delete pExportTest;
+}
+
+bool CFamiTrackerApp::IsExportTest() const
+{
+	return m_bExportTesting;
 }
 
 #endif /* EXPORT_TEST */
+
+// Used to display a messagebox on the main thread
+void CFamiTrackerApp::ThreadDisplayMessage(LPCTSTR lpszText, UINT nType, UINT nIDHelp)
+{
+	m_pMainWnd->SendMessage(WM_USER_DISPLAY_MESSAGE_STRING, (WPARAM)lpszText, (LPARAM)nType);
+}
+
+void CFamiTrackerApp::ThreadDisplayMessage(UINT nIDPrompt, UINT nType, UINT nIDHelp)
+{
+	m_pMainWnd->SendMessage(WM_USER_DISPLAY_MESSAGE_ID, (WPARAM)nIDPrompt, (LPARAM)nType);
+}
 
 // Various global helper functions
 
@@ -951,6 +852,44 @@ CString LoadDefaultFilter(LPCTSTR Name, LPCTSTR Ext)
 	return filter;
 }
 
+CString LoadDefaultFilter(UINT nID, LPCTSTR Ext)
+{
+	// Loads a single filter string including the all files option
+	CString filter;
+	CString allFilter;
+	VERIFY(allFilter.LoadString(AFX_IDS_ALLFILTER));
+
+	filter.LoadString(nID);
+	filter += _T("|*");
+	filter += Ext;
+	filter += _T("|");
+	filter += allFilter;
+	filter += _T("|*.*||");
+
+	return filter;
+}
+
+void AfxFormatString3(CString &rString, UINT nIDS, LPCTSTR lpsz1, LPCTSTR lpsz2, LPCTSTR lpsz3)
+{
+	LPCTSTR arr[] = {lpsz1, lpsz2, lpsz3};
+	AfxFormatStrings(rString, nIDS, arr, 3);
+}
+
+CString MakeIntString(int val)
+{
+	// Turns an int to a string
+	CString str;
+	str.Format(_T("%i"), val);
+	return str;
+}
+
+CString MakeFloatString(float val)
+{
+	CString str;
+	str.Format(_T("%g"), val);
+	return str;
+}
+
 /**
  * CFTCommandLineInfo, a custom command line parser
  *
@@ -960,6 +899,9 @@ CFTCommandLineInfo::CFTCommandLineInfo() : CCommandLineInfo(),
 	m_bLog(false), 
 	m_bExport(false), 
 	m_bPlay(false),
+#ifdef EXPORT_TEST
+	m_bVerifyExport(false),
+#endif
 	m_strExportFile(_T("")),
 	m_strExportLogFile(_T("")),
 	m_strExportDPCMFile(_T(""))
@@ -979,6 +921,13 @@ void CFTCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLas
 			m_bPlay = true;
 			return;
 		}
+		// Disable crash dumps (/nodump)
+		else if (!_tcsicmp(pszParam, _T("nodump"))) { 
+#ifdef ENABLE_CRASH_HANDLER
+			UninstallExceptionHandler();
+#endif
+			return;
+		}
 		// Enable register logger (/log), available in debug mode only
 		else if (!_tcsicmp(pszParam, _T("log"))) {
 #ifdef _DEBUG
@@ -986,7 +935,16 @@ void CFTCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLas
 			return;
 #endif
 		}
-		// Enable console output
+		// Run export tester (/verify), optionally provide NSF file, otherwise NSF is created
+		else if (!_tcsicmp(pszParam, _T("verify"))) {
+#ifdef EXPORT_TEST
+			m_bVerifyExport = true;
+			return;
+#endif
+		}
+		// Enable console output (TODO)
+		// This is intended for a small helper program that avoids the problem with console on win32 programs,
+		// and should remain undocumented. I'm using it for testing.
 		else if (!_tcsicmp(pszParam, _T("console"))) {
 			FILE *f;
 			AttachConsole(ATTACH_PARENT_PROCESS);
@@ -1015,9 +973,17 @@ void CFTCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLas
 				return;
 			}
 		}
+#ifdef EXPORT_TEST
+		else if (m_bVerifyExport) {
+			if (m_strVerifyFile.GetLength() == 0)
+			{
+				m_strVerifyFile = CString(pszParam);
+				return;
+			}
+		}
+#endif
 	}
 
 	// Call default implementation
 	CCommandLineInfo::ParseParam(pszParam, bFlag, bLast);
 }
-

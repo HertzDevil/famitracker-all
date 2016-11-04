@@ -18,8 +18,8 @@
 ** must bear this legend.
 */
 
-#include "apu.h"
-#include "noise.h"
+#include "APU.h"
+#include "Noise.h"
 
 const uint16 CNoise::NOISE_PERIODS_NTSC[] = {
 	4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
@@ -31,6 +31,15 @@ const uint16 CNoise::NOISE_PERIODS_PAL[] = {
 
 CNoise::CNoise(CMixer *pMixer, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE)
 {
+	m_iLooping = 0;
+	m_iEnvelopeFix = 0;
+	m_iEnvelopeSpeed = 0;
+	m_iEnvelopeVolume = 0;
+	m_iFixedVolume = 0;
+	m_iEnvelopeCounter = 0;
+	m_iSampleRate = 0;
+	m_iShiftReg = 0;
+
 	PERIOD_TABLE = NOISE_PERIODS_NTSC;
 }
 

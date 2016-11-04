@@ -25,7 +25,7 @@
 //
 
 // Change this for new versions
-const char DRIVER_ID[] = "NSF-driver v2.8";
+const char DRIVER_ID[] = "NSF-driver v2.10";
 
 #pragma warning( disable : 4309 ) // disable warning 4309: 'initializing' : truncation of constant value
 

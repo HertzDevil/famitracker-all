@@ -19,6 +19,9 @@
 #define HID_BLOCK_START                         0x10090
 #define HID_BLOCK_END                           0x10091
 #define HID_CLONE_SEQUENCE                      0x100AF
+#define HID_MODULE_TEST_EXPORT                  0x100B0
+#define HID_INCREASEVALUES                      0x100B1
+#define HID_DECREASEVALUES                      0x100B2
 #define HID_TRACKER_PLAY_CURSOR                 0x1012C
 #define HID_TRACKER_PLAY                        0x18003
 #define HID_TRACKER_PLAYPATTERN                 0x18007
@@ -152,6 +155,13 @@
 #define HID_EDIT_PASTEMIXED                     0x1815A
 #define HID_FRAME_PASTEASNEWPA                  0x1815B
 #define HID_FRAME_PASTENEWPATTERNS              0x1815C
+#define HID_POPUP_DELETE33117                   0x1815D
+#define HID_POPUP_TRIM                          0x1815E
+#define HID_POPUP_PLAY                          0x1815F
+#define HID_INSTRUMENT_SAVETOFILE               0x18160
+#define HID_INSTRUMENT_LOADFROMFILE             0x18161
+#define HID_HELP_FAQ                            0x18162
+#define HID_POPUP_CLONESEQUENCE                 0x18165
 #define HID_INSTRUMENT_ADD_2A03                 0x19000
 #define HID_INSTRUMENT_ADD_FDS                  0x19001
 #define HID_INSTRUMENT_ADD_MMC5                 0x19002
@@ -165,6 +175,7 @@
 #define HID_INDICATOR_RATE                      0x1D003
 #define HID_INDICATOR_TEMPO                     0x1D004
 #define HID_INDICATOR_TIME                      0x1D005
+#define HID_INDICATOR_POS                       0x1D006
  
 // Prompts (IDP_*) 
  
@@ -179,6 +190,9 @@
 #define HIDR_INSTRUMENT_TOOLBAR                 0x20118
 #define HIDR_PATTERN_HEADER_POPUP               0x2011D
 #define HIDR_FRAMEWND                           0x20123
+#define HIDR_SAMPLE_EDITOR_POPUP                0x20130
+#define HIDR_EXPORT_TEST_REPORT                 0x20137
+#define HIDR_SEQUENCE_POPUP                     0x2013F
  
 // Dialogs (IDD_*) 
 #define HIDD_ABOUTBOX                           0x20064
@@ -190,7 +204,6 @@
 #define HIDD_INSTRUMENT_DPCM                    0x2009F
 #define HIDD_INSTRUMENT                         0x200A0
 #define HIDD_CONFIG_APPEARANCE                  0x200B4
-#define HIDD_MIDIIMPORT                         0x200B5
 #define HIDD_CONFIG_GENERAL                     0x200B7
 #define HIDD_PROPERTIES                         0x200B9
 #define HIDD_CONFIG_MIDI                        0x200C2
@@ -211,9 +224,11 @@
 #define HIDD_HEADER                             0x2011B
 #define HIDD_COMMENTS                           0x20120
 #define HIDD_CONFIG_LEVELS                      0x20124
+#define HIDD_CONFIG_MIXER                       0x20124
 #define HIDD_INSTRUMENT_N163_WAVE1              0x20125
 #define HIDD_INSTRUMENT_N163_WAVE               0x20125
 #define HIDD_IMPORT                             0x2012D
+#define HIDD_EXPORT_TEST                        0x20134
  
 // Frame Controls (IDW_*) 
 // This is a part of the Microsoft Foundation Classes C++ library.

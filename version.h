@@ -27,7 +27,7 @@
 // Version info
 #define VERSION_MAJ  0
 #define VERSION_MIN  4
-#define VERSION_REV  2
+#define VERSION_REV  3
 
 #define VERSION_WIP  0
 
