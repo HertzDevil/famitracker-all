@@ -25,7 +25,7 @@ class CSizeEditor : public CWnd
 {
 	DECLARE_DYNAMIC(CSizeEditor)
 	CSizeEditor(CWnd *pParent);
-	~CSizeEditor();
+	virtual ~CSizeEditor();
 private:
 	int m_iValue;
 	int m_iButtonPressed;

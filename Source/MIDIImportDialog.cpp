@@ -22,7 +22,6 @@
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "MIDIImportDialog.h"
-#include ".\midiimportdialog.h"
 
 
 // CMIDIImportDialog dialog
@@ -53,7 +52,6 @@ END_MESSAGE_MAP()
 INT_PTR CMIDIImportDialog::DoModal(int Channels)
 {
 	m_iChannels = Channels;
-
 	return CDialog::DoModal();
 }
 

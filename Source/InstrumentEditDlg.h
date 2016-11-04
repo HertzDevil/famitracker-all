@@ -40,6 +40,8 @@ public:
 
 	void EndDialog(int nResult);
 
+	CFamiTrackerDoc *GetDocument() const { return m_pDocument; };
+
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT };
 
@@ -50,11 +52,18 @@ protected:
 	void ClearPanels();
 
 	void SwitchOnNote(int x, int y);
-	void SwitchOffNote();
+	void SwitchOffNote(bool ForceHalt);
 
 protected:
 	// Constants
 	static const int PANEL_COUNT = 2;
+
+	static const int KEYBOARD_TOP;
+	static const int KEYBOARD_LEFT;
+	static const int KEYBOARD_WIDTH;
+	static const int KEYBOARD_HEIGHT;
+
+	static const char *CHIP_NAMES[];
 
 protected:
 	// Variables for keyboard
@@ -68,6 +77,8 @@ protected:
 	int m_iPanels;
 
 	int	m_iInstrument;
+
+	CFamiTrackerDoc *m_pDocument;
 
 	DECLARE_MESSAGE_MAP()
 public:

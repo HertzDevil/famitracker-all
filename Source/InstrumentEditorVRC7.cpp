@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditorVRC7.h"
 
@@ -72,7 +73,7 @@ BOOL CInstrumentEditorVRC7::OnInitDialog()
 	CString Text;
 
 	for (int i = 0; i < 16; i++) {
-		Text.Format("Patch #%i %s", i, i == 0 ? "(custom patch)" : "");
+		Text.Format(_T("Patch #%i %s"), i, i == 0 ? _T("(custom patch)") : _T(""));
 		pPatchBox->AddString(Text);
 	}
 
@@ -102,81 +103,34 @@ BOOL CInstrumentEditorVRC7::OnInitDialog()
 void CInstrumentEditorVRC7::OnCbnSelchangePatch()
 {
 	int Patch;
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	CComboBox *pPatchBox = (CComboBox*)GetDlgItem(IDC_PATCH);
 	Patch = pPatchBox->GetCurSel();
-	CInstrumentVRC7 *InstConf = (CInstrumentVRC7*)pDoc->GetInstrument(m_iInstrument);
-	InstConf->SetPatch(Patch);
+	//CInstrumentVRC7 *InstConf = (CInstrumentVRC7*)GetDocument()->GetInstrument(m_iInstrument);
+	m_pInstrument->SetPatch(Patch);
+	//InstConf->SetPatch(Patch);
 	EnableControls(Patch == 0);
 //	CheckDlgButton(IDC_HOLD, InstConf->GetHold());
 }
 
 void CInstrumentEditorVRC7::EnableControls(bool bEnable)
 {
-	if (bEnable) {
-		GetDlgItem(IDC_M_AM)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_AR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_DM)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_DR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_EG)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_KSL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_KSR2)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_MUL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_RR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_SL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_SR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_M_VIB)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_AM)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_AR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_DM)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_DR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_EG)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_KSL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_KSR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_MUL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_RR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_SL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_SR)->EnableWindow(TRUE);
-		GetDlgItem(IDC_C_VIB)->EnableWindow(TRUE);
-		GetDlgItem(IDC_TL)->EnableWindow(TRUE);
-		GetDlgItem(IDC_FB)->EnableWindow(TRUE);
-	}
-	else {
-		GetDlgItem(IDC_M_AM)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_AR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_DM)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_DR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_EG)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_KSL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_KSR2)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_MUL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_RR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_SL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_SR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_M_VIB)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_AM)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_AR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_DM)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_DR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_EG)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_KSL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_KSR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_MUL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_RR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_SL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_SR)->EnableWindow(FALSE);
-		GetDlgItem(IDC_C_VIB)->EnableWindow(FALSE);
-		GetDlgItem(IDC_TL)->EnableWindow(FALSE);
-		GetDlgItem(IDC_FB)->EnableWindow(FALSE);
-	}
+	const int SLIDER_IDS[] = {
+		IDC_M_AM, IDC_M_AR, IDC_M_DM, IDC_M_DR, IDC_M_EG, IDC_M_KSL, IDC_M_KSR2, IDC_M_MUL, IDC_M_RR, IDC_M_SL, IDC_M_SR, IDC_M_VIB,
+		IDC_C_AM, IDC_C_AR, IDC_C_DM, IDC_C_DR, IDC_C_EG, IDC_C_KSL, IDC_C_KSR, IDC_C_MUL, IDC_C_RR, IDC_C_SL, IDC_C_SR, IDC_C_VIB,
+		IDC_TL, IDC_FB
+	};
+
+	const int SLIDERS = sizeof(SLIDER_IDS) / sizeof(SLIDER_IDS[0]);
+
+	for (int i = 0; i < SLIDERS; ++i)
+		GetDlgItem(SLIDER_IDS[i])->EnableWindow(bEnable ? TRUE : FALSE);
 }
 
 void CInstrumentEditorVRC7::SelectInstrument(int Instrument)
 {
 	CComboBox *pPatchBox = (CComboBox*)GetDlgItem(IDC_PATCH);
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrumentVRC7 *InstConf = (CInstrumentVRC7*)pDoc->GetInstrument(Instrument);
-	m_iInstrument = Instrument;
+	CInstrumentVRC7 *InstConf = (CInstrumentVRC7*)GetDocument()->GetInstrument(Instrument);
+	//m_iInstrument = Instrument;
 	m_pInstrument = InstConf;
 	int Patch = InstConf->GetPatch();
 	pPatchBox->SetCurSel(Patch);

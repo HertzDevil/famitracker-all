@@ -20,17 +20,7 @@
 
 #pragma once
 
-const int MAX_SEQUENCE_ITEMS = 254;
-
-/*
-** This class is a pure virtual interface to CSequence, which can be used by custom exporters
-*/
-class CSequenceInterface
-{
-public:
-	virtual signed char		GetItem(int Index) const = 0;
-	virtual unsigned int	GetItemCount() const = 0;
-};
+#include "CustomExporterInterfaces.h"
 
 class CDocumentFile;
 
@@ -40,33 +30,35 @@ class CDocumentFile;
 class CSequence: public CSequenceInterface {
 public:
 	CSequence();
-	void			Clear();
-	signed char		GetItem(int Index) const;
-	unsigned int	GetItemCount() const;
-	unsigned int	GetLoopPoint();
-	unsigned int	GetReleasePoint();
-	void			SetItem(int Index, signed char Value);
-	void			SetItemCount(unsigned int Count);
-	void			SetLoopPoint(int Point);
-	void			SetReleasePoint(int Point);
 
-	void			Store(CDocumentFile *pDocFile, int Index, int Type);
+	void		 Clear();
+	signed char	 GetItem(int Index) const;
+	unsigned int GetItemCount() const;
+	unsigned int GetLoopPoint() const;
+	unsigned int GetReleasePoint() const;
+	unsigned int GetSetting() const;
+	void		 SetItem(int Index, signed char Value);
+	void		 SetItemCount(unsigned int Count);
+	void		 SetLoopPoint(unsigned int Point);
+	void		 SetReleasePoint(unsigned int Point);
+	void		 SetSetting(unsigned int Setting);
+
+	//void		 Store(CDocumentFile *pDocFile, int Index, int Type);
+ 
+	void		 Copy(const CSequence *pSeq);
 
 	// Used by instrument editor
-	void			SetPlayPos(int pos);
-	int				GetPlayPos();
-
-	void			SetSetting(int Setting);
-	int				GetSetting();
-
-	void			Copy(const CSequence *pSeq);
+	void		 SetPlayPos(int pos);
+	int			 GetPlayPos();
 
 private:
-	unsigned int	m_iItemCount;
-	unsigned int	m_iLoopPoint;
-	unsigned int	m_iReleasePoint;
-//	unsigned int	m_iItemCountRelease;
-	signed	 char	m_cValues[MAX_SEQUENCE_ITEMS];
-	int				m_iSetting;
-	int				m_iPlaying;
+	// Sequence data
+	unsigned int m_iItemCount;
+	unsigned int m_iLoopPoint;
+	unsigned int m_iReleasePoint;
+	unsigned int m_iSetting;
+//	unsigned int m_iItemCountRelease;
+	signed char	 m_cValues[MAX_SEQUENCE_ITEMS];
+	// Used by instrument editor
+	int			 m_iPlaying;
 };

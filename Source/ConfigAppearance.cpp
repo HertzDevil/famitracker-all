@@ -24,6 +24,7 @@
 #include "FamiTrackerView.h"
 #include "ConfigAppearance.h"
 #include "Settings.h"
+#include "ColorScheme.h"
 
 const char *COLOR_ITEMS[] = {
 	"Background", 
@@ -216,7 +217,7 @@ BOOL CConfigAppearance::OnInitDialog()
 	CDC *pDC = GetDC();
 	LOGFONT LogFont;
 
-	m_strFont = theApp.m_pSettings->General.strFont;
+	m_strFont = theApp.GetSettings()->General.strFont;
 
 	memset(&LogFont, 0, sizeof(LOGFONT));
 	LogFont.lfCharSet = DEFAULT_CHARSET;
@@ -238,17 +239,17 @@ BOOL CConfigAppearance::OnInitDialog()
 
 	m_iSelectedItem = 0;
 
-	m_iColors[COL_BACKGROUND]			= theApp.m_pSettings->Appearance.iColBackground;
-	m_iColors[COL_BACKGROUND_HILITE]	= theApp.m_pSettings->Appearance.iColBackgroundHilite;
-	m_iColors[COL_BACKGROUND_HILITE2]	= theApp.m_pSettings->Appearance.iColBackgroundHilite2;
-	m_iColors[COL_PATTERN_TEXT]			= theApp.m_pSettings->Appearance.iColPatternText;
-	m_iColors[COL_PATTERN_TEXT_HILITE]	= theApp.m_pSettings->Appearance.iColPatternTextHilite;
-	m_iColors[COL_PATTERN_TEXT_HILITE2]	= theApp.m_pSettings->Appearance.iColPatternTextHilite2;
-	m_iColors[COL_PATTERN_INSTRUMENT]	= theApp.m_pSettings->Appearance.iColPatternInstrument;
-	m_iColors[COL_PATTERN_VOLUME]		= theApp.m_pSettings->Appearance.iColPatternVolume;
-	m_iColors[COL_PATTERN_EFF_NUM]		= theApp.m_pSettings->Appearance.iColPatternEffect;
-	m_iColors[COL_SELECTION]			= theApp.m_pSettings->Appearance.iColSelection;
-	m_iColors[COL_CURSOR]				= theApp.m_pSettings->Appearance.iColCursor;
+	m_iColors[COL_BACKGROUND]			= theApp.GetSettings()->Appearance.iColBackground;
+	m_iColors[COL_BACKGROUND_HILITE]	= theApp.GetSettings()->Appearance.iColBackgroundHilite;
+	m_iColors[COL_BACKGROUND_HILITE2]	= theApp.GetSettings()->Appearance.iColBackgroundHilite2;
+	m_iColors[COL_PATTERN_TEXT]			= theApp.GetSettings()->Appearance.iColPatternText;
+	m_iColors[COL_PATTERN_TEXT_HILITE]	= theApp.GetSettings()->Appearance.iColPatternTextHilite;
+	m_iColors[COL_PATTERN_TEXT_HILITE2]	= theApp.GetSettings()->Appearance.iColPatternTextHilite2;
+	m_iColors[COL_PATTERN_INSTRUMENT]	= theApp.GetSettings()->Appearance.iColPatternInstrument;
+	m_iColors[COL_PATTERN_VOLUME]		= theApp.GetSettings()->Appearance.iColPatternVolume;
+	m_iColors[COL_PATTERN_EFF_NUM]		= theApp.GetSettings()->Appearance.iColPatternEffect;
+	m_iColors[COL_SELECTION]			= theApp.GetSettings()->Appearance.iColSelection;
+	m_iColors[COL_CURSOR]				= theApp.GetSettings()->Appearance.iColCursor;
 
 		/*
 	m_iColBackground		= theApp.m_pSettings->Appearance.iColBackground;
@@ -279,19 +280,19 @@ void CConfigAppearance::AddFontName(char *Name)
 
 BOOL CConfigAppearance::OnApply()
 {
-	theApp.m_pSettings->General.strFont = m_strFont;
+	theApp.GetSettings()->General.strFont = m_strFont;
 
-	theApp.m_pSettings->Appearance.iColBackground			= m_iColors[COL_BACKGROUND];
-	theApp.m_pSettings->Appearance.iColBackgroundHilite		= m_iColors[COL_BACKGROUND_HILITE];
-	theApp.m_pSettings->Appearance.iColBackgroundHilite2	= m_iColors[COL_BACKGROUND_HILITE2];
-	theApp.m_pSettings->Appearance.iColPatternText			= m_iColors[COL_PATTERN_TEXT];
-	theApp.m_pSettings->Appearance.iColPatternTextHilite	= m_iColors[COL_PATTERN_TEXT_HILITE];
-	theApp.m_pSettings->Appearance.iColPatternTextHilite2	= m_iColors[COL_PATTERN_TEXT_HILITE2];
-	theApp.m_pSettings->Appearance.iColPatternInstrument	= m_iColors[COL_PATTERN_INSTRUMENT];
-	theApp.m_pSettings->Appearance.iColPatternVolume		= m_iColors[COL_PATTERN_VOLUME];
-	theApp.m_pSettings->Appearance.iColPatternEffect		= m_iColors[COL_PATTERN_EFF_NUM];
-	theApp.m_pSettings->Appearance.iColSelection			= m_iColors[COL_SELECTION];
-	theApp.m_pSettings->Appearance.iColCursor				= m_iColors[COL_CURSOR];
+	theApp.GetSettings()->Appearance.iColBackground			= m_iColors[COL_BACKGROUND];
+	theApp.GetSettings()->Appearance.iColBackgroundHilite	= m_iColors[COL_BACKGROUND_HILITE];
+	theApp.GetSettings()->Appearance.iColBackgroundHilite2	= m_iColors[COL_BACKGROUND_HILITE2];
+	theApp.GetSettings()->Appearance.iColPatternText		= m_iColors[COL_PATTERN_TEXT];
+	theApp.GetSettings()->Appearance.iColPatternTextHilite	= m_iColors[COL_PATTERN_TEXT_HILITE];
+	theApp.GetSettings()->Appearance.iColPatternTextHilite2	= m_iColors[COL_PATTERN_TEXT_HILITE2];
+	theApp.GetSettings()->Appearance.iColPatternInstrument	= m_iColors[COL_PATTERN_INSTRUMENT];
+	theApp.GetSettings()->Appearance.iColPatternVolume		= m_iColors[COL_PATTERN_VOLUME];
+	theApp.GetSettings()->Appearance.iColPatternEffect		= m_iColors[COL_PATTERN_EFF_NUM];
+	theApp.GetSettings()->Appearance.iColSelection			= m_iColors[COL_SELECTION];
+	theApp.GetSettings()->Appearance.iColCursor				= m_iColors[COL_CURSOR];
 /*
 	theApp.m_pSettings->Appearance.iColBackground			= m_iColBackground;
 	theApp.m_pSettings->Appearance.iColBackgroundHilite		= m_iColBackgroundHilite;

@@ -27,6 +27,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+IDR_INSTRUMENT_TOOLBAR  BITMAP                  "res\\bmp00001.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -63,6 +64,18 @@ BEGIN
     BUTTON      ID_FILE_GENERALSETTINGS
     SEPARATOR
     BUTTON      ID_FILE_CREATE_NSF
+END
+
+IDR_INSTRUMENT_TOOLBAR TOOLBAR  16, 15
+BEGIN
+    BUTTON      ID_MODULE_ADDINSTRUMENT
+    BUTTON      ID_MODULE_REMOVEINSTRUMENT
+    BUTTON      ID_INSTRUMENT_CLONE
+    SEPARATOR
+    BUTTON      ID_MODULE_LOADINSTRUMENT
+    BUTTON      ID_MODULE_SAVEINSTRUMENT
+    SEPARATOR
+    BUTTON      ID_MODULE_EDITINSTRUMENT
 END
 
 
@@ -104,7 +117,6 @@ BEGIN
         END
         MENUITEM "Interpolate\tCtrl+G",         ID_EDIT_INTERPOLATE
         MENUITEM "&Reverse\tCtrl+R",            ID_EDIT_REVERSE
-        MENUITEM "Instrument Mask\tAlt+T",      ID_EDIT_INSTRUMENTMASK
         MENUITEM "R&eplace instrument\tAlt+S",  ID_EDIT_REPLACEINSTRUMENT
         MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
@@ -117,9 +129,11 @@ BEGIN
         MENUITEM "Clear patterns",              ID_EDIT_CLEARPATTERNS
         POPUP "Clean up"
         BEGIN
-            MENUITEM "Remove unused instruments",   ID_EDIT_REMOVEUNUSEDINSTRUMENTS
+            MENUITEM "Remove unused instruments",   ID_CLEANUP_REMOVEUNUSEDINSTRUMENTS
             MENUITEM "Remove unused patterns",      ID_CLEANUP_REMOVEUNUSEDPATTERNS
         END
+        MENUITEM SEPARATOR
+        MENUITEM "Instrument Mask\tAlt+T",      ID_EDIT_INSTRUMENTMASK
         MENUITEM SEPARATOR
         MENUITEM "Paste and Overwrite",         ID_EDIT_PASTEOVERWRITE
         MENUITEM "Paste and Mix",               ID_EDIT_PASTEMIX
@@ -141,7 +155,7 @@ BEGIN
     BEGIN
         MENUITEM "New",                         ID_MODULE_ADDINSTRUMENT
         MENUITEM "Remove",                      ID_MODULE_REMOVEINSTRUMENT
-        MENUITEM "Clone",                       ID_INSTRUMENT_CLONE33018
+        MENUITEM "Clone",                       ID_INSTRUMENT_CLONE
         MENUITEM "Load",                        ID_MODULE_LOADINSTRUMENT
         MENUITEM "Save",                        ID_MODULE_SAVEINSTRUMENT
         MENUITEM "Edit\tCtrl+I",                ID_MODULE_EDITINSTRUMENT
@@ -206,12 +220,13 @@ BEGIN
     VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     VK_F4,          ID_FILE_CLOSE,          VIRTKEY, ALT, NOINVERT
+    "E",            ID_FILE_CREATE_NSF,     VIRTKEY, CONTROL, NOINVERT
     "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
     VK_F1,          ID_HELP,                VIRTKEY, NOINVERT
     VK_F12,         ID_TRACKER_KILLSOUND,   VIRTKEY, NOINVERT
-    "E",            ID_FILE_CREATE_NSF,     VIRTKEY, CONTROL, NOINVERT
+    "P",            ID_MODULE_MODULEPROPERTIES, VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -220,22 +235,23 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOGEX 0, 0, 264, 206
+IDD_ABOUTBOX DIALOGEX 0, 0, 264, 222
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About FamiTracker"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     LTEXT           "FamiTracker Version x.x.x\n\nA Famicom/NES music tracker",IDC_ABOUT,54,7,119,26,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2005 - 2010 jsr",IDC_STATIC,54,38,118,9
+    LTEXT           "Copyright (C) 2005 - 2011 jsr",IDC_STATIC,54,38,118,8
     DEFPUSHBUTTON   "OK",IDOK,207,14,50,16,WS_GROUP
-    LTEXT           "* Blip_buffer 0.4.0 is Copyright (C) blargg (http://www.slack.net/~ant/nes-emu/)\n* Fast Fourirer Transform code is (C) Reliable Software\n* YM2413 emulator is written by Mitsutaka Okazaki\n* Export plugin support is by Gradualore",IDC_STATIC,54,136,203,41
-    LTEXT           "E-mail: \nWeb:",IDC_STATIC,54,55,24,18
-    LTEXT           "This software is licensed under the GNU General Public\n License. Source is available on the webpage.",IDC_STATIC,54,110,203,18
+    LTEXT           "Libraries:\n* Blip_buffer 0.4.0 is Copyright (C) blargg (http://www.slack.net/~ant/nes-emu/)\n* Fast Fourier Transform code is (C) Reliable Software\n* YM2413 emulator is written by Mitsutaka Okazaki",IDC_STATIC,54,173,203,44
+    LTEXT           "E-mail:",IDC_STATIC,54,55,24,10
+    LTEXT           "This software is licensed under the GNU General Public\n License. Source is available on the webpage.",IDC_STATIC,54,113,203,18
     ICON            IDR_MAINFRAME,IDC_STATIC,7,15,21,20,SS_REALSIZEIMAGE
-    LTEXT           "* Icon is made by Kugenhetz\n* Toolbar icons are made by ilkke\n",IDC_STATIC,54,178,203,21
-    LTEXT           "All comments and feedback are welcome\nGreets to everyone at the 2A03.org forum and everyone who has contributed with bug reports and suggestions!",IDC_STATIC,54,79,203,27
-    LTEXT           "zxy965r@tninet.se",IDC_MAIL,84,54,64,10,SS_NOTIFY
-    LTEXT           "http://famitracker.shoodot.net",IDC_WEBPAGE,84,63,103,9,SS_NOTIFY
+    LTEXT           "Contributions:\n* Export plugin support by Gradualore\n* Icon is made by Kuhneghetz\n* Toolbar icons are made by ilkke\n",IDC_STATIC,54,136,203,33
+    LTEXT           "All comments and feedback are welcome\nGreets to everyone at the 2A03.org forum and everyone who has contributed with bug reports and suggestions!",IDC_STATIC,54,81,203,27
+    LTEXT           "zxy965r@tninet.se",IDC_MAIL,84,55,64,10,SS_NOTIFY
+    LTEXT           "http://famitracker.shoodot.net",IDC_WEBPAGE,84,65,103,9,SS_NOTIFY
+    LTEXT           "Web:",IDC_STATIC,54,65,24,9
 END
 
 
@@ -245,7 +261,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,3,5,0
+ FILEVERSION 0,3,6,0
  PRODUCTVERSION 1,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -263,9 +279,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "jsr software"
             VALUE "FileDescription", "NES/Famicom sound tracker"
-            VALUE "FileVersion", "0.3.5"
+            VALUE "FileVersion", "0.3.6"
             VALUE "InternalName", "FamiTracker.exe"
-            VALUE "LegalCopyright", " (c) jsr 2005-2010 All rights reserved."
+            VALUE "LegalCopyright", " (c) jsr 2005-2011 All rights reserved."
             VALUE "OriginalFilename", "FamiTracker.exe"
             VALUE "ProductName", "FamiTracker"
             VALUE "ProductVersion", "1.0.0.0"
@@ -295,7 +311,9 @@ BEGIN
         VERTGUIDE, 78
         VERTGUIDE, 84
         TOPMARGIN, 7
-        BOTTOMMARGIN, 201
+        BOTTOMMARGIN, 217
+        HORZGUIDE, 60
+        HORZGUIDE, 69
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -312,7 +330,6 @@ BEGIN
     ID_INDICATOR_RATE       "000 Hz"
     ID_INDICATOR_TIME       "00:00:00 "
     IDS_CLIPBOARD_ERROR     "Could not register clipboard format"
-    IDS_FILE_OPEN_ERROR     "Could not open file, make sure it isn't shared with other applications"
     IDS_FILE_VALID_ERROR    "File is not a valid FamiTracker module"
     IDS_FILE_VERSION_ERROR  "File version is not supported"
     IDS_INST_LIMIT          "You cannot add more instruments"
@@ -446,6 +463,8 @@ BEGIN
     IDS_REMOVE_INSTRUMENTS  "Do you want to remove all unused instruments? There is no undo for this action."
     IDS_INVALID_INST_FILE   "Could not open instrument file"
     IDS_REMOVE_PATTERNS     "Do you want to remove all unused patterns? There is no undo for this action."
+    IDS_SOUND_FAIL          "It appears the current sound settings aren't working, change settings and try again!"
+    IDS_UNDERRUN_MESSAGE    "Audio buffer underrun, increase audio buffer size or decrease CPU utilization."
 END
 
 STRINGTABLE 
@@ -453,7 +472,7 @@ BEGIN
     ID_TRACKER_PLAY         "Play module\nPlay"
     ID_TRACKER_PLAYPATTERN  "Play and loop current pattern\nPlay and loop"
     ID_TRACKER_STOP         "Stop playing\nStop"
-    ID_TRACKER_EDIT         "Enable/disable editing mode\nToggle edit mode"
+    ID_TRACKER_EDIT         "Enable/disable edit mode\nToggle edit mode"
     ID_TRACKER_KILLSOUND    "Promptly stop all channels"
 END
 
@@ -481,7 +500,7 @@ BEGIN
     ID_TRANSPOSE_DECREASENOTE "Decrease selected note/notes by one step"
     ID_TRANSPOSE_INCREASEOCTAVE "Increase selected octave/octaves by one step"
     ID_TRANSPOSE_DECREASEOCTAVE "Decrease selected octave/octaves by one step"
-    ID_EDIT_SELECTALL       "Select pattern"
+    ID_EDIT_SELECTALL       "Select pattern or all patterns\nSelect All"
 END
 
 STRINGTABLE 
@@ -491,6 +510,7 @@ BEGIN
     ID_FRAME_INSERT         "Insert a new frame on current location\nAdd frame"
     ID_FRAME_REMOVE         "Remove current frame\nRemove frame"
     ID_TRACKER_PLAYROW      "Plays a single row"
+    ID_FILE_IMPORTMIDI      "Imports a MIDI file\nImport MIDI"
 END
 
 STRINGTABLE 
@@ -502,14 +522,14 @@ STRINGTABLE
 BEGIN
     ID_BUTTON32892          "FamiTracker settings"
     ID_SPEED_DEFAULT        "Chooses default playback rate corresponding to selected video standard"
-    ID_MODULE_MODULEPROPERTIES "Module properties"
+    ID_MODULE_MODULEPROPERTIES "Opens the module properties window"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_FILE_LOAD_ERROR     "Couldn't load file properly"
+    IDS_FILE_LOAD_ERROR     "Couldn't load file properly. Make sure you have the latest version of FamiTracker."
     IDS_CONFIG_WINDOW       "FamiTracker configuration"
-    IDS_WELCOME             "Welcome to FamiTracker, please press F1 for help"
+    IDS_WELCOME             "Welcome to FamiTracker, press F1 for help"
 END
 
 STRINGTABLE 
@@ -517,14 +537,15 @@ BEGIN
     ID_EDIT_PASTEMIX        "Pasted notes will mix with existing notes"
     ID_MODULE_MOVEFRAMEDOWN "Move selected frame one step down\nMove frame down"
     ID_MODULE_MOVEFRAMEUP   "Move selected frame one step up\nMove frame up"
-    ID_MODULE_SAVEINSTRUMENT "Save instruments to files"
-    ID_MODULE_LOADINSTRUMENT "Load instruments from files"
+    ID_MODULE_SAVEINSTRUMENT "Save instrument to file\nSave instrument"
+    ID_MODULE_LOADINSTRUMENT "Load instrument from file\nLoad instrument"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_MODULE_ADDINSTRUMENT "Add a new instrument"
-    ID_MODULE_REMOVEINSTRUMENT "Remove selected instrument"
+    ID_MODULE_ADDINSTRUMENT "Add a new instrument to the module\nAdd instrument"
+    ID_MODULE_REMOVEINSTRUMENT 
+                            "Remove instrument from module\nRemove instrument"
 END
 
 STRINGTABLE 
@@ -535,7 +556,10 @@ BEGIN
     ID_TRACKER_SWITCHTOTRACKINSTRUMENT 
                             "Switch to channel instruments when playing"
     ID_FRAME_INSERT_UNIQUE  "Insert new frame with empty patterns"
+    ID_FILE_CREATEWAV       "Saves the file as a WAV-file\nCreate WAV"
+    ID_VIEW_CONTROLPANEL    "Show or hide the control panel"
     ID_EDIT_CLEARPATTERNS   "Resets all patterns and frames"
+    ID_EDIT_INTERPOLATE     "Interpolates a selection between two values\nInterpolate"
 END
 
 STRINGTABLE 
@@ -543,7 +567,7 @@ BEGIN
     ID_TRACKER_SOLOCHANNEL  "Mutes/unmutes all but the selected channel"
     ID_TRACKER_TOGGLECHANNEL "Mute/unmute selected channel"
     ID_EDIT_GRADIENT        "Interpolates a selection of values"
-    ID_MODULE_EDITINSTRUMENT "Edit instrument"
+    ID_MODULE_EDITINSTRUMENT "Open instrument editor\nEdit instrument"
 END
 
 STRINGTABLE 
@@ -562,7 +586,24 @@ END
 
 STRINGTABLE 
 BEGIN
+    ID_EDIT_REVERSE         "Reverses a selection\nReverse"
     ID_TRACKER_DPCM         "Display information about the DPCM channel"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_INSTRUMENT_CLONE     "Create a copy of selected instrument\nClone instrument"
+    ID_EDIT_REPLACEINSTRUMENT 
+                            "Replaces all instruments in a selection with the selected instrument\nReplace instrument"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_CLEANUP_REMOVEUNUSEDPATTERNS 
+                            "Removes all unused patterns\nRemove unused patterns"
+    ID_HELP_EFFECTTABLE     "Open help window with effect table"
+    ID_CLEANUP_REMOVEUNUSEDINSTRUMENTS 
+                            "Removes all unused instruments\nRemove unused instruments"
 END
 
 #endif    // English (U.S.) resources
@@ -617,6 +658,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Interpolate\tCtrl+G",        ID_EDIT_INTERPOLATE
         MENUITEM "&Reverse\tCtrl+R",            ID_EDIT_REVERSE
+        MENUITEM "Pick up row",                 ID_POPUP_PICKUPROW
         MENUITEM SEPARATOR
         MENUITEM "&Toggle channel\tAlt+F9",     ID_POPUP_TOGGLECHANNEL
         MENUITEM "&Solo channel\tAlt+F10",      ID_POPUP_SOLOCHANNEL
@@ -662,6 +704,17 @@ BEGIN
         MENUITEM "Save",                        IDC_SAVE
         MENUITEM "Load",                        IDC_LOAD
         MENUITEM "Import",                      IDC_IMPORT
+    END
+END
+
+IDR_SAMPLE_WND_POPUP MENU 
+BEGIN
+    POPUP "Popup"
+    BEGIN
+        MENUITEM "Sample graph 1",              ID_POPUP_SAMPLEGRAPH1
+        MENUITEM "Sample graph 2",              ID_POPUP_SAMPLEGRAPH2
+        MENUITEM "Spectrum analyzer",           ID_POPUP_SPECTRUMANALYZER
+        MENUITEM "Nothing",                     ID_POPUP_NOTHING
     END
 END
 
@@ -731,22 +784,25 @@ BEGIN
     LTEXT           "60 Hz",IDC_SPEED,112,11,26,12
 END
 
-IDD_PCMIMPORT DIALOGEX 0, 0, 205, 90
+IDD_PCMIMPORT DIALOGEX 0, 0, 211, 134
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "PCM import"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,148,24,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,148,41,50,14
+    DEFPUSHBUTTON   "OK",IDOK,154,24,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,154,41,50,14
     GROUPBOX        "Quality: 0",IDC_QUALITY_FRM,7,7,136,36
     CONTROL         "",IDC_QUALITY,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,30,19,90,15
     LTEXT           "Low",IDC_STATIC,15,21,15,10
     LTEXT           "High",IDC_STATIC,123,21,16,10
-    GROUPBOX        "Volume: 0",IDC_VOLUME_FRM,7,47,136,36
+    GROUPBOX        "Volume: 0",IDC_VOLUME_FRM,7,47,136,35
     CONTROL         "",IDC_VOLUME,"msctls_trackbar32",TBS_AUTOTICKS | WS_TABSTOP,30,59,90,15
     LTEXT           "Low",IDC_STATIC,15,61,15,10
     LTEXT           "High",IDC_STATIC,123,61,16,10
-    PUSHBUTTON      "Preview",IDC_PREVIEW,148,7,50,14
+    PUSHBUTTON      "Preview",IDC_PREVIEW,154,7,50,14
+    GROUPBOX        "File info",IDC_STATIC,7,86,136,40
+    LTEXT           "Static",IDC_SAMPLE_RATE,15,99,118,8
+    LTEXT           "Static",IDC_RESAMPLING,15,111,118,8
 END
 
 IDD_INSTRUMENT_INTERNAL DIALOGEX 0, 0, 372, 172
@@ -850,7 +906,7 @@ BEGIN
     CONTROL         "Free cursor edit",IDC_OPT_FREECURSOR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,41,113,9
     CONTROL         "Preview wave-files",IDC_OPT_WAVEPREVIEW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,53,113,9
     CONTROL         "Key repeat",IDC_OPT_KEYREPEAT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,65,113,9
-    GROUPBOX        "Tracker edit style",IDC_STATIC,138,7,135,48
+    GROUPBOX        "Pattern edit style",IDC_STATIC,138,7,135,48
     CONTROL         "Show row numbers in hex",IDC_OPT_HEXROW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,77,113,9
     CONTROL         "Preview next/previous frame",IDC_OPT_FRAMEPREVIEW,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,89,113,9
@@ -896,7 +952,7 @@ BEGIN
     EDITTEXT        IDC_SONGNAME,34,135,100,12,ES_AUTOHSCROLL
     CONTROL         "",IDC_SONGLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | WS_BORDER | WS_TABSTOP,14,18,120,114
     LTEXT           " Title",IDC_STATIC,14,135,17,12,SS_CENTERIMAGE
-    PUSHBUTTON      "Import file",IDC_SONG_IMPORT,138,86,60,14,NOT WS_VISIBLE
+    PUSHBUTTON      "Import file",IDC_SONG_IMPORT,138,86,60,14
     GROUPBOX        "Vibrato",IDC_STATIC,7,194,199,31
     COMBOBOX        IDC_VIBRATO,14,204,184,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
@@ -1010,6 +1066,7 @@ BEGIN
     EDITTEXT        IDC_OUTPUT,14,132,206,124,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
     GROUPBOX        "Type of file",IDC_STATIC,7,84,220,29
     COMBOBOX        IDC_TYPE,16,95,204,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Play",IDC_PLAY,174,68,53,14,NOT WS_VISIBLE
 END
 
 IDD_INSTRUMENT_VRC7 DIALOGEX 0, 0, 372, 172
@@ -1120,9 +1177,9 @@ BEGIN
     EDITTEXT        IDC_MOD_DELAY,312,57,43,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_MOD_DELAY_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,309,57,11,14
     PUSHBUTTON      "Flat",IDC_MOD_PRESET_FLAT,318,131,46,12
-    PUSHBUTTON      "Vibrato",IDC_MOD_PRESET_VIBRATO,318,148,46,12
+    PUSHBUTTON      "Sine",IDC_MOD_PRESET_SINE,318,148,46,12
     GROUPBOX        "Frequency modulation",IDC_STATIC,236,7,128,70
-    EDITTEXT        IDC_WAVE,235,85,129,13,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
+    EDITTEXT        IDC_WAVE,235,85,129,13,ES_AUTOHSCROLL
     EDITTEXT        IDC_MODULATION,235,101,129,13,ES_AUTOHSCROLL
     LTEXT           "Wave",IDC_STATIC,197,86,31,10
     LTEXT           "Modulation",IDC_STATIC,197,102,35,10
@@ -1157,7 +1214,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDC_OK,336,178,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,336,197,50,14
-    CONTROL         "",IDC_SAMPLE,"Static",SS_WHITERECT | SS_NOTIFY | SS_SUNKEN,7,7,379,150
+    CONTROL         "",IDC_SAMPLE,"Static",SS_WHITERECT | SS_NOTIFY | SS_SUNKEN,7,7,379,132
     PUSHBUTTON      "Play",IDC_PLAY,7,197,50,14
     LTEXT           "Offset: 0, Pos: 0",IDC_POS,7,167,79,11,SS_SUNKEN
     PUSHBUTTON      "Delete",IDC_DELETE,265,178,50,14
@@ -1169,11 +1226,24 @@ BEGIN
 END
 
 IDD_INSTRUMENT_FDS_ENVELOPE DIALOGEX 0, 0, 372, 172
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_SYSMENU
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_SEQUENCE,75,151,290,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_SEQUENCE_STRING,75,151,290,14,ES_AUTOHSCROLL
     COMBOBOX        IDC_TYPE,8,151,63,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_CHANNELS DIALOGEX 0, 0, 236, 199
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Channels"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,179,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,179,22,50,14
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_LIST | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,166,185
+    PUSHBUTTON      "Move up",IDCANCEL2,179,39,50,14
+    PUSHBUTTON      "Move down",IDCANCEL3,179,55,50,14
+    PUSHBUTTON      "Visible",IDCANCEL4,179,71,50,14
 END
 
 
@@ -1227,9 +1297,12 @@ BEGIN
     IDD_PCMIMPORT, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 198
+        RIGHTMARGIN, 204
+        VERTGUIDE, 15
+        VERTGUIDE, 143
         TOPMARGIN, 7
-        BOTTOMMARGIN, 83
+        BOTTOMMARGIN, 127
+        HORZGUIDE, 47
     END
 
     IDD_INSTRUMENT_INTERNAL, DIALOG
@@ -1533,6 +1606,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 165
     END
+
+    IDD_CHANNELS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 229
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 192
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -1601,13 +1682,6 @@ END
 // Dialog Info
 //
 
-IDD_MAINFRAME DLGINIT
-BEGIN
-    IDC_SUBTUNE, 0x403, 8, 0
-0x7254, 0x6361, 0x206b, 0x0031, 
-    0
-END
-
 IDD_CONFIG_GENERAL DLGINIT
 BEGIN
     IDC_PAGELENGTH, 0x403, 2, 0
@@ -1639,23 +1713,6 @@ BEGIN
 0x0036, 
     IDC_OCTAVE, 0x403, 2, 0
 0x0037, 
-    0
-END
-
-IDD_EXPORT DLGINIT
-BEGIN
-    IDC_TYPE, 0x403, 26, 0
-0x534e, 0x2046, 0x202d, 0x694e, 0x746e, 0x6e65, 0x6f64, 0x5320, 0x756f, 
-0x646e, 0x4620, 0x6c69, 0x0065, 
-    IDC_TYPE, 0x403, 21, 0
-0x454e, 0x2053, 0x202d, 0x4e69, 0x5345, 0x5220, 0x4d4f, 0x6920, 0x616d, 
-0x6567, "\000" 
-    IDC_TYPE, 0x403, 21, 0
-0x4942, 0x204e, 0x202d, 0x6152, 0x2077, 0x756d, 0x6973, 0x2063, 0x6164, 
-0x6174, "\000" 
-    IDC_TYPE, 0x403, 27, 0
-0x5250, 0x2047, 0x202d, 0x6c43, 0x6165, 0x206e, 0x3233, 0x426b, 0x5220, 
-0x4d4f, 0x6920, 0x616d, 0x6567, "\000" 
     0
 END
 

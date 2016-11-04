@@ -32,22 +32,23 @@
 #include "InstrumentEditorN106.h"
 #include "MainFrm.h"
 
-const int KEYBOARD_TOP		= 323;
-const int KEYBOARD_LEFT		= 12;
-const int KEYBOARD_WIDTH	= 561;
-const int KEYBOARD_HEIGHT	= 58;
+// Constants
+const int CInstrumentEditDlg::KEYBOARD_TOP	  = 323;
+const int CInstrumentEditDlg::KEYBOARD_LEFT	  = 12;
+const int CInstrumentEditDlg::KEYBOARD_WIDTH  = 561;
+const int CInstrumentEditDlg::KEYBOARD_HEIGHT = 58;
 
-const char *CHIP_NAMES[] = {"", "2A03", "VRC6", "VRC7", "FDS", "N106", "5B"};
+const TCHAR *CInstrumentEditDlg::CHIP_NAMES[] = {_T(""), _T("2A03"), _T("VRC6"), _T("VRC7"), _T("FDS"), _T("N106"), _T("5B")};
 
 // CInstrumentEditDlg dialog
 
 IMPLEMENT_DYNAMIC(CInstrumentEditDlg, CDialog)
 
 CInstrumentEditDlg::CInstrumentEditDlg(CWnd* pParent /*=NULL*/)
-	: CDialog(CInstrumentEditDlg::IDD, pParent)
+	: CDialog(CInstrumentEditDlg::IDD, pParent),
+	m_bOpened(false),
+	m_iInstrument(-1)
 {
-	m_bOpened = false;
-	m_iInstrument = -1;
 }
 
 CInstrumentEditDlg::~CInstrumentEditDlg()
@@ -79,11 +80,14 @@ BOOL CInstrumentEditDlg::OnInitDialog()
 	m_iSelectedInstType = -1;
 	m_iLastNote = -1;
 	m_bOpened = true;
+	m_iPanels = 0;
 
-	for (int i = 0; i < PANEL_COUNT; i++)
+	for (int i = 0; i < PANEL_COUNT; ++i)
 		m_pPanels[i] = NULL;
 
-	m_iPanels = 0;
+	// Get active document
+	CFrameWnd *pFrameWnd = static_cast<CFrameWnd*>(GetParent());
+	m_pDocument = static_cast<CFamiTrackerDoc*>(pFrameWnd->GetActiveDocument());
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -131,24 +135,14 @@ void CInstrumentEditDlg::ClearPanels()
 
 void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 {
-	CFamiTrackerDoc *pDoc = static_cast<CFamiTrackerDoc*>(theApp.GetFirstDocument());
 	CString Title;
 	char Name[256];
-/*
-	if (Index == m_iInstrument)
-		return;
-
-	m_iInstrument = Index;
-*/
-
-	CInstrument *pInst = pDoc->GetInstrument(Index);
+	CInstrument *pInst = m_pDocument->GetInstrument(Index);
 	int InstType = pInst->GetType();
 
 	// Dialog title
-	CString Chip;
-	pDoc->GetInstrumentName(Index, Name);
-	
-	Title.Format("Instrument editor - %02X. %s (%s)", Index, Name, CHIP_NAMES[InstType]);
+	m_pDocument->GetInstrumentName(Index, Name);	
+	Title.Format(_T("Instrument editor - %02X. %s (%s)"), Index, Name, CHIP_NAMES[InstType]);
 	SetWindowText(Title);
 
 	if (InstType != m_iSelectedInstType) {
@@ -157,8 +151,7 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 
 		switch (InstType) {
 			case INST_2A03: {
-				bool bShowDPCM = (((CFamiTrackerView*)theApp.GetDocumentView())->GetSelectedChannel() == 4) || 
-					(((CInstrument2A03*)pInst)->AssignedSamples());
+					bool bShowDPCM = (((CFamiTrackerView*)theApp.GetActiveView())->GetSelectedChannel() == 4) || (((CInstrument2A03*)pInst)->AssignedSamples());
 					InsertPane(new CInstrumentEditor2A03(), !bShowDPCM);
 					InsertPane(new CInstrumentEditorDPCM(), bShowDPCM);
 				}
@@ -192,9 +185,7 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	CTabCtrl *pTabControl = (CTabCtrl*)GetDlgItem(IDC_INST_TAB);
-	int Selection;
-
-	Selection = pTabControl->GetCurSel();
+	int Selection = pTabControl->GetCurSel();
 
 	for (int i = 0; i < PANEL_COUNT; i++) {
 		if (m_pPanels[i] != NULL) {
@@ -203,6 +194,7 @@ void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 
 	m_pPanels[Selection]->ShowWindow(SW_SHOW);
+	m_pPanels[Selection]->SetFocus();
 
 	*pResult = 0;
 }
@@ -298,7 +290,7 @@ void CInstrumentEditDlg::ChangeNoteState(int Note)
 
 void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 {
-	CFamiTrackerView *pView = ((CFamiTrackerView*)theApp.GetDocumentView());
+	CFamiTrackerView *pView = ((CFamiTrackerView*)theApp.GetActiveView());
 	stChanNote NoteData;
 	int Octave;
 	int Note;
@@ -383,7 +375,7 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 		m_iLastNote = Note + (Octave * 12);
 	}
 	else {
-		NoteData.Note			= HALT;
+		NoteData.Note			= pView->DoRelease() ? RELEASE : HALT;//HALT;
 		NoteData.Octave			= 0;
 		NoteData.Vol			= 0;
 		NoteData.Instrument		= 0;
@@ -396,20 +388,22 @@ void CInstrumentEditDlg::SwitchOnNote(int x, int y)
 	}
 }
 
-void CInstrumentEditDlg::SwitchOffNote()
+void CInstrumentEditDlg::SwitchOffNote(bool ForceHalt)
 {
 	stChanNote NoteData;
 
-	int Channel = ((CFamiTrackerView*)theApp.GetDocumentView())->GetSelectedChannel();
+	CFamiTrackerView *pView = (CFamiTrackerView*)theApp.GetActiveView();
 
-	NoteData.Note			= HALT;
+	int Channel = pView->GetSelectedChannel();
+
+	NoteData.Note			= (pView->DoRelease() && !ForceHalt) ? RELEASE : HALT;
 	NoteData.Octave			= 0;
 	NoteData.Vol			= 0x10;
-	NoteData.Instrument		= 0;
+	NoteData.Instrument		= pView->GetInstrument();// 0;
 	memset(NoteData.EffNumber, 0, 4);
 	memset(NoteData.EffParam, 0, 4);
 
-	((CFamiTrackerView*)theApp.GetDocumentView())->FeedNote(Channel, &NoteData);
+	pView->FeedNote(Channel, &NoteData);
 
 	m_iLastNote = -1;
 }
@@ -423,7 +417,7 @@ void CInstrumentEditDlg::OnLButtonDown(UINT nFlags, CPoint point)
 
 void CInstrumentEditDlg::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	SwitchOffNote();
+	SwitchOffNote(false);
 	CDialog::OnLButtonUp(nFlags, point);
 }
 
@@ -468,7 +462,7 @@ void CInstrumentEditDlg::OnCancel()
 void CInstrumentEditDlg::OnNcLButtonUp(UINT nHitTest, CPoint point)
 {
 	// Mouse was released outside the client area
-	SwitchOffNote();
+	SwitchOffNote(true);
 	CDialog::OnNcLButtonUp(nHitTest, point);
 }
 
@@ -476,4 +470,3 @@ bool CInstrumentEditDlg::IsOpened()
 {
 	return m_bOpened;
 }
-

@@ -133,25 +133,25 @@ BOOL CConfigGeneral::OnApply()
 	else if (m_iPageStepSize > MAX_PATTERN_LENGTH)
 		m_iPageStepSize = MAX_PATTERN_LENGTH;
 
-	theApp.m_pSettings->General.bWrapCursor		= m_bWrapCursor;
-	theApp.m_pSettings->General.bWrapFrames		= m_bWrapFrames;
-	theApp.m_pSettings->General.bFreeCursorEdit	= m_bFreeCursorEdit;
-	theApp.m_pSettings->General.bWavePreview	= m_bPreviewWAV;
-	theApp.m_pSettings->General.bKeyRepeat		= m_bKeyRepeat;
-	theApp.m_pSettings->General.bRowInHex		= m_bRowInHex;
-	theApp.m_pSettings->General.iEditStyle		= m_iEditStyle;
-	theApp.m_pSettings->General.bFramePreview	= m_bFramePreview;
-	theApp.m_pSettings->General.bNoDPCMReset	= m_bNoDPCMReset;
-	theApp.m_pSettings->General.bNoStepMove		= m_bNoStepMove;
-	theApp.m_pSettings->General.iPageStepSize	= m_iPageStepSize;
-	theApp.m_pSettings->General.bPatternColor	= m_bPatternColors;
-	theApp.m_pSettings->General.bPullUpDelete	= m_bPullUpDelete;
-	theApp.m_pSettings->General.bBackups		= m_bBackups;
+	theApp.GetSettings()->General.bWrapCursor		= m_bWrapCursor;
+	theApp.GetSettings()->General.bWrapFrames		= m_bWrapFrames;
+	theApp.GetSettings()->General.bFreeCursorEdit	= m_bFreeCursorEdit;
+	theApp.GetSettings()->General.bWavePreview		= m_bPreviewWAV;
+	theApp.GetSettings()->General.bKeyRepeat		= m_bKeyRepeat;
+	theApp.GetSettings()->General.bRowInHex			= m_bRowInHex;
+	theApp.GetSettings()->General.iEditStyle		= m_iEditStyle;
+	theApp.GetSettings()->General.bFramePreview		= m_bFramePreview;
+	theApp.GetSettings()->General.bNoDPCMReset		= m_bNoDPCMReset;
+	theApp.GetSettings()->General.bNoStepMove		= m_bNoStepMove;
+	theApp.GetSettings()->General.iPageStepSize		= m_iPageStepSize;
+	theApp.GetSettings()->General.bPatternColor		= m_bPatternColors;
+	theApp.GetSettings()->General.bPullUpDelete		= m_bPullUpDelete;
+	theApp.GetSettings()->General.bBackups			= m_bBackups;
 
-	theApp.m_pSettings->Keys.iKeyNoteCut		= m_iKeyNoteCut;
-	theApp.m_pSettings->Keys.iKeyNoteRelease	= m_iKeyNoteRelease;
-	theApp.m_pSettings->Keys.iKeyClear			= m_iKeyClear;
-	theApp.m_pSettings->Keys.iKeyRepeat			= m_iKeyRepeat;
+	theApp.GetSettings()->Keys.iKeyNoteCut			= m_iKeyNoteCut;
+	theApp.GetSettings()->Keys.iKeyNoteRelease		= m_iKeyNoteRelease;
+	theApp.GetSettings()->Keys.iKeyClear			= m_iKeyClear;
+	theApp.GetSettings()->Keys.iKeyRepeat			= m_iKeyRepeat;
 
 	return CPropertyPage::OnApply();
 }
@@ -162,25 +162,25 @@ BOOL CConfigGeneral::OnInitDialog()
 
 	CPropertyPage::OnInitDialog();
 
-	m_bWrapCursor		= theApp.m_pSettings->General.bWrapCursor;
-	m_bWrapFrames		= theApp.m_pSettings->General.bWrapFrames;
-	m_bFreeCursorEdit	= theApp.m_pSettings->General.bFreeCursorEdit;
-	m_bPreviewWAV		= theApp.m_pSettings->General.bWavePreview;
-	m_bKeyRepeat		= theApp.m_pSettings->General.bKeyRepeat;
-	m_bRowInHex			= theApp.m_pSettings->General.bRowInHex;
-	m_iEditStyle		= theApp.m_pSettings->General.iEditStyle;
-	m_bFramePreview		= theApp.m_pSettings->General.bFramePreview;
-	m_bNoDPCMReset		= theApp.m_pSettings->General.bNoDPCMReset;
-	m_bNoStepMove		= theApp.m_pSettings->General.bNoStepMove;
-	m_iPageStepSize		= theApp.m_pSettings->General.iPageStepSize;
-	m_bPatternColors	= theApp.m_pSettings->General.bPatternColor;
-	m_bPullUpDelete		= theApp.m_pSettings->General.bPullUpDelete;
-	m_bBackups			= theApp.m_pSettings->General.bBackups;
+	m_bWrapCursor		= theApp.GetSettings()->General.bWrapCursor;
+	m_bWrapFrames		= theApp.GetSettings()->General.bWrapFrames;
+	m_bFreeCursorEdit	= theApp.GetSettings()->General.bFreeCursorEdit;
+	m_bPreviewWAV		= theApp.GetSettings()->General.bWavePreview;
+	m_bKeyRepeat		= theApp.GetSettings()->General.bKeyRepeat;
+	m_bRowInHex			= theApp.GetSettings()->General.bRowInHex;
+	m_iEditStyle		= theApp.GetSettings()->General.iEditStyle;
+	m_bFramePreview		= theApp.GetSettings()->General.bFramePreview;
+	m_bNoDPCMReset		= theApp.GetSettings()->General.bNoDPCMReset;
+	m_bNoStepMove		= theApp.GetSettings()->General.bNoStepMove;
+	m_iPageStepSize		= theApp.GetSettings()->General.iPageStepSize;
+	m_bPatternColors	= theApp.GetSettings()->General.bPatternColor;
+	m_bPullUpDelete		= theApp.GetSettings()->General.bPullUpDelete;
+	m_bBackups			= theApp.GetSettings()->General.bBackups;
 
-	m_iKeyNoteCut = theApp.m_pSettings->Keys.iKeyNoteCut; 
-	m_iKeyNoteRelease = theApp.m_pSettings->Keys.iKeyNoteRelease; 
-	m_iKeyClear = theApp.m_pSettings->Keys.iKeyClear; 
-	m_iKeyRepeat = theApp.m_pSettings->Keys.iKeyRepeat;
+	m_iKeyNoteCut = theApp.GetSettings()->Keys.iKeyNoteCut; 
+	m_iKeyNoteRelease = theApp.GetSettings()->Keys.iKeyNoteRelease; 
+	m_iKeyClear = theApp.GetSettings()->Keys.iKeyClear; 
+	m_iKeyRepeat = theApp.GetSettings()->Keys.iKeyRepeat;
 
 	GetKeyNameText(MapVirtualKey(m_iKeyNoteCut, MAPVK_VK_TO_VSC) << 16, Text, 64);
 	SetDlgItemText(IDC_KEY_NOTE_CUT, Text);
@@ -295,6 +295,8 @@ BOOL CConfigGeneral::PreTranslateMessage(MSG* pMsg)
 				m_iKeyRepeat = pMsg->wParam;
 				SetDlgItemText(id, Text);
 				break;
+			default:
+				return CPropertyPage::PreTranslateMessage(pMsg);
 		}
 
 		SetModified();

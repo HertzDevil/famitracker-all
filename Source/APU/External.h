@@ -21,11 +21,14 @@
 #ifndef _EXTERNAL_H_
 #define _EXTERNAL_H_
 
-#include "mixer.h"
-#include "..\Blip_Buffer\Blip_buffer.h"
+class CMixer;
 
 class CExternal {
 public:
+	CExternal() {};
+	CExternal(CMixer *pMixer) : m_pMixer(pMixer) {};
+	virtual ~CExternal() {};
+
 protected:
 	CMixer *m_pMixer;
 };

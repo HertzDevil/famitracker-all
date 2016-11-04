@@ -1,25 +1,57 @@
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2010  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
+
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTracker.h"
 #include "SWSampleScope.h"
 
-CSWSampleScope::CSWSampleScope(bool bBlur)
+CSWSampleScope::CSWSampleScope(bool bBlur) :
+	m_pBlitBuffer(NULL),
+	m_pWindowBuf(NULL),
+	m_iCount(0),
+	m_bBlur(bBlur)
 {
-	m_iCount = 0;
-	m_bBlur = bBlur;
+}
+
+CSWSampleScope::~CSWSampleScope()
+{
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
+	SAFE_RELEASE_ARRAY(m_pWindowBuf);
 }
 
 void CSWSampleScope::Activate()
 {
 	memset(&bmi, 0, sizeof(BITMAPINFO));
-	bmi.bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biBitCount	= 32;
-	bmi.bmiHeader.biHeight		= WIN_HEIGHT;
-	bmi.bmiHeader.biWidth		= WIN_WIDTH;
-	bmi.bmiHeader.biPlanes		= 1;
+	bmi.bmiHeader.biSize	 = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biHeight	 = WIN_HEIGHT;
+	bmi.bmiHeader.biWidth	 = WIN_WIDTH;
+	bmi.bmiHeader.biPlanes	 = 1;
+
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
 
 	m_pBlitBuffer = new int[WIN_WIDTH * WIN_HEIGHT * 2];
 	memset(m_pBlitBuffer, 0, WIN_WIDTH * WIN_HEIGHT * sizeof(int));
+
+	SAFE_RELEASE_ARRAY(m_pWindowBuf);
 
 	m_pWindowBuf = new int[WIN_WIDTH];
 	m_iWindowBufPtr = 0;
@@ -27,8 +59,8 @@ void CSWSampleScope::Activate()
 
 void CSWSampleScope::Deactivate()
 {
-	delete [] m_pBlitBuffer;
-	delete [] m_pWindowBuf;
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
+	SAFE_RELEASE_ARRAY(m_pWindowBuf);
 }
 
 void CSWSampleScope::SetSampleData(int *pSamples, unsigned int iCount)
@@ -45,6 +77,12 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 	int GraphBgColor	= theApp.m_pSettings->Appearance.iColBackground;
 	*/
 
+#ifdef _DEBUG
+	static int _peak = 0;
+	static int _min = 0;
+	static int _max = 0;
+#endif
+
 	int GraphColor		= 0xFFFFFF;
 	int GraphColor2		= DIM(GraphColor, 50);
 	int GraphBgColor	= 0x000000;
@@ -58,10 +96,18 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 
 	while (i < m_iCount) {
 
-		m_pWindowBuf[m_iWindowBufPtr / 7] = m_pSamples[i++];
-		m_iWindowBufPtr++;
+#ifdef _DEBUG
+		if (_min > m_pSamples[i])
+			_min = m_pSamples[i];
+		if (_max < m_pSamples[i])
+			_max = m_pSamples[i];
+		if (abs(m_pSamples[i]) > _peak)
+			_peak = abs(m_pSamples[i]);
+#endif
 
-		if ((m_iWindowBufPtr / 7) > WIN_WIDTH) {
+		m_pWindowBuf[m_iWindowBufPtr++ / 7] = m_pSamples[i++];
+
+		if ((m_iWindowBufPtr / 7) >= WIN_WIDTH) {
 			m_iWindowBufPtr = 0;
 			int x = 0;
 			int y = 0;
@@ -71,11 +117,9 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 			l = (m_pWindowBuf[0] / 1000) + (WIN_HEIGHT / 2) - 1;
 
 			for (x = 0; x < WIN_WIDTH; x++) {
-			
 				s = (m_pWindowBuf[x] / 1000) + (WIN_HEIGHT / 2) - 1;
 
 				for (y = 0; y < WIN_HEIGHT; y++) {
-					
 					if ((y == s) || ((y > s && y <= l) || (y >= l && y < s))) {
 						if (m_bBlur) {
 							m_pBlitBuffer[(y + 0) * WIN_WIDTH + x] = 0xFFFFFF;
@@ -137,6 +181,19 @@ void CSWSampleScope::Draw(CDC *pDC, bool bMessage)
 				l = s;
 			}
 			StretchDIBits(*pDC, 0, 0, WIN_WIDTH, WIN_HEIGHT, 0, 0, WIN_WIDTH, WIN_HEIGHT, m_pBlitBuffer, &bmi, DIB_RGB_COLORS, SRCCOPY);
+
+#ifdef _DEBUG
+			CString PeakText;
+			_peak = _max - _min;
+			PeakText.Format(_T("%i"), _peak);
+			pDC->TextOut(0, 0, PeakText);
+			PeakText.Format(_T("-%gdB"), 20.0 * log(double(_peak) / 65535.0));
+			pDC->TextOut(0, 16, PeakText);
+			_peak = 0;
+			_min = 0;
+			_max = 0;
+#endif
+			
 		}
 	}	
 }

@@ -18,8 +18,6 @@
 ** must bear this legend.
 */
 
-#define WINVER 0x0500 
-
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "AboutDlg.h"
@@ -30,26 +28,60 @@
 BEGIN_MESSAGE_MAP(CLinkLabel, CStatic)
 	ON_WM_CTLCOLOR_REFLECT()
 	ON_WM_LBUTTONUP()
+	ON_WM_MOUSELEAVE()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
-CLinkLabel::CLinkLabel(char *address)
+
+CLinkLabel::CLinkLabel(CString address)
 {
-	m_pAddress = address;
+	m_strAddress = address;
+	m_bHover = false;
 }
 
 HBRUSH CLinkLabel::CtlColor(CDC* pDC, UINT /*nCtlColor*/)
 {
-	pDC->SetTextColor(0xFF0000);
+	pDC->SetTextColor(m_bHover ? 0x0000FF : 0xFF0000);
 	pDC->SetBkMode(TRANSPARENT);
 	return (HBRUSH)GetStockObject(NULL_BRUSH);
 }
 
 void CLinkLabel::OnLButtonUp(UINT nFlags, CPoint point)
 {
-	ShellExecute(NULL, "open", m_pAddress, NULL, NULL, SW_SHOWNORMAL);
+	ShellExecute(NULL, _T("open"), m_strAddress, NULL, NULL, SW_SHOWNORMAL);
 	CStatic::OnLButtonUp(nFlags, point);
 }
 
+void CLinkLabel::OnMouseLeave()
+{
+	m_bHover = false;
+	CRect rect, parentRect;
+	GetWindowRect(&rect);
+	GetParent()->GetWindowRect(parentRect);
+	rect.OffsetRect(-parentRect.left - GetSystemMetrics(SM_CXDLGFRAME), -parentRect.top - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYDLGFRAME));
+	GetParent()->RedrawWindow(rect);
+	CStatic::OnMouseLeave();
+}
+
+void CLinkLabel::OnMouseMove(UINT nFlags, CPoint point)
+{
+	if (!m_bHover) {
+		m_bHover = true;
+		CRect rect, parentRect;
+		GetWindowRect(&rect);
+		GetParent()->GetWindowRect(parentRect);
+		rect.OffsetRect(-parentRect.left - GetSystemMetrics(SM_CXDLGFRAME), -parentRect.top - GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYDLGFRAME));
+		GetParent()->RedrawWindow(rect);
+
+		TRACKMOUSEEVENT t;
+		t.cbSize = sizeof(TRACKMOUSEEVENT);
+		t.dwFlags = TME_LEAVE;
+		t.hwndTrack = m_hWnd;
+		TrackMouseEvent(&t);
+	}
+
+	CStatic::OnMouseMove(nFlags, point);
+}
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
 END_MESSAGE_MAP()
@@ -60,10 +92,8 @@ CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD), m_pMail(NULL), m_pWeb(NULL)
 
 CAboutDlg::~CAboutDlg()
 {
-	if (m_pMail)
-		delete m_pMail;
-	if (m_pWeb)
-		delete m_pWeb;
+	SAFE_RELEASE(m_pMail);
+	SAFE_RELEASE(m_pWeb);
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
@@ -74,17 +104,17 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 BOOL CAboutDlg::OnInitDialog()
 {
 	CString aboutString;
-	CString beta;
-#ifdef WIP
-	beta = "beta";
-#else
-	beta = "";
-#endif
-	aboutString.Format("FamiTracker Version %i.%i.%i %s\n\nA Famicom/NES music tracker", VERSION_MAJ, VERSION_MIN, VERSION_REV, beta);
-	SetDlgItemTextA(IDC_ABOUT, aboutString);
 
-	m_pMail = new CLinkLabel("mailto:zxy965r@tninet.se");
-	m_pWeb = new CLinkLabel("http://famitracker.shoodot.net");
+#ifdef WIP
+	aboutString.Format(_T("FamiTracker Version %i.%i.%i beta %i\n\nA Famicom/NES music tracker"), VERSION_MAJ, VERSION_MIN, VERSION_REV, VERSION_WIP);
+#else
+	aboutString.Format(_T("FamiTracker Version %i.%i.%i\n\nA Famicom/NES music tracker"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+#endif
+
+	SetDlgItemText(IDC_ABOUT, aboutString);
+
+	m_pMail = new CLinkLabel(_T("mailto:zxy965r@tninet.se"));
+	m_pWeb = new CLinkLabel(_T("http://famitracker.shoodot.net"));
 
 	m_pMail->SubclassDlgItem(IDC_MAIL, this);
 	m_pWeb->SubclassDlgItem(IDC_WEBPAGE, this);
@@ -96,9 +126,10 @@ BOOL CAboutDlg::OnInitDialog()
 	pFont->GetLogFont(&LogFont);
 	LogFont.lfUnderline = 1;
 	CFont *newFont = new CFont();
-	newFont->CreateFontIndirectA(&LogFont);
+	newFont->CreateFontIndirect(&LogFont);
 	m_pMail->SetFont(newFont);
 	m_pWeb->SetFont(newFont);
 
 	return TRUE;
 }
+

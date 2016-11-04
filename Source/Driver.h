@@ -93,7 +93,7 @@ const char DRIVER_VRC7[] = {
 	#include "drivers/drv_vrc7.h"
 };
 
-// FDS enabled, todo
+// FDS enabled
 const char DRIVER_FDS[] = {
 	#include "drivers/drv_fds.h"
 };

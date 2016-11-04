@@ -24,7 +24,6 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "Channels5B.h"
 

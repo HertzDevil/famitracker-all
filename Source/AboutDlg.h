@@ -23,13 +23,16 @@
 class CLinkLabel : public CStatic
 {
 public:
-	CLinkLabel(char *address);
+	CLinkLabel(CString address);
 protected:
 	DECLARE_MESSAGE_MAP()
-	char *m_pAddress;
+	CString m_strAddress;
+	bool m_bHover;
 public:
 	afx_msg HBRUSH CtlColor(CDC* /*pDC*/, UINT /*nCtlColor*/);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnMouseLeave();
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 };
 
 

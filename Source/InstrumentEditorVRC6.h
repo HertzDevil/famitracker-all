@@ -28,7 +28,7 @@ public:
 	CInstrumentEditorVRC6(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorVRC6();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "Konami VRC6"; };
+	virtual TCHAR *GetTitle() { return _T("Konami VRC6"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -46,7 +46,10 @@ protected:
 	void TranslateMML(CString String, int Max, int Min);
 
 protected:
-	static const char *INST_SETTINGS_VRC6[];
+	static LPCTSTR INST_SETTINGS_VRC6[];
+
+	static const int MAX_VOLUME = 15;
+	static const int MAX_DUTY = 7;
 
 protected:
 	CWnd				*m_pParentWin;

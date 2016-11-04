@@ -32,7 +32,7 @@ public:
 	CInstrumentEditorDPCM(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorDPCM();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "DPCM samples"; };
+	virtual TCHAR *GetTitle() { return _T("DPCM samples"); };
 
 // Dialog Data
 	enum { IDD = IDD_INSTRUMENT_DPCM };
@@ -49,8 +49,8 @@ protected:
 	void BuildKeyList();
 	void BuildSampleList();
 	void UpdateKey(int Index);
-	void LoadSample(char *FilePath, char *FileName);
-	void InsertSample(CDSample *pNewSample);
+	bool LoadSample(char *FilePath, char *FileName);
+	bool InsertSample(CDSample *pNewSample);
 
 	CDSample *GetSelectedSample();
 

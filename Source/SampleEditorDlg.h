@@ -28,31 +28,37 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CSampleView();
-	void DrawPlayCursor(int Pos);
-	void DrawStartCursor();
-	int GetStartOffset() const { return m_iStartCursor; };
-	int GetSelStart() const { return m_iSelStart; };
-	int GetSelEnd() const { return m_iSelEnd; };
-	void CalculateSample(CDSample *pSample, int Start);
-	int GetBlock(int Pixel) const;
-	int GetPixel(int Block) const;
-	void UpdateInfo();
+	virtual ~CSampleView();
+
+	void	DrawPlayCursor(int Pos);
+	void	DrawStartCursor();
+	void	CalculateSample(CDSample *pSample, int Start);
+	void	UpdateInfo();
+
+	int		GetStartOffset() const { return m_iStartCursor; };
+	int		GetSelStart() const { return (m_iSelStart < m_iSelEnd) ? m_iSelStart : m_iSelEnd; };
+	int		GetSelEnd() const { return (m_iSelStart > m_iSelEnd) ? m_iSelStart : m_iSelEnd; };
+	int		GetBlock(int Pixel) const;
+	int		GetPixel(int Block) const;
+
 private:
 	int *m_pSamples;
+
 	int m_iSize;
+	int m_iBlockSize;
 	int m_iSelStart;
 	int m_iSelEnd;
-
 	int m_iStartCursor;
-
 	double m_dSampleStep;
-	int m_iBlockSize;
-
 	bool m_bClicked;
 
-	CRect clientRect;
-	CDC copy;
-	CBitmap copyBmp;
+	CRect	m_clientRect;
+	CDC		m_dcCopy;
+	CBitmap m_bmpCopy;
+
+	CPen *m_pSolidPen;
+	CPen *m_pDashedPen;
+	CPen *m_pGrayDashedPen;
 
 public:
 	afx_msg void OnPaint();
@@ -60,6 +66,7 @@ public:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };
 
 // CSampleEditorDlg dialog

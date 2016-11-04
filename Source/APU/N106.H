@@ -22,12 +22,14 @@
 #define _N106_H_
 
 #include "external.h"
-#include "mixer.h"
+#include "Channel.h"
+
+class CMixer;
 
 class CN106Chan : public CExChannel {
 public:
 	CN106Chan(CMixer *pMixer, int ID, uint8 *pWaveData);
-	~CN106Chan();
+	virtual ~CN106Chan();
 	void Reset();
 	void Process(uint32 Time, uint8 ChannelsActive);
 	void Write(uint16 Address, uint8 Value);
@@ -42,7 +44,7 @@ private:
 class CN106 : public CExternal {
 public:
 	CN106(CMixer *pMixer);
-	~CN106();
+	virtual ~CN106();
 	void Reset();
 	void Process(uint32 Time);
 	void EndFrame();

@@ -39,15 +39,8 @@ CSampleEditorDlg::CSampleEditorDlg(CWnd* pParent /*=NULL*/, CDSample *pSample)
 
 CSampleEditorDlg::~CSampleEditorDlg()
 {
-	if (m_pSampleView)
-		delete m_pSampleView;
-	
-	if (m_pSample) {
-		if (m_pSample->SampleData)
-			delete [] m_pSample->SampleData;
-
-		delete m_pSample;
-	}
+	SAFE_RELEASE(m_pSampleView);
+	SAFE_RELEASE(m_pSample);
 }
 
 void CSampleEditorDlg::DoDataExchange(CDataExchange* pDX)
@@ -187,14 +180,15 @@ void CSampleEditorDlg::MoveControls()
 
 void CSampleEditorDlg::OnBnClickedOk()
 {
+	m_pOriginalSample->Allocate(m_pSample->SampleSize, m_pSample->SampleData);
+/*
 	// Store new sample
 	delete [] m_pOriginalSample->SampleData;
 
 	m_pOriginalSample->SampleData = new char[m_pSample->SampleSize];
 	m_pOriginalSample->SampleSize = m_pSample->SampleSize;
 	memcpy(m_pOriginalSample->SampleData, m_pSample->SampleData, m_pSample->SampleSize);
-
-	//m_pOriginalSample->SampleData = m_pSample->SampleData;
+*/
 	EndDialog(0);
 }
 
@@ -211,8 +205,8 @@ void CSampleEditorDlg::OnBnClickedPlay()
 	int Pitch = ((CSliderCtrl*)GetDlgItem(IDC_PITCH))->GetPos();
 	m_pSoundGen->WriteAPU(0x4011, IsDlgButtonChecked(IDC_DELTASTART) ? 64 : 0);
 	m_pSoundGen->PreviewSample(m_pSample, m_pSampleView->GetStartOffset(), Pitch);
-	// Wait for sample to really play, but don't wait for more than 200ms
-	DWORD time = GetTickCount() + 200;
+	// Wait for sample to play (at most 400ms)
+	DWORD time = GetTickCount() + 400;
 	while (m_pSoundGen->PreviewDone() == true || GetTickCount() > time);
 	// Start play cursor timer
 	SetTimer(0, 10, NULL);
@@ -222,28 +216,32 @@ void CSampleEditorDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// Update play cursor
 
-	if (nIDEvent == 0) {
-		// Play cursor
-		stDPCMState state = m_pSoundGen->GetDPCMState();
+	switch (nIDEvent) {
+		case 0: {
+			// Play cursor
+			stDPCMState state = m_pSoundGen->GetDPCMState();
 
-		// Pos is in bytes
-		int Pos = state.SamplePos /*<< 6*/;
+			// Pos is in bytes
+			int Pos = state.SamplePos /*<< 6*/;
 
-		if (m_pSoundGen->PreviewDone()) {
-			KillTimer(0);
-			Pos = -1;
+			if (m_pSoundGen->PreviewDone()) {
+				KillTimer(0);
+				Pos = -1;
+			}
+
+			m_pSampleView->DrawPlayCursor(Pos);
 		}
-
-		m_pSampleView->DrawPlayCursor(Pos);
-	}
-	else if (nIDEvent == 1) {
-		// Start cursor
-		static bool bDraw = false;
-		if (!bDraw)
-			m_pSampleView->DrawStartCursor();
-		else
-			m_pSampleView->DrawPlayCursor(-1);
-		bDraw = !bDraw;
+		case 1: {
+			// Start cursor
+			if (m_pSoundGen->PreviewDone()) {
+				static bool bDraw = false;
+				if (!bDraw)
+					m_pSampleView->DrawStartCursor();
+				else
+					m_pSampleView->DrawPlayCursor(-1);
+				bDraw = !bDraw;
+			}
+		}
 	}
 
 	CDialog::OnTimer(nIDEvent);
@@ -313,7 +311,10 @@ BEGIN_MESSAGE_MAP(CSampleView, CStatic)
 	ON_WM_MOUSEMOVE()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_LBUTTONUP()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
+
+CScrollBar m_sbScrollBar;
 
 CSampleView::CSampleView() : 
 	m_iSelStart(-1), 
@@ -322,94 +323,104 @@ CSampleView::CSampleView() :
 	m_pSamples(NULL),
 	m_bClicked(false)
 {
+	m_pSolidPen = new CPen(PS_SOLID, 1, (COLORREF)0);
+	m_pDashedPen = new CPen(PS_DASH, 1, (COLORREF)0x00);
+	m_pGrayDashedPen = new CPen(PS_DASHDOT, 1, (COLORREF)0xF0F0F0);
 }
 
-	// Todo: move these
-CPen SolidPen(PS_SOLID, 1, (COLORREF)0);
-CPen DashedPen(PS_DASH, 1, (COLORREF)0x00);
-CPen GrayDashedPen(PS_DASHDOT, 1, (COLORREF)0xF0F0F0);
+CSampleView::~CSampleView()
+{
+	SAFE_RELEASE_ARRAY(m_pSamples);
+
+	SAFE_RELEASE(m_pSolidPen);
+	SAFE_RELEASE(m_pDashedPen);
+	SAFE_RELEASE(m_pGrayDashedPen);
+}
 
 void CSampleView::OnPaint()
 {
+	int ScrollBarHeight = 0;
+
 	CPaintDC dc(this); // device context for painting
-	// TODO: Add your message handler code here
-	// Do not call CStatic::OnPaint() for painting messages
 
-	GetClientRect(&clientRect);
+	// Create scroll bar
+	if (m_sbScrollBar.m_hWnd == NULL) {
+		CRect rect;
+		GetClientRect(&rect);
+		m_sbScrollBar.Create(SBS_HORZ | SBS_BOTTOMALIGN | WS_CHILD | WS_VISIBLE, rect, this, 1);
+		m_sbScrollBar.EnableWindow(0);
+	}
 
-	int MaxY = clientRect.bottom - 2;
-	int MaxX = clientRect.right - 2;
+	CRect sbRect;
+	m_sbScrollBar.GetClientRect(&sbRect);
+	ScrollBarHeight = sbRect.bottom - sbRect.top;
+
+	GetClientRect(&m_clientRect);
+
+	m_clientRect.bottom -= ScrollBarHeight;
+
+	int MaxY = m_clientRect.bottom - 2;
+	int MaxX = m_clientRect.right - 2;
 	int x, y;
 
-	if (copy.m_hDC != NULL)
-		copy.DeleteDC();
+	if (m_dcCopy.m_hDC != NULL)
+		m_dcCopy.DeleteDC();
 
-	if (copyBmp.m_hObject != NULL)
-		copyBmp.DeleteObject();
+	if (m_bmpCopy.m_hObject != NULL)
+		m_bmpCopy.DeleteObject();
 
-	copyBmp.CreateCompatibleBitmap(&dc, clientRect.Width(), clientRect.Height());
-	copy.CreateCompatibleDC(&dc);
-	copy.SelectObject(&copyBmp);
-
-	copy.FillSolidRect(clientRect, 0xFFFFFF);
-
-	copy.SetViewportOrg(1, 1);
+	m_bmpCopy.CreateCompatibleBitmap(&dc, m_clientRect.Width(), m_clientRect.Height());
+	m_dcCopy.CreateCompatibleDC(&dc);
+	m_dcCopy.SelectObject(&m_bmpCopy);
+	m_dcCopy.FillSolidRect(m_clientRect, 0xFFFFFF);
+	m_dcCopy.SetViewportOrg(1, 1);
 
 	if (m_iSize == 0) {
-		copy.TextOutA(10, 10, CString("No sample"));
-		dc.BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &copy, 0, 0, SRCCOPY);
+		m_dcCopy.TextOut(10, 10, CString(_T("No sample")));
+		dc.BitBlt(0, 0, m_clientRect.Width(), m_clientRect.Height(), &m_dcCopy, 0, 0, SRCCOPY);
 		return;
 	}
 
 	double Step = double(m_iSize) / double(MaxX);	// Samples / pixel
-	double Pos = 0;
 
 	m_dSampleStep = Step;
-	m_iBlockSize = MaxX / (m_iSize / (8 * 16));
+	m_iBlockSize = (MaxX * (8 * 16)) / m_iSize;
 
-	CPen *oldPen = copy.SelectObject(&SolidPen);
+	CPen *oldPen = m_dcCopy.SelectObject(m_pSolidPen);
 
 	// Block markers
-	copy.SelectObject(&GrayDashedPen);
-	copy.SetBkMode(TRANSPARENT);
+	m_dcCopy.SelectObject(m_pGrayDashedPen);
+	m_dcCopy.SetBkMode(TRANSPARENT);
 	int Blocks = (m_iSize / (8 * 16));
 	if (Blocks < (MaxX / 2)) {
 		for (int i = 1; i < Blocks; ++i) {
 			x = int((i * 128) / m_dSampleStep) - 1;
-			copy.MoveTo(x, 0);
-			copy.LineTo(x, MaxY);
+			m_dcCopy.MoveTo(x, 0);
+			m_dcCopy.LineTo(x, MaxY);
 		}
 	}
 
 	// Selection, each step is 16 bytes, or 128 samples
 	if (m_iSelStart != m_iSelEnd) {
-		copy.FillSolidRect(m_iSelStart, 0, m_iSelEnd - m_iSelStart, MaxY, 0xFF80A0);
+		m_dcCopy.FillSolidRect(m_iSelStart, 0, m_iSelEnd - m_iSelStart, MaxY, 0xFF80A0);
 //		copy.FillSolidRect(m_iSelStart, 0, 1, MaxY, 0xFF6080);
 //		copy.FillSolidRect(m_iSelEnd, 0, 1, MaxY, 0xFF6080);
 	}
 
 	// Draw the sample
-	y = int((double(m_pSamples[0]) / 127.0) * double(MaxY));
-	copy.MoveTo(0, y);
-	copy.SelectObject(&SolidPen);
+	y = (m_pSamples[0] * MaxY) / 127;
+	m_dcCopy.MoveTo(0, y);
+	m_dcCopy.SelectObject(m_pSolidPen);
 
 	for (x = 0; x < MaxX; ++x) {
-//		y = int((double(m_pSamples[int(Pos)]) / 127.0) * double(MaxY));
-		// Interpolate
-		y = 0;
-		for (int j = 0; j < Step; j++) {
-			y += int((double(m_pSamples[int(Pos+j)]) / 127.0) * double(MaxY));
-		}
-		y=int(double(y)/Step);
-
-		copy.LineTo(x, y);
-		Pos += Step;
+		y = (m_pSamples[(x * m_iSize) / MaxX] * MaxY) / 127;
+		m_dcCopy.LineTo(x, y);
 	}
 
-	copy.SetViewportOrg(0, 0);
-	copy.SelectObject(oldPen);
+	m_dcCopy.SetViewportOrg(0, 0);
+	m_dcCopy.SelectObject(oldPen);
 
-	dc.BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &copy, 0, 0, SRCCOPY);
+	dc.BitBlt(0, 0, m_clientRect.Width(), m_clientRect.Height(), &m_dcCopy, 0, 0, SRCCOPY);
 }
 
 BOOL CSampleView::OnEraseBkgnd(CDC* pDC)
@@ -426,6 +437,9 @@ void CSampleView::OnMouseMove(UINT nFlags, CPoint point)
 	if (!m_iSize)
 		return;
 
+	if (point.y > m_clientRect.bottom)
+		return;
+
 	if (nFlags & MK_LBUTTON && m_iSelStart != -1) {
 		//m_iSelEnd = int((point.x + m_iBlockSize / 2) / m_iBlockSize) * m_iBlockSize;
 		int Block = GetBlock(point.x + m_iBlockSize / 2);
@@ -434,8 +448,8 @@ void CSampleView::OnMouseMove(UINT nFlags, CPoint point)
 		RedrawWindow();
 	}
 
-	static char Text[256];
-	sprintf(Text, "Offset: %i, Pos: %i", Offset, Pos);
+	CString Text;
+	Text.Format(_T("Offset: %i, Pos: %i"), Offset, Pos);
 	GetParent()->SetDlgItemText(IDC_POS, Text);
 
 	CStatic::OnMouseMove(nFlags, point);
@@ -444,6 +458,9 @@ void CSampleView::OnMouseMove(UINT nFlags, CPoint point)
 void CSampleView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	if (!m_iSize)
+		return;
+
+	if (point.y > m_clientRect.bottom)
 		return;
 
 	int Block = GetBlock(point.x);
@@ -491,12 +508,12 @@ void CSampleView::DrawPlayCursor(int Pos)
 	CDC *pDC = GetDC();
 	int x = int(((double(Pos + m_iStartCursor) * 64.0) * 8.0) / m_dSampleStep);
 
-	pDC->BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &copy, 0, 0, SRCCOPY);
+	pDC->BitBlt(0, 0, m_clientRect.Width(), m_clientRect.Height(), &m_dcCopy, 0, 0, SRCCOPY);
 
 	if (Pos != -1) {
-		CPen *oldPen = pDC->SelectObject(&DashedPen);
+		CPen *oldPen = pDC->SelectObject(m_pDashedPen);
 		pDC->MoveTo(x, 0);
-		pDC->LineTo(x, clientRect.bottom);
+		pDC->LineTo(x, m_clientRect.bottom);
 		pDC->SelectObject(oldPen);
 	}
 
@@ -508,12 +525,12 @@ void CSampleView::DrawStartCursor()
 	CDC *pDC = GetDC();
 	int x = int((double(m_iStartCursor) * 8.0 * 64.0) / m_dSampleStep);
 
-	pDC->BitBlt(0, 0, clientRect.Width(), clientRect.Height(), &copy, 0, 0, SRCCOPY);
+	pDC->BitBlt(0, 0, m_clientRect.Width(), m_clientRect.Height(), &m_dcCopy, 0, 0, SRCCOPY);
 
 	if (m_iStartCursor != -1) {
-		CPen *oldPen = pDC->SelectObject(&DashedPen);
+		CPen *oldPen = pDC->SelectObject(m_pDashedPen);
 		pDC->MoveTo(x, 0);
-		pDC->LineTo(x, clientRect.bottom);
+		pDC->LineTo(x, m_clientRect.bottom);
 		pDC->SelectObject(oldPen);
 	}
 
@@ -525,14 +542,12 @@ void CSampleView::CalculateSample(CDSample *pSample, int Start)
 	int Samples = pSample->SampleSize;
 	int Size = Samples * 8;
 
-	if (m_pSamples)
-		delete [] m_pSamples;
+	SAFE_RELEASE_ARRAY(m_pSamples);
 
 	if (pSample->SampleSize == 0) {
 		m_iSize = 0;
 		m_iStartCursor = 0;
 		m_iSelStart = m_iSelEnd = -1;
-		m_pSamples = NULL;
 		return;
 	}
 
@@ -571,10 +586,10 @@ int CSampleView::GetPixel(int Block) const
 
 void CSampleView::UpdateInfo()
 {
-	static char Text[256];
 	if (!m_iSize)
 		return;
-	sprintf(Text, "Delta end pos: %i, Size: %i bytes", m_pSamples[m_iSize - 1], m_iSize / 8);
+	CString Text;
+	Text.Format(_T("Delta end pos: %i, Size: %i bytes"), m_pSamples[m_iSize - 1], m_iSize / 8);
 	GetParent()->SetDlgItemText(IDC_INFO, Text);
 }
 
@@ -604,4 +619,20 @@ void CSampleEditorDlg::OnBnClickedTilt()
 	}
 
 	UpdateSampleView();
+}
+
+void CSampleView::OnSize(UINT nType, int cx, int cy)
+{
+	CStatic::OnSize(nType, cx, cy);
+
+	if (m_sbScrollBar.m_hWnd != NULL) {
+		CRect clientRect, scrollRect;
+		GetClientRect(&clientRect);
+		m_sbScrollBar.GetClientRect(&scrollRect);
+		scrollRect.right = clientRect.right;
+		int height = scrollRect.Height();
+		scrollRect.top = clientRect.bottom - height;
+		scrollRect.bottom = scrollRect.top + height;
+		m_sbScrollBar.MoveWindow(&scrollRect);
+	}
 }

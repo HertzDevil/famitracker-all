@@ -11,9 +11,14 @@
 #define IDC_EDIT                        5
 #define IDC_SAVE                        6
 #define IDS_FILE_VERSION_TOO_NEW        6
+#define IDCANCEL2                       6
 #define IDS_REMOVE_INSTRUMENTS          7
+#define IDCANCEL3                       7
 #define IDS_INVALID_INST_FILE           8
+#define IDCANCEL4                       8
 #define IDS_REMOVE_PATTERNS             9
+#define IDS_SOUND_FAIL                  10
+#define IDS_UNDERRUN_MESSAGE            11
 #define IDD_ABOUTBOX                    100
 #define ID_NEXT_FRAME                   125
 #define ID_PREV_FRAME                   126
@@ -53,8 +58,10 @@
 #define IDS_START_ERROR                 143
 #define ID_DELETE_ROW                   143
 #define IDS_SOUNDGEN_ERROR              144
+#define ID_BLOCK_START                  144
 #define IDD_PERFORMANCE                 145
 #define IDS_SOUNDGEN_CLOSE_ERR          145
+#define ID_BLOCK_END                    145
 #define IDD_SPEED                       146
 #define IDS_OUT_OF_SLOTS                146
 #define IDD_PCMIMPORT                   147
@@ -104,6 +111,9 @@
 #define IDR_SAMPLES_POPUP               266
 #define IDB_BITMAP1                     277
 #define IDB_TOOLBAR_INST_256            277
+#define IDR_SAMPLE_WND_POPUP            279
+#define IDR_INSTRUMENT_TOOLBAR          280
+#define IDD_CHANNELS                    282
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_MODIFIERS                   1003
@@ -125,6 +135,7 @@
 #define IDC_KEYREPEAT                   1038
 #define IDC_SAMPLE_RATE                 1039
 #define IDC_SAMPLE_SIZE                 1040
+#define IDC_RESAMPLING                  1040
 #define IDC_BUF_LENGTH                  1041
 #define IDC_BASS_FREQ                   1042
 #define IDC_CHANGE_ALL                  1043
@@ -276,6 +287,7 @@
 #define IDC_MOD_PRESET_FLAT             1189
 #define IDC_C_AM                        1190
 #define IDC_MOD_PRESET_VIBRATO          1190
+#define IDC_MOD_PRESET_SINE             1190
 #define IDC_C_VIB                       1191
 #define IDC_MOD_RATE                    1191
 #define IDC_C_EG                        1192
@@ -310,7 +322,9 @@
 #define IDC_SEQUENCE                    1205
 #define IDC_MAIL                        1208
 #define IDC_WEBPAGE                     1209
-#define IDC_MODULES                     1210
+#define IDC_SCROLLBAR2                  1212
+#define IDC_SAMPLESCROLL                1212
+#define IDC_LIST1                       1216
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -408,6 +422,14 @@
 #define ID_HELP_EFFECTTABLE             33017
 #define ID_INSTRUMENT_CLONE33018        33018
 #define ID_FRAME_QUEUE                  33019
+#define ID_CLEANUP_REMOVEUNUSEDINSTRUMENTS 33022
+#define ID_POPUP_SAMEPLGRAPH            33025
+#define ID_POPUP_SAMPLEGRAPH2           33026
+#define ID_POPUP_SPECTRUMANALYZER       33027
+#define ID_POPUP_NOTHING                33028
+#define ID_POPUP_SAMPLEGRAPH1           33029
+#define ID_POPUP_PICKUPINSTRUMENT       33031
+#define ID_POPUP_PICKUPROW              33032
 #define ID_INDICATOR_INSTRUMENT         61204
 #define ID_INDICATOR_TEMPO              61205
 
@@ -415,9 +437,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        278
-#define _APS_NEXT_COMMAND_VALUE         33022
-#define _APS_NEXT_CONTROL_VALUE         1211
-#define _APS_NEXT_SYMED_VALUE           144
+#define _APS_NEXT_RESOURCE_VALUE        283
+#define _APS_NEXT_COMMAND_VALUE         33033
+#define _APS_NEXT_CONTROL_VALUE         1218
+#define _APS_NEXT_SYMED_VALUE           146
 #endif
 #endif

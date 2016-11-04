@@ -19,7 +19,6 @@
 */
 
 #include <windows.h>
-//#include "main.h"
 #include "wavefile.h"
 
 bool CWaveFile::OpenFile(char *Filename, int SampleRate, int SampleSize, int Channels)
@@ -29,25 +28,25 @@ bool CWaveFile::OpenFile(char *Filename, int SampleRate, int SampleSize, int Cha
 
 	int nError;
 
-	WaveFormat.wf.wFormatTag		= WAVE_FORMAT_PCM;
-	WaveFormat.wf.nChannels			= Channels;
-	WaveFormat.wf.nSamplesPerSec	= SampleRate;
-	WaveFormat.wf.nBlockAlign		= (SampleSize / 8) * Channels;
-	WaveFormat.wf.nAvgBytesPerSec	= SampleRate * (SampleSize / 8) * Channels;
-	WaveFormat.wBitsPerSample		= SampleSize;
+	WaveFormat.wf.wFormatTag	  = WAVE_FORMAT_PCM;
+	WaveFormat.wf.nChannels		  = Channels;
+	WaveFormat.wf.nSamplesPerSec  = SampleRate;
+	WaveFormat.wf.nBlockAlign	  = (SampleSize / 8) * Channels;
+	WaveFormat.wf.nAvgBytesPerSec = SampleRate * (SampleSize / 8) * Channels;
+	WaveFormat.wBitsPerSample	  = SampleSize;
 
 	hmmioOut = mmioOpen(Filename, NULL, MMIO_ALLOCBUF | MMIO_READWRITE | MMIO_CREATE);
 
-	ckOutRIFF.fccType	= mmioFOURCC('W', 'A', 'V', 'E');
-	ckOutRIFF.cksize	= 0;
+	ckOutRIFF.fccType = mmioFOURCC('W', 'A', 'V', 'E');
+	ckOutRIFF.cksize  = 0;
 
 	nError = mmioCreateChunk(hmmioOut, &ckOutRIFF, MMIO_CREATERIFF);
 
 	if (nError != MMSYSERR_NOERROR)
 		return false;
 
-	ckOut.ckid		= mmioFOURCC('f', 'm', 't', ' ');     
-	ckOut.cksize	= sizeof(PCMWAVEFORMAT);
+	ckOut.ckid	 = mmioFOURCC('f', 'm', 't', ' ');     
+	ckOut.cksize = sizeof(PCMWAVEFORMAT);
 
 	nError = mmioCreateChunk(hmmioOut, &ckOut, 0);
 
@@ -57,8 +56,8 @@ bool CWaveFile::OpenFile(char *Filename, int SampleRate, int SampleSize, int Cha
 	mmioWrite(hmmioOut, (HPSTR)&WaveFormat, sizeof(PCMWAVEFORMAT));
 	mmioAscend(hmmioOut, &ckOut, 0);
 
-	ckOut.ckid		= mmioFOURCC('d', 'a', 't', 'a');
-	ckOut.cksize	= 0;
+	ckOut.ckid	 = mmioFOURCC('d', 'a', 't', 'a');
+	ckOut.cksize = 0;
 
 	nError = mmioCreateChunk(hmmioOut, &ckOut, 0);
 

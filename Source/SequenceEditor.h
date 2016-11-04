@@ -22,25 +22,28 @@
 
 enum {WM_SIZE_CHANGE = WM_USER, WM_CURSOR_CHANGE, WM_SEQUENCE_CHANGED};
 
-#include "SizeEditor.h"
-
 class CSequence;
 class CGraphEditor;
+class CSizeEditor;
 
 // Sequence editor
 class CSequenceEditor : public CWnd
 {
 	DECLARE_DYNAMIC(CSequenceEditor)
 public:
-	CSequenceEditor();
+	CSequenceEditor(CFamiTrackerDoc *pDoc);
 	virtual ~CSequenceEditor();
 	
 	BOOL CreateEditor(CWnd *pParentWnd, const RECT &rect);
 	void SelectSequence(CSequence *pSequence, int Type, int InstrumentType);
+	void SetMaxValues(int MaxVol, int MaxDuty);
+	void ChangedSetting();
+
 public:
 	static const int SEQUENCE_EDIT_WIDTH = 540;
 	static const int SEQUENCE_EDIT_HEIGHT = 237;
 private:
+	CFamiTrackerDoc *m_pDocument;
 	CWnd *m_pParent;
 	CFont *m_pFont;
 	CSizeEditor *m_pSizeEditor;
@@ -49,6 +52,8 @@ private:
 	CMenu m_menuPopup;
 	int m_iSelectedSetting;
 	int m_iInstrumentType;
+	int m_iMaxVol;
+	int m_iMaxDuty;
 private:
 	void DestroyGraphEditor();
 	void SequenceChangedMessage(bool Changed);
@@ -58,7 +63,11 @@ public:
 	afx_msg void OnPaint();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnMenuRelative();
+	/*
 	afx_msg void OnMenuAbsolute();
+	afx_msg void OnMenuRelative();
+	afx_msg void OnMenuFixed();
+	*/
 	virtual BOOL DestroyWindow();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 };

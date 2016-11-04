@@ -22,9 +22,11 @@
 
 // CSettings command target
 
-const int EDIT_STYLE1 = 0;	// FT2
-const int EDIT_STYLE2 = 1;	// ModPlug
-const int EDIT_STYLE3 = 2;	// IT
+enum EDIT_STYLES {
+	EDIT_STYLE1 = 0,		// FT2
+	EDIT_STYLE2 = 1,		// ModPlug
+	EDIT_STYLE3 = 2			// IT
+};
 
 enum WIN_STATES {
 	STATE_NORMAL,
@@ -37,27 +39,77 @@ enum PATHS {
 	PATH_NSF,
 	PATH_DMC,
 	PATH_WAV,
-	PATH_PLUGIN,
-	
+
 	PATH_COUNT
 };
 
+
+// Base class for settings, pure virtual
+class CSettingBase {
+public:
+	CSettingBase(LPCTSTR pSection, LPCTSTR pEntry, void *pVariable) : m_pSection(pSection), m_pEntry(pEntry), m_pVariable(pVariable) {};
+	virtual void Load() = 0;
+	virtual void Save() = 0;
+	virtual void Default() = 0;
+protected:
+	LPCTSTR m_pSection;
+	LPCTSTR m_pEntry;
+	void *m_pVariable;
+};
+
+// Bool setting
+class CSettingBool : public CSettingBase {
+public:
+	CSettingBool(LPCTSTR pSection, LPCTSTR pEntry, bool defaultVal, void *pVar) : CSettingBase(pSection, pEntry, pVar), m_bDefaultValue(defaultVal) {};
+	virtual void Load();
+	virtual void Save();
+	virtual void Default();
+protected:
+	bool m_bDefaultValue;
+};
+
+// Integer setting
+class CSettingInt : public CSettingBase {
+public:
+	CSettingInt(LPCTSTR pSection, LPCTSTR pEntry, int defaultVal, void *pVar) : CSettingBase(pSection, pEntry, pVar), m_iDefaultValue(defaultVal) {};
+	virtual void Load();
+	virtual void Save();
+	virtual void Default();
+protected:
+	int m_iDefaultValue;
+};
+
+// String setting
+class CSettingString : public CSettingBase {
+public:
+	CSettingString(LPCTSTR pSection, LPCTSTR pEntry, LPCTSTR pDefault, void *pVar) : CSettingBase(pSection, pEntry, pVar), m_pDefaultValue(pDefault) {};
+	virtual void Load();
+	virtual void Save();
+	virtual void Default();
+protected:
+	LPCTSTR m_pDefaultValue;
+};
+
+// Settings collection
 class CSettings : public CObject
 {
 public:
 	CSettings();
 	virtual ~CSettings();
 
-	void LoadSettings();
-	void SaveSettings();
-	void DefaultSettings();
-	void SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
+	void	LoadSettings();
+	void	SaveSettings();
+	void	DefaultSettings();
+	void	SetWindowPos(int Left, int Top, int Right, int Bottom, int State);
 
-	void	StoreSetting(CString Section, CString Name, int Value);
-	int		LoadSetting(CString Section, CString Name);
+	void	StoreSetting(CString Section, CString Name, int Value) const;
+	int		LoadSetting(CString Section, CString Name) const;
 
-	CString GetPath(unsigned int PathType);
+	CString GetPath(unsigned int PathType) const;
 	void	SetPath(CString PathName, unsigned int PathType);
+
+public:
+	// Local cache of all settings (all public)
 
 	struct {
 		bool	bWrapCursor;
@@ -76,8 +128,6 @@ public:
 		bool	bPullUpDelete;
 		bool	bBackups;
 	} General;
-
-	//CString	strDevice;
 
 	struct {
 		int		iDevice;
@@ -132,6 +182,18 @@ public:
 	int SampleWinState;
 
 private:
+	void AddSetting(CSettingBase *pSetting);
+	void SetupSettings();
+
+private:
+	static const int MAX_SETTINGS = 128;
+
+private:
+	CSettingBase *m_pSettings[MAX_SETTINGS];
+	int m_iAddedSettings;
+
+private:
+	// Paths
 	CString Paths[PATH_COUNT];
 };
 

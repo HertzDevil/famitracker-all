@@ -28,7 +28,7 @@ public:
 	CInstrumentEditorN106(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorN106();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "Namco N106"; };
+	virtual TCHAR *GetTitle() { return _T("Namco N106"); };
 
 	// Public
 	void SelectInstrument(int Instrument);

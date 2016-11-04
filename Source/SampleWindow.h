@@ -23,6 +23,8 @@
 class CSampleWinState
 {
 public:
+	virtual ~CSampleWinState() {};
+
 	virtual void Activate() = 0;
 	virtual void Deactivate() = 0;
 	virtual void SetSampleData(int *iSamples, unsigned int iCount) = 0;
@@ -58,20 +60,12 @@ private:
 
 public:
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
-	virtual BOOL DestroyWindow();
 
 protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnPaint();
-public:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
-};
-
-class CSampleWinProc : public CWinThread
-{
 public:
-	CSampleWindow *Wnd;
-	virtual int Run();
-	virtual BOOL InitInstance();
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 };

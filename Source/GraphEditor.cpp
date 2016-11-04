@@ -44,7 +44,10 @@ BEGIN_MESSAGE_MAP(CGraphEditor, CWnd)
 END_MESSAGE_MAP()
 
 
-CGraphEditor::CGraphEditor(CSequence *pSequence) : m_pBackDC(NULL), m_pBitmap(NULL), m_pSmallFont(NULL)
+CGraphEditor::CGraphEditor(CSequence *pSequence) : 
+	m_pBackDC(NULL), 
+	m_pBitmap(NULL), 
+	m_pSmallFont(NULL)
 {
 	m_pSequence = pSequence;
 	m_iLastPlayPos = 0;
@@ -196,10 +199,10 @@ void CGraphEditor::DrawRange(CDC *pDC, int Max, int Min)
 	pDC->SetTextColor(0xFFFFFF);
 	pDC->SetBkColor(pDC->GetPixel(0, 0));	// Ugly but works
 
-	line.Format("%02i", Max);
+	line.Format(_T("%02i"), Max);
 	pDC->TextOut(2, m_GraphRect.top - 3, line);
 
-	line.Format("%02i", Min);
+	line.Format(_T("%02i"), Min);
 	pDC->TextOut(2, m_GraphRect.bottom - 13, line);
 
 	pDC->SelectObject(pOldFont);
@@ -220,7 +223,7 @@ void CGraphEditor::DrawLoopPoint(CDC *pDC, int StepWidth)
 
 		pDC->SetTextColor(0xFFFFFF);
 		pDC->SetBkMode(TRANSPARENT);
-		pDC->TextOut(x + 4, m_BottomRect.top, "Loop");
+		pDC->TextOut(x + 4, m_BottomRect.top, _T("Loop"));
 	}
 
 	pDC->SelectObject(pOldFont);
@@ -241,7 +244,7 @@ void CGraphEditor::DrawReleasePoint(CDC *pDC, int StepWidth)
 
 		pDC->SetTextColor(0xFFFFFF);
 		pDC->SetBkMode(TRANSPARENT);
-		pDC->TextOut(x + 4, m_BottomRect.top, "Release");
+		pDC->TextOut(x + 4, m_BottomRect.top, _T("Release"));
 	}
 
 	pDC->SelectObject(pOldFont);
@@ -553,7 +556,10 @@ BEGIN_MESSAGE_MAP(CArpeggioGraphEditor, CGraphEditor)
 	ON_WM_MOUSEWHEEL()
 END_MESSAGE_MAP()
 
-CArpeggioGraphEditor::CArpeggioGraphEditor(CSequence *pSequence) : CGraphEditor(pSequence), m_iScrollOffset(0), m_pScrollBar(NULL)
+CArpeggioGraphEditor::CArpeggioGraphEditor(CSequence *pSequence) : 
+	CGraphEditor(pSequence), 
+	m_iScrollOffset(0), 
+	m_pScrollBar(NULL)
 {
 }
 
@@ -613,7 +619,7 @@ CString CArpeggioGraphEditor::GetNoteString(int Value)
 	Octave = Value / 12;
 	Note = Value % 12;
 
-	line.Format("%c%c%c", NOTES_A[Note], NOTES_B[Note], NOTES_C[Octave]);
+	line.Format(_T("%c%c%c"), NOTES_A[Note], NOTES_B[Note], NOTES_C[Octave]);
 
 	return line;
 }
@@ -653,7 +659,7 @@ void CArpeggioGraphEditor::DrawRange(CDC *pDC, int Max, int Min)
 		Octave = NoteValue / 12;
 		Note = NoteValue % 12;
 
-		line.Format("%c%c%c", NOTES_A[Note], NOTES_B[Note], NOTES_C[Octave]);
+		line.Format(_T("%c%c%c"), NOTES_A[Note], NOTES_B[Note], NOTES_C[Octave]);
 		pDC->TextOut(2, m_GraphRect.bottom - 13, line);
 
 		pDC->SelectObject(pOldFont);

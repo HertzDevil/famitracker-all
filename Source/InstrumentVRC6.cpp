@@ -19,9 +19,10 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
+#include "Compiler.h"
+#include "DocumentFile.h"
 
 /*
  * class CInstrumentVRC6
@@ -44,6 +45,8 @@ CInstrument *CInstrumentVRC6::Clone()
 		pNew->SetSeqEnable(i, GetSeqEnable(i));
 		pNew->SetSeqIndex(i, GetSeqIndex(i));
 	}
+
+	pNew->SetName(GetName());
 
 	return pNew;
 }
@@ -77,9 +80,9 @@ bool CInstrumentVRC6::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
-void CInstrumentVRC6::SaveFile(CFile *pFile)
+void CInstrumentVRC6::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+//	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	// Sequences
 	unsigned char SeqCount = SEQ_COUNT;
@@ -113,9 +116,9 @@ void CInstrumentVRC6::SaveFile(CFile *pFile)
 	}
 }
 
-bool CInstrumentVRC6::LoadFile(CFile *pFile, int iVersion)
+bool CInstrumentVRC6::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	//CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	// Sequences
 	unsigned char SeqCount;
@@ -198,11 +201,13 @@ int CInstrumentVRC6::Compile(CCompiler *pCompiler, int Index)
 	int iAddress;
 	int i;
 
+	CFamiTrackerDoc *pDoc = pCompiler->GetDocument();
+
 	pCompiler->WriteLog("VRC6 {");
 	ModSwitch = 0;
 
 	for (i = 0; i < SEQ_COUNT; i++) {
-		ModSwitch = (ModSwitch >> 1) | (GetSeqEnable(i) ? 0x10 : 0);
+		ModSwitch = (ModSwitch >> 1) | (GetSeqEnable(i) && (pDoc->GetSequenceVRC6(GetSeqIndex(i), i)->GetItemCount() > 0) ? 0x10 : 0);
 	}
 
 	pCompiler->StoreByte(ModSwitch);
@@ -210,7 +215,7 @@ int CInstrumentVRC6::Compile(CCompiler *pCompiler, int Index)
 	StoredBytes++;
 
 	for (i = 0; i < SEQ_COUNT; i++) {
-		iAddress = (GetSeqEnable(i) == 0) ? 0 : pCompiler->GetSequenceAddressVRC6(GetSeqIndex(i), i);
+		iAddress = (GetSeqEnable(i) == 0 || (pDoc->GetSequenceVRC6(GetSeqIndex(i), i)->GetItemCount() == 0)) ? 0 : pCompiler->GetSequenceAddressVRC6(GetSeqIndex(i), i);
 		if (iAddress > 0) {
 			pCompiler->StoreShort(iAddress);
 			pCompiler->WriteLog("%04X ", iAddress);

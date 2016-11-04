@@ -19,7 +19,6 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "PatternCompiler.h"
 
@@ -89,20 +88,14 @@ CPatternCompiler::CPatternCompiler() :
 
 CPatternCompiler::~CPatternCompiler()
 {
-	if (m_pData)
-		delete [] m_pData;
-
-	if (m_pCompressedData)
-		delete [] m_pCompressedData;
+	SAFE_RELEASE_ARRAY(m_pData);
+	SAFE_RELEASE_ARRAY(m_pCompressedData);
 }
 
 void CPatternCompiler::CleanUp()
 {
-	if (m_pData != NULL)
-		delete [] m_pData;
-
-	if (m_pCompressedData != NULL)
-		delete [] m_pCompressedData;
+	SAFE_RELEASE_ARRAY(m_pData);
+	SAFE_RELEASE_ARRAY(m_pCompressedData);
 
 	m_iDataPointer = 0;
 	m_pData = new unsigned char[0x1000];
@@ -116,6 +109,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 	unsigned int i, iPatternLen;
 	unsigned char NESNote, Note, Octave, Instrument, LastInstrument, Volume;
 	unsigned char Effect, EffParam;
+	unsigned int DPCMInst = 0;
 	bool Action;
 	stSpacingInfo SpaceInfo;
 
@@ -123,7 +117,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 
 	CleanUp();
 
-	iPatternLen = pDoc->GetPatternLength();
+	iPatternLen = pDoc->GetPatternLength(Track);
 	LastInstrument = 0x41;
 
 	m_iZeroes = 0;
@@ -163,7 +157,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 		Action		= false;
 
 		// Check for delays, must come first
-		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Channel) + 1); n++) {
+		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Track, Channel) + 1); n++) {
 			Effect		= ChanNote.EffNumber[n];
 			EffParam	= ChanNote.EffParam[n];
 			if (Effect == EF_DELAY && EffParam > 0) {
@@ -229,6 +223,9 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 #endif
 				Action = true;
 			}
+			else {
+				DPCMInst = ChanNote.Instrument;
+			}
 		}
 
 		if (Note == 0) {
@@ -243,10 +240,10 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 		else {
 			if (Channel == 4) {
 				// 2A03 DPCM
-				int LookUp = (*DPCM_LookUp)[LastInstrument][Octave][Note - 1];
+				int LookUp = (*DPCM_LookUp)[DPCMInst][Octave][Note - 1];
 				if (LookUp > 0) {
 					NESNote = LookUp << 1;
-					int Sample = ((CInstrument2A03*)pDoc->GetInstrument(LastInstrument))->GetSample(Octave, Note - 1) - 1;
+					int Sample = ((CInstrument2A03*)pDoc->GetInstrument(DPCMInst))->GetSample(Octave, Note - 1) - 1;
 					m_bDSamplesAccessed[Sample] = true;
 				}
 				else
@@ -263,7 +260,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 				NESNote = (Note - 1) + (Octave * 12);
 		}
 
-		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Channel) + 1); n++) {
+		for (unsigned int n = 0; n < (pDoc->GetEffColumns(Track, Channel) + 1); n++) {
 			Effect		= ChanNote.EffNumber[n];
 			EffParam	= ChanNote.EffParam[n];
 			
@@ -361,6 +358,10 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 					break;
 				case EF_PITCH:
 					if (Channel != 4) {
+						if (Chip & SNDCHIP_VRC7 && Channel > 4)
+							EffParam = (char)(256 - (int)EffParam);
+						else if (Chip & SNDCHIP_FDS && Channel == 5)
+							EffParam = (char)(256 - (int)EffParam);
 						WriteData(CMD_EFF_PITCH);
 						WriteData(EffParam);
 					}
@@ -447,9 +448,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 
 unsigned int CPatternCompiler::FindInstrument(int Instrument, unsigned int *pInstList)
 {
-	int i;
-
-	for (i = 0; i < MAX_INSTRUMENTS; i++) {
+	for (int i = 0; i < MAX_INSTRUMENTS; i++) {
 		if (pInstList[i] == Instrument)
 			return i;
 	}
@@ -469,7 +468,7 @@ stSpacingInfo CPatternCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track
 	Info.SpaceCount = 0;
 	Info.SpaceSize = 0;
 
-	for (i = StartRow; i < pDoc->GetPatternLength(); i++) {
+	for (i = StartRow; i < pDoc->GetPatternLength(Track); i++) {
 		pDoc->GetDataAtPattern(Track, Pattern, Channel, i, &NoteData);
 		NoteUsed = false;
 
@@ -479,7 +478,7 @@ stSpacingInfo CPatternCompiler::ScanNoteLengths(CFamiTrackerDoc *pDoc, int Track
 			NoteUsed = true;
 		if (NoteData.Vol < 0x10)
 			NoteUsed = true;
-		for (unsigned int j = 0; j < (pDoc->GetEffColumns(Channel) + 1); j++) {
+		for (unsigned int j = 0; j < (pDoc->GetEffColumns(Track, Channel) + 1); j++) {
 			if (NoteData.EffNumber[j] != EF_NONE)
 				NoteUsed = true;
 		}
@@ -543,7 +542,7 @@ void CPatternCompiler::DispatchZeroes()
 	m_iZeroes = 0;
 }
 
-// Returns the size of the block at 'position' in the data array. A block is ended by a note
+// Returns the size of the block at 'position' in the data array. A block is terminated by a note
 int CPatternCompiler::GetBlockSize(int Position)
 {
 	unsigned char data;

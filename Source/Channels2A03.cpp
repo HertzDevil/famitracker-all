@@ -24,7 +24,6 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "Channels2A03.h"
 #include "Settings.h"
@@ -251,23 +250,16 @@ void CSquare1Chan::RefreshChannel()
 
 	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
 
-	if (Freq > 0x7FF)
-		Freq = 0x7FF;
+//	if (Freq > 0x7FF)
+//		Freq = 0x7FF;
+
+	Freq = LimitFreq(Freq);
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
 	LastLoFreq	= (m_iLastFrequency >> 8);
-
 	DutyCycle	= (m_iDutyPeriod & 0x03);
-	Volume		= (m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15 - TremVol;
-
-	if (Volume < 0)
-		Volume = 0;
-	if (Volume > 15)
-		Volume = 15;
-
-	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
+	Volume		= CalculateVolume(15);
 
 	m_iLastFrequency = Freq;
 
@@ -298,10 +290,10 @@ void CSquare1Chan::RefreshChannel()
 
 void CSquare1Chan::ClearRegisters()
 {
-	m_pAPU->Write(0x4000, 0);
-	m_pAPU->Write(0x4001, 0);
-	m_pAPU->Write(0x4002, 0);
-	m_pAPU->Write(0x4003, 0);	
+	m_pAPU->Write(0x4000, 0x30);
+	m_pAPU->Write(0x4001, 0x08);
+	m_pAPU->Write(0x4002, 0x00);
+	m_pAPU->Write(0x4003, 0x00);	
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,6 +315,8 @@ void CSquare2Chan::RefreshChannel()
 	TremVol = GetTremolo();
 
 	Freq = m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
+
+	Freq = LimitFreq(Freq);
 
 	HiFreq		= (Freq & 0xFF);
 	LoFreq		= (Freq >> 8);
@@ -369,10 +363,10 @@ void CSquare2Chan::RefreshChannel()
 
 void CSquare2Chan::ClearRegisters()
 {
-	m_pAPU->Write(0x4004, 0);
-	m_pAPU->Write(0x4005, 0);
-	m_pAPU->Write(0x4006, 0);
-	m_pAPU->Write(0x4007, 0);	
+	m_pAPU->Write(0x4004, 0x30);
+	m_pAPU->Write(0x4005, 0x08);
+	m_pAPU->Write(0x4006, 0x00);
+	m_pAPU->Write(0x4007, 0x00);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,6 +384,9 @@ void CTriangleChan::RefreshChannel()
 	VibFreq = GetVibrato();
 
 	Freq	= m_iFrequency - VibFreq + GetFinePitch() + GetPitch();
+
+	Freq = LimitFreq(Freq);
+
 	HiFreq	= (Freq & 0xFF);
 	LoFreq	= (Freq >> 8);
 	
@@ -506,7 +503,7 @@ void CDPCMChan::ClearRegisters()
 	m_pAPU->Write(0x4015, 0x0F);
 	m_pAPU->Write(0x4010, 0);
 	
-	if (/*!m_bKeyRelease ||*/ !theApp.m_pSettings->General.bNoDPCMReset || theApp.IsPlaying()) {
+	if (/*!m_bKeyRelease ||*/ !theApp.GetSettings()->General.bNoDPCMReset || theApp.IsPlaying()) {
 		m_pAPU->Write(0x4011, 0);		// regain full volume for TN
 	}
 
@@ -621,9 +618,4 @@ void CDPCMChan::PlayChannelNote(stChanNote *NoteData, int EffColumns)
 	}
 
 	theApp.RegisterKeyState(m_iChannelID, (Note - 1) + (Octave * 12));
-}
-
-void CDPCMChan::SetSampleMem(CSampleMem *pSampleMem)
-{
-	m_pSampleMem = pSampleMem;
 }

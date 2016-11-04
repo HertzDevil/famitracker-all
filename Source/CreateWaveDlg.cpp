@@ -21,6 +21,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"
 #include "CreateWaveDlg.h"
 #include "WavProgressDlg.h"
 #include "SoundGen.h"
@@ -35,7 +36,6 @@ IMPLEMENT_DYNAMIC(CCreateWaveDlg, CDialog)
 CCreateWaveDlg::CCreateWaveDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CCreateWaveDlg::IDD, pParent)
 {
-
 }
 
 CCreateWaveDlg::~CCreateWaveDlg()
@@ -56,12 +56,13 @@ END_MESSAGE_MAP()
 
 int CCreateWaveDlg::GetFrameLoopCount()
 {
-	int Frames;
-	Frames = GetDlgItemInt(IDC_TIMES);
+	int Frames = GetDlgItemInt(IDC_TIMES);
+
 	if (Frames < 1)
 		Frames = 1;
 	if (Frames > MAX_LOOP_TIMES)
 		Frames = MAX_LOOP_TIMES;
+
 	return Frames;
 }
 
@@ -69,13 +70,16 @@ int CCreateWaveDlg::GetTimeLimit()
 {
 	int Minutes, Seconds, Time;
 	char str[256];
+
 	GetDlgItemText(IDC_SECONDS, str, 256);
-	sscanf(str, "%u:%u", &Minutes, &Seconds);
+	_stscanf(str, _T("%u:%u"), &Minutes, &Seconds);
 	Time = (Minutes * 60) + (Seconds % 60);
+
 	if (Time < 1)
 		Time = 1;
 	if (Time > MAX_PLAY_TIME)
 		Time = MAX_PLAY_TIME;
+
 	return Time;
 }
 
@@ -86,10 +90,14 @@ void CCreateWaveDlg::OnBnClickedBegin()
 	RENDER_END EndType;
 	int EndParam;
 
+	CString FileName = ((CFamiTrackerDoc*) theApp.GetActiveDocument())->GetFileTitle();
+
 	CWavProgressDlg ProgressDlg;
-	CFileDialog SaveDialog(FALSE, "wav", 0, 0, "Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||");
+	CFileDialog SaveDialog(FALSE, _T("wav"), FileName, 0, _T("Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||"));
+
 	// Close this dialog
 	EndDialog(0);
+
 	// Ask for file location
 	if (SaveDialog.DoModal() == IDCANCEL)
 		return;
@@ -115,8 +123,8 @@ BOOL CCreateWaveDlg::OnInitDialog()
 	CheckDlgButton(IDC_RADIO_LOOP, BST_CHECKED);
 	CheckDlgButton(IDC_RADIO_TIME, BST_UNCHECKED);
 
-	SetDlgItemText(IDC_TIMES, "1");
-	SetDlgItemText(IDC_SECONDS, "01:00");
+	SetDlgItemText(IDC_TIMES, _T("1"));
+	SetDlgItemText(IDC_SECONDS, _T("01:00"));
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -148,7 +156,7 @@ void CCreateWaveDlg::OnDeltaposSpinTime(NMHDR *pNMHDR, LRESULT *pResult)
 	LPNMUPDOWN pNMUpDown = reinterpret_cast<LPNMUPDOWN>(pNMHDR);
 	int Minutes, Seconds;
 	int Time = GetTimeLimit() - pNMUpDown->iDelta;
-	char str[256];
+	CString str;
 
 	if (Time < 1)
 		Time = 1;
@@ -157,7 +165,8 @@ void CCreateWaveDlg::OnDeltaposSpinTime(NMHDR *pNMHDR, LRESULT *pResult)
 
 	Seconds = Time % 60;
 	Minutes = Time / 60;
-	sprintf(str, "%02i:%02i", Minutes, Seconds);
+
+	str.Format(_T("%02i:%02i"), Minutes, Seconds);
 	SetDlgItemText(IDC_SECONDS, str);
 	CheckDlgButton(IDC_RADIO_LOOP, BST_UNCHECKED);
 	CheckDlgButton(IDC_RADIO_TIME, BST_CHECKED);

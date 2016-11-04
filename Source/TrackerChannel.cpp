@@ -19,17 +19,16 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "TrackerChannel.h"
 
 /*
  * This class serves as the interface between the UI and the sound player for each channel
- * Multi-thread synchronization should be done here
+ * Thread synchronization should be done here
  *
  */
 
-CTrackerChannel::CTrackerChannel(const char *pName, const int iChip, const int iID) : 
+CTrackerChannel::CTrackerChannel(const TCHAR *pName, const int iChip, const int iID) : 
 	m_pChannelName(pName),
 	m_iChip(iChip),
 	m_iChannelID(iID),
@@ -43,7 +42,7 @@ CTrackerChannel::~CTrackerChannel(void)
 {
 }
 
-const char *CTrackerChannel::GetChannelName() const
+const TCHAR *CTrackerChannel::GetChannelName() const
 {
 	return m_pChannelName;
 }
@@ -97,7 +96,9 @@ bool CTrackerChannel::NewNoteData()
 
 void CTrackerChannel::Reset()
 {
+	m_NoteLock.Lock();
 	m_bNewNote = false;
+	m_NoteLock.Unlock();
 }
 
 void CTrackerChannel::SetVolumeMeter(int Value)

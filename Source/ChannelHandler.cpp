@@ -38,14 +38,18 @@ CChannelHandler::CChannelHandler(int ChanID) :
 	m_iInstrument(0), 
 	m_iLastInstrument(MAX_INSTRUMENTS),
 	m_pNoteLookupTable(NULL),
-	m_pDocument(NULL)
+	m_pVibratoTable(NULL),
+	m_pDocument(NULL),
+	m_pAPU(NULL),
+	m_iPitch(0),
+	m_iNote(0)
 { 
-	m_iPitch = 0; 
-	m_iNote = 0; 
 }
 
 void CChannelHandler::InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *pDoc)
 {
+	// Called from main thread
+
 	m_pAPU = pAPU;
 	m_pVibratoTable = pVibTable;
 	m_pDocument = pDoc;
@@ -55,7 +59,7 @@ void CChannelHandler::InitChannel(CAPU *pAPU, int *pVibTable, CFamiTrackerDoc *p
 
 	m_iEffect = 0;
 
-	KillChannel();
+	//KillChannel();
 
 	m_iVibratoStyle = VIBRATO_NEW;
 }
@@ -82,7 +86,7 @@ void CChannelHandler::SetPitch(int Pitch)
 
 int CChannelHandler::GetPitch() const 
 { 
-	if (m_iPitch != 0 && m_iNote != 0) {
+	if (m_iPitch != 0 && m_iNote != 0 && m_pNoteLookupTable != NULL) {
 		// Interpolate pitch
 		int LowNote = m_iNote - PITCH_RANGE;
 		int HighNote = m_iNote + PITCH_RANGE;
@@ -227,7 +231,7 @@ int CChannelHandler::RunNote(int Octave, int Note)
 	int NewNote, NesFreq;
 
 	// And note
-	NewNote = MIDI_NOTE((Octave - 2), Note);
+	NewNote = MIDI_NOTE(Octave, Note);
 	NesFreq = TriggerNote(NewNote);
 
 	if (m_iPortaSpeed > 0 && m_iEffect == EF_PORTAMENTO) {
@@ -317,6 +321,7 @@ bool CChannelHandler::HandleDelay(stChanNote *NoteData, int EffColumns)
 		m_bDelayEnabled = false;
 		PlayChannelNote(m_pDelayedNote, m_iDelayEffColumns);
 		delete m_pDelayedNote;
+		m_pDelayedNote = NULL;
 	}
 	
 	// Check delay
@@ -374,13 +379,8 @@ void CChannelHandler::ProcessChannel()
 		m_iVolume = MAX_VOL;
 
 	// Vibrato and tremolo
-#ifdef NEW_VIBRATO
 	m_iVibratoPhase = (m_iVibratoPhase + m_iVibratoSpeed) & 63;
 	m_iTremoloPhase = (m_iTremoloPhase + m_iTremoloSpeed) & 63;
-#else
-	m_iVibratoPhase = (m_iVibratoPhase + m_iVibratoSpeed) & (VIBRATO_LENGTH - 1);
-	m_iTremoloPhase = (m_iTremoloPhase + m_iTremoloSpeed) & (TREMOLO_LENGTH - 1);
-#endif
 
 	// Handle other effects
 	switch (m_iEffect) {
@@ -479,21 +479,15 @@ int CChannelHandler::GetVibrato() const
 	// Vibrato offset (4xx)
 	int VibFreq;
 
-#ifdef NEW_VIBRATO
 	if ((m_iVibratoPhase & 0xF0) == 0x00)
-		VibFreq = m_pVibratoTable[m_iVibratoPhase + m_iVibratoDepth];
+		VibFreq = m_pVibratoTable[m_iVibratoDepth + m_iVibratoPhase];
 	else if ((m_iVibratoPhase & 0xF0) == 0x10)
-		VibFreq = m_pVibratoTable[15 - (m_iVibratoPhase - 16) + m_iVibratoDepth];
+		VibFreq = m_pVibratoTable[m_iVibratoDepth + 15 - (m_iVibratoPhase - 16)];
 	else if ((m_iVibratoPhase & 0xF0) == 0x20)
-		VibFreq = -m_pVibratoTable[(m_iVibratoPhase - 32) + m_iVibratoDepth];
+		VibFreq = -m_pVibratoTable[m_iVibratoDepth + (m_iVibratoPhase - 32)];
 	else if ((m_iVibratoPhase & 0xF0) == 0x30)
-		VibFreq = -m_pVibratoTable[15 - (m_iVibratoPhase - 48) + m_iVibratoDepth];
-#else
-	VibFreq	= m_pVibratoTable[m_iVibratoPhase] >> (0x8 - (m_iVibratoDepth >> 1));
-	if ((m_iVibratoDepth & 1) == 0)
-		VibFreq -= (VibFreq >> 1);
-#endif
-	
+		VibFreq = -m_pVibratoTable[m_iVibratoDepth + 15 - (m_iVibratoPhase - 48)];
+
 	if (m_pDocument->GetVibratoStyle() == VIBRATO_OLD) {
 		VibFreq += m_pVibratoTable[m_iVibratoDepth + 15] + 1;
 		VibFreq >>= 1;
@@ -508,19 +502,12 @@ int CChannelHandler::GetTremolo() const
 	int TremVol;
 	int Phase = m_iTremoloPhase >> 1;
 
-#ifdef NEW_VIBRATO
 	if ((Phase & 0xF0) == 0x00)
 		TremVol = m_pVibratoTable[Phase + m_iTremoloDepth];
 	else if ((Phase & 0xF0) == 0x10)
 		TremVol = m_pVibratoTable[15 - (Phase - 16) + m_iTremoloDepth];
-#else
-	TremVol	= (m_pVibratoTable[m_iTremoloPhase] >> 4) >> (4 - (m_iTremoloDepth >> 1));
 
-	if ((m_iTremoloDepth & 1) == 0)
-		TremVol -= (TremVol >> 1);
-#endif
-
-	return TremVol;
+	return (TremVol >> 1);
 }
 
 int CChannelHandler::GetFinePitch() const
@@ -623,4 +610,23 @@ CSequence *CChannelHandler::GetSequence(int Index, int Type)
 {
 	// Return a sequence, must be overloaded
 	return NULL;
+}
+
+int CChannelHandler::CalculateVolume(int Limit) const
+{
+	// Default volume calculation
+	int Volume;
+
+	Volume = m_iVolume >> VOL_SHIFT;
+	Volume = (m_iOutVol * Volume) / 15 - GetTremolo();
+
+	if (Volume < 0)
+		Volume = 0;
+	if (Volume > Limit)
+		Volume = Limit;
+
+	if (m_iOutVol > 0 && m_iVolume > 0 && Volume == 0)
+		Volume = 1;
+
+	return Volume;
 }

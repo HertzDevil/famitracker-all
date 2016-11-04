@@ -29,7 +29,7 @@
 #include "Settings.h"
 #include "SoundGen.h"
 
-const char *CInstrumentEditorDPCM::KEY_NAMES[] = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+const TCHAR *CInstrumentEditorDPCM::KEY_NAMES[] = {_T("C"), _T("C#"), _T("D"), _T("D#"), _T("E"), _T("F"), _T("F#"), _T("G"), _T("G#"), _T("A"), _T("A#"), _T("B")};
 
 // Derive a new class from CFileDialog with implemented preview of DMC files
 
@@ -37,7 +37,7 @@ class CDMCFileSoundDialog : public CFileDialog
 {
 public:
 	CDMCFileSoundDialog(BOOL bOpenFileDialog, LPCTSTR lpszDefExt = NULL, LPCTSTR lpszFileName = NULL, DWORD dwFlags = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, LPCTSTR lpszFilter = NULL, CWnd* pParentWnd = NULL, DWORD dwSize = 0);
-	~CDMCFileSoundDialog();
+	virtual ~CDMCFileSoundDialog();
 
 protected:
 	virtual void OnFileNameChange();
@@ -61,17 +61,13 @@ void CDMCFileSoundDialog::OnFileNameChange()
 {
 	// Preview DMC file
 
-	if (!GetFileExt().CompareNoCase("dmc") && theApp.m_pSettings->General.bWavePreview) {
+	if (!GetFileExt().CompareNoCase(_T("dmc")) && theApp.GetSettings()->General.bWavePreview) {
 		DWORD dwAttrib = GetFileAttributes(GetPathName());
 		if (!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY) && GetPathName() != m_strLastFile) {
 			CFile file(GetPathName(), CFile::modeRead);
 			ULONGLONG size = file.GetLength();
-			if (size > 4081)
-				size = 4081;
-			CDSample *pSample = new CDSample();
-			pSample->SampleData = new char[(int)size];
-			pSample->SampleSize = (int)size;
-			memset(pSample->Name, 0, 256);
+			size = min(size, CDSample::MAX_SIZE);
+			CDSample *pSample = new CDSample((int)size);
 			file.Read(pSample->SampleData, (int)size);
 			theApp.GetSoundGenerator()->PreviewSample(pSample, 0, 15);
 			file.Close();
@@ -140,27 +136,29 @@ BOOL CInstrumentEditorDPCM::OnInitDialog()
 
 	m_pTableListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 	m_pTableListCtrl->DeleteAllItems();
-	m_pTableListCtrl->InsertColumn(0, "Key", LVCFMT_LEFT, 30);
-	m_pTableListCtrl->InsertColumn(1, "Pitch", LVCFMT_LEFT, 35);
-	m_pTableListCtrl->InsertColumn(2, "Sample", LVCFMT_LEFT, 90);
+	m_pTableListCtrl->InsertColumn(0, _T("Key"), LVCFMT_LEFT, 30);
+	m_pTableListCtrl->InsertColumn(1, _T("Pitch"), LVCFMT_LEFT, 35);
+	m_pTableListCtrl->InsertColumn(2, _T("Sample"), LVCFMT_LEFT, 90);
 	m_pTableListCtrl->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
 	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 	m_pSampleListCtrl->DeleteAllItems();
-	m_pSampleListCtrl->InsertColumn(0, "#", LVCFMT_LEFT, 22);
-	m_pSampleListCtrl->InsertColumn(1, "Name", LVCFMT_LEFT, 88);
-	m_pSampleListCtrl->InsertColumn(2, "Size", LVCFMT_LEFT, 39);
+	m_pSampleListCtrl->InsertColumn(0, _T("#"), LVCFMT_LEFT, 22);
+	m_pSampleListCtrl->InsertColumn(1, _T("Name"), LVCFMT_LEFT, 88);
+	m_pSampleListCtrl->InsertColumn(2, _T("Size"), LVCFMT_LEFT, 39);
 	m_pSampleListCtrl->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT);
 
+//	m_pSampleListCtrl->OnFile
+
 	for (i = 0; i < 16; i++) {
-		Text.Format("%i", i);
+		Text.Format(_T("%i"), i);
 		pPitch->AddString(Text);
 	}
 
 	pPitch->SetCurSel(15);
 
 	for (i = 0; i < OCTAVE_RANGE; i++) {
-		Text.Format("%i", i);
+		Text.Format(_T("%i"), i);
 		pOctave->AddString(Text);
 	}
 
@@ -180,32 +178,29 @@ BOOL CInstrumentEditorDPCM::OnInitDialog()
 
 void CInstrumentEditorDPCM::BuildKeyList()
 {
-	for (int i = 0; i < 12; i++) {
+	for (int i = 0; i < 12; ++i) {
 		UpdateKey(i);
 	}
 }
 
 void CInstrumentEditorDPCM::UpdateKey(int Index)
 {
-	int Pitch, Item;
 	char Name[256];
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	m_pTableListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 
 	if (m_pInstrument->GetSample(m_iOctave, Index) > 0) {
-		Item = m_pInstrument->GetSample(m_iOctave, Index) - 1;
-		Pitch = m_pInstrument->GetSamplePitch(m_iOctave, Index);
+		int Item = m_pInstrument->GetSample(m_iOctave, Index) - 1;
+		int Pitch = m_pInstrument->GetSamplePitch(m_iOctave, Index);
 
-		if (pDoc->GetSampleSize(Item) == 0) {
+		if (GetDocument()->GetSampleSize(Item) == 0) {
 			strcpy(Name, "(n/a)");
 		}
 		else {
-			pDoc->GetSampleName(Item, Name);
+			GetDocument()->GetSampleName(Item, Name);
 		}
 		m_pTableListCtrl->SetItemText(Index, 2, Name);
-		sprintf(Name, "%i", Pitch & 0x0F);
+		sprintf(Name, "%i %s", Pitch & 0x0F, (Pitch & 0x80) ? "L" : "");
 		m_pTableListCtrl->SetItemText(Index, 1, Name);
 	}
 	else {
@@ -218,36 +213,35 @@ void CInstrumentEditorDPCM::UpdateKey(int Index)
 
 void CInstrumentEditorDPCM::BuildSampleList()
 {
-	CComboBox		*m_pSampleBox;
-	CDSample		*pDSample;
-	unsigned int	Size, i, Index = 0;
-	CString			Text;
+	CString	Text;
+	CComboBox *pSampleBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-
-	m_pSampleBox		= reinterpret_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
-	m_pSampleListCtrl	= reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
+	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
 	m_pSampleListCtrl->DeleteAllItems();
-	m_pSampleBox->ResetContent();
+	pSampleBox->ResetContent();
 
-	Size = 0;
+	unsigned int Size(0), Index(0);
 
-	m_pSampleBox->AddString("(no sample)");
+	pSampleBox->AddString(_T("(no sample)"));
 
-	for (i = 0; i < MAX_DSAMPLES; i++) {
-		pDSample = pDoc->GetDSample(i);
+	for (int i = 0; i < MAX_DSAMPLES; ++i) {
+		CDSample *pDSample = GetDocument()->GetDSample(i);
 		if (pDSample->SampleSize > 0) {
-			Text.Format("%i", i);							m_pSampleListCtrl->InsertItem(Index, Text);
-			Text.Format("%s", pDSample->Name);				m_pSampleListCtrl->SetItemText(Index, 1, Text);
-			Text.Format("%i", pDSample->SampleSize);		m_pSampleListCtrl->SetItemText(Index, 2, Text);
-			Text.Format("%02i - %s", i, pDSample->Name);	m_pSampleBox->AddString(Text);
+			Text.Format(_T("%i"), i);
+			m_pSampleListCtrl->InsertItem(Index, Text);
+			Text.Format(_T("%s"), pDSample->Name);
+			m_pSampleListCtrl->SetItemText(Index, 1, Text);
+			Text.Format(_T("%i"), pDSample->SampleSize);
+			m_pSampleListCtrl->SetItemText(Index, 2, Text);
+			Text.Format(_T("%02i - %s"), i, pDSample->Name);
+			pSampleBox->AddString(Text);
 			Size += pDSample->SampleSize;
-			Index++;
+			++Index;
 		}
 	}
 
-	Text.Format("Space used %i kB, left %i kB (16 kB available)", Size / 0x400, (0x4000 - Size) / 0x400);
+	Text.Format(_T("Space used %i kB, left %i kB (16 kB available)"), Size / 0x400, (0x4000 - Size) / 0x400);
 	SetDlgItemText(IDC_SPACE, Text);
 }
 
@@ -256,42 +250,53 @@ void CInstrumentEditorDPCM::BuildSampleList()
 // Todo: I think I was wrong
 #define ADJUST_FOR_STORAGE(x) (x)
 
-void CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
+bool CInstrumentEditorDPCM::LoadSample(char *FilePath, char *FileName)
 {
 	CFile SampleFile;
 
 	if (!SampleFile.Open(FilePath, CFile::modeRead)) {
-		MessageBox("Could not open file!");
-		return;
+		AfxMessageBox(_T("Could not open file!"));
+		return false;
 	}
 
-	CDSample *NewSample = new CDSample;
+	CDSample *pNewSample = new CDSample();
 
-	if (NewSample != NULL) {
-		sprintf(NewSample->Name, "%s", FileName);
-		NewSample->SampleSize = (int)SampleFile.GetLength();
-		NewSample->SampleData = new char[NewSample->SampleSize];
-		SampleFile.Read(NewSample->SampleData, NewSample->SampleSize);
-		InsertSample(NewSample);
+	if (pNewSample != NULL) {
+		strcpy(pNewSample->Name, FileName);
+		int Size = (int)SampleFile.GetLength();
+		// Clip file if too large
+		Size = min(Size, CDSample::MAX_SIZE);
+		pNewSample->SampleSize = Size;
+		pNewSample->SampleData = new char[Size];
+		SampleFile.Read(pNewSample->SampleData, pNewSample->SampleSize);
+		if (!InsertSample(pNewSample))
+			return false;
 	}
 	
 	SampleFile.Close();
 	BuildSampleList();
+
+	return true;
 }
 
-void CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
+bool CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
 {	
-	int Size = 0;
+	int Size(0);
+	int FreeSlot = GetDocument()->GetFreeDSample();
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	// Out of sample slots
+	if (FreeSlot == -1) {
+		delete pNewSample;
+		return false;
+	}
 
-	CDSample *pFreeSample = pDoc->GetFreeDSample();
+	CDSample *pFreeSample = GetDocument()->GetDSample(FreeSlot);
 
-	for (int i = 0; i < MAX_DSAMPLES; i++)
-		Size += ADJUST_FOR_STORAGE(pDoc->GetDSample(i)->SampleSize);
+	for (int i = 0; i < MAX_DSAMPLES; ++i)
+		Size += ADJUST_FOR_STORAGE(GetDocument()->GetDSample(i)->SampleSize);
 	
 	if ((Size + pNewSample->SampleSize) > 0x4000) {
-		theApp.DisplayError(IDS_OUT_OF_SAMPLEMEM);
+		AfxMessageBox(IDS_OUT_OF_SAMPLEMEM, MB_ICONERROR);
 	}
 	else {
 		strcpy(pFreeSample->Name, pNewSample->Name);
@@ -300,22 +305,21 @@ void CInstrumentEditorDPCM::InsertSample(CDSample *pNewSample)
 		memcpy(pFreeSample->SampleData, pNewSample->SampleData, pNewSample->SampleSize);
 	}
 
-	delete [] pNewSample->SampleData;
-	// pNewSample must be allocated dynamically
 	delete pNewSample;
+
+	return true;
 }
 
 void CInstrumentEditorDPCM::OnBnClickedLoad()
 {
-//	CFileDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER, "Delta modulated samples (*.dmc)|*.dmc|All files|*.*||");
-	CDMCFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER, "Delta modulated samples (*.dmc)|*.dmc|All files|*.*||");
+	CDMCFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER, _T("Delta modulated samples (*.dmc)|*.dmc|All files|*.*||"));
 
-	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_DMC);
+	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.GetSettings()->GetPath(PATH_DMC);
 
 	if (OpenFileDialog.DoModal() == IDCANCEL)
 		return;
 
-	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_DMC);
+	theApp.GetSettings()->SetPath(OpenFileDialog.GetPathName(), PATH_DMC);
 
 	if (OpenFileDialog.GetFileName().GetLength() == 0) {
 		// Multiple files
@@ -335,10 +339,8 @@ void CInstrumentEditorDPCM::OnBnClickedLoad()
 void CInstrumentEditorDPCM::OnBnClickedUnload()
 {
 	CListCtrl *pListBox = (CListCtrl*)GetDlgItem(IDC_SAMPLE_LIST);
-	int nItem = -1, SelCount, Index;
+	int nItem(-1), SelCount, Index;
 	char ItemName[256];
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	if (m_iSelectedSample == MAX_DSAMPLES)
 		return;
@@ -350,37 +352,33 @@ void CInstrumentEditorDPCM::OnBnClickedUnload()
 		nItem = pListBox->GetNextItem(nItem, LVNI_SELECTED);
 		ASSERT(nItem != -1);
 		pListBox->GetItemText(nItem, 0, ItemName, 256);
-		//sscanf(ItemName, "%i", &Index);
 		Index = atoi(ItemName);
-		pDoc->RemoveDSample(Index);
+		GetDocument()->RemoveDSample(Index);
 	}
-
-//	pDoc->RemoveDSample(m_iSelectedSample);
 
 	BuildSampleList();
 }
 
 void CInstrumentEditorDPCM::OnNMClickSampleList(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	char ItemName[256];
-	int Index;
-
 	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
 	if (m_pSampleListCtrl->GetItemCount() == 0)
 		return;
 
-	Index = m_pSampleListCtrl->GetSelectionMark();
+	int Index = m_pSampleListCtrl->GetSelectionMark();
+	TCHAR ItemName[256];
 	m_pSampleListCtrl->GetItemText(Index, 0, ItemName, 256);
-	sscanf(ItemName, "%i", &m_iSelectedSample);
+	//sscanf(ItemName, "%i", &m_iSelectedSample);
+	m_iSelectedSample = _ttoi(ItemName);
 
 	*pResult = 0;
 }
 
 void CInstrumentEditorDPCM::OnBnClickedImport()
 {
-	CPCMImport		ImportDialog;
-	CDSample		*pImported;
+	CPCMImport	ImportDialog;
+	CDSample	*pImported;
 
 	if (!(pImported = ImportDialog.ShowDialog()))
 		return;
@@ -399,12 +397,11 @@ void CInstrumentEditorDPCM::OnCbnSelchangeOctave()
 void CInstrumentEditorDPCM::OnCbnSelchangePitch()
 {
 	CComboBox *m_pPitchBox	= reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
-	int Pitch;
 
 	if (m_iSelectedKey == -1)
 		return;
 
-	Pitch = m_pPitchBox->GetCurSel();
+	int Pitch = m_pPitchBox->GetCurSel();
 
 	if (IsDlgButtonChecked(IDC_LOOP))
 		Pitch |= 0x80;
@@ -418,19 +415,18 @@ void CInstrumentEditorDPCM::OnNMClickTable(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	CComboBox *pSampleBox, *pPitchBox;
 	CString Text;
-	int Sample, Pitch;
 
 	m_pTableListCtrl	= reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 	m_iSelectedKey		= m_pTableListCtrl->GetSelectionMark();
 
-	Sample				= m_pInstrument->GetSample(m_iOctave, m_iSelectedKey) - 1;
-	Pitch				= m_pInstrument->GetSamplePitch(m_iOctave, m_iSelectedKey);
+	int Sample			= m_pInstrument->GetSample(m_iOctave, m_iSelectedKey) - 1;
+	int Pitch			= m_pInstrument->GetSamplePitch(m_iOctave, m_iSelectedKey);
 
 	m_pTableListCtrl	= static_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 	pSampleBox			= static_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
 	pPitchBox			= static_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
 
-	Text.Format("%02i - %s", Sample, m_pTableListCtrl->GetItemText(m_pTableListCtrl->GetSelectionMark(), 2));
+	Text.Format(_T("%02i - %s"), Sample, m_pTableListCtrl->GetItemText(m_pTableListCtrl->GetSelectionMark(), 2));
 
 	if (Sample != -1)
 		pSampleBox->SelectString(0, Text);
@@ -453,23 +449,20 @@ void CInstrumentEditorDPCM::OnCbnSelchangeSamples()
 	CComboBox *m_pSampleBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_SAMPLES));
 	CComboBox *pPitchBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
 	
-	int Sample, PrevSample;
-	char Name[256];
-
-	PrevSample = m_pInstrument->GetSample(m_iOctave, m_iSelectedKey);
-
-	Sample = m_pSampleBox->GetCurSel();
+	int PrevSample = m_pInstrument->GetSample(m_iOctave, m_iSelectedKey);
+	int Sample = m_pSampleBox->GetCurSel();
 
 	if (Sample > 0) {
+		char Name[256];
 		m_pSampleBox->GetLBText(Sample, Name);
 		
 		Name[2] = 0;
-		if (Name[0] == '0') {
+		if (Name[0] == _T('0')) {
 			Name[0] = Name[1];
 			Name[1] = 0;
 		}
 
-		sscanf(Name, "%i", &Sample);
+		Sample = _tstoi(Name);
 		Sample++;
 
 		if (PrevSample == 0) {
@@ -477,8 +470,6 @@ void CInstrumentEditorDPCM::OnCbnSelchangeSamples()
 			m_pInstrument->SetSamplePitch(m_iOctave, m_iSelectedKey, Pitch);
 		}
 	}
-
-//	m_iSelectedSample = Sample;
 
 	m_pInstrument->SetSample(m_iOctave, m_iSelectedKey, Sample);
 
@@ -488,22 +479,19 @@ void CInstrumentEditorDPCM::OnCbnSelchangeSamples()
 CDSample *CInstrumentEditorDPCM::GetSelectedSample()
 {
 	CDSample *pSample;
-	char	 Text[256];
-	int		 Index;
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	TCHAR	 Text[256];
 
 	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
-	Index = m_pSampleListCtrl->GetSelectionMark();
+	int Index = m_pSampleListCtrl->GetSelectionMark();
 
 	if (Index == -1)
 		return NULL;
 
 	m_pSampleListCtrl->GetItemText(Index, 0, Text, 256);
-	sscanf(Text, "%i", &Index);
+	Index = _tstoi(Text);
 	
-	pSample = pDoc->GetDSample(Index);
+	pSample = GetDocument()->GetDSample(Index);
 
 	return pSample;
 }
@@ -512,41 +500,37 @@ void CInstrumentEditorDPCM::OnBnClickedSave()
 {
 	CString		Path;
 	CFile		SampleFile;
-
 	CDSample	*DSample;
-	char		Text[256];
-	int			Index;
-
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	TCHAR		Text[256];
 
 	m_pSampleListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_SAMPLE_LIST));
 
-	Index = m_pSampleListCtrl->GetSelectionMark();
+	int Index = m_pSampleListCtrl->GetSelectionMark();
 
 	if (Index == -1)
 		return;
 
 	m_pSampleListCtrl->GetItemText(Index, 0, Text, 256);
-	sscanf(Text, "%i", &Index);
+	Index = _tstoi(Text);
 	
-	DSample = pDoc->GetDSample(Index);
+	DSample = GetDocument()->GetDSample(Index);
 
 	if (DSample->SampleSize == 0)
 		return;
 
-	CFileDialog SaveFileDialog(FALSE, "dmc", (LPCSTR)DSample->Name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, "Delta modulation samples (*.dmc)|*.dmc|All files|*.*||");
+	CFileDialog SaveFileDialog(FALSE, _T("dmc"), (LPCSTR)DSample->Name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Delta modulation samples (*.dmc)|*.dmc|All files|*.*||"));
 	
-	SaveFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_DMC);
+	SaveFileDialog.m_pOFN->lpstrInitialDir = theApp.GetSettings()->GetPath(PATH_DMC);
 
 	if (SaveFileDialog.DoModal() == IDCANCEL)
 		return;
 
-	theApp.m_pSettings->SetPath(SaveFileDialog.GetPathName(), PATH_DMC);
+	theApp.GetSettings()->SetPath(SaveFileDialog.GetPathName(), PATH_DMC);
 
 	Path = SaveFileDialog.GetPathName();
 
 	if (!SampleFile.Open(Path, CFile::modeWrite | CFile::modeCreate)) {
-		MessageBox("Could not open file!");
+		AfxMessageBox(_T("Could not open file!"));
 		return;
 	}
 
@@ -556,20 +540,19 @@ void CInstrumentEditorDPCM::OnBnClickedSave()
 
 void CInstrumentEditorDPCM::OnBnClickedLoop()
 {
-	int Pitch;
-
-	Pitch = m_pInstrument->GetSamplePitch(m_iOctave, m_iSelectedKey) & 0x0F;
+	int Pitch = m_pInstrument->GetSamplePitch(m_iOctave, m_iSelectedKey) & 0x0F;
 
 	if (IsDlgButtonChecked(IDC_LOOP))
 		Pitch |= 0x80;
 
 	m_pInstrument->SetSamplePitch(m_iOctave, m_iSelectedKey, Pitch);
+
+	UpdateKey(m_iSelectedKey);
 }
 
 void CInstrumentEditorDPCM::SelectInstrument(int Instrument)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(Instrument);
+	CInstrument2A03 *pInst = (CInstrument2A03*)GetDocument()->GetInstrument(Instrument);
 	m_pInstrument = pInst;
 	BuildKeyList();
 }
@@ -582,11 +565,11 @@ BOOL CInstrumentEditorDPCM::PreTranslateMessage(MSG* pMsg)
 				if (pMsg->wParam == 27)	// Esc
 					break;
 				// Select DPCM channel
-				static_cast<CFamiTrackerView*>(theApp.GetDocumentView())->SelectChannel(4);
-				static_cast<CFamiTrackerView*>(theApp.GetDocumentView())->PreviewNote((unsigned char)pMsg->wParam);
+				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->SelectChannel(4);
+				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote((unsigned char)pMsg->wParam);
 				return TRUE;
 			case WM_KEYUP:
-				static_cast<CFamiTrackerView*>(theApp.GetDocumentView())->PreviewRelease((unsigned char)pMsg->wParam);
+				static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease((unsigned char)pMsg->wParam);
 				return TRUE;
 		}
 	}
@@ -598,11 +581,10 @@ void CInstrumentEditorDPCM::OnBnClickedAdd()
 {
 	// Add sample to key list	
 	CComboBox *pPitchBox = reinterpret_cast<CComboBox*>(GetDlgItem(IDC_PITCH));
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	int Pitch = pPitchBox->GetCurSel();
 
-	if (pDoc->GetSampleSize(m_iSelectedSample) > 0) {
+	if (GetDocument()->GetSampleSize(m_iSelectedSample) > 0) {
 		m_pInstrument->SetSample(m_iOctave, m_iSelectedKey, m_iSelectedSample + 1);
 		m_pInstrument->SetSamplePitch(m_iOctave, m_iSelectedKey, Pitch);
 		UpdateKey(m_iSelectedKey);
@@ -717,8 +699,7 @@ void CInstrumentEditorDPCM::OnNMRClickTable(NMHDR *pNMHDR, LRESULT *pResult)
 
 	// Create a popup menu for key list with samples
 
-	CDSample		*pDSample;
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	CDSample *pDSample;
 
 	CMenu PopupMenu;
 	CPoint point;
@@ -728,11 +709,11 @@ void CInstrumentEditorDPCM::OnNMRClickTable(NMHDR *pNMHDR, LRESULT *pResult)
 
 	GetCursorPos(&point);
 	PopupMenu.CreatePopupMenu();
-	PopupMenu.AppendMenu(MF_STRING, 1, "(no sample)");
+	PopupMenu.AppendMenu(MF_STRING, 1, _T("(no sample)"));
 
 	// Fill menu
 	for (int i = 0; i < MAX_DSAMPLES; i++) {
-		pDSample = pDoc->GetDSample(i);
+		pDSample = GetDocument()->GetDSample(i);
 		if (pDSample->SampleSize > 0) {
 			PopupMenu.AppendMenu(MF_STRING, i + 2, pDSample->Name);
 		}
@@ -763,19 +744,17 @@ void CInstrumentEditorDPCM::OnNMDblclkTable(NMHDR *pNMHDR, LRESULT *pResult)
 
 	// Preview sample from key table
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-
 	int Sample = m_pInstrument->GetSample(m_iOctave, m_iSelectedKey);
 
 	if (Sample == 0)
 		return;
 
-	CDSample *pSample = pDoc->GetDSample(Sample - 1);
+	CDSample *pSample = GetDocument()->GetDSample(Sample - 1);
 	int Pitch = m_pInstrument->GetSamplePitch(m_iOctave, m_iSelectedKey) & 0x0F;
 
 	m_pTableListCtrl = reinterpret_cast<CListCtrl*>(GetDlgItem(IDC_TABLE));
 
-	if (pSample == NULL || pSample->SampleSize == 0 || m_pTableListCtrl->GetItemText(m_iSelectedKey, 2) == "(no sample)")
+	if (pSample == NULL || pSample->SampleSize == 0 || m_pTableListCtrl->GetItemText(m_iSelectedKey, 2) == _T("(no sample)"))
 		return;
 
 	theApp.GetSoundGenerator()->PreviewSample(pSample, 0, Pitch);

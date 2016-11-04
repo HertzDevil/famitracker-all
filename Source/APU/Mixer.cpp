@@ -25,11 +25,12 @@
 //
 
 /*
+
  Mixing of external channles are based on my own research:
 
  VRC6 (Madara): 
-	Pulse channels has the same amplitude as internal 
-    pulse channels on equal volume levels
+	Pulse channels has the same amplitude as internal-
+    pulse channels on equal volume levels.
 
  FDS: 
 	Square wave @ v = $1F: 2.4V
@@ -37,27 +38,38 @@
 	(internal square wave: 1.0V)
 
  MMC5 (just breed): 
-	MMC5 square @v = $0F: 900mV
-	(Internal square: 760mV, the cart attenuates sound a little)
+	2A03 square @ v = $0F: 760mV (the cart attenuates internal channels a little)
+	MMC5 square @ v = $0F: 900mV
+
+ VRC7:
+	2A03 Square  @ v = $0F: 300mV (the cart attenuates internal channels a lot)
+	VRC7 Patch 5 @ v = $0F: 900mV
+	Did some more tests and found patch 14 @ v=15 to be 13.77dB stronger than a 50% square @ v=15
 
  ---
 
- VRC7, N106 & 5B are still unknown
+ N106 & 5B are still unknown
 
 */
 
+#include "../stdafx.h"
 #include <memory>
 #include "mixer.h"
 #include "apu.h"
-#include "../Blip_Buffer/blip_buffer.h"
+#include "emu2413.h"
 
 //#define LINEAR_MIXING
 
-const double AMP_2A03 = 400.0;
+static const double AMP_2A03 = 400.0;
+
+static const float LEVEL_FALL_OFF_RATE	= 0.6f;
+static const int   LEVEL_FALL_OFF_DELAY = 3;
 
 CMixer::CMixer()
 {
-	m_pSampleBuffer = NULL;
+	memset(m_iChannels, 0, sizeof(int32) * CHANNELS);
+	memset(m_fChannelLevels, 0, sizeof(float) * CHANNELS);
+	memset(m_iChanLevelFallOff, 0, sizeof(uint32) * CHANNELS);
 }
 
 CMixer::~CMixer()
@@ -86,34 +98,21 @@ inline double CMixer::CalcPin2(double Val1, double Val2, double Val3)
 	return 0;
 }
 
-bool CMixer::Init()
-{
-	memset(Channels, 0, sizeof(int) * CHANNELS);
-	memset(ChannelLevels, 0, sizeof(float) * CHANNELS);
-	memset(ChanLevelFallOff, 0, sizeof(int) * CHANNELS);
-//	memset(ExternalSampleBuffer, 0, sizeof(int32) * 1000);
-
-//	ExternalSamples = 0;
-
-	return true;
-}
-
-void CMixer::Shutdown()
-{
-	if (m_pSampleBuffer)
-		delete [] m_pSampleBuffer;
-
-	m_pSampleBuffer = NULL;
-}
-
 void CMixer::ExternalSound(int Chip)
 {
-	ExternalChip = Chip;
+	m_iExternalChip = Chip;
+	UpdateSettings(m_iLowCut, m_iHighCut, m_iHighDamp, m_iOverallVol);
 }
 
 void CMixer::UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVol)
 {
 	float fVol = float(OverallVol) / 100.0f;
+
+	if (m_iExternalChip & SNDCHIP_VRC7)
+		// Decrease the internal audio when VRC7 is enabled to increase the headroom
+		m_fDamping = 0.34f;
+	else
+		m_fDamping = 1.0f;
 
 	// Blip-buffer filtering
 	BlipBuffer.bass_freq(LowCut);
@@ -125,13 +124,18 @@ void CMixer::UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVo
 	SynthN106.treble_eq(blip_eq_t(-HighDamp, HighCut, m_iSampleRate));
 
 	// Checked against hardware
-	Synth2A03.volume(fVol * 1.0f);
+	Synth2A03.volume(fVol * 1.0f * m_fDamping);
 	SynthVRC6.volume(fVol * 3.98333f);
 	SynthFDS.volume(fVol * 1.00f);
 	SynthMMC5.volume(fVol * 1.18421f);
 	
 	// Not checked
-	SynthN106.volume(1.0f * fVol);
+	SynthN106.volume(fVol * 1.0f);
+
+	m_iLowCut = LowCut;
+	m_iHighCut = HighCut;
+	m_iHighDamp = HighDamp;
+	m_iOverallVol = OverallVol;
 }
 
 void CMixer::MixSamples(blip_sample_t *pBuffer, uint32 Count)
@@ -140,36 +144,19 @@ void CMixer::MixSamples(blip_sample_t *pBuffer, uint32 Count)
 	BlipBuffer.mix_samples(pBuffer, Count);
 }
 
-uint32 CMixer::GetMixSampleCount(int t)
+uint32 CMixer::GetMixSampleCount(int t) const
 {
 	return BlipBuffer.count_samples(t);
 }
 
-//const uint32 OPL_CLOCK = 3579545;
-
-bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint32 ClockRate, uint8 NrChannels)
+bool CMixer::AllocateBuffer(unsigned int BufferLength, uint32 SampleRate, uint8 NrChannels)
 {
 	m_iSampleRate = SampleRate;
-
-	BlipBuffer.sample_rate(SampleRate, ((BufferLength * 1000) / SampleRate) * 2);
-	BlipBuffer.clock_rate(ClockRate);
-
-//	SetVolumeLevels();
-
-	if (m_pSampleBuffer)
-		delete [] m_pSampleBuffer;
-
-	// Allocate a transfer buffer
-	m_pSampleBuffer = new int32[BufferLength * NrChannels];
-
-	// Setup OPLL
-	// Todo: fix 44100
-//	OPLL_init(OPL_CLOCK, /*44100*/ SampleRate);
-
+	BlipBuffer.sample_rate(SampleRate, (BufferLength * 1000 * 2) / SampleRate);
 	return true;
 }
 
-void CMixer::SetClockRate(int Rate)
+void CMixer::SetClockRate(uint32 Rate)
 {
 	// Change the clockrate
 	BlipBuffer.clock_rate(Rate);
@@ -180,7 +167,7 @@ void CMixer::ClearBuffer()
 	BlipBuffer.clear();
 }
 
-int CMixer::SamplesAvail()
+int CMixer::SamplesAvail() const
 {	
 	return (int)BlipBuffer.samples_avail();
 }
@@ -190,31 +177,22 @@ int CMixer::FinishBuffer(int t)
 	BlipBuffer.end_frame(t);
 
 	// Get channel levels for VRC7
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < 6; ++i)
 		StoreChannelLevel(CHANID_VRC7_CH1 + i, OPLL_getchanvol(i) >> 6);
 
-	for (int i = 0; i < CHANNELS; i++) {
-
-		if (ChanLevelFallOff[i] > 0)
-			ChanLevelFallOff[i]--;
+	for (int i = 0; i < CHANNELS; ++i) {
+		if (m_iChanLevelFallOff[i] > 0)
+			m_iChanLevelFallOff[i]--;
 		else {
-		//ChannelLevels[i] = 0;
-
-//			ChanLevelFallOff[i] = 1;
-			if (ChannelLevels[i] > 0) {
-//				if (i == 4) {
-//					ChannelLevels[i] -= 8;
-//					if (ChannelLevels[i] < 0)
-//						ChannelLevels[i] = 0;
-//				}
-//				else
-					ChannelLevels[i] -= 0.6f;
-				if (ChannelLevels[i] < 0)
-					ChannelLevels[i] = 0;
+			if (m_fChannelLevels[i] > 0) {
+				m_fChannelLevels[i] -= LEVEL_FALL_OFF_RATE;
+				if (m_fChannelLevels[i] < 0)
+					m_fChannelLevels[i] = 0;
 			}
 		}
 	}
 
+	// Return number of samples available
 	return BlipBuffer.samples_avail();
 }
 
@@ -228,14 +206,14 @@ void CMixer::MixInternal(int Value, int Time)
 	double Sum, Delta;
 
 #ifdef LINEAR_MIXING
-	SumL = ((Channels[CHANID_SQUARE1].Left + Channels[CHANID_SQUARE2].Left) * 0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Left + 0.00494 * Channels[CHANID_NOISE].Left + 0.00335 * Channels[CHANID_DPCM].Left)) * InternalVol;
-	SumR = ((Channels[CHANID_SQUARE1].Right + Channels[CHANID_SQUARE2].Right) *  0.00752 + (0.00851 * Channels[CHANID_TRIANGLE].Right + 0.00494 * Channels[CHANID_NOISE].Right + 0.00335 * Channels[CHANID_DPCM].Right)) * InternalVol;
+	SumL = ((m_iChannels[CHANID_SQUARE1].Left + m_iChannels[CHANID_SQUARE2].Left) * 0.00752 + (0.00851 * m_iChannels[CHANID_TRIANGLE].Left + 0.00494 * m_iChannels[CHANID_NOISE].Left + 0.00335 * m_iChannels[CHANID_DPCM].Left)) * InternalVol;
+	SumR = ((m_iChannels[CHANID_SQUARE1].Right + m_iChannels[CHANID_SQUARE2].Right) *  0.00752 + (0.00851 * m_iChannels[CHANID_TRIANGLE].Right + 0.00494 * m_iChannels[CHANID_NOISE].Right + 0.00335 * m_iChannels[CHANID_DPCM].Right)) * InternalVol;
 #else
-	Sum = CalcPin1(Channels[CHANID_SQUARE1], Channels[CHANID_SQUARE2]) + 
-		  CalcPin2(Channels[CHANID_TRIANGLE], Channels[CHANID_NOISE], Channels[CHANID_DPCM]);
+	Sum = CalcPin1(m_iChannels[CHANID_SQUARE1], m_iChannels[CHANID_SQUARE2]) + 
+		  CalcPin2(m_iChannels[CHANID_TRIANGLE], m_iChannels[CHANID_NOISE], m_iChannels[CHANID_DPCM]);
 #endif
 
-	Delta = (Sum - LastSum) * AMP_2A03;
+	Delta = (Sum - LastSum) * AMP_2A03 /** m_dDamping*/;
 	LastSum = Sum;
 
 	if (Delta)
@@ -273,7 +251,7 @@ void CMixer::AddValue(int ChanID, int Chip, int Value, int AbsValue, int FrameCy
 
 	StoreChannelLevel(ChanID, AbsValue);
 
-	Channels[ChanID] = Value;
+	m_iChannels[ChanID] = Value;
 
 	switch (Chip) {
 		case SNDCHIP_NONE:
@@ -301,19 +279,14 @@ int CMixer::ReadBuffer(int Size, void *Buffer, bool Stereo)
 	return BlipBuffer.read_samples((blip_sample_t*)Buffer, Size);
 }
 
-int32 CMixer::GetChanOutput(uint8 Chan)
+int32 CMixer::GetChanOutput(uint8 Chan) const
 {
-	int32 Ret = (int32)ChannelLevels[Chan];
-//	if (Chan == CHANID_DPCM)
-//		Ret /= 8;
-	return Ret;
+	return (int32)m_fChannelLevels[Chan];
 }
 
 void CMixer::StoreChannelLevel(int Channel, int Value)
 {
-	int AbsVol;
-
-	AbsVol = abs(Value);
+	int AbsVol = abs(Value);
 
 	// Adjust channel levels for some channels
 	if (Channel == CHANID_VRC6_SAWTOOTH)
@@ -325,8 +298,8 @@ void CMixer::StoreChannelLevel(int Channel, int Value)
 	if (Channel == CHANID_FDS)
 		AbsVol = AbsVol / 38;
 
-	if (float(AbsVol) >= ChannelLevels[Channel]) {
-		ChannelLevels[Channel] = float(AbsVol);
-		ChanLevelFallOff[Channel] = 3;
+	if (float(AbsVol) >= m_fChannelLevels[Channel]) {
+		m_fChannelLevels[Channel] = float(AbsVol);
+		m_iChanLevelFallOff[Channel] = LEVEL_FALL_OFF_DELAY;
 	}
 }

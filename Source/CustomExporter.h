@@ -13,15 +13,18 @@ public:
 	~CCustomExporter( void );
 	bool load( CString FileName );
 	CString const& getName( void ) const;
-	bool Export( CFamiTrackerDocInterface const* doc, LPCSTR fileName ) const;
+	CString const& getExt( void ) const;
+	bool Export( CFamiTrackerDocInterface const* doc, const char* fileName ) const;
 
 private:
 	CString m_name;
+	CString m_ext;
 	CString m_dllFilePath;
 	HINSTANCE m_dllHandle;
 	int *m_referenceCount;
+	const char* (__cdecl *m_GetExt)( void );
 	const char* (__cdecl *m_GetName)( void );
-	bool (__cdecl *m_Export)( CFamiTrackerDocInterface const* doc, LPCSTR fileName );
+	bool (__cdecl *m_Export)( FamitrackerDocInterface const* iface, const char* fileName );
 	void incReferenceCount( void );
 	void decReferenceCount( void );
 };

@@ -19,34 +19,36 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "DocumentFile.h"
 
+//
+// This class is based on CFile and has some simple extensions to create and read FTM files
+//
+
+// No unicode allowed here
+
 // Class constants
-const unsigned int CDocumentFile::FILE_VER		 = 0x0420;				// Current file version (4.20)
-const unsigned int CDocumentFile::COMPATIBLE_VER = 0x0100;				// Compatible file version (1.0)
+const unsigned int CDocumentFile::FILE_VER		 = 0x0420;			// Current file version (4.20)
+const unsigned int CDocumentFile::COMPATIBLE_VER = 0x0100;			// Compatible file version (1.0)
 
-static const char *FILE_HEADER	= "FamiTracker Module";
-static const char *FILE_ENDER	= "END";
+const char *CDocumentFile::FILE_HEADER_ID = "FamiTracker Module";
+const char *CDocumentFile::FILE_END_ID	  = "END";
 
-static const unsigned int MAX_BLOCK_SIZE = 0x80000;				// 256 kB (should be enough for each block)
+const unsigned int CDocumentFile::MAX_BLOCK_SIZE = 0x80000;
+const unsigned int CDocumentFile::BLOCK_SIZE = 0x10000;
 
 // CDocumentFile
 
-CDocumentFile::CDocumentFile()
+CDocumentFile::CDocumentFile() : 
+	m_pBlockData(NULL),
+	m_cBlockID(new char[16])
 {
-	m_pBlockData = NULL;
-	m_cBlockID = new char[16];
 }
 
 CDocumentFile::~CDocumentFile()
 {
-	if (m_pBlockData) {
-		delete [] m_pBlockData;
-		m_pBlockData = NULL;
-	}
-
-	delete [] m_cBlockID;
+	SAFE_RELEASE_ARRAY(m_pBlockData);
+	SAFE_RELEASE_ARRAY(m_cBlockID);
 }
 
 bool CDocumentFile::Finished() const
@@ -56,13 +58,13 @@ bool CDocumentFile::Finished() const
 
 void CDocumentFile::BeginDocument()
 {
-	Write(FILE_HEADER, int(strlen(FILE_HEADER)));
+	Write(FILE_HEADER_ID, int(strlen(FILE_HEADER_ID)));
 	Write(&FILE_VER, sizeof(int));
 }
 
 void CDocumentFile::EndDocument()
 {
-	Write(FILE_ENDER, int(strlen(FILE_ENDER)));
+	Write(FILE_END_ID, int(strlen(FILE_END_ID)));
 }
 
 void CDocumentFile::CreateBlock(const char *ID, int Version)
@@ -74,41 +76,66 @@ void CDocumentFile::CreateBlock(const char *ID, int Version)
 	m_iBlockSize	= 0;
 	m_iBlockVersion = Version & 0xFFFF;
 
-	m_pBlockData = new char[MAX_BLOCK_SIZE];
-	memset(m_pBlockData, 0, MAX_BLOCK_SIZE);
+	m_iMaxBlockSize = BLOCK_SIZE;
+
+	m_pBlockData = new char[m_iMaxBlockSize];
+
+	ASSERT(m_pBlockData != NULL);
 }
 
-void CDocumentFile::WriteBlock(void *Data, int Size)
+void CDocumentFile::ReallocateBlock()
 {
-	if (!m_pBlockData || m_iBlockPointer >= MAX_BLOCK_SIZE)
-		return;
+	int OldSize = m_iMaxBlockSize;
+	m_iMaxBlockSize += BLOCK_SIZE;
+	char *pData = new char[m_iMaxBlockSize];
+	ASSERT(pData != NULL);
+	memcpy(pData, m_pBlockData, OldSize);
+	SAFE_RELEASE_ARRAY(m_pBlockData);
+	m_pBlockData = pData;
+}
 
-	memcpy(m_pBlockData + m_iBlockPointer, Data, Size);
-	m_iBlockPointer += Size;
+void CDocumentFile::WriteBlock(const void *Data, unsigned int Size)
+{
+	ASSERT(m_pBlockData != NULL);
+
+	unsigned int WriteSize, WritePtr = 0;
+	char *pData = (char*)Data;
+
+	// Allow block to grow in size
+	while (Size > 0) {
+		if (Size > BLOCK_SIZE)
+			WriteSize = BLOCK_SIZE;
+		else
+			WriteSize = Size;
+
+		if ((m_iBlockPointer + WriteSize) >= m_iMaxBlockSize)
+			ReallocateBlock();
+
+		memcpy(m_pBlockData + m_iBlockPointer, pData + WritePtr, WriteSize);
+		m_iBlockPointer += WriteSize;
+		Size -= WriteSize;
+		WritePtr += WriteSize;
+	}
 }
 
 void CDocumentFile::WriteBlockInt(int Value)
 {
-	if (!m_pBlockData || m_iBlockPointer >= MAX_BLOCK_SIZE)
-		return;
-
-	memcpy(m_pBlockData + m_iBlockPointer, &Value, sizeof(int));
-	m_iBlockPointer += sizeof(int);
+	WriteBlock(&Value, sizeof(int));
 }
 
 void CDocumentFile::WriteBlockChar(char Value)
 {
-	if (!m_pBlockData || m_iBlockPointer >= MAX_BLOCK_SIZE)
-		return;
-
-	memcpy(m_pBlockData + m_iBlockPointer, &Value, sizeof(char));
-	m_iBlockPointer += sizeof(char);
+	WriteBlock(&Value, sizeof(char));
 }
 
 void CDocumentFile::WriteString(CString String)
 {
-	for (int i = 0; i < String.GetLength(); i++)
+	int len = String.GetLength();
+
+	for (int i = 0; i < len; ++i)
 		WriteBlockChar(String.GetAt(i));
+
+	// End of string
 	WriteBlockChar(0);
 }
 
@@ -133,9 +160,9 @@ bool CDocumentFile::CheckValidity()
 	char Buffer[256];
 
 	// Check ident string
-	Read(Buffer, int(strlen(FILE_HEADER)));
+	Read(Buffer, int(strlen(FILE_HEADER_ID)));
 
-	if (memcmp(Buffer, FILE_HEADER, strlen(FILE_HEADER)) != 0)
+	if (memcmp(Buffer, FILE_HEADER_ID, strlen(FILE_HEADER_ID)) != 0)
 		return FALSE;
 
 	// Read file version
@@ -147,12 +174,12 @@ bool CDocumentFile::CheckValidity()
 	return true;
 }
 
-int CDocumentFile::GetFileVersion() const
+unsigned int CDocumentFile::GetFileVersion() const
 {
 	return m_iFileVersion & 0xFFFF;
 }
 
-void CDocumentFile::ReadBlock()
+bool CDocumentFile::ReadBlock()
 {
 	int BytesRead;
 
@@ -164,23 +191,26 @@ void CDocumentFile::ReadBlock()
 	Read(&m_iBlockVersion, sizeof(int));
 	Read(&m_iBlockSize, sizeof(int));
 
-	if (m_pBlockData) {
-		delete [] m_pBlockData;
-		m_pBlockData = NULL;
+	if (m_iBlockSize > 1000000) {
+		memset(m_cBlockID, 0, 16);
+		return true;
 	}
-	
+
+	SAFE_RELEASE_ARRAY(m_pBlockData);
 	m_pBlockData = new char[m_iBlockSize];
 
 	Read(m_pBlockData, m_iBlockSize);
 
-	if (strcmp(m_cBlockID, FILE_ENDER) == 0)
+	if (strcmp(m_cBlockID, FILE_END_ID) == 0)
 		m_bFileDone = true;
 
 	if (BytesRead == 0)
 		m_bFileDone = true;
+
+	return false;
 }
 
-char *CDocumentFile::GetBlockHeaderID()
+char *CDocumentFile::GetBlockHeaderID() const
 {
 	return m_cBlockID;
 }

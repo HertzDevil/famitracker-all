@@ -21,7 +21,8 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "PerformanceDlg.h"
-#include ".\performancedlg.h"
+#include "FamiTrackerDoc.h"
+#include "SoundGen.h"
 
 
 // CPerformanceDlg dialog
@@ -55,8 +56,7 @@ BOOL CPerformanceDlg::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	theApp.GetCPUUsage();
-	theApp.GetFrameRate();
-	theApp.GetUnderruns();
+	theApp.GetSoundGenerator()->GetFrameRate();
 
 	SetTimer(1, 1000, NULL);
 
@@ -70,8 +70,8 @@ void CPerformanceDlg::OnTimer(UINT nIDEvent)
 	CString Text;
 
 	unsigned int Usage = theApp.GetCPUUsage();
-	unsigned int Rate = theApp.GetFrameRate();
-	unsigned int Underruns = theApp.GetUnderruns();
+	unsigned int Rate = theApp.GetSoundGenerator()->GetFrameRate();
+	unsigned int Underruns = theApp.GetSoundGenerator()->GetUnderruns();
 
 	Text.Format("%i%%", Usage / 100);
 	SetDlgItemText(IDC_CPU, Text);

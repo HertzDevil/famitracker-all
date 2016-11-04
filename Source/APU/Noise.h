@@ -45,6 +45,7 @@ public:
 private:
 	static const uint16	NOISE_FREQ[];
 
+private:
 	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;
 	uint8	m_iEnvelopeVolume, m_iFixedVolume;
 	int8	m_iEnvelopeCounter;

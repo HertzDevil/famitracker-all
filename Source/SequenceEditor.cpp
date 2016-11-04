@@ -26,53 +26,50 @@
 #include "GraphEditor.h"
 #include "InstrumentEditPanel.h"
 #include "SizeEditor.h"
+#include "SequenceSetting.h"
 
 // This file contains the sequence editor and sequence size control
 
-enum {MENU_ARP_RELATIVE = WM_USER, MENU_ARP_ABSOLUTE};
+enum {MENU_ARP_ABSOLUTE = WM_USER, MENU_ARP_RELATIVE, MENU_ARP_FIXED};
 
 // CSequenceEditor
 
 IMPLEMENT_DYNAMIC(CSequenceEditor, CWnd)
 
-CSequenceEditor::CSequenceEditor() : CWnd(), m_pGraphEditor(NULL)
+CSequenceEditor::CSequenceEditor(CFamiTrackerDoc *pDoc) : CWnd(), 
+	m_pGraphEditor(NULL), 
+	m_pSizeEditor(NULL),
+	m_pFont(NULL),
+	m_iMaxVol(15), 
+	m_iMaxDuty(3),
+	m_pDocument(pDoc)
 {
 }
 
 CSequenceEditor::~CSequenceEditor()
 {
+	SAFE_RELEASE(m_pFont);
+	SAFE_RELEASE(m_pSizeEditor);
+	SAFE_RELEASE(m_pGraphEditor);
 }
 
 BEGIN_MESSAGE_MAP(CSequenceEditor, CWnd)
 	ON_WM_PAINT()
 	ON_WM_LBUTTONUP()
-	ON_COMMAND(MENU_ARP_RELATIVE, OnMenuRelative)
-	ON_COMMAND(MENU_ARP_ABSOLUTE, OnMenuAbsolute)
+	ON_WM_LBUTTONDOWN()
 END_MESSAGE_MAP()
 
 CRect m_MenuRect;
 
-void CSequenceEditor::OnMenuRelative()
-{
-	m_pSequence->SetSetting(0);
-	SelectSequence(m_pSequence, m_iSelectedSetting, m_iInstrumentType);
-//	RedrawWindow();
-}
-
-void CSequenceEditor::OnMenuAbsolute()
-{
-	m_pSequence->SetSetting(1);
-	SelectSequence(m_pSequence, m_iSelectedSetting, m_iInstrumentType);
-//	RedrawWindow();
-}
+//CSequenceSetting *m_pSetting;
 
 BOOL CSequenceEditor::CreateEditor(CWnd *pParentWnd, const RECT &rect)
 {
-	if (CWnd::CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE, rect, pParentWnd, 0) == -1)
+	if (CWnd::CreateEx(WS_EX_CLIENTEDGE, NULL, _T(""), WS_CHILD | WS_VISIBLE, rect, pParentWnd, 0) == -1)
 		return -1;
 
 	m_pFont = new CFont();
-	m_pFont->CreateFont(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma");
+	m_pFont->CreateFont(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, _T("Tahoma"));
 
 	m_pParent = pParentWnd;
 
@@ -82,22 +79,23 @@ BOOL CSequenceEditor::CreateEditor(CWnd *pParentWnd, const RECT &rect)
 
 	m_pSizeEditor = new CSizeEditor(this);
 	
-	if (m_pSizeEditor->CreateEx(NULL, NULL, "", WS_CHILD | WS_VISIBLE, CRect(40, GraphRect.bottom + 5, 104, GraphRect.bottom + 22), this, 0) == -1)
+	if (m_pSizeEditor->CreateEx(NULL, NULL, _T(""), WS_CHILD | WS_VISIBLE, CRect(40, GraphRect.bottom + 5, 104, GraphRect.bottom + 22), this, 0) == -1)
 		return -1;
 
 	m_MenuRect = CRect(GraphRect.right - 80, GraphRect.bottom + 5, GraphRect.right - 10, GraphRect.bottom + 22);
+/*
+	m_pSetting = new CSequenceSetting(this);
 
-	m_menuPopup.CreatePopupMenu();
-	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_RELATIVE, _T("Relative"));
-	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_ABSOLUTE, _T("Absolute"));
+	if (m_pSetting->CreateEx(NULL, NULL, "", WS_CHILD | WS_VISIBLE, m_MenuRect, this, 0) == -1)
+		return -1;
 
+	m_pSetting->Setup(m_pFont);
+*/
 	return 0;
 }
 
 void CSequenceEditor::OnPaint()
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*) theApp.GetFirstDocument();
-
 	CPaintDC dc(this); // device context for painting
 
 	CRect rect;
@@ -108,27 +106,24 @@ void CSequenceEditor::OnPaint()
 		m_pSizeEditor->SetValue(m_pSequence->GetItemCount());
 
 	dc.SelectObject(m_pFont);
-	dc.TextOut(10, rect.bottom - 19, "Size:");
+	dc.TextOut(10, rect.bottom - 19, _T("Size:"));
 
 	CString LengthStr;
-	LengthStr.Format("%i ms  ", (1000 * m_pSizeEditor->GetValue()) / pDoc->GetFrameRate());
+	LengthStr.Format(_T("%i ms  "), (1000 * m_pSizeEditor->GetValue()) / m_pDocument->GetFrameRate());
 
 	dc.TextOut(120, rect.bottom - 19, LengthStr);
 
 	// Todo: For arpeggio, make this more general
 #if 0
-	if (m_iSelectedSetting == MOD_ARPEGGIO) {		// Temporarily disabled
+	if (m_iSelectedSetting == SEQ_ARPEGGIO) {		// Temporarily disabled
 		dc.FillSolidRect(m_MenuRect, 0);
 		dc.Draw3dRect(m_MenuRect, 0x808080, 0xFFFFFF);
 		dc.SetTextColor(0xFFFFFF);
 		dc.SetBkColor(0);
 //		dc.TextOut(m_MenuRect.top + 2, m_MenuRect.left + 2, "Relative");
-		if (m_pSequence->GetSetting() == 0) {
-			dc.TextOut(280 + 2, rect.bottom - 19, "Relative");
-		}
-		else {
-			dc.TextOut(280 + 2, rect.bottom - 19, "Absolute");
-		}
+
+		static const char* MODES[] = {"Absolute", "Relative", "Fixed"};
+		dc.TextOut(280 + 2, rect.bottom - 19, MODES[m_pSequence->GetSetting()]);
 	}
 	else {
 		dc.FillSolidRect(m_MenuRect, 0xFFFFFF);
@@ -157,10 +152,10 @@ BOOL CSequenceEditor::PreTranslateMessage(MSG* pMsg)
 			GetClientRect(rect);
 			// Arpeggio
 			if (m_iSelectedSetting == SEQ_ARPEGGIO && m_pSequence->GetSetting() == 1) {
-				Text.Format("{%i, %s}  ", pMsg->wParam, ((CArpeggioGraphEditor*)m_pGraphEditor)->GetNoteString(pMsg->lParam));
+				Text.Format(_T("{%i, %s}  "), pMsg->wParam, ((CArpeggioGraphEditor*)m_pGraphEditor)->GetNoteString(pMsg->lParam));
 			}
 			else
-				Text.Format("{%i, %i}  ", pMsg->wParam, pMsg->lParam);
+				Text.Format(_T("{%i, %i}  "), pMsg->wParam, pMsg->lParam);
 			pDC->TextOut(170, rect.bottom - 19, Text);
 			ReleaseDC(pDC);
 			return TRUE;
@@ -174,6 +169,18 @@ BOOL CSequenceEditor::PreTranslateMessage(MSG* pMsg)
 	return CWnd::PreTranslateMessage(pMsg);
 }
 
+void CSequenceEditor::ChangedSetting()
+{
+	// Called when the setting selector has changed
+	SelectSequence(m_pSequence, m_iSelectedSetting, m_iInstrumentType);
+}
+
+void CSequenceEditor::SetMaxValues(int MaxVol, int MaxDuty)
+{
+	m_iMaxVol = MaxVol;
+	m_iMaxDuty = MaxDuty;
+}
+
 void CSequenceEditor::SequenceChangedMessage(bool Changed)
 {
 	CString Text;
@@ -183,10 +190,10 @@ void CSequenceEditor::SequenceChangedMessage(bool Changed)
 
 	for (unsigned int i = 0; i < m_pSequence->GetItemCount(); i++) {
 		if (m_pSequence->GetLoopPoint() == i)
-			Text.Append("| ");
+			Text.Append(_T("| "));
 		else if (m_pSequence->GetReleasePoint() == i)
-			Text.Append("/ ");
-		Text.AppendFormat("%i ", m_pSequence->GetItem(i));
+			Text.Append(_T("/ "));
+		Text.AppendFormat(_T("%i "), m_pSequence->GetItem(i));
 	}
 
 	dynamic_cast<CSequenceInstrumentEditPanel*>(m_pParent)->SetSequenceString(Text, Changed);
@@ -195,8 +202,6 @@ void CSequenceEditor::SequenceChangedMessage(bool Changed)
 
 void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int InstrumentType)
 {
-	int DutyMax, VolMax;
-
 	// Select a sequence to edit
 	m_pSequence = pSequence;
 	m_iSelectedSetting = Type;
@@ -204,25 +209,10 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 
 	DestroyGraphEditor();
 
-	// Todo: store this somewhere else, like inside instrument classes
-	switch (InstrumentType) {
-		case INST_2A03:
-			DutyMax = 3;
-			VolMax = 15;
-			break;
-		case INST_VRC6:
-			DutyMax = 7;
-			VolMax = 15;
-			break;
-		case INST_FDS:
-			VolMax = 31;
-			break;
-	}
-
 	// Create the graph
 	switch (Type) {
 		case SEQ_VOLUME:
-			m_pGraphEditor = new CBarGraphEditor(pSequence, VolMax);
+			m_pGraphEditor = new CBarGraphEditor(pSequence, m_iMaxVol);
 			break;
 		case SEQ_ARPEGGIO:
 			m_pGraphEditor = new CArpeggioGraphEditor(pSequence);
@@ -232,15 +222,17 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 			m_pGraphEditor = new CPitchGraphEditor(pSequence);
 			break;
 		case SEQ_DUTYCYCLE:
-			m_pGraphEditor = new CBarGraphEditor(pSequence, DutyMax);
+			m_pGraphEditor = new CBarGraphEditor(pSequence, m_iMaxDuty);
 			break;
 	}
-
+/*
+	m_pSetting->SelectSequence(pSequence, Type, InstrumentType);
+*/
 	CRect GraphRect;
 	GetClientRect(GraphRect);
 	GraphRect.bottom -= 25;
 
-	if (m_pGraphEditor->CreateEx(NULL, NULL, "", WS_CHILD, GraphRect, this, 0) == -1)
+	if (m_pGraphEditor->CreateEx(NULL, NULL, _T(""), WS_CHILD, GraphRect, this, 0) == -1)
 		return;
 
 	m_pGraphEditor->UpdateWindow();
@@ -248,6 +240,7 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 
 	m_pSizeEditor->SetValue(pSequence->GetItemCount());
 
+	Invalidate();
 	RedrawWindow();
 
 	// Update sequence string
@@ -256,14 +249,16 @@ void CSequenceEditor::SelectSequence(CSequence *pSequence, int Type, int Instrum
 
 void CSequenceEditor::OnLButtonUp(UINT nFlags, CPoint point)
 {
+#if 0
 	CRect rect;
 	GetWindowRect(rect);
 
 	if (m_iSelectedSetting == SEQ_ARPEGGIO) {
 		if (m_MenuRect.PtInRect(point)) {
-//			m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN |TPM_RIGHTBUTTON, point.x + rect.left, point.y + rect.top, this);
+			m_menuPopup.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x + rect.left, point.y + rect.top, this);
 		}
 	}
+#endif
 }
 
 BOOL CSequenceEditor::DestroyWindow()
@@ -280,4 +275,11 @@ void CSequenceEditor::DestroyGraphEditor()
 		delete m_pGraphEditor;
 		m_pGraphEditor = NULL;
 	}
+}
+
+void CSequenceEditor::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	CWnd::OnLButtonDown(nFlags, point);
+	// Set focus to parent to allow keyboard note preview
+	GetParent()->SetFocus();
 }

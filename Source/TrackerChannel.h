@@ -25,7 +25,7 @@
 class CTrackerChannel
 {
 public:
-	CTrackerChannel(const char *pName, const int iChip, const int iID);
+	CTrackerChannel(const TCHAR *pName, const int iChip, const int iID);
 	~CTrackerChannel(void);
 	const char *GetChannelName() const;
 	const char GetChip() const;
@@ -45,8 +45,9 @@ public:
 	int GetPitch() const;
 
 private:
-	const char *m_pChannelName;
+	const TCHAR *m_pChannelName;
 
+private:
 	int m_iChip;
 	int m_iChannelID;
 	int m_iColumnCount;

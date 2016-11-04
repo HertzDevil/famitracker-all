@@ -41,6 +41,9 @@ CSampleWindow::CSampleWindow() :
 
 CSampleWindow::~CSampleWindow()
 {
+	for (int i = 0; i < 4; ++i) {
+		SAFE_RELEASE(m_pStates[i]);
+	}
 }
 
 BEGIN_MESSAGE_MAP(CSampleWindow, CWnd)
@@ -48,34 +51,8 @@ BEGIN_MESSAGE_MAP(CSampleWindow, CWnd)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_PAINT()
 	ON_WM_LBUTTONDBLCLK()
+	ON_WM_RBUTTONUP()
 END_MESSAGE_MAP()
-
-// CSampleWinProc message handlers
-
-BOOL CSampleWinProc::InitInstance()
-{
-	return TRUE;
-}
-
-int CSampleWinProc::Run()
-{
-	MSG msg;
-	bool Running = true;
-
-	while (Running) {
-		while (GetMessage(&msg, NULL, 0, 0)) {
-			if (msg.message == WM_USER) {
-				Wnd->DrawSamples((int*)msg.wParam, (int)msg.lParam);
-			}
-			else if (msg.message == WM_QUIT) {
-				Running = false;
-			}
-		}
-	}
-
-	return CWinThread::Run();
-}
-
 
 // State methods
 
@@ -84,7 +61,7 @@ void CSampleWindow::NextState()
 	m_iCurrentState = (m_iCurrentState + 1) % STATE_COUNT;
 	Invalidate();
 
-	theApp.m_pSettings->SampleWinState = m_iCurrentState;
+	theApp.GetSettings()->SampleWinState = m_iCurrentState;
 }
 
 // CSampleWindow message handlers
@@ -96,7 +73,7 @@ void CSampleWindow::DrawSamples(int *Samples, int Count)
 		m_pStates[m_iCurrentState]->SetSampleData(Samples, Count);
 		m_pStates[m_iCurrentState]->Draw(pDC, false);
 		ReleaseDC(pDC);
-		delete [] Samples;
+		//delete [] Samples;
 	}
 }
 
@@ -107,8 +84,8 @@ BOOL CSampleWindow::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lps
 	m_pStates[2] = new CSWSpectrum();
 	m_pStates[3] = new CSWLogo();
 	
-//	m_iCurrentState = 0;
-	m_iCurrentState = theApp.m_pSettings->SampleWinState;
+	// This is saved
+	m_iCurrentState = theApp.GetSettings()->SampleWinState;
 
 	for (int i = 0; i < STATE_COUNT; i++) {
 		m_pStates[i]->Activate();
@@ -135,12 +112,39 @@ void CSampleWindow::OnPaint()
 	m_pStates[m_iCurrentState]->Draw(&dc, true);
 }
 
-
-BOOL CSampleWindow::DestroyWindow()
+void CSampleWindow::OnRButtonUp(UINT nFlags, CPoint point)
 {
-	for (int i = 0; i < STATE_COUNT; i++) {
-		m_pStates[i]->Deactivate();
+	CMenu *PopupMenu, PopupMenuBar;
+	PopupMenuBar.LoadMenu(IDR_SAMPLE_WND_POPUP);
+	PopupMenu = PopupMenuBar.GetSubMenu(0);
+
+	CPoint menuPoint;
+	CRect rect;
+
+	GetWindowRect(rect);
+
+	menuPoint.x = rect.left + point.x;
+	menuPoint.y = rect.top + point.y;
+
+	UINT Result = PopupMenu->TrackPopupMenu(TPM_RETURNCMD, menuPoint.x, menuPoint.y, this);
+
+	switch (Result) {
+		case ID_POPUP_SAMPLEGRAPH1:
+			m_iCurrentState = 0;
+			break;
+		case ID_POPUP_SAMPLEGRAPH2:
+			m_iCurrentState = 1;
+			break;
+		case ID_POPUP_SPECTRUMANALYZER:
+			m_iCurrentState = 2;
+			break;
+		case ID_POPUP_NOTHING:
+			m_iCurrentState = 3;
+			break;
 	}
 
-	return CWnd::DestroyWindow();
+	Invalidate();
+	theApp.GetSettings()->SampleWinState = m_iCurrentState;
+
+	CWnd::OnRButtonUp(nFlags, point);
 }

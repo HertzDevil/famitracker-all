@@ -25,15 +25,15 @@
 #include "PCMImport.h"
 #include "Settings.h"
 #include "SoundGen.h"
+#include "apu/apu.h"
+#include "apu/dpcm.h"
 
-const int MAX_QUALITY	= 15;
-const int MIN_QUALITY	= 0;
-const int MAX_VOLUME	= 16;
-const int MIN_VOLUME	= 1;
+const int CPCMImport::MAX_QUALITY = 15;
+const int CPCMImport::MIN_QUALITY = 0;
+const int CPCMImport::MAX_VOLUME = 16;
+const int CPCMImport::MIN_VOLUME = 1;
 
-const int DPCM_RATES[]	= {0x01AC, 0x017C, 0x0154, 0x0140, 0x011E, 0x00FE, 0x00E2, 0x00D6, 0x00BE, 0x00A0, 0x008E, 0x0080, 0x006A, 0x0054, 0x0048, 0x0036};
-const int BASE_FREQ		= 1789773;
-const int SAMPLES_MAX	= 0x0FF1;		// Max amount of 8-bit DPCM samples
+const int CPCMImport::SAMPLES_MAX = 0x0FF1;		// Max amount of 8-bit DPCM samples
 
 // Derive a new class from CFileDialog with implemented preview of audio files
 
@@ -64,7 +64,7 @@ void CFileSoundDialog::OnFileNameChange()
 {
 	// Preview wave file
 
-	if (!GetFileExt().CompareNoCase("wav") && theApp.m_pSettings->General.bWavePreview)
+	if (!GetFileExt().CompareNoCase(_T("wav")) && theApp.GetSettings()->General.bWavePreview)
 		PlaySound(GetPathName(), NULL, SND_FILENAME | SND_NODEFAULT | SND_ASYNC | SND_NOWAIT);
 	
 	CFileDialog::OnFileNameChange();
@@ -99,25 +99,27 @@ CDSample *CPCMImport::ShowDialog()
 {
 	// Return import parameters, 0 if cancel
 
-	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, "Microsoft PCM files (*.wav)|*.wav|All files (*.*)|*.*||");
-/*
-	strcpy(pImported->Name, "");
-	Imported.SampleData = NULL;
-	Imported.SampleSize = 0;
-*/
-	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.m_pSettings->GetPath(PATH_WAV);
+	CFileSoundDialog OpenFileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, _T("Wave files (*.wav)|*.wav|All files (*.*)|*.*||"));
+
+	OpenFileDialog.m_pOFN->lpstrInitialDir = theApp.GetSettings()->GetPath(PATH_WAV);
 
 	if (OpenFileDialog.DoModal() == IDCANCEL)
 		return NULL;
 
-	theApp.m_pSettings->SetPath(OpenFileDialog.GetPathName(), PATH_WAV);
+	theApp.GetSettings()->SetPath(OpenFileDialog.GetPathName(), PATH_WAV);
 
-	m_strPath		= OpenFileDialog.GetPathName();
-	m_strFileName	= OpenFileDialog.GetFileName();
+	m_strPath	  = OpenFileDialog.GetPathName();
+	m_strFileName = OpenFileDialog.GetFileName();
+	m_pImported	  = NULL;
 
-	m_pImported = NULL;
+	// Open file and read header
+	if (!OpenWaveFile())
+		return NULL;
 
 	CDialog::DoModal();
+
+	// Close file
+	m_fSampleFile.Close();
 
 	return m_pImported;
 }
@@ -132,6 +134,7 @@ BOOL CPCMImport::OnInitDialog()
 	CSliderCtrl *VolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
 	CString Text;
 
+	// Initial volume & quality
 	m_iQuality = MAX_QUALITY;
 	m_iVolume = MAX_VOLUME / 4;
 
@@ -141,11 +144,13 @@ BOOL CPCMImport::OnInitDialog()
 	VolumeSlider->SetRange(MIN_VOLUME, MAX_VOLUME);
 	VolumeSlider->SetPos(m_iVolume);
 
-	Text.Format("Quality: %i", m_iQuality);
+	Text.Format(_T("Quality: %i"), m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format("Volume: %i", m_iVolume);
+	Text.Format(_T("Volume: %i"), m_iVolume);
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
+
+	UpdateFileInfo();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -153,18 +158,20 @@ BOOL CPCMImport::OnInitDialog()
 
 void CPCMImport::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
+	CString Text;
 	CSliderCtrl *QualitySlider = (CSliderCtrl*)GetDlgItem(IDC_QUALITY);
 	CSliderCtrl *VolumeSlider = (CSliderCtrl*)GetDlgItem(IDC_VOLUME);
-	CString Text;
 
 	m_iQuality = QualitySlider->GetPos();
 	m_iVolume = VolumeSlider->GetPos();
 
-	Text.Format("Quality: %i", m_iQuality);
+	Text.Format(_T("Quality: %i"), m_iQuality);
 	SetDlgItemText(IDC_QUALITY_FRM, Text);
 
-	Text.Format("Volume: %i", m_iVolume);
+	Text.Format(_T("Volume: %i"), m_iVolume);
 	SetDlgItemText(IDC_VOLUME_FRM, Text);
+
+	UpdateFileInfo();
 
 	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
 }
@@ -202,54 +209,128 @@ void CPCMImport::OnBnClickedPreview()
 	if (!pSample)
 		return;
 
-	// Play sample
+	// Play sample, it'll be removed automatically when finished
 	theApp.GetSoundGenerator()->PreviewSample(pSample, 0, m_iQuality);
+}
+
+void CPCMImport::UpdateFileInfo()
+{
+	CString SampleRate;
+	SampleRate.Format(_T("%i Hz, %i bits, %s"), m_iSamplesPerSec, m_iSampleSize * 8, (m_iChannels == 2) ? _T("Stereo") : _T("Mono"));
+	SetDlgItemText(IDC_SAMPLE_RATE, SampleRate);
+	
+	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_FREQ_NTSC[m_iQuality];
+	float resample_factor = base_freq / (float)m_iSamplesPerSec;
+
+	CString Resampling;
+	Resampling.Format(_T("Resampling factor: %g"), resample_factor);
+	SetDlgItemText(IDC_RESAMPLING, Resampling);
 }
 
 CDSample *CPCMImport::ConvertFile()
 {
-	const int		MAXINAMP = 24;
+	// Converts a WAV file to a DPCM sample
+	unsigned char DeltaAcc = 0;	// DPCM sample accumulator
+	int Sample = 0;				// PCM sample
+	int Delta = 0;				// Delta counter
+	int AccReady = 8;
+	int WaveSize = m_iWaveSize;
 
-	PCMWAVEFORMAT	WaveFormat;
-	int				WaveSize;
+	float resample_factor;
+	float resampling = 0.0f;
 
-	unsigned int	Samples = 0;
-	char			*SampleBuf;
+	// Display wait cursor
+	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
 
-	bool	Scanning = true;
-	char	Header[4];
-	int		BlockSize, Dec;
-	int		Progress = 0;
+	// Seek to start of samples
+	m_fSampleFile.Seek(m_ullSampleStart, CFile::begin);
 
-	int		dmcbits = 0, dmcshift = 8;
-	int		subsample = 0, oversampling = 75;
-	int		k = 128;
-	int		dmcpos;
+	// Allocate space
+	char *pSamples = new char[SAMPLES_MAX];
+	int iSamples = 0;
 
-	CDSample *pImported;
+	// Determine resampling factor
+	// To avoid resampling @ quality = 15, use 33143 Hz
+	float base_freq = (float)CAPU::BASE_FREQ_NTSC / (float)CDPCM::DMC_FREQ_NTSC[m_iQuality];
+	resample_factor = base_freq / (float)m_iSamplesPerSec;
 
-	if (!m_fSampleFile.Open(m_strPath, CFile::modeRead)) {
-		MessageBox("Could not open file!");
-		return NULL;
+	// Conversion
+	while ((WaveSize > 0) && (iSamples < SAMPLES_MAX)) {
+
+		resampling += 1.0f;
+
+		// Read & resample PCM sample from file
+		while (resampling > 0.0f && WaveSize > 0) {
+			Sample = (ReadSample() * m_iVolume) / 16;
+			WaveSize -= m_iBlockAlign;
+			resampling -= resample_factor;
+		}
+
+		DeltaAcc >>= 1;
+
+		// PCM -> DPCM
+		if (Sample > Delta) {
+			++Delta;
+			if (Delta > 31)
+				Delta = 31;
+			DeltaAcc |= 0x80;
+		}
+		else {
+			--Delta;
+			if (Delta < -31)
+				Delta = -31;
+		}
+
+		if (--AccReady == 0) {
+			// Store sample
+			pSamples[iSamples++] = DeltaAcc;
+			AccReady = 8;
+		}
+	} 
+
+	// Adjust sample until size is x * $10 + 1 bytes
+	while (iSamples < SAMPLES_MAX && ((iSamples & 0x0F) - 1) != 0)
+		pSamples[iSamples++] = 0x55;
+
+	// Return a sample object
+	return new CDSample(iSamples, pSamples);
+}
+
+bool CPCMImport::OpenWaveFile()
+{
+	// Open and read wave file header
+	PCMWAVEFORMAT WaveFormat;
+	char Header[4];
+	bool Scanning = true;
+	int BlockSize;
+	CFileException ex;
+
+	if (!m_fSampleFile.Open(m_strPath, CFile::modeRead, &ex)) {
+		TCHAR   szCause[255];
+		CString strFormatted;
+		ex.GetErrorMessage(szCause, 255);
+		strFormatted = _T("Could not open file: ");
+		strFormatted += szCause;
+		AfxMessageBox(strFormatted);
+		return false;
 	}
 
 	m_fSampleFile.Read(Header, 4);
 
 	if (memcmp(Header, "RIFF", 4) != 0) {
-		MessageBox("File is not a valid RIFF!");
+		AfxMessageBox(_T("File is not a valid RIFF!"));
 		m_fSampleFile.Close();
-		return NULL;
+		return false;
 	}
 
-	m_fSampleFile.Read(&BlockSize, 4);
-	WaveSize = BlockSize;
+	// Read sample size
+	m_fSampleFile.Read(&m_iWaveSize, 4);
 
 	// This is not perfect, but seems to work for the files I tried
 	while (Scanning) {
 		m_fSampleFile.Read(Header, 4);
 		
 		if (memcmp(Header, "WAVE", 4)) {
-			BlockSize = 0;
 			m_fSampleFile.Read(&BlockSize, 4);
 
 			if (!memcmp(Header, "fmt ", 4)) {
@@ -262,13 +343,13 @@ CDSample *CPCMImport::ConvertFile()
 				m_fSampleFile.Seek(BlockSize - ReadSize, CFile::current);
 
 				if (WaveFormat.wf.wFormatTag != WAVE_FORMAT_PCM) {
-					theApp.DisplayError(ID_INVALID_WAVEFILE);
+					AfxMessageBox(ID_INVALID_WAVEFILE, MB_ICONERROR);
 					m_fSampleFile.Close();
-					return NULL;
+					return false;
 				}
 			}
 			else if (!memcmp(Header, "data", 4)) {
-				WaveSize = BlockSize;
+				m_iWaveSize = BlockSize;
 				Scanning = false;
 			}
 			else if (!memcmp(Header, "fact", 4)) {
@@ -280,118 +361,32 @@ CDSample *CPCMImport::ConvertFile()
 		}
 	}
 
-	// Display wait cursor
-	SetCursor(AfxGetApp()->LoadStandardCursor(IDC_WAIT));
+	m_ullSampleStart = m_fSampleFile.GetPosition();
 
-	m_iChannels		= WaveFormat.wf.nChannels;
-	m_iSampleSize	= WaveFormat.wf.nBlockAlign / m_iChannels;
-	Dec				= WaveFormat.wf.nBlockAlign;
-	SampleBuf		= new char[SAMPLES_MAX];
-	dmcpos			= 0;
+	// Save file info
+	m_iChannels		  = WaveFormat.wf.nChannels;
+	m_iSampleSize	  = WaveFormat.wf.nBlockAlign / WaveFormat.wf.nChannels;
+	m_iBlockAlign	  = WaveFormat.wf.nBlockAlign;
+	m_iAvgBytesPerSec = WaveFormat.wf.nAvgBytesPerSec;
+	m_iSamplesPerSec  = WaveFormat.wf.nSamplesPerSec;
 
-	oversampling = ((BASE_FREQ / DPCM_RATES[m_iQuality]) * 100) / WaveFormat.wf.nSamplesPerSec;
-
-	// Length of PCM samples in ms
-	int Len = WaveSize / (WaveFormat.wf.nAvgBytesPerSec / 1000);
-
-	// Maximum length of DPCM samples in ms
-	int MaxLen = (SAMPLES_MAX * 8000) / (BASE_FREQ / DPCM_RATES[m_iQuality]);
-
-	if (Len > MaxLen) {
-		WaveSize = (WaveFormat.wf.nAvgBytesPerSec * MaxLen) / 1000;
-	}
-
-	int Delta, AccReady, DeltaAcc, SubSample, ScaledSample, LastAcc;
-
-	Delta = 0;
-	ScaledSample = 127;
-	AccReady = 8;
-	DeltaAcc = 0;
-	SubSample = 0;
-
-	bool SampleDone = false;
-
-	int Min = -32;
-	int Max = 32;
-/*
-	if (IsDlgButtonChecked(IDC_CLIP)) {
-		Min = 0;
-		Max = 63;
-	}
-	else {
-		Min = -32;
-		Max = 32;
-	}
-*/
-	// Do the conversion, this is based on Damian Yerrick's program
-	do {
-		DeltaAcc >>= 1;
-
-		if (ScaledSample > Delta) {
-			Delta++;
-			DeltaAcc |= 0x80;
-			if (Delta > Max)
-				Delta = Max;
-		}
-		else {
-			Delta--;
-			if (Delta < Min)
-				Delta = Min;
-		}
-
-		AccReady--;
-
-		if (AccReady == 0) {
-			SampleBuf[Samples++] = DeltaAcc;
-			LastAcc = DeltaAcc;
-			DeltaAcc = 0;
-			AccReady = 8;
-		}
-		
-		SubSample += 100;
-
-		while (SubSample > 0 && WaveSize > 0 && Samples < SAMPLES_MAX) {
-			ScaledSample = (ReadSample() * m_iVolume) / 16;
-			WaveSize -= Dec;
-			Progress += Dec;
-			SubSample -= oversampling;
-		}
-
-		if (WaveSize <= 0 && SubSample <= 0)
-			SampleDone = true;
-
-	} while (!SampleDone && (Samples < SAMPLES_MAX));
-	
-	
-	// Adjust to make it even to x * $10 + 1 bytes
-	while (Samples < SAMPLES_MAX && ((Samples & 0x0F) - 1) != 0) {
-		SampleBuf[Samples++] = 0;
-	}
-
-	if (Samples > SAMPLES_MAX)
-		Samples = SAMPLES_MAX;
-
-	// Allocate sample object
-	pImported = new CDSample();
-	pImported->SampleData = SampleBuf;
-	pImported->SampleSize = Samples;
-	memset(pImported->Name, 0, 256);
-
-	m_fSampleFile.Close();
-
-	return pImported;
+	return true;
 }
 
 int CPCMImport::ReadSample(void)
 {
-	short SampleLeft, SampleRight;
+	short SampleRight = 0;
+	short SampleLeft = 0;
 	short Sample = 0;
 
 	if (m_iSampleSize == 2) {
+		// 16 bit samples
 		if (m_iChannels == 2) {
 			m_fSampleFile.Read(&SampleLeft, 2);
+			SampleLeft /= 256;
 			m_fSampleFile.Read(&SampleRight, 2);
-			Sample = (SampleLeft + SampleRight) / 512;
+			SampleRight /= 256;
+			Sample = (SampleLeft + SampleRight) / 2;
 		}
 		else {
 			m_fSampleFile.Read(&Sample, 2);
@@ -399,6 +394,7 @@ int CPCMImport::ReadSample(void)
 		}
 	}
 	else {
+		// 8 bit samples
 		if (m_iChannels == 2) {
 			m_fSampleFile.Read(&SampleLeft, 1);
 			m_fSampleFile.Read(&SampleRight, 1);

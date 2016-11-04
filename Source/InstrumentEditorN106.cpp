@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "FamiTracker.h"
+#include "FamiTrackerDoc.h"
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditorN106.h"
 

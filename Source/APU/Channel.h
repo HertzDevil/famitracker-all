@@ -21,7 +21,7 @@
 #ifndef _CHANNEL_H_
 #define _CHANNEL_H_
 
-#include "mixer.h"
+class CMixer;
 
 //
 // This class is used to derive the audio channels
@@ -29,10 +29,14 @@
 
 class CChannel {
 public:
-	CChannel() : 
+	CChannel(CMixer *pMixer, int ID, int Chip) : 
+		m_pMixer(pMixer),
+		m_iChanId(ID),
+		m_iChip(Chip),
 		m_iFrameCycles(0),
 		m_iLastValue(0)
-	{};
+	{
+	}
 
 	// Begin a new audio frame
 	inline void EndFrame() {
@@ -47,6 +51,7 @@ protected:
 		}
 	};
 
+protected:
 	CMixer	*m_pMixer;			// The mixer
 	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
 	int32	m_iLastValue;		// Last value sent to mixer
@@ -81,6 +86,7 @@ protected:
 		m_iLastValue = Value;
 	}
 
+protected:
 	CMixer	*m_pMixer;
 	uint32	m_iFrameCycles;		// Cycle counter, resets every new frame
 	uint8	m_iChip;

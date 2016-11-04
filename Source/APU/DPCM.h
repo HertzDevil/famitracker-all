@@ -45,14 +45,15 @@ public:
 	void	Process(uint32 Time);
 	void	Reload();
 
-	uint8	GetSamplePos() { return  (m_iDMA_Address - (m_iDMA_LoadReg << 6 | 0x4000)) >> 6; };
-	uint8	GetDeltaCounter() { return m_iDeltaCounter; };
-	bool	IsPlaying() { return m_iEnabled == 1; };
+	uint8	GetSamplePos() const { return  (m_iDMA_Address - (m_iDMA_LoadReg << 6 | 0x4000)) >> 6; };
+	uint8	GetDeltaCounter() const { return m_iDeltaCounter; };
+	bool	IsPlaying() const { return m_iEnabled == 1; };
 
-private:
+public:
 	static const uint16	DMC_FREQ_NTSC[];
 	static const uint16	DMC_FREQ_PAL[];
 
+private:
 	uint8	m_iBitDivider, m_iShiftReg;
 	uint8	m_iPlayMode;
 	uint8	m_iDeltaCounter;
@@ -65,6 +66,7 @@ private:
 
 	uint16	m_iDMC_FreqTable[16];
 
+	// Needed by FamiTracker 
 	CSampleMem	*m_pSampleMem;
 };
 

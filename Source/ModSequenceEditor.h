@@ -24,7 +24,7 @@ class CModSequenceEditor : public CWnd
 {
 public:
 	CModSequenceEditor();
-	~CModSequenceEditor();
+	virtual ~CModSequenceEditor();
 	DECLARE_DYNAMIC(CModSequenceEditor)
 protected:
 	DECLARE_MESSAGE_MAP()

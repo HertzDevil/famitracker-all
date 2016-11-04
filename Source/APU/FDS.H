@@ -27,7 +27,7 @@
 class CFDS : public CExternal, CExChannel {
 public:
 	CFDS(CMixer *pMixer);
-	~CFDS();
+	virtual ~CFDS();
 //	void	Init(CMixer *pMixer);
 	void	Reset();
 	void	Write(uint16 Address, uint8 Value);

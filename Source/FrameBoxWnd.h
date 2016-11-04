@@ -20,13 +20,29 @@
 
 #pragma once
 
+class CFamiTrackerDoc;
+class CFamiTrackerView;
 
 // CFrameBoxWnd
 
 class CFrameBoxWnd : public CWnd
 {
 	DECLARE_DYNAMIC(CFrameBoxWnd)
+public:
+	CFrameBoxWnd(CMainFrame *pMainFrm);
+	virtual ~CFrameBoxWnd();
+	static const int FRAME_ITEM_WIDTH = 20;
+	void AssignDocument(CFamiTrackerDoc *pDoc, CFamiTrackerView *pView);
+	void EnableInput();
+	bool InputEnabled() const;
+	void CreateGdiObjects();
 private:
+	CFont m_Font;
+	CBrush m_Brush;
+	CPen m_Pen;
+	CBitmap m_bmpBack;
+	CDC	m_dcBack;
+
 	HACCEL m_hAccel;
 	CMainFrame *m_pMainFrame;
 	int m_iHiglightLine;
@@ -37,12 +53,8 @@ private:
 	bool m_bCursor;
 	bool m_bControl;
 	int m_iCopiedValues[MAX_CHANNELS];
-public:
-	CFrameBoxWnd(CMainFrame *pMainFrm);
-	virtual ~CFrameBoxWnd();
-	static const int FRAME_ITEM_WIDTH = 20;
-	void EnableInput();
-	bool InputEnabled() const;
+	CFamiTrackerDoc *m_pDocument;
+	CFamiTrackerView *m_pView;
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
@@ -50,7 +62,6 @@ public:
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
-	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnNcMouseMove(UINT nHitTest, CPoint point);
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
@@ -58,7 +69,6 @@ public:
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
-//	afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);

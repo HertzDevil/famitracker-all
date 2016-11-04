@@ -27,24 +27,30 @@
 class CVRC7 : public CExternal {
 public:
 	CVRC7(CMixer *pMixer);
-	~CVRC7();
-	void Shutdown();
+	virtual ~CVRC7();
+
 	void Reset();
-	void SetSampleSpeed(uint32 SampleRate, double ClockRate);
+	void SetSampleSpeed(uint32 SampleRate, double ClockRate, uint32 FrameRate);
+	void SetVolume(int Volume);
 	void Write(uint16 Address, uint8 Value);
 	void EndFrame();
 	void Process(uint32 Time);
 
+protected:
+	static const float  AMPLIFY;
+	static const uint32 OPL_CLOCK;
+
 private:
-	OPLL	*OPLLInt;
+	OPLL	*m_pOPLLInt;
 	uint32	m_iFrameCycles;
 	uint32	m_iMaxSamples;
 
-	double	Div;
 	int16	*m_pBuffer;
 	uint32	m_iBufferPtr;
 
 	uint8	m_iSoundReg;
+
+	float	m_fVolume;
 };
 
 

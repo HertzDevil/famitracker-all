@@ -30,19 +30,19 @@ public:
 	char			*GetItemName(int Item) const;
 	unsigned short	GetAction(unsigned char nChar);
 	void			KeyReleased(unsigned char nChar);
-	char			*GetModName(int Item);
-	char			*GetKeyName(int Item);
-	char			*EnumKeyNames(int Index);
-	int				GetItem(CString Name);
+	LPCTSTR			GetModName(int Item) const;
+	LPCTSTR			GetKeyName(int Item) const;
+	LPCTSTR			EnumKeyNames(int Index) const;
+	int				GetItem(CString Name) const;
 	void			SelectMod(int Item, int Mod);
 	void			SelectKey(int Item, CString Key);
-	void			SaveShortcuts(CSettings *pSettings);
+	void			SaveShortcuts(CSettings *pSettings) const;
 	void			LoadShortcuts(CSettings *pSettings);
 	void			LoadDefaults();
 	void			LostFocus();
 
 public:
-	static const char *MOD_NAMES[];
+	static LPCTSTR  MOD_NAMES[];
 
 private:
 	unsigned int	m_iModifier;

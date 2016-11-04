@@ -27,17 +27,17 @@
 
 const int VERSION_MAJ = 0;
 const int VERSION_MIN = 3;
-const int VERSION_REV = 5;
+const int VERSION_REV = 6;
 
-const int VERSION_WIP = 1;
+const int VERSION_WIP = 4;
 
 #define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 
 // Color macros
 
-#define RED(x)		((x >> 16) & 0xFF)
-#define GREEN(x)	((x >> 8) & 0xFF)
-#define BLUE(x)		(x & 0xFF)
+#define RED(x)	 ((x >> 16) & 0xFF)
+#define GREEN(x) ((x >> 8) & 0xFF)
+#define BLUE(x)	 (x & 0xFF)
 
 #define COMBINE(r, g, b) (((r) << 16) | ((g) << 8) | b)
 
@@ -54,13 +54,25 @@ const int VERSION_WIP = 1;
 
 #include "resource.h"       // main symbols
 
-const int CHIP_COUNT = 8;	// Number of allowed expansion chips
+// Custom command line reader
+class CFTCommandLineInfo : public CCommandLineInfo
+{
+public:
+	CFTCommandLineInfo();
+	virtual void ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLast);
+public:
+	bool m_bLog;
+	bool m_bExport;
+	bool m_bPlay;
+	CString m_strExportFile;
+};
+
 
 class CMIDI;
 class CSoundGen;
 class CSettings;
 class CAccelerator;
-class CInstrument;
+class CChannelMap;
 class CCustomExporters;
 
 // CFamiTrackerApp:
@@ -73,61 +85,45 @@ public:
 	// Constructor
 	CFamiTrackerApp();
 
-	// Different app-oriented functions
-	void			DisplayError(int Message);
-	int				DisplayMessage(int Message, int Type);
+	//
+	// Public functions
+	//
+public:
 	void			LoadSoundConfig();
 	void			ReloadColorScheme(void);
-	void			SetMachineType(int Type, int Rate);
-	void			DrawSamples(int *Samples, int Count);
-	void			MidiEvent(void);
-	int				GetCPUUsage();
-	int				GetFrameRate();
-	int				GetUnderruns();
-	void			SetDocumentLoaded(bool Loaded);
-	bool			IsDocLoaded() { return m_bDocLoaded; };
-	bool			IsThemeActive() { return m_bThemeActive; };
-
-	// Sound functions
-	void			SilentEverything();
-	void			ShutDownSynth();
+	int				GetCPUUsage() const;
+	bool			IsThemeActive() const;
+	void			CheckSynth();
 
 	// Tracker player functions
 	void			RegisterKeyState(int Channel, int Note);
-	void			StepFrame();
 	void			StopPlayer();
 	bool			IsPlaying();
-	int				GetTempo();
-	void			ResetTempo();
 	void			ResetPlayer();
+	void			SilentEverything();
 
-	void			CheckSynth();
-	void			BufferUnderrun();
-
-	// Different get-functions
-	CAccelerator	*GetAccelerator() { return m_pAccel; };
-	CSoundGen		*GetSoundGenerator();
-	CMIDI			*GetMIDI();
+	// Get-functions
+	CAccelerator	*GetAccelerator() const { return m_pAccel; };
+	CSoundGen		*GetSoundGenerator() const { return m_pSoundGenerator; };
+	CMIDI			*GetMIDI() const { return m_pMIDI; };
+	CSettings		*GetSettings() const { return m_pSettings; };
+	CChannelMap		*GetChannelMap() const { return m_pChannelMap; };
 	
-	CCustomExporters *GetCustomExporters();
+	CCustomExporters *GetCustomExporters() const;
 
-	CDocument		*GetFirstDocument();
-	CView			*GetDocumentView();
+	// Try to avoid these
+	CDocument		*GetActiveDocument() const;
+	CView			*GetActiveView() const;
 
-	void			SetSoundChip(int Chip);
-
-	int				GetChipCount();
-	char			*GetChipName(int Index);
-	int				GetChipIdent(int Index);
-	int				GetChipIndex(int Ident);
-	CInstrument*	GetChipInstrument(int Ident);
-
-	void			SetSoundGenerator(CSoundGen *pGen);
-
+	//
+	// Private functions
+	//
 private:
-	void AddChip(char *pName, int Ident, CInstrument *pInst);
-
 	void CheckAppThemed();
+	void ShutDownSynth();
+
+protected:
+	BOOL DoPromptFileName(CString& fileName, CString& filePath, UINT nIDSTitle, DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate);
 
 	// Private variables and objects
 private:
@@ -135,6 +131,8 @@ private:
 	CMIDI			*m_pMIDI;
 	CAccelerator	*m_pAccel;					// Keyboard accelerator
 	CSoundGen		*m_pSoundGenerator;			// Sound synth & player
+	CSettings		*m_pSettings;				// Program settings
+	CChannelMap		*m_pChannelMap;
 
 	CCustomExporters *m_customExporters;
 
@@ -142,26 +140,11 @@ private:
 	HANDLE			m_hAliveCheck;
 	HANDLE			m_hNotificationEvent;
 
-	// Chips
-	int				m_iAddedChips;
-	char			*m_pChipNames[10];
-	int				m_iChipIdents[10];
-	CInstrument		*m_pChipInst[10];
-
-	char			m_cAppPath[MAX_PATH];
-	int				m_iFrameRate, m_iFrameCounter;
-	bool			m_bShuttingDown;
-	bool			m_bInitialized;
-	bool			m_bDocLoaded;
 	bool			m_bThemeActive;
 
 // Overrides
 public:
-	// Program settings. I'll leave this global to make things easier
-	CSettings	*m_pSettings;
-
 	virtual BOOL InitInstance();
-
 // Implementation
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
@@ -172,13 +155,11 @@ public:
 	afx_msg void OnTrackerPlayCursor();
 	afx_msg void OnTrackerPlaypattern();
 	afx_msg void OnTrackerStop();
-	afx_msg void OnUpdateTrackerPlay(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateTrackerStop(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateTrackerPlaypattern(CCmdUI *pCmdUI);
 	afx_msg void OnFileOpen();
-	afx_msg void OnEditEnableMIDI();
-	afx_msg void OnUpdateEditEnablemidi(CCmdUI *pCmdUI);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 extern CFamiTrackerApp theApp;
+
+// Global helper functions
+CString LoadDefaultFilter(LPCTSTR Name, LPCTSTR Ext);

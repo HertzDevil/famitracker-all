@@ -25,11 +25,8 @@ const uint16 CNoise::NOISE_FREQ[] =
 	{0x04, 0x08, 0x10, 0x20, 0x40, 0x60, 0x80, 0xA0, 
 	 0xCA, 0xFE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4};
 
-CNoise::CNoise(CMixer *pMixer, int ID)
+CNoise::CNoise(CMixer *pMixer, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE)
 {
-	m_pMixer = pMixer;
-	m_iChanId = ID;
-	m_iChip = SNDCHIP_NONE;
 }
 
 CNoise::~CNoise()
@@ -90,20 +87,19 @@ uint8 CNoise::ReadControl()
 
 void CNoise::Process(uint32 Time)
 {
-	bool Output = m_iEnabled && (m_iLengthCounter > 0);
-	static uint8 LastSample;	// I think this wouldn't be allowed if there was more than one instance of CNoise
+	bool Valid = m_iEnabled && (m_iLengthCounter > 0);
 
 	while (Time >= m_iCounter) {
 		Time			-= m_iCounter;
 		m_iFrameCycles	+= m_iCounter;
 		m_iCounter		= m_iFrequency;
 		
+		uint8 Volume = m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume;
+
+		if (Valid && Volume > 0)
+			Mix((m_iShiftReg & 1) ? Volume : 0);
+
 		m_iShiftReg = (((m_iShiftReg << 14) ^ (m_iShiftReg << m_iSampleRate)) & 0x4000) | (m_iShiftReg >> 1);
-		
-		if (Output && LastSample != (m_iShiftReg & 0x01)) {
-			LastSample = (m_iShiftReg & 0x01);
-			Mix((LastSample && Output) ? (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume) : 0);
-		}
 	}
 
 	m_iCounter -= Time;

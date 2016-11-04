@@ -19,9 +19,10 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
+#include "Compiler.h"
+#include "DocumentFile.h"
 
 const char TEST_WAVE[] = {
 	00, 01, 12, 22, 32, 36, 39, 39, 42, 47, 47, 50, 48, 51, 54, 58,
@@ -47,9 +48,9 @@ CInstrumentFDS::CInstrumentFDS() : CInstrument(), m_bChanged(false)
 
 CInstrumentFDS::~CInstrumentFDS()
 {
-	delete m_pVolume;
-	delete m_pArpeggio;
-	delete m_pPitch;
+	SAFE_RELEASE(m_pVolume);
+	SAFE_RELEASE(m_pArpeggio);
+	SAFE_RELEASE(m_pPitch);
 }
 
 CInstrument *CInstrumentFDS::Clone()
@@ -92,8 +93,7 @@ void CInstrumentFDS::StoreInstSequence(CFile *pFile, CSequence *pSeq)
 	pFile->Write(&i, 4);
 	// Store items
 	for (unsigned int j = 0; j < pSeq->GetItemCount(); j++) {
-		char c;
-		c = pSeq->GetItem(j);
+		char c = pSeq->GetItem(j);
 		pFile->Write(&c, 1);
 	}
 }
@@ -110,10 +110,8 @@ bool CInstrumentFDS::LoadInstSequence(CFile *pFile, CSequence *pSeq)
 	pFile->Read(&ReleasePoint, 4);
 	pFile->Read(&Settings, 4);
 
-	if (SeqCount >= MAX_SEQUENCE_ITEMS)
-		SeqCount = MAX_SEQUENCE_ITEMS - 1;
-
-	ASSERT_FILE_DATA(SeqCount <= MAX_SEQUENCE_ITEMS);
+	if (SeqCount > MAX_SEQUENCE_ITEMS)
+		SeqCount = MAX_SEQUENCE_ITEMS;
 
 	pSeq->Clear();
 	pSeq->SetItemCount(SeqCount);
@@ -122,14 +120,13 @@ bool CInstrumentFDS::LoadInstSequence(CFile *pFile, CSequence *pSeq)
 	pSeq->SetSetting(Settings);
 
 	for (int x = 0; x < SeqCount; x++) {
-		char Value;// = pDocFile->GetBlockChar();
+		char Value;
 		pFile->Read(&Value, 1);
 		pSeq->SetItem(x, Value);
 	}
 
 	return true;
 }
-
 
 void CInstrumentFDS::StoreSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 {
@@ -159,9 +156,6 @@ bool CInstrumentFDS::LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 	ReleasePoint = pDocFile->GetBlockInt();
 	Settings = pDocFile->GetBlockInt();
 
-	if (SeqCount >= MAX_SEQUENCE_ITEMS)
-		SeqCount = MAX_SEQUENCE_ITEMS - 1;
-
 	ASSERT_FILE_DATA(SeqCount <= MAX_SEQUENCE_ITEMS);
 
 	pSeq->Clear();
@@ -170,7 +164,7 @@ bool CInstrumentFDS::LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 	pSeq->SetReleasePoint(ReleasePoint);
 	pSeq->SetSetting(Settings);
 
-	for (int x = 0; x < SeqCount; x++) {
+	for (int x = 0; x < SeqCount; ++x) {
 		char Value = pDocFile->GetBlockChar();
 		pSeq->SetItem(x, Value);
 	}
@@ -180,15 +174,13 @@ bool CInstrumentFDS::LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 
 void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 {
-	int i;
-
 	// Write wave
-	for (i = 0; i < 64; i++) {
+	for (int i = 0; i < 64; ++i) {
 		pDocFile->WriteBlockChar(GetSample(i));
 	}
 
 	// Write modulation table
-	for (i = 0; i < 32; i++) {
+	for (int i = 0; i < 32; ++i) {
 		pDocFile->WriteBlockChar(GetModulation(i));
 	}
 
@@ -197,6 +189,7 @@ void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 	pDocFile->WriteBlockInt(GetModulationDepth());
 	pDocFile->WriteBlockInt(GetModulationDelay());
 
+	// Sequences
 	StoreSequence(pDocFile, m_pVolume);
 	StoreSequence(pDocFile, m_pArpeggio);
 	StoreSequence(pDocFile, m_pPitch);
@@ -204,13 +197,11 @@ void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 
 bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 {
-	int i;
-	
-	for (i = 0; i < 64; i++) {
+	for (int i = 0; i < 64; ++i) {
 		SetSample(i, pDocFile->GetBlockChar());
 	}
 
-	for (i = 0; i < 32; i++) {
+	for (int i = 0; i < 32; ++i) {
 		SetModulation(i, pDocFile->GetBlockChar());
 	}
 
@@ -218,7 +209,7 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 	SetModulationDepth(pDocFile->GetBlockInt());
 	SetModulationDelay(pDocFile->GetBlockInt());
 
-	// hack to fix earlier saved files
+	// hack to fix earlier saved files (remove this eventually)
 /*
 	if (pDocFile->GetBlockVersion() > 2) {
 		LoadSequence(pDocFile, m_pVolume);
@@ -252,7 +243,7 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
-void CInstrumentFDS::SaveFile(CFile *pFile)
+void CInstrumentFDS::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
 	int i;
 
@@ -283,19 +274,17 @@ void CInstrumentFDS::SaveFile(CFile *pFile)
 	StoreInstSequence(pFile, m_pPitch);
 }
 
-bool CInstrumentFDS::LoadFile(CFile *pFile, int iVersion)
+bool CInstrumentFDS::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
-	int i;
-
-	// Write wave
-	for (i = 0; i < 64; i++) {
+	// Read wave
+	for (int i = 0; i < 64; i++) {
 		char sample;
 		pFile->Read(&sample, 1);
 		SetSample(i, sample);
 	}
 
-	// Write modulation table
-	for (i = 0; i < 32; i++) {
+	// Read modulation table
+	for (int i = 0; i < 32; i++) {
 		char mod;
 		pFile->Read(&mod, 1);
 		SetModulation(i, mod);

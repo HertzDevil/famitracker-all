@@ -27,7 +27,7 @@ class CGraphEditor : public CWnd
 {
 public:
 	CGraphEditor(CSequence *pSequence);
-	~CGraphEditor();
+	virtual ~CGraphEditor();
 	DECLARE_DYNAMIC(CGraphEditor)
 protected:
 	static const int GRAPH_LEFT = 28;			// Left side marigin
@@ -97,7 +97,7 @@ class CArpeggioGraphEditor : public CGraphEditor
 public:
 	DECLARE_DYNAMIC(CArpeggioGraphEditor)
 	CArpeggioGraphEditor(CSequence *pSequence);
-	~CArpeggioGraphEditor();
+	virtual ~CArpeggioGraphEditor();
 	CString GetNoteString(int Value);
 private:
 	static const int ITEMS = 20;

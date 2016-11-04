@@ -60,12 +60,12 @@ void CSizeEditor::OnPaint()
 
 	CFont Font, *pOldFont;
 
-	Font.CreateFont(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma");
+	Font.CreateFont(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, _T("Tahoma"));
 
 	pOldFont = dc.SelectObject(&Font);
 
 	CString Value;
-	Value.Format("%i", m_iValue);
+	Value.Format(_T("%i"), m_iValue);
 
 	CRect rect;
 	GetClientRect(rect);
@@ -101,8 +101,8 @@ void CSizeEditor::OnPaint()
 	dc.SetTextColor(0xFFFFFF);
 	dc.TextOut(20, 1, Value);
 	dc.SetTextColor(0);
-	dc.TextOut(6, 1, "-");
-	dc.TextOut(rect.right - 14, 1, "+");
+	dc.TextOut(6, 1, _T("-"));
+	dc.TextOut(rect.right - 14, 1, _T("+"));
 
 	dc.SelectObject(pOldFont);
 }
@@ -197,7 +197,7 @@ void CSizeEditor::MouseAction(UINT nFlags, CPoint point)
 
 void CSizeEditor::IncreaseValue()
 {
-	if (m_iValue < MAX_SEQ_ITEMS)
+	if (m_iValue < MAX_SEQUENCE_ITEMS)
 		m_iValue++;
 
 	m_pParentWnd->PostMessage(WM_SIZE_CHANGE, (LPARAM)m_iValue);

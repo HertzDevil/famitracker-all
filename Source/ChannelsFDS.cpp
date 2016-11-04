@@ -23,7 +23,6 @@
 #include "stdafx.h"
 #include <cmath>
 #include "FamiTrackerDoc.h"
-#include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "ChannelsFDS.h"
 
@@ -126,6 +125,9 @@ void CChannelHandlerFDS::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		ReleaseNote();
 	}
 
+	if (m_iEffect == EF_SLIDE_DOWN || m_iEffect == EF_SLIDE_UP)
+		m_iEffect = EF_NONE;
+
 	if (PostEffect)
 		SetupSlide(PostEffect, PostEffectParam);
 }
@@ -176,7 +178,7 @@ void CChannelHandlerFDS::RefreshChannel()
 	}
 	/*****/
 
-	int Frequency = m_iFrequency - GetVibrato() + GetFinePitch() + GetPitch();
+	int Frequency = m_iFrequency - GetVibrato() - GetFinePitch() + GetPitch();
 
 	Frequency = LimitFreq(Frequency);
 
@@ -186,15 +188,7 @@ void CChannelHandlerFDS::RefreshChannel()
 	ModFreqLo = m_iModulationFreq & 0xFF;
 	ModFreqHi = (m_iModulationFreq >> 8) & 0x0F;
 
-	// Calculate volume
-//	Volume = ((m_iVolume >> 2) * m_iOutVol) / 15 - GetTremolo();
-	//Volume = (((m_iOutVol * (m_iVolume >> VOL_SHIFT)) / 15) << 1) - GetTremolo();
-	Volume = m_iVolume - GetTremolo();
-	if (Volume < 0)
-		Volume = 0;
-	Volume >>= VOL_SHIFT;
-	Volume = (m_iOutVol * Volume) / 15;
-	//Volume <<= 1;
+	Volume = CalculateVolume(32);
 
 	if (m_iNote == 0x80)
 		Volume = 0;
@@ -228,7 +222,7 @@ void CChannelHandlerFDS::ClearRegisters()
 	m_pAPU->ExternalWrite(0x4090, 0x00);
 
 	// Clear volume
-	m_pAPU->ExternalWrite(0x4080, 0x00);
+	m_pAPU->ExternalWrite(0x4080, 0x80);
 
 	// Silence channel
 	m_pAPU->ExternalWrite(0x4083, 0x80);
@@ -239,8 +233,7 @@ void CChannelHandlerFDS::ClearRegisters()
 	// Disable modulation
 	m_pAPU->ExternalWrite(0x4087, 0x80);
 
-//	m_iVolume = MAX_VOL;
-	m_iOutVol = 0x1F;
+	m_iOutVol = 0x20;
 
 	m_iNote = 0x80;
 

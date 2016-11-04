@@ -66,9 +66,9 @@ BOOL CConfigShortcuts::OnInitDialog()
 	CComboBox *pKeys = (CComboBox*)GetDlgItem(IDC_KEYS);
 
 	pListView->DeleteAllItems();
-	pListView->InsertColumn(0, "Action", LVCFMT_LEFT, 170);
-	pListView->InsertColumn(1, "Modifier", LVCFMT_LEFT, 105);
-	pListView->InsertColumn(2, "Key", LVCFMT_LEFT, 75);
+	pListView->InsertColumn(0, _T("Action"), LVCFMT_LEFT, 170);
+	pListView->InsertColumn(1, _T("Modifier"), LVCFMT_LEFT, 105);
+	pListView->InsertColumn(2, _T("Key"), LVCFMT_LEFT, 75);
 
 	int Count = Accelerator.GetItemCount();
 
@@ -87,14 +87,14 @@ BOOL CConfigShortcuts::OnInitDialog()
 	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_CONTROL | MOD_SHIFT]);
 	pModifiers->AddString(CAccelerator::MOD_NAMES[MOD_ALT | MOD_CONTROL | MOD_SHIFT]);
 
-	pKeys->AddString("None");
+	pKeys->AddString(_T("None"));
 
 	for (int i = 0; i < 0xFF; i++) {
-		char *Name = Accelerator.EnumKeyNames(i);
-		if (strlen(Name) > 0)
+		LPCTSTR Name = Accelerator.EnumKeyNames(i);
+		if (_tcslen(Name) > 0)
 			pKeys->AddString(Name);
 	}
-
+	
 	pListView->SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	pListView->SetSelectionMark(0);
 	pModifiers->SetCurSel(0);
@@ -172,7 +172,7 @@ void CConfigShortcuts::OnBnClickedDefault()
 	CAccelerator *pAccel = theApp.GetAccelerator();
 	CListCtrl *pListView = (CListCtrl*)GetDlgItem(IDC_SHORTCUTS);
 	
-	if (AfxMessageBox("Do you want to restore default keys? There's no undo.", MB_ICONWARNING | MB_YESNO, 0) == IDNO)
+	if (AfxMessageBox(_T("Do you want to restore default keys? There's no undo."), MB_ICONWARNING | MB_YESNO, 0) == IDNO)
 		return;
 
 	pAccel->LoadDefaults();

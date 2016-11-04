@@ -61,6 +61,8 @@ protected:
 
 	virtual int LimitFreq(int Freq);
 
+	int CalculateVolume(int Limit) const;
+
 public:
 	// Todo: use these eventually
 	void CutNote();													// Called on note cut commands
@@ -90,8 +92,8 @@ protected:
 
 protected:
 	// Channel variables
-	int	m_iChannelID;				// Channel ID
-	int m_iVibratoStyle;
+	int					m_iChannelID;				// Channel ID
+	int					m_iVibratoStyle;
 
 	// General
 	bool				m_bEnabled;
@@ -136,7 +138,7 @@ protected:
 
 	int					m_iPitch;					// Used by the pitch wheel
 
-	// other crap, sort and rename
+	// todo: sort and rename
 	unsigned int		m_iOutVol, InitVol;
 	unsigned int		Length;
 };

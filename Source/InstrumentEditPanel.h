@@ -20,6 +20,8 @@
 
 #pragma once
 
+class CSequence;
+
 class CInstrumentEditPanel : public CDialog
 {
 	DECLARE_DYNAMIC(CInstrumentEditPanel)
@@ -28,10 +30,16 @@ public:
 	CInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditPanel();
 	virtual int GetIDD() = 0;
-	virtual char *GetTitle() = 0;
+	virtual TCHAR *GetTitle() = 0;
 
 	// These must be implemented
 	virtual void SelectInstrument(int Instrument) = 0;
+
+protected:
+	CFamiTrackerDoc *GetDocument() const;
+
+	virtual void PreviewNote(unsigned char Key);
+	virtual void PreviewRelease(unsigned char Key);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -41,13 +49,12 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
 };
-
-class CSequence;
 
 // Adds some functions for sequences
 class CSequenceInstrumentEditPanel : public CInstrumentEditPanel 
@@ -56,9 +63,15 @@ class CSequenceInstrumentEditPanel : public CInstrumentEditPanel
 
 public:
 	CSequenceInstrumentEditPanel(UINT nIDTemplate, CWnd* pParent);
+	virtual ~CSequenceInstrumentEditPanel();
+
 	virtual void SetSequenceString(CString Sequence, bool Changed) = 0;
 
 	virtual void TranslateMML(CString String, CSequence *pSequence, int Max, int Min);
+
+protected:
+	virtual void PreviewNote(unsigned char Key);
+	virtual void PreviewRelease(unsigned char Key);
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

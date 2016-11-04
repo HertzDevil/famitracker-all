@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <mmsystem.h>
+
 const int MIDI_MSG_NOTE_OFF			= 8;
 const int MIDI_MSG_NOTE_ON			= 9;
 const int MIDI_MSG_AFTER_TOUCH		= 0xA;
@@ -35,31 +37,68 @@ class CMIDI : public CObject
 public:
 	CMIDI();
 	virtual ~CMIDI();
-	bool	OpenSelectedDevice();
-	bool	CloseDevice(void);
 
-//	bool	ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Note, unsigned char & Octave, unsigned char & Velocity);
-	bool	ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Data1, unsigned char & Data2);
-	int		GetNumDevices(bool Input);
-	void	GetDeviceString(int Num, char *Text, bool Input);
-	void	SetDevice(int DeviceNr, bool MasterSync);
-	void	SetOutDevice(int DeviceNr);
-	void	Event(unsigned char Status, unsigned char Data1, unsigned char Data2);
-	void	Toggle();
-
-	void	WriteNote(unsigned char Channel, unsigned char Note, unsigned char Octave, unsigned char Velocity);
-	void	ResetOutput();
-
-	bool	IsOpened()		{ return m_bOpened; }
-	bool	IsAvailable()	{ return m_iDevice > 0; }
-
-	int		m_iDevice, m_iOutDevice;
-	bool	m_bMasterSync;
-
-private:
-	bool	m_bOpened, m_bOutOpened;
-
-public:
 	bool	Init(void);
 	void	Shutdown(void);
+
+	bool	OpenDevices(void);
+	bool	CloseDevices(void);
+
+	bool	ReadMessage(unsigned char & Message, unsigned char & Channel, unsigned char & Data1, unsigned char & Data2);
+	void	WriteNote(unsigned char Channel, unsigned char Note, unsigned char Octave, unsigned char Velocity);
+	void	ResetOutput();
+	void	ToggleInput();
+
+	bool	IsOpened() const;
+	bool	IsAvailable() const;
+
+	void	SetInputDevice(int Device, bool MasterSync);
+	void	SetOutputDevice(int Device);
+
+	int		GetInputDevice() const;
+	int		GetOutputDevice() const;
+
+	// Device enumeration
+	int		GetNumInputDevices() const;
+	int		GetNumOutputDevices() const;
+
+	void	GetInputDeviceString(int Num, CString &Text) const;
+	void	GetOutputDeviceString(int Num, CString &Text) const;
+
+	// Protected functions
+protected:
+	void	Event(unsigned char Status, unsigned char Data1, unsigned char Data2);
+	void	Enqueue(unsigned char MsgType, unsigned char MsgChannel, unsigned char Data1, unsigned char Data2);
+
+	// Constants
+protected:
+	static const int MAX_QUEUE = 100;
+
+	// Private variables
+private:
+	int		m_iInDevice;				// MIDI input device
+	int		m_iOutDevice;				// MIDI output device
+
+	bool	m_bMasterSync;
+	bool	m_bInStarted;
+
+	char	MsgTypeQueue[MAX_QUEUE];
+	char	MsgChanQueue[MAX_QUEUE];
+	char	Data1Queue[MAX_QUEUE];
+	char	Data2Queue[MAX_QUEUE];
+
+	int		m_iQueuePtr;
+	int		m_iQueueHead;
+	int		m_iQueueTail;
+
+	unsigned char	m_iLastMsgType;
+	unsigned char	m_iLastMsgChan;
+
+	HMIDIIN		m_hMIDIIn;
+	HMIDIOUT	m_hMIDIOut;
+
+	// Static functions & variables
+protected:
+	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2);
+	static CMIDI *m_pInstance;
 };

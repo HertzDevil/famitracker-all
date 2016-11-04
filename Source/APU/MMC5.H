@@ -2,11 +2,12 @@
 #define _MMC5_H_
 
 #include "external.h"
+#include "channel.h"
 
 class CMMCSquare : public CExChannel {
 public:
 	CMMCSquare(CMixer *pMixer, int ID) : CExChannel(pMixer, SNDCHIP_MMC5, ID) {};
-	~CMMCSquare();
+	virtual ~CMMCSquare();
 
 	void	Reset();
 	void	Write(uint16 Address, uint8 Value);
@@ -33,7 +34,8 @@ private:
 class CMMC5 : public CExternal {
 public:
 	CMMC5(CMixer *pMixer);
-	~CMMC5();
+	virtual ~CMMC5();
+
 	void Reset();
 	void Write(uint16 Address, uint8 Value);
 	uint16 Read(uint16 Address);
@@ -41,12 +43,13 @@ public:
 	void Process(uint32 Time);
 	void LengthCounterUpdate();
 	void EnvelopeUpdate();
+
 private:	
 	CMMCSquare *m_pSquare1;
 	CMMCSquare *m_pSquare2;
-	uint8 *m_pEXRAM;
-	uint8 m_iMulLow;
-	uint8 m_iMulHigh;
+	uint8	   *m_pEXRAM;
+	uint8		m_iMulLow;
+	uint8		m_iMulHigh;
 };
 
 #endif /* _MMC5_H_ */

@@ -41,12 +41,14 @@ public:
 
 	void	LengthCounterUpdate();
 	void	LinearCounterUpdate();
+
 private:
 	static const uint8 TRIANGLE_WAVE[];
 
+private:
 	uint8	m_iLoop, m_iLinearLoad, m_iHalt;
 	uint16	m_iLinearCounter;
-	int8	m_iStepGen, m_iStepGenStep;
+	int8	m_iStepGen;
 };
 
 #endif /* _TRIANGLE_H_ */

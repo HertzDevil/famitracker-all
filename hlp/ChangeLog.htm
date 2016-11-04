@@ -7,9 +7,56 @@
 	<BODY>
 		<span class="topic">Change log</span><HR />
         <h1>
+            <span class="heading" lang="sv">Version 0.3.6</span></h1>
+        <ul class="text">
+            <li><span lang="sv">Added support for</span> <span lang="sv">m</span>odule importing</li>
+            <li>Added a shortcut option to show/hide control panel (in settings/shortcuts)</li>
+            <li>Added alt+left/right to move to left/right channel</li>
+            <li>Added block begin/end commands (Alt+B/E, available in IT-mode)</li>
+            <li>Exporter plugin code updated</li>
+            <li>Fixed a problem when loading multiple FTI files with DPCM samples</li>
+            <li>Fixed a problem that occured when using undo on patterns with Dxx/Bxx effects</li>
+            <li>Fixed VRC7 sweeps, auto portamento &amp; fine pitch setting</li>
+            <li>Adjusted VRC7 mixing volume <span lang="sv">after</span> hardware measurement<span 
+                    lang="sv">s</span></li>
+            <li>Changed the VRC7 built-in patch settings to a more accurate set</li>
+            <li>Fixed auto-arpeggio issue in the tracker</li>
+            <li>Fixed the problem that caused release points to sometimes disappear in 
+                saved files</li>
+            <li>Fixed some synchronization issues that could cause a crash when switching 
+                expansion chip sound</li>
+            <li>Fixed some <span lang="sv">DPCM</span> editor crash bugs</li>
+            <li>Fixed a bug that crashed the program when loading files with FDS 
+                instruments and FDS expansion disabled</li>
+            <li>Fixed a bug that crashed the program when repeatedly pressing F12</li>
+            <li>Fixed Sxx effect in exported files</li>
+            <li>Fixed Rxx effect issue on exported files</li>
+            <li>Fixed Vxx effect inconsistency when exporting NSFs</li>
+            <li>Fixed Qxx/Rxx effect behvaiour on FDS in tracker</li>
+            <li>Fixed Rxx/Qxx effect when triggering a new note before the slide is done 
+                in exported files</li>
+            <li>Fixed a bug in the Yxx-effect when export<span lang="sv">ing </span>to NSF</li>
+            <li>Corrected the tremolo effect on FDS</li>
+            <li>Inverted the Pxx command in the FDS channel</li>
+            <li>Fixed FDS pitch clipping in exported files</li>
+            <li><span lang="sv">D</span>isabled FDS hardware envelope trigger <span lang="sv">for</span> note 
+                offs <span lang="sv">when exporting to NSF</span></li>
+            <li>Fixed a crash bug when inserting/removing frames when max count is used</li>
+            <li>Fixed a crash bug that occurred sometimes when using select-all in a 
+                channel with all effect columns enabled</li>
+            <li>Mixed paste does not overwrite non-empty rows anymore</li>
+            <li>Note cut/release works on IT-mode when previewing notes</li>
+            <li>Fixed a crash bug when inputting MIDI data on an invalid channel</li>
+            <li>Fixed VRC6 sequence bug when triggering the release part</li>
+            <li>Fixed a bug where DPCM would fail in exported NSFs after <span lang="sv">
+                removing</span> instruments</li>
+            <li>Fixed a crash bug when using a custom refresh rate with expansion chip<span 
+                    lang="sv">s</span></li>
+        </ul>
+        <h1>
             <span class="heading" lang="sv">Version 0.3.5</span></h1>
 <ul>
-    <li class="text">Delete key deleted two rows on the bottom row<span lang="sv">, 
+    <li class="text">Delete key deleted two rows on the bottom row, 
         fixed</span></li>
     <li class="text"><span lang="sv">Entering an </span>instrument column<span 
             lang="sv"> number</span> moves to that instrument</li>

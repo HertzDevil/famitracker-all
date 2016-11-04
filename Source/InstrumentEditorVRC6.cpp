@@ -26,7 +26,7 @@
 #include "SequenceEditor.h"
 #include "InstrumentEditorVRC6.h"
 
-const char *CInstrumentEditorVRC6::INST_SETTINGS_VRC6[] = {"Volume", "Arpeggio", "Pitch", "Hi-pitch", "Pulse Width"};
+LPCTSTR CInstrumentEditorVRC6::INST_SETTINGS_VRC6[] = {_T("Volume"), _T("Arpeggio"), _T("Pitch"), _T("Hi-pitch"), _T("Pulse Width")};
 
 // CInstrumentEditorVRC6 dialog
 
@@ -35,12 +35,14 @@ CInstrumentEditorVRC6::CInstrumentEditorVRC6(CWnd* pParent) : CSequenceInstrumen
 	m_pParentWin(pParent),
 	m_pInstrument(NULL),
 	m_pSequence(NULL),
+	m_pSequenceEditor(NULL),
 	m_iSelectedSetting(0)
 {
 }
 
 CInstrumentEditorVRC6::~CInstrumentEditorVRC6()
 {
+	SAFE_RELEASE(m_pSequenceEditor);
 }
 
 void CInstrumentEditorVRC6::DoDataExchange(CDataExchange* pDX)
@@ -50,8 +52,7 @@ void CInstrumentEditorVRC6::DoDataExchange(CDataExchange* pDX)
 
 void CInstrumentEditorVRC6::SelectInstrument(int Instrument)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrumentVRC6 *pInst = (CInstrumentVRC6*)pDoc->GetInstrument(Instrument);
+	CInstrumentVRC6 *pInst = (CInstrumentVRC6*)GetDocument()->GetInstrument(Instrument);
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 
 	m_pInstrument = pInst;
@@ -59,7 +60,7 @@ void CInstrumentEditorVRC6::SelectInstrument(int Instrument)
 	// Update instrument setting list
 	for (int i = 0; i < SEQ_COUNT; i++) {
 		CString IndexStr;
-		IndexStr.Format("%i", pInst->GetSeqIndex(i));
+		IndexStr.Format(_T("%i"), pInst->GetSeqIndex(i));
 		pList->SetCheck(i, pInst->GetSeqEnable(i));
 		pList->SetItemText(i, 1, IndexStr);
 	} 
@@ -74,8 +75,7 @@ void CInstrumentEditorVRC6::SelectInstrument(int Instrument)
 void CInstrumentEditorVRC6::SelectSequence(int Sequence, int Type)
 {
 	// Selects the current sequence in the sequence editor
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	m_pSequence = pDoc->GetSequenceVRC6(Sequence, Type);
+	m_pSequence = GetDocument()->GetSequenceVRC6(Sequence, Type);
 	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_VRC6);
 }
 
@@ -87,7 +87,7 @@ void CInstrumentEditorVRC6::TranslateMML(CString String, int Max, int Min)
 	m_pSequenceEditor->RedrawWindow();
 
 	// Register a document change
-	theApp.GetFirstDocument()->SetModifiedFlag();
+	GetDocument()->SetModifiedFlag();
 
 	// Enable setting
 	((CListCtrl*)GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);
@@ -119,15 +119,15 @@ BOOL CInstrumentEditorVRC6::OnInitDialog()
 	// Instrument settings
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 	pList->DeleteAllItems();
-	pList->InsertColumn(0, "", LVCFMT_LEFT, 26);
-	pList->InsertColumn(1, "#", LVCFMT_LEFT, 30);
-	pList->InsertColumn(2, "Effect name", LVCFMT_LEFT, 84);
+	pList->InsertColumn(0, _T(""), LVCFMT_LEFT, 26);
+	pList->InsertColumn(1, _T("#"), LVCFMT_LEFT, 30);
+	pList->InsertColumn(2, _T("Effect name"), LVCFMT_LEFT, 84);
 	pList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 	
 	for (int i = SEQ_COUNT - 1; i > -1; i--) {
-		pList->InsertItem(0, "", 0);
+		pList->InsertItem(0, _T(""), 0);
 		pList->SetCheck(0, 0);
-		pList->SetItemText(0, 1, "0");
+		pList->SetItemText(0, 1, _T("0"));
 		pList->SetItemText(0, 2, INST_SETTINGS_VRC6[i]);
 	}
 
@@ -140,9 +140,10 @@ BOOL CInstrumentEditorVRC6::OnInitDialog()
 
 	CRect rect(190 - 2, 30 - 2, CSequenceEditor::SEQUENCE_EDIT_WIDTH, CSequenceEditor::SEQUENCE_EDIT_HEIGHT);
 	
-	m_pSequenceEditor = new CSequenceEditor();	
+	m_pSequenceEditor = new CSequenceEditor(GetDocument());	
 	m_pSequenceEditor->CreateEditor(this, rect);
 	m_pSequenceEditor->ShowWindow(SW_SHOW);
+	m_pSequenceEditor->SetMaxValues(MAX_VOLUME, MAX_DUTY);
 	
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -185,7 +186,7 @@ void CInstrumentEditorVRC6::OnEnChangeSeqIndex()
 	
 	// Update list
 	CString Text;
-	Text.Format("%i", Index);
+	Text.Format(_T("%i"), Index);
 	pList->SetItemText(m_iSelectedSetting, 1, Text);
 
 	if (m_pInstrument) {
@@ -197,8 +198,8 @@ void CInstrumentEditorVRC6::OnEnChangeSeqIndex()
 void CInstrumentEditorVRC6::OnBnClickedFreeSeq()
 {
 	CString Text;
-	int FreeIndex = ((CFamiTrackerDoc*)theApp.GetFirstDocument())->GetFreeSequenceVRC6(m_iSelectedSetting);
-	Text.Format("%i", FreeIndex);
+	int FreeIndex = GetDocument()->GetFreeSequenceVRC6(m_iSelectedSetting);
+	Text.Format(_T("%i"), FreeIndex);
 	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
 }
 
@@ -210,7 +211,7 @@ void CInstrumentEditorVRC6::OnBnClickedParse()
 
 	switch (m_iSelectedSetting) {
 		case SEQ_VOLUME:
-			TranslateMML(Text, 15, 0);
+			TranslateMML(Text, MAX_VOLUME, 0);
 			break;
 		case SEQ_ARPEGGIO:
 			TranslateMML(Text, 96, -96);
@@ -222,7 +223,7 @@ void CInstrumentEditorVRC6::OnBnClickedParse()
 			TranslateMML(Text, 126, -127);
 			break;
 		case SEQ_DUTYCYCLE:
-			TranslateMML(Text, 7, 0);
+			TranslateMML(Text, MAX_DUTY, 0);
 			break;
 	}
 }

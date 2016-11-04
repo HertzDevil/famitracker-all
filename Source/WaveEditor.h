@@ -24,7 +24,7 @@ class CWaveEditor : public CWnd
 {
 public:
 	CWaveEditor(int sx, int sy, int lx, int ly);
-	~CWaveEditor();
+	virtual ~CWaveEditor();
 	DECLARE_DYNAMIC(CWaveEditor)
 protected:
 	DECLARE_MESSAGE_MAP()

@@ -33,17 +33,40 @@ public:
 
 	CDSample *ShowDialog();
 
+protected:
 	CDSample *m_pImported;
-	CString	m_strPath, m_strFileName;
+
+	CString		m_strPath, m_strFileName;
+	CFile		m_fSampleFile;
+	ULONGLONG	m_ullSampleStart;
+
 	int m_iQuality;
 	int m_iVolume;
 	int m_iSampleSize;
 	int m_iChannels;
+	int m_iWaveSize;
+	int m_iBlockAlign;
+	int m_iAvgBytesPerSec;
+	int m_iSamplesPerSec;
+
+protected:
+	static const int MAX_QUALITY;
+	static const int MIN_QUALITY;
+	static const int MAX_VOLUME;
+	static const int MIN_VOLUME;
+
+//	static const int DPCM_RATES[];
+//	static const int BASE_FREQ;
+	static const int SAMPLES_MAX;
+
+protected:
+	CDSample *ConvertFile();
+	int ReadSample(void);
+	bool OpenWaveFile();
+	void UpdateFileInfo();
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-	CDSample *ConvertFile();
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -51,9 +74,5 @@ public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedOk();
-private:
-	int ReadSample(void);
-	CFile m_fSampleFile;
-public:
 	afx_msg void OnBnClickedPreview();
 };

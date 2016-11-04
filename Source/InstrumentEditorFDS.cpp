@@ -26,6 +26,7 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditorFDS.h"
 #include "MainFrm.h"
@@ -36,14 +37,17 @@ using namespace std;
 
 IMPLEMENT_DYNAMIC(CInstrumentEditorFDS, CInstrumentEditPanel)
 
-CInstrumentEditorFDS::CInstrumentEditorFDS(CWnd* pParent)
-	: CInstrumentEditPanel(CInstrumentEditorFDS::IDD, pParent),
-	m_pWaveEditor(NULL), m_pModSequenceEditor(NULL), m_pInstrument(NULL)
+CInstrumentEditorFDS::CInstrumentEditorFDS(CWnd* pParent) : CInstrumentEditPanel(CInstrumentEditorFDS::IDD, pParent),
+	m_pWaveEditor(NULL), 
+	m_pModSequenceEditor(NULL), 
+	m_pInstrument(NULL)
 {
 }
 
 CInstrumentEditorFDS::~CInstrumentEditorFDS()
 {
+	SAFE_RELEASE(m_pModSequenceEditor);
+	SAFE_RELEASE(m_pWaveEditor);
 }
 
 void CInstrumentEditorFDS::DoDataExchange(CDataExchange* pDX)
@@ -53,8 +57,7 @@ void CInstrumentEditorFDS::DoDataExchange(CDataExchange* pDX)
 
 void CInstrumentEditorFDS::SelectInstrument(int Instrument)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrumentFDS *pInst = (CInstrumentFDS*)pDoc->GetInstrument(Instrument);
+	CInstrumentFDS *pInst = (CInstrumentFDS*)GetDocument()->GetInstrument(Instrument);
 
 	m_pInstrument = pInst;
 
@@ -78,7 +81,7 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorFDS, CInstrumentEditPanel)
 	ON_COMMAND(IDC_PRESET_SQUARE, OnPresetSquare)
 	ON_COMMAND(IDC_PRESET_SAWTOOTH, OnPresetSawtooth)
 	ON_COMMAND(IDC_MOD_PRESET_FLAT, OnModPresetFlat)
-	ON_COMMAND(IDC_MOD_PRESET_VIBRATO, OnModPresetVibrato)
+	ON_COMMAND(IDC_MOD_PRESET_SINE, OnModPresetSine)
 	ON_WM_VSCROLL()
 	ON_EN_CHANGE(IDC_MOD_RATE, OnModRateChange)
 	ON_EN_CHANGE(IDC_MOD_DEPTH, OnModDepthChange)
@@ -94,14 +97,14 @@ BOOL CInstrumentEditorFDS::OnInitDialog()
 	// Create wave editor
 	CRect rect(SX(20), SY(30), 0, 0);
 	m_pWaveEditor = new CWaveEditor(4, 2, 64, 64);
-	m_pWaveEditor->CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE, rect, this);
+	m_pWaveEditor->CreateEx(WS_EX_CLIENTEDGE, NULL, _T(""), WS_CHILD | WS_VISIBLE, rect, this);
 	m_pWaveEditor->ShowWindow(SW_SHOW);
 	m_pWaveEditor->UpdateWindow();
 
 	// Create modulation sequence editor
 	rect = CRect(SX(10), SY(200), 0, 0);
 	m_pModSequenceEditor = new CModSequenceEditor();
-	m_pModSequenceEditor->CreateEx(WS_EX_CLIENTEDGE, NULL, "", WS_CHILD | WS_VISIBLE, rect, this);
+	m_pModSequenceEditor->CreateEx(WS_EX_CLIENTEDGE, NULL, _T(""), WS_CHILD | WS_VISIBLE, rect, this);
 	m_pModSequenceEditor->ShowWindow(SW_SHOW);
 	m_pModSequenceEditor->UpdateWindow();
 
@@ -178,7 +181,7 @@ void CInstrumentEditorFDS::OnModPresetFlat()
 	WaveChanged();
 }
 
-void CInstrumentEditorFDS::OnModPresetVibrato()
+void CInstrumentEditorFDS::OnModPresetSine()
 {
 	for (int i = 0; i < 8; i++) {
 		m_pInstrument->SetModulation(i, 7);
@@ -266,7 +269,7 @@ void CInstrumentEditorFDS::WaveChanged()
 
 	for (int i = 0; i < 64; i++) {
 		CString temp;
-		temp.Format("%i ", m_pInstrument->GetSample(i));
+		temp.Format(_T("%i "), m_pInstrument->GetSample(i));
 		wave.Append(temp);
 	}
 
@@ -276,7 +279,7 @@ void CInstrumentEditorFDS::WaveChanged()
 
 	for (int i = 0; i < 32; i++) {
 		CString temp;
-		temp.Format("%i ", m_pInstrument->GetModulation(i));
+		temp.Format(_T("%i "), m_pInstrument->GetModulation(i));
 		mod.Append(temp);
 	}
 
@@ -325,4 +328,12 @@ void CInstrumentEditorFDS::ReadModString()
 
 	m_pModSequenceEditor->RedrawWindow();
 	WaveChanged();
+}
+
+void CInstrumentEditorFDS::PreviewNote(unsigned char Key)
+{
+	// Skip if text windows are selected
+	CWnd *pFocus = GetFocus();
+	if (pFocus != GetDlgItem(IDC_WAVE) && pFocus != GetDlgItem(IDC_MODULATION))
+		static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
 }

@@ -22,12 +22,13 @@
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "FamiTrackerView.h"
+#include "InstrumentEditDlg.h"
 #include "SequenceEditor.h"
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditor2A03.h"
 #include "MainFrm.h"
 
-const char *CInstrumentEditor2A03::INST_SETTINGS[] = {"Volume", "Arpeggio", "Pitch", "Hi-pitch", "Duty / Noise"};
+LPCTSTR CInstrumentEditor2A03::INST_SETTINGS[] = {_T("Volume"), _T("Arpeggio"), _T("Pitch"), _T("Hi-pitch"), _T("Duty / Noise")};
 
 // CInstrumentSettings dialog
 
@@ -36,12 +37,14 @@ CInstrumentEditor2A03::CInstrumentEditor2A03(CWnd* pParent) : CSequenceInstrumen
 	m_pParentWin(pParent),
 	m_pInstrument(NULL),
 	m_pSequence(NULL),
+	m_pSequenceEditor(NULL),
 	m_iSelectedSetting(0)
 {
 }
 
 CInstrumentEditor2A03::~CInstrumentEditor2A03()
 {
+	SAFE_RELEASE(m_pSequenceEditor);
 }
 
 void CInstrumentEditor2A03::DoDataExchange(CDataExchange* pDX)
@@ -67,15 +70,15 @@ BOOL CInstrumentEditor2A03::OnInitDialog()
 	// Instrument settings
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 	pList->DeleteAllItems();
-	pList->InsertColumn(0, "", LVCFMT_LEFT, 26);
-	pList->InsertColumn(1, "#", LVCFMT_LEFT, 30);
-	pList->InsertColumn(2, "Effect name", LVCFMT_LEFT, 84);
+	pList->InsertColumn(0, _T(""), LVCFMT_LEFT, 26);
+	pList->InsertColumn(1, _T("#"), LVCFMT_LEFT, 30);
+	pList->InsertColumn(2, _T("Effect name"), LVCFMT_LEFT, 84);
 	pList->SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
 	
 	for (int i = SEQ_COUNT - 1; i > -1; i--) {
-		pList->InsertItem(0, "", 0);
+		pList->InsertItem(0, _T(""), 0);
 		pList->SetCheck(0, 0);
-		pList->SetItemText(0, 1, "0");
+		pList->SetItemText(0, 1, _T("0"));
 		pList->SetItemText(0, 2, INST_SETTINGS[i]);
 	}
 
@@ -88,7 +91,7 @@ BOOL CInstrumentEditor2A03::OnInitDialog()
 
 	CRect rect(SX(190 - 2 - 40) + 40, SY(30) - 2, SX(CSequenceEditor::SEQUENCE_EDIT_WIDTH - 190) + 190, SY(CSequenceEditor::SEQUENCE_EDIT_HEIGHT-42)+42);
 
-	m_pSequenceEditor = new CSequenceEditor();	
+	m_pSequenceEditor = new CSequenceEditor(GetDocument());
 	m_pSequenceEditor->CreateEditor(this, rect);
 	m_pSequenceEditor->ShowWindow(SW_SHOW);
 	
@@ -133,7 +136,7 @@ void CInstrumentEditor2A03::OnEnChangeSeqIndex()
 	
 	// Update list
 	CString Text;
-	Text.Format("%i", Index);
+	Text.Format(_T("%i"), Index);
 	pList->SetItemText(m_iSelectedSetting, 1, Text);
 
 	if (m_pInstrument) {
@@ -145,8 +148,8 @@ void CInstrumentEditor2A03::OnEnChangeSeqIndex()
 void CInstrumentEditor2A03::OnBnClickedFreeSeq()
 {
 	CString Text;
-	int FreeIndex = ((CFamiTrackerDoc*)theApp.GetFirstDocument())->GetFreeSequence(m_iSelectedSetting);
-	Text.Format("%i", FreeIndex);
+	int FreeIndex = GetDocument()->GetFreeSequence(m_iSelectedSetting);
+	Text.Format(_T("%i"), FreeIndex);
 	SetDlgItemText(IDC_SEQ_INDEX, Text);	// Things will update automatically by changing this
 }
 
@@ -188,8 +191,7 @@ void CInstrumentEditor2A03::OnKeyReturn()
 
 void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrument2A03 *pInst = (CInstrument2A03*)pDoc->GetInstrument(Instrument);
+	CInstrument2A03 *pInst = (CInstrument2A03*)GetDocument()->GetInstrument(Instrument);
 	CListCtrl *pList = (CListCtrl*) GetDlgItem(IDC_INSTSETTINGS);
 
 	m_pInstrument = pInst;
@@ -197,7 +199,7 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 	// Update instrument setting list
 	for (int i = 0; i < SEQ_COUNT; i++) {
 		CString IndexStr;
-		IndexStr.Format("%i", pInst->GetSeqIndex(i));
+		IndexStr.Format(_T("%i"), pInst->GetSeqIndex(i));
 		pList->SetCheck(i, pInst->GetSeqEnable(i));
 		pList->SetItemText(i, 1, IndexStr);
 	} 
@@ -209,13 +211,14 @@ void CInstrumentEditor2A03::SelectInstrument(int Instrument)
 
 	// Select new sequence
 	SelectSequence(pInst->GetSeqIndex(m_iSelectedSetting), m_iSelectedSetting);
+
+	SetFocus();
 }
 
 void CInstrumentEditor2A03::SelectSequence(int Sequence, int Type)
 {
 	// Selects the current sequence in the sequence editor
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	m_pSequence = pDoc->GetSequence(Sequence, Type);
+	m_pSequence = GetDocument()->GetSequence(Sequence, Type);
 	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_2A03);
 }
 
@@ -227,7 +230,7 @@ void CInstrumentEditor2A03::TranslateMML(CString String, int Max, int Min)
 	m_pSequenceEditor->RedrawWindow();
 
 	// Register a document change
-	theApp.GetFirstDocument()->SetModifiedFlag();
+	GetDocument()->SetModifiedFlag();
 
 	// Enable setting
 	((CListCtrl*)GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);

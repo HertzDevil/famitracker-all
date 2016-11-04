@@ -20,31 +20,25 @@
 
 #include "../stdafx.h"
 #include <memory>
-#include "../FamiTracker.h"
-#include "../common.h"
 #include "apu.h"
+#include "VRC7.h"
 
-const double AMPLIFY = 1.1;
-const uint32 OPL_CLOCK = 3579545;
+const float  CVRC7::AMPLIFY	  = 2.44f;		// Mixing amplification, VRC7 patch 14 is 4,88 times stronger than a 50% square @ v=15
+const uint32 CVRC7::OPL_CLOCK = 3579545;	// Clock frequency
 
-CVRC7::CVRC7(CMixer *pMixer) : m_pBuffer(NULL)
+CVRC7::CVRC7(CMixer *pMixer) : CExternal(pMixer), m_pBuffer(NULL), m_pOPLLInt(NULL), m_fVolume(1.0f)
 {
-	m_pMixer = pMixer;
-	OPLL_init(OPL_CLOCK, 44100);
-	OPLLInt = OPLL_new();
-	OPLL_reset(OPLLInt);
-	OPLL_reset_patch(OPLLInt, 1);
-	OPLLInt->masterVolume = 70;
+	Reset();
 }
 
 CVRC7::~CVRC7()
 {
-	OPLL_delete(OPLLInt);
-}
+	if (m_pOPLLInt != NULL) {
+		OPLL_delete(m_pOPLLInt);
+		m_pOPLLInt = NULL;
+	}
 
-void CVRC7::Shutdown()
-{
-	delete [] m_pBuffer;
+	SAFE_RELEASE_ARRAY(m_pBuffer);
 }
 
 void CVRC7::Reset()
@@ -53,17 +47,29 @@ void CVRC7::Reset()
 	m_iFrameCycles = 0;
 }
 
-void CVRC7::SetSampleSpeed(uint32 SampleRate, double ClockRate)
+void CVRC7::SetSampleSpeed(uint32 SampleRate, double ClockRate, uint32 FrameRate)
 {
-	OPLL_setClock(OPL_CLOCK, SampleRate);
+	if (m_pOPLLInt == NULL) {
+		OPLL_init(OPL_CLOCK, SampleRate);
+		m_pOPLLInt = OPLL_new();
+		OPLL_reset(m_pOPLLInt);
+		OPLL_reset_patch(m_pOPLLInt, 1);
+	}
+	else {
+		OPLL_setClock(OPL_CLOCK, SampleRate);
+	}
 
-	m_iMaxSamples = SampleRate / 60 + 400;		// remove 60
-	
-	if (m_pBuffer) 
-		delete [] m_pBuffer;
+	m_iMaxSamples = (SampleRate / FrameRate) * 2;	// Allow some overflow
 
+	SAFE_RELEASE_ARRAY(m_pBuffer);
 	m_pBuffer = new int16[m_iMaxSamples];
 	memset(m_pBuffer, 0, sizeof(int16) * m_iMaxSamples);
+}
+
+void CVRC7::SetVolume(int Volume)
+{
+	// Volume = 100-0
+	m_fVolume = (float(Volume) / 100.0f) * AMPLIFY;
 }
 
 void CVRC7::Write(uint16 Address, uint8 Value)
@@ -73,7 +79,7 @@ void CVRC7::Write(uint16 Address, uint8 Value)
 			m_iSoundReg = Value;
 			break;
 		case 0x9030:
-			OPLL_writeReg(OPLLInt, m_iSoundReg, Value);
+			OPLL_writeReg(m_pOPLLInt, m_iSoundReg, Value);
 			break;
 	}
 }
@@ -82,8 +88,14 @@ void CVRC7::EndFrame()
 {
 	uint32 WantSamples = m_pMixer->GetMixSampleCount(m_iFrameCycles);
 
-	while (m_iBufferPtr < WantSamples)
-		m_pBuffer[m_iBufferPtr++] = (int)((double)OPLL_calc(OPLLInt) * AMPLIFY);
+	static int32 LastSample = 0;
+
+	// Generate VRC7 samples
+	while (m_iBufferPtr < WantSamples) {
+		int32 Sample = int(float(OPLL_calc(m_pOPLLInt)) * m_fVolume);
+		m_pBuffer[m_iBufferPtr++] = int16((Sample + LastSample) >> 1);
+		LastSample = Sample;
+	}
 
 	m_pMixer->MixSamples((blip_sample_t*)m_pBuffer, WantSamples);
 
@@ -93,6 +105,6 @@ void CVRC7::EndFrame()
 
 void CVRC7::Process(uint32 Time)
 {
-	//  this cannot run in sync
+	// This cannot run in sync, fetch all samples at end of frame instead
 	m_iFrameCycles += Time;
 }

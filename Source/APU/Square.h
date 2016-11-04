@@ -43,21 +43,19 @@ public:
 	void	SweepUpdate(bool First);
 	void	EnvelopeUpdate();
 
-	static const uint8 DUTY_PULSE[];
+public:
+	static const uint8 DUTY_TABLE[4][16];
 
 private:
-
 	uint8	m_iDutyLength, m_iDutyCycle;
 
 	uint8	m_iLooping, m_iEnvelopeFix, m_iEnvelopeSpeed;
 	uint8	m_iEnvelopeVolume, m_iFixedVolume;
 	int8	m_iEnvelopeCounter;
-	bool	m_bInvert;
 
-	uint8	SweepEnabled, SweepPeriod, SweepMode, SweepShift;
-	int16	SweepCounter, SweepResult;
-	bool	SweepWritten;
-//	uint8	SweepRegister;
+	uint8	m_iSweepEnabled, m_iSweepPeriod, m_iSweepMode, m_iSweepShift;
+	int16	m_iSweepCounter, m_iSweepResult;
+	bool	m_bSweepWritten;
 };
 
 #endif /* _SQUARE_H_ */

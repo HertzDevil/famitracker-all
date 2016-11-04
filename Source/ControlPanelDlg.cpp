@@ -20,7 +20,7 @@
 
 
 #include "stdafx.h"
-#include "FamiTracker.h"
+#include "resource.h"
 #include "ControlPanelDlg.h"
 
 

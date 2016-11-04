@@ -18,9 +18,7 @@
 ** must bear this legend.
 */
 
-
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
 
@@ -34,7 +32,11 @@ CInstrument::CInstrument() : m_iType(0)
 	memset(m_cName, 0, 128);
 }
 
-void CInstrument::SetName(char *Name)
+CInstrument::~CInstrument()
+{
+}
+
+void CInstrument::SetName(const char *Name)
 {
 	strcpy(m_cName, Name);
 }

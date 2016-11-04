@@ -19,16 +19,12 @@
 */
 
 #include "apu.h"
+#include "MMC5.h"
 #include "square.h"
-
-static const uint8 /*CSquare::*/DUTY_TABLE[4][16] = {{0, 1, 1, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
-									 {0, 1, 1, 1,  1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0},
-									 {0, 1, 1, 1,  1, 1, 1, 1,  1, 0, 0, 0,  0, 0, 0, 0},
-									 {1, 0, 0, 0,  0, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1}};
 
 // MMC5 external sound
 
-CMMC5::CMMC5(CMixer *pMixer):
+CMMC5::CMMC5(CMixer *pMixer) : 
 	m_pEXRAM(new uint8[0x400]),
 	m_pSquare1(new CMMCSquare(pMixer, CHANID_MMC5_SQUARE1)),
 	m_pSquare2(new CMMCSquare(pMixer, CHANID_MMC5_SQUARE2))
@@ -37,9 +33,14 @@ CMMC5::CMMC5(CMixer *pMixer):
 
 CMMC5::~CMMC5()
 {
-	delete m_pSquare1;
-	delete m_pSquare2;
-	delete [] m_pEXRAM;
+	if (m_pSquare1)
+		delete m_pSquare1;
+
+	if (m_pSquare2)
+		delete m_pSquare2;
+
+	if (m_pEXRAM)
+		delete [] m_pEXRAM;
 }
 
 void CMMC5::Reset()
@@ -136,11 +137,6 @@ void CMMC5::EnvelopeUpdate()
 
 // MMC5 Square
 
-
-//CMMCSquare::CMMCSquare(CMixer *pMixer, int ID) : CChannel(pMixer, ID)
-//{
-//}
-
 CMMCSquare::~CMMCSquare()
 {
 }
@@ -216,7 +212,7 @@ void CMMCSquare::Process(uint32 Time)
 		m_iCounter		= m_iFrequency + 1;
 		m_iDutyCycle	= (m_iDutyCycle + 1) & 0x0F;
 
-		Mix(Valid ? (DUTY_TABLE[m_iDutyLength][m_iDutyCycle] * (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume)) : 0);
+		Mix(Valid ? (CSquare::DUTY_TABLE[m_iDutyLength][m_iDutyCycle] * (m_iEnvelopeFix ? m_iFixedVolume : m_iEnvelopeVolume)) : 0);
 	}
 
 	m_iCounter -= Time;

@@ -38,6 +38,14 @@ public:
 	enum { IDD = IDD_WAVE_PROGRESS };
 
 protected:
+
+	CSoundGen			*m_pSoundGen;
+	CProgressCtrl		*m_pProgressBar;
+	CFamiTrackerView	*m_pView;
+	CFamiTrackerDoc		*m_pDoc;
+	DWORD				m_dwStartTime;
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	CString m_sFile;

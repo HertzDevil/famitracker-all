@@ -28,7 +28,7 @@ public:
 	CInstrumentEditorVRC7(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorVRC7();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "Konami VRC7"; };
+	virtual TCHAR *GetTitle() { return _T("Konami VRC7"); };
 
 	virtual void SelectInstrument(int Instrument);
 
@@ -38,9 +38,6 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-	unsigned int m_iInstrument;
-	CInstrumentVRC7 *m_pInstrument;
-
 	void LoadCustomPatch();
 	void SaveCustomPatch();
 
@@ -48,6 +45,10 @@ protected:
 	int GetSliderVal(int Slider);
 	void SetSliderVal(int Slider, int Value);
 	void EnableControls(bool bEnable);
+
+protected:
+	//unsigned int m_iInstrument;
+	CInstrumentVRC7 *m_pInstrument;
 
 	DECLARE_MESSAGE_MAP()
 public:

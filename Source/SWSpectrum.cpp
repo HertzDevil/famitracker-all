@@ -1,20 +1,56 @@
+/*
+** FamiTracker - NES/Famicom sound tracker
+** Copyright (C) 2005-2010  Jonathan Liss
+**
+** This program is free software; you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation; either version 2 of the License, or
+** (at your option) any later version.
+**
+** This program is distributed in the hope that it will be useful, 
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+** Library General Public License for more details.  To obtain a 
+** copy of the GNU Library General Public License, write to the Free 
+** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+**
+** Any permitted reproduction of these routines, in whole or in part,
+** must bear this legend.
+*/
+
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "SWSpectrum.h"
 
+CSWSpectrum::CSWSpectrum() :
+	m_pBlitBuffer(NULL),
+	m_pFftObject(NULL)
+{
+}
+
+CSWSpectrum::~CSWSpectrum()
+{
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
+	SAFE_RELEASE(m_pFftObject);
+}
+
 void CSWSpectrum::Activate()
 {
 	memset(&bmi, 0, sizeof(BITMAPINFO));
-	bmi.bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biBitCount	= 32;
-	bmi.bmiHeader.biHeight		= -WIN_HEIGHT;
-	bmi.bmiHeader.biWidth		= WIN_WIDTH;
-	bmi.bmiHeader.biPlanes		= 1;
+	bmi.bmiHeader.biSize	 = sizeof(BITMAPINFOHEADER);
+	bmi.bmiHeader.biBitCount = 32;
+	bmi.bmiHeader.biHeight	 = -WIN_HEIGHT;
+	bmi.bmiHeader.biWidth	 = WIN_WIDTH;
+	bmi.bmiHeader.biPlanes	 = 1;
+
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
 
 	m_pBlitBuffer = new int[WIN_WIDTH * WIN_HEIGHT * 2];
 	memset(m_pBlitBuffer, 0, WIN_WIDTH * WIN_HEIGHT * sizeof(int));
 
-	m_pFftObject = new Fft(FFT_POINTS, 48000);
+	SAFE_RELEASE(m_pFftObject);
+
+	m_pFftObject = new Fft(FFT_POINTS, 44100);
 
 	for (int i = 0; i < FFT_POINTS; i++)
 		m_iFftPoint[i] = 0;
@@ -24,8 +60,8 @@ void CSWSpectrum::Activate()
 
 void CSWSpectrum::Deactivate()
 {
-	delete m_pFftObject;
-	delete [] m_pBlitBuffer;
+	SAFE_RELEASE_ARRAY(m_pBlitBuffer);
+	SAFE_RELEASE(m_pFftObject);
 }
 
 void CSWSpectrum::SetSampleData(int *pSamples, unsigned int iCount)
@@ -72,7 +108,6 @@ void CSWSpectrum::Draw(CDC *pDC, bool bMessage)
 		for (y = 0; y < WIN_HEIGHT; y++) {
 			if (y < bar)
 				m_pBlitBuffer[(WIN_HEIGHT - y) * WIN_WIDTH + i] = 0xFFFFFF - (DIM(0xFFFF80, (y * 100) / bar) + 0x80) + 0x000080;
-//				m_pBlitBuffer[(WIN_HEIGHT - y) * WIN_WIDTH + i] = 0xC0C0C0;//0xF0F0F0 - (DIM(0xFFFF80, (y * 100) / bar) + 0x80) + 0x000080;
 			else
 				m_pBlitBuffer[(WIN_HEIGHT - y) * WIN_WIDTH + i] = 0x000000;
 		}
@@ -81,5 +116,4 @@ void CSWSpectrum::Draw(CDC *pDC, bool bMessage)
 	}
 
 	StretchDIBits(*pDC, 0, 0, WIN_WIDTH, WIN_HEIGHT, 0, 0, WIN_WIDTH, WIN_HEIGHT, m_pBlitBuffer, &bmi, DIB_RGB_COLORS, SRCCOPY);
-
 }

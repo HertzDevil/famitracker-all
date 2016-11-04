@@ -62,38 +62,38 @@ BOOL CConfigMIDI::OnInitDialog()
 
 	CMIDI	*pMIDI = theApp.GetMIDI();
 	int		NumDev, i;
-	char	Text[256];
+	CString Text;
 
 	CComboBox *InDevices = (CComboBox*)GetDlgItem(IDC_INDEVICES);
 	CComboBox *OutDevices = (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
 
-	InDevices->AddString("<none>");
-	OutDevices->AddString("<none>");
+	InDevices->AddString(_T("<none>"));
+	OutDevices->AddString(_T("<none>"));
 
 	// Input
-	NumDev = pMIDI->GetNumDevices(true);
+	NumDev = pMIDI->GetNumInputDevices();
 
-	for (i = 0; i < NumDev; i++) {
-		pMIDI->GetDeviceString(i, Text, true);
+	for (i = 0; i < NumDev; ++i) {
+		pMIDI->GetInputDeviceString(i, Text);
 		InDevices->AddString(Text);
 	}
 
 	// Output
-	NumDev = pMIDI->GetNumDevices(false);
+	NumDev = pMIDI->GetNumOutputDevices();
 
-	for (i = 0; i < NumDev; i++) {
-		pMIDI->GetDeviceString(i, Text, false);
+	for (i = 0; i < NumDev; ++i) {
+		pMIDI->GetOutputDeviceString(i, Text);
 		OutDevices->AddString(Text);
 	}
 
-	InDevices->SetCurSel(pMIDI->m_iDevice);
-	OutDevices->SetCurSel(pMIDI->m_iOutDevice);
+	InDevices->SetCurSel(pMIDI->GetInputDevice());
+	OutDevices->SetCurSel(pMIDI->GetOutputDevice());
 
-	CheckDlgButton(IDC_MASTER_SYNC, theApp.m_pSettings->Midi.bMidiMasterSync	? 1 : 0);
-	CheckDlgButton(IDC_KEY_RELEASE, theApp.m_pSettings->Midi.bMidiKeyRelease	? 1 : 0);
-	CheckDlgButton(IDC_CHANMAP,		theApp.m_pSettings->Midi.bMidiChannelMap	? 1 : 0);
-	CheckDlgButton(IDC_VELOCITY,	theApp.m_pSettings->Midi.bMidiVelocity		? 1 : 0);
-	CheckDlgButton(IDC_ARPEGGIATE,	theApp.m_pSettings->Midi.bMidiArpeggio		? 1 : 0);
+	CheckDlgButton(IDC_MASTER_SYNC, theApp.GetSettings()->Midi.bMidiMasterSync	? 1 : 0);
+	CheckDlgButton(IDC_KEY_RELEASE, theApp.GetSettings()->Midi.bMidiKeyRelease	? 1 : 0);
+	CheckDlgButton(IDC_CHANMAP,		theApp.GetSettings()->Midi.bMidiChannelMap	? 1 : 0);
+	CheckDlgButton(IDC_VELOCITY,	theApp.GetSettings()->Midi.bMidiVelocity	? 1 : 0);
+	CheckDlgButton(IDC_ARPEGGIATE,	theApp.GetSettings()->Midi.bMidiArpeggio	? 1 : 0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -105,14 +105,14 @@ BOOL CConfigMIDI::OnApply()
 	CComboBox	*OutDevices	= (CComboBox*)GetDlgItem(IDC_OUTDEVICES);
 	CMIDI		*pMIDI		= theApp.GetMIDI();
 	
-	pMIDI->SetDevice(InDevices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
-	pMIDI->SetOutDevice(OutDevices->GetCurSel());
+	pMIDI->SetInputDevice(InDevices->GetCurSel(), IsDlgButtonChecked(IDC_MASTER_SYNC) != 0);
+	pMIDI->SetOutputDevice(OutDevices->GetCurSel());
 	
-	theApp.m_pSettings->Midi.bMidiMasterSync	= IsDlgButtonChecked(IDC_MASTER_SYNC)	== 1;
-	theApp.m_pSettings->Midi.bMidiKeyRelease	= IsDlgButtonChecked(IDC_KEY_RELEASE)	== 1;
-	theApp.m_pSettings->Midi.bMidiChannelMap	= IsDlgButtonChecked(IDC_CHANMAP)		== 1;
-	theApp.m_pSettings->Midi.bMidiVelocity		= IsDlgButtonChecked(IDC_VELOCITY)		== 1;
-	theApp.m_pSettings->Midi.bMidiArpeggio		= IsDlgButtonChecked(IDC_ARPEGGIATE)	== 1;
+	theApp.GetSettings()->Midi.bMidiMasterSync	= IsDlgButtonChecked(IDC_MASTER_SYNC)	== 1;
+	theApp.GetSettings()->Midi.bMidiKeyRelease	= IsDlgButtonChecked(IDC_KEY_RELEASE)	== 1;
+	theApp.GetSettings()->Midi.bMidiChannelMap	= IsDlgButtonChecked(IDC_CHANMAP)		== 1;
+	theApp.GetSettings()->Midi.bMidiVelocity	= IsDlgButtonChecked(IDC_VELOCITY)		== 1;
+	theApp.GetSettings()->Midi.bMidiArpeggio	= IsDlgButtonChecked(IDC_ARPEGGIATE)	== 1;
 
 	return CPropertyPage::OnApply();
 }

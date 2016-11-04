@@ -67,15 +67,6 @@ void FillItem(CDC *pDC, int Index, int Value, bool Remove)
 
 	int x = 2 + Index * (SIZE_X + 2);
 	pDC->FillSolidRect(x, POS[VAL[Value]] + 2, SIZE_X, 5, Remove == false ? COL[VAL[Value]] : 0xD0D0D0);
-	/*
-	dc.FillSolidRect(x, 2 + 7, SIZE_X, 5, mod == 2 ? 0x00FF00 : 0xD0D0D0);		// +2
-	dc.FillSolidRect(x, 2 + 14, SIZE_X, 5, mod == 1 ? 0x00FF00 : 0xD0D0D0);		// +1
-	dc.FillSolidRect(x, 2 + 21, SIZE_X, 5, mod == 0 ? 0x00FFFF : 0xD0D0D0);		// 0
-	dc.FillSolidRect(x, 2 + 28, SIZE_X, 5, mod == 7 ? 0x00FF00 : 0xD0D0D0);		// -1
-	dc.FillSolidRect(x, 2 + 35, SIZE_X, 5, mod == 6 ? 0x00FF00 : 0xD0D0D0);		// -2
-	dc.FillSolidRect(x, 2 + 42, SIZE_X, 5, mod == 5 ? 0x00FF00 : 0xD0D0D0);		// -4
-	dc.FillSolidRect(x, 2 + 52, SIZE_X, 5, mod == 4 ? 0xFF0000 : 0xD0D0D0);		// reset
-	*/
 }
 
 void CModSequenceEditor::OnPaint()
@@ -154,5 +145,5 @@ void CModSequenceEditor::EditSequence(CPoint point)
 
 	FillItem(pDC, index, value, false);
 
-	GetParent()->PostMessageA(WM_USER + 1);
+	GetParent()->PostMessage(WM_USER + 1);
 }

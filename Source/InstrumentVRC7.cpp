@@ -19,9 +19,10 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
+#include "Compiler.h"
+#include "DocumentFile.h"
 
 /*
  * class CInstrumentVRC7
@@ -50,6 +51,8 @@ CInstrument *CInstrumentVRC7::Clone()
 	for (int i = 0; i < 8; ++i)
 		pNew->SetCustomReg(i, GetCustomReg(i));
 
+	pNew->SetName(GetName());
+
 	return pNew;
 }
 
@@ -71,7 +74,7 @@ bool CInstrumentVRC7::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
-void CInstrumentVRC7::SaveFile(CFile *pFile)
+void CInstrumentVRC7::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
 	unsigned char Var;
 
@@ -83,7 +86,7 @@ void CInstrumentVRC7::SaveFile(CFile *pFile)
 	}
 }
 
-bool CInstrumentVRC7::LoadFile(CFile *pFile, int iVersion)
+bool CInstrumentVRC7::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
 	unsigned char Var;
 

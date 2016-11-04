@@ -104,7 +104,7 @@ CMIDIImport::~CMIDIImport()
 
 // CMIDIImport member functions
 
-bool CMIDIImport::ImportFile(LPCSTR FileName)
+bool CMIDIImport::ImportFile(LPCTSTR FileName)
 {
 	CHUNK_HEADER	Chunk;
 	CFile			File;
@@ -112,8 +112,8 @@ bool CMIDIImport::ImportFile(LPCSTR FileName)
 	
 	CMIDIImportDialog ImportDialog;
 
-	pDocument = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	pMainFrame = (CMainFrame*)theApp.GetDocumentView()->GetParentFrame();
+	pDocument = (CFamiTrackerDoc*)theApp.GetActiveDocument();
+	pMainFrame = (CMainFrame*)theApp.GetMainWnd();
 
 	MTHD_CHUNK MTHD;
 
@@ -173,6 +173,9 @@ bool CMIDIImport::ImportFile(LPCSTR FileName)
 
 	File.Close();
 	
+	pDocument->SetModifiedFlag();
+	pDocument->UpdateAllViews(NULL, UPDATE_ENTIRE);
+
 	pMainFrame->RedrawWindow();
 
 	return true;
@@ -221,7 +224,7 @@ bool CMIDIImport::ParseTrack()
 					TrackPtr++;
 					break;
 				default:
-					Text.Format("Unnamned %X", Event);
+					Text.Format(_T("Unnamned %X"), Event);
 					return true;
 			}
 		}

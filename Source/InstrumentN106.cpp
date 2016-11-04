@@ -19,7 +19,6 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
 
@@ -42,12 +41,12 @@ bool CInstrumentN106::Load(CDocumentFile *pDocFile)
 	return false;
 }
 
-void CInstrumentN106::SaveFile(CFile *pFile)
+void CInstrumentN106::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
-	AfxMessageBox("Saving N106 instruments is not yet supported");
+	AfxMessageBox(_T("Saving N106 instruments is not yet supported"));
 }
 
-bool CInstrumentN106::LoadFile(CFile *pFile, int iVersion)
+bool CInstrumentN106::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
 	return false;
 }

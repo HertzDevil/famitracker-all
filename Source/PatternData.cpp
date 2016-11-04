@@ -19,39 +19,36 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "PatternData.h"
 
-CPatternData::CPatternData()
+// This class contains pattern data
+// A list of these objects exists inside the document one for each song
+
+CPatternData::CPatternData(unsigned int PatternLength, unsigned int Speed, unsigned int Tempo)
 {
+	// Clear memory
 	memset(m_iFrameList, 0, sizeof(short) * MAX_FRAMES * MAX_CHANNELS);
+	memset(m_pPatternData, 0, sizeof(stChanNote*) * MAX_CHANNELS * MAX_PATTERN);
+	memset(m_iEffectColumns, 0, sizeof(int) * MAX_CHANNELS);
+
+	m_iPatternLength = PatternLength;
+	m_iFrameCount	 = 1;
+	m_iSongSpeed	 = Speed;
+	m_iSongTempo	 = Tempo;
+
+	// Pre-allocate pattern 0 for all channels
+	for (int i = 0; i < MAX_CHANNELS; ++i)
+		AllocatePattern(i, 0);
 }
 
 CPatternData::~CPatternData()
 {
 	// Deallocate memory
-	for (int i = 0; i < MAX_CHANNELS; i++) {
-		for (int j = 0; j < MAX_PATTERN; j++) {
-			if (m_pPatternData[i][j])
-				delete [] m_pPatternData[i][j];
+	for (int i = 0; i < MAX_CHANNELS; ++i) {
+		for (int j = 0; j < MAX_PATTERN; ++j) {
+			SAFE_RELEASE_ARRAY(m_pPatternData[i][j]);
 		}
-	}
-}
-
-void CPatternData::Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed, unsigned int Tempo)
-{
-	m_iPatternLength = PatternLength;
-	m_iFrameCount	 = FrameCount;
-	m_iSongSpeed	 = Speed;
-	m_iSongTempo	 = Tempo;
-
-	for (int i = 0; i < MAX_CHANNELS; i++) {
-		for (int j = 0; j < MAX_PATTERN; j++) {
-			m_pPatternData[i][j] = NULL;
-		}
-		AllocatePattern(i, 0);
-		m_iEffectColumns[i] = 0;
 	}
 }
 
@@ -143,11 +140,22 @@ void CPatternData::ClearEverything()
 			}
 		}
 	}
+
+	m_iFrameCount = 1;
 }
 
 void CPatternData::ClearPattern(int Channel, int Pattern)
 {
 	// Deletes a specified pattern in a channel
-	delete [] m_pPatternData[Channel][Pattern];
-	m_pPatternData[Channel][Pattern] = NULL;
+	SAFE_RELEASE_ARRAY(m_pPatternData[Channel][Pattern]);
+}
+
+unsigned short CPatternData::GetFramePattern(int Frame, int Channel) const
+{ 
+	return m_iFrameList[Frame][Channel]; 
+}
+
+void CPatternData::SetFramePattern(int Frame, int Channel, int Pattern)
+{
+	m_iFrameList[Frame][Channel] = Pattern;
 }

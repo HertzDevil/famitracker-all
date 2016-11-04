@@ -14,6 +14,29 @@
         {
             width: 132px;
         }
+        .style3
+        {
+            font-weight: normal;
+        }
+        .style5
+        {
+            width: 44px;
+            text-align: center;
+        }
+        .style6
+        {
+            width: 93px;
+            text-align: center;
+        }
+        .style7
+        {
+            FONT-SIZE: 9pt;
+            table-layout: fixed;
+            width: 11%;
+            font-family: Arial;
+            border-collapse: collapse;
+            background-color: #FCFCFC;
+        }
     </style>
 </HEAD>
 <BODY class="heading">
@@ -59,13 +82,14 @@
     </p>
     </span><strong><span class="bold">DPCM (Delta PCM)</span></strong><p>
         <span class="text">Used to play delta modulated samples. <span lang="sv">Channel 
-        </span>effects (<span lang="sv">volume,</span> arpeggio &amp; pitch slides) do 
-    not operate on this channel.<span lang="sv"> The volume column has no effect on this 
+        </span>effects (<span lang="sv">volume,</span> arpeggio &amp; pitch slides) do<span 
+            lang="sv">es</span> 
+    not<span lang="sv"> work </span>on this channel.<span lang="sv"> The volume column has no effect on this 
         channel.</span></span></p>
     <p>
-    <span class="bold">Note</span><span class="text">: Due to the way the sound is mixed in the hardware, the output volume level 
+    <span class="bold">Note</span><span class="text">: Due to the way the sound is mixed in the hardware, the volume level 
     of triangle and noise channels will be affected <span lang="sv">by</span> the DPCM channel.<span 
-            lang="sv"> More info is available on the bottom of this document.<br />
+            lang="sv"> More info is available on the bottom of this page.<br />
         </span></p>
     </span>
     <hr />
@@ -152,6 +176,7 @@
     A loop point causes the sequence to loop and a release points will hold the 
     sequence until a release command.<span lang="sv"> </span>The loop point is defined as a &#39;|&#39; and release point as &#39;/&#39; in the text 
     <span lang="sv">string</span>.</p>
+    <hr />
 <p class="text">
     <b class="bold">DPCM samples</b></p>
 <p class="text">
@@ -162,27 +187,141 @@
     does not affect the wave channels</span>. Assigned samples are samples assigned in 
     <span lang="sv">the selected </span>instrument while 
     loaded samples are global for all instruments.</p>
+    <p class="text">
+        <span lang="sv"><b>Load:</b> load samples from files. The format must be 1-bit 
+        delta PCM and max size can be 4081 bytes.</span></p>
+    <p class="style1">
+        <span lang="sv">Unload: <span class="style3">Remove selected sample.</span></span></p>
+    <p class="style1">
+        <span lang="sv">Save: <span class="style3">Saves selected sample to a file.</span></span></p>
+    <p class="style1">
+        <span lang="sv">Import: <span class="style3">Load and convert PCM files to delta 
+        PCM.
+    <a href="dpcm_import.htm">See more info about importing PCM.</a></span></span></p>
+    <p class="style1">
+        <span lang="sv">Edit: <span class="style3">Opens a DPCM editor, read about it
+    <a href="dpcm_editor.htm">here</a>.</span></span></p>
+    <p class="style1">
+        <span lang="sv">Preview: <span class="style3">Plays the sample.</span></span></p>
     
 
 
 <p class="text">
-            First load the samples, either directly from &quot;Load sample&quot; where the 
-			format must be 1-bit delta PCM, or &quot;Import sample&quot; to import wave-files. (The quality of wave files will decrease significantly 
-			when converted to DPCM.)
-            There are 16 kB available for DPCM samples.
-			Then select a key in &quot;Assigned samples&quot;-box and select the sample from the 
-            drop-down box below<span lang="sv"> or right click in the list</span>. The pitch box&nbsp;sets the&nbsp;pitch for the sample (15 - 
+            <span lang="sv">The available space</span> for DPCM samples<span lang="sv"> is 
+            16 kB</span>.
+			<span lang="sv">S</span>elect a key in &quot;Assigned samples&quot;-box and select the sample from the 
+            drop-down box below<span lang="sv"> (or right click in the list)</span>. The pitch box&nbsp;sets the&nbsp;pitch for the sample (15 - 
             0).
-            The &quot;&lt;-&quot; can also be used to assign samples, and &quot;-&gt;&quot; to remove assigned 
-            samples.<span lang="sv"> Loop is used to loop the sample from beginning.</span><br>
-            </p>
+            The &quot;<b>&lt;-</b>&quot;<span lang="sv">-button</span> can also be used to assign samples, and &quot;<b>-&gt;</b>&quot;<span 
+                lang="sv">-button</span> to remove assigned 
+            samples.<span lang="sv"> Loop is used to loop the sample from beginning.</span></p>
+    <p class="text">
+            <span lang="sv">The pitch setting translates to a frequency according to the 
+            following table:</span></p>
+    <table class="style7">
+        <tr>
+            <td class="style5">
+                <span lang="sv">0</span></td>
+            <td class="style6">
+                4181.71 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                    <span lang="sv">1</span>
+            </td>
+            <td class="style6">
+                4709.93 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">2</span></td>
+            <td class="style6">
+                5264.04 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                    <span lang="sv">3</span>
+            </td>
+            <td class="style6">
+                5593.04 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                    <span lang="sv">4</span>
+            </td>
+            <td class="style6">
+                    6257.95 Hz
+            </td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">5</span></td>
+            <td class="style6">
+                7046.35 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">6</span></td>
+            <td class="style6">
+                7919.35 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">7</span></td>
+            <td class="style6">
+                8363.42 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">8</span></td>
+            <td class="style6">
+                9419.86 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">9</span></td>
+            <td class="style6">
+                11,186.08 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">10</span></td>
+            <td class="style6">
+                12,604.03 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">11</span></td>
+            <td class="style6">
+                13,982.60 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">12</span></td>
+            <td class="style6">
+                16,884.65 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">13</span></td>
+            <td class="style6">
+                21,306.82 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">14</span></td>
+            <td class="style6">
+                24,857.95 Hz</td>
+        </tr>
+        <tr>
+            <td class="style5">
+                <span lang="sv">15</span></td>
+            <td class="style6">
+                33,143.94 Hz</td>
+        </tr>
+    </table>
 <p class="text">
-    <a href="dpcm_import.htm">See more info about importing PCM.</a></p>
-<p class="text">
-    <span lang="sv">There are a simple DPCM editor available, read about it
-    <a href="dpcm_editor.htm">here</a>.</span></p>
-<p class="text">
-            <STRONG>Note:</STRONG> 
+            <STRONG>Note: 
             </STRONG>Playing a DPCM sample may decrease the volume level of triangle and 
             noise. If full volume isn&#39;t regained after a sample is finished, use a note stop 
             or the Z-effect in the DPCM channel to restore it.<span lang="sv"> You can check 

@@ -21,8 +21,9 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "SpeedDlg.h"
-#include ".\speeddlg.h"
 
+const int RATE_MIN = 25;
+const int RATE_MAX = 400;
 
 // CSpeedDlg dialog
 
@@ -60,16 +61,11 @@ int CSpeedDlg::GetSpeedFromDlg(int InitialSpeed)
 
 void CSpeedDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
-	CString String;
-	int Pos;
-
 	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
-
-	Pos = ((CSliderCtrl*)pScrollBar)->GetPos();
-
-	String.Format("%i Hz", Pos);
+	m_iSpeed = ((CSliderCtrl*)pScrollBar)->GetPos();
+	CString String;
+	String.Format(_T("%i Hz"), m_iSpeed );
 	SetDlgItemText(IDC_SPEED, String);
-	m_iSpeed = Pos;
 }
 
 BOOL CSpeedDlg::OnInitDialog()
@@ -79,11 +75,11 @@ BOOL CSpeedDlg::OnInitDialog()
 	CSliderCtrl *Slider = (CSliderCtrl*)GetDlgItem(IDC_SPEED_SLD);
 	CString String;
 
-	// Program will crash if speed is set below 25Hz, I don't know why
-	Slider->SetRange(25, 400);
+	// Todo: Program will crash if speed is set below 25Hz, I don't know why
+	Slider->SetRange(RATE_MIN, RATE_MAX);
 	Slider->SetPos(m_iSpeed);
 
-	String.Format("%i Hz", m_iSpeed);
+	String.Format(_T("%i Hz"), m_iSpeed);
 	SetDlgItemText(IDC_SPEED, String);
 
 	return TRUE;  // return TRUE unless you set the focus to a control

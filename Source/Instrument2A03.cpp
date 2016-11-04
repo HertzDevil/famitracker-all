@@ -22,6 +22,8 @@
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
+#include "Compiler.h"
+#include "DocumentFile.h"
 
 // 2A03 instruments
 
@@ -115,12 +117,12 @@ bool CInstrument2A03::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
-void CInstrument2A03::SaveFile(CFile *pFile)
+void CInstrument2A03::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
 	// Saves an 2A03 instrument
 	// Current version 2.2
 
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+//	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 
 	// Sequences
 	unsigned char SeqCount = SEQ_COUNT;
@@ -207,9 +209,11 @@ void CInstrument2A03::SaveFile(CFile *pFile)
 	}
 }
 
-bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
+bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
+	// Reads an FTI file
+
+	//CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
 	char SampleNames[MAX_DSAMPLES][256];
 	stSequence OldSequence;
 
@@ -218,7 +222,7 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
 	pFile->Read(&SeqCount, sizeof(char));
 
 	// Loop through all instrument effects
-	for (int l = 0; l < SeqCount; l++) {
+	for (unsigned int i = 0; i < SeqCount; ++i) {
 
 		unsigned char Enabled;
 		pFile->Read(&Enabled, sizeof(char));
@@ -229,16 +233,16 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
 			pFile->Read(&Count, sizeof(int));
 
 			// Find a free sequence
-			int Index = pDoc->GetFreeSequence(l);
-			CSequence *pSeq = pDoc->GetSequence(Index, l);
+			int Index = pDoc->GetFreeSequence(i);
+			CSequence *pSeq = pDoc->GetSequence(Index, i);
 
 			if (iVersion < 20) {
 				OldSequence.Count = Count;
-				for (int k = 0; k < Count; k++) {
-					pFile->Read(&OldSequence.Length[k], sizeof(char));
-					pFile->Read(&OldSequence.Value[k], sizeof(char));
+				for (int j = 0; j < Count; ++j) {
+					pFile->Read(&OldSequence.Length[j], sizeof(char));
+					pFile->Read(&OldSequence.Value[j], sizeof(char));
 				}
-				pDoc->ConvertSequence(&OldSequence, pSeq, l);	// convert
+				pDoc->ConvertSequence(&OldSequence, pSeq, i);	// convert
 			}
 			else {
 				pSeq->SetItemCount(Count);
@@ -255,18 +259,18 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
 					pFile->Read(&Setting, sizeof(int));
 					pSeq->SetSetting(Setting);
 				}
-				for (int k = 0; k < Count; k++) {
+				for (int j = 0; j < Count; ++j) {
 					char Val;
 					pFile->Read(&Val, sizeof(char));
-					pSeq->SetItem(k, Val);
+					pSeq->SetItem(j, Val);
 				}
 			}
-			SetSeqEnable(l, true);
-			SetSeqIndex(l, Index);
+			SetSeqEnable(i, true);
+			SetSeqIndex(i, Index);
 		}
 		else {
-			SetSeqEnable(l, false);
-			SetSeqIndex(l, 0);
+			SetSeqEnable(i, false);
+			SetSeqIndex(i, 0);
 		}
 	}
 
@@ -274,16 +278,15 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
 	memset(SamplesFound, 0, sizeof(bool) * MAX_DSAMPLES);
 
 	unsigned int Count;
-	unsigned int j;
 	pFile->Read(&Count, sizeof(int));
 
 	// DPCM instruments
-	for (j = 0; j < Count; j++) {
-		int Note, Octave;
-		unsigned char InstNote, Sample, Pitch;
+	for (unsigned int i = 0; i < Count; ++i) {
+		unsigned char InstNote;
 		pFile->Read(&InstNote, sizeof(char));
-		Octave = InstNote / 12;
-		Note = InstNote % 12;
+		int Octave = InstNote / 12;
+		int Note = InstNote % 12;
+		unsigned char Sample, Pitch;
 		pFile->Read(&Sample, sizeof(char));
 		pFile->Read(&Pitch, sizeof(char));
 		SetSamplePitch(Octave, Note, Pitch);
@@ -291,59 +294,67 @@ bool CInstrument2A03::LoadFile(CFile *pFile, int iVersion)
 	}
 
 	// DPCM samples list
-	unsigned int SampleCount;
-	bool Found;
-	int Size;
-	char *SampleData;
+	bool bAssigned[OCTAVE_RANGE][NOTE_RANGE];
+	memset(bAssigned, 0, sizeof(bool) * OCTAVE_RANGE * NOTE_RANGE);
 
+	unsigned int SampleCount;
 	pFile->Read(&SampleCount, sizeof(int));
 
-	for (unsigned int l = 0; l < SampleCount; l++) {
+	for (unsigned int i = 0; i < SampleCount; ++i) {
 		int Index, Len;
 		pFile->Read(&Index, sizeof(int));
 		pFile->Read(&Len, sizeof(int));
 		pFile->Read(SampleNames[Index], Len);
 		SampleNames[Index][Len] = 0;
+		int Size;
 		pFile->Read(&Size, sizeof(int));
-		SampleData = new char[Size];
+		char *SampleData = new char[Size];
 		pFile->Read(SampleData, Size);
-		Found = false;
-		for (int m = 0; m < MAX_DSAMPLES; m++) {
-			CDSample *pSample = pDoc->GetDSample(m);
-			if (pSample->SampleSize > 0 && !strcmp(pSample->Name, SampleNames[Index])) {
+		bool Found = false;
+		for (int j = 0; j < MAX_DSAMPLES; ++j) {
+			CDSample *pSample = pDoc->GetDSample(j);
+			// Compare size and name to see if identical sample exists
+			if (pSample->SampleSize == Size && !strcmp(pSample->Name, SampleNames[Index])) {
 				Found = true;
 				// Assign sample
-				for (int n = 0; n < (6 * 12); n++) {
-					if (GetSample(n / 6, j % 13) == (Index + 1))
-						SetSample(n / 6, j % 13, m + 1);
+				for (int o = 0; o < OCTAVE_RANGE; ++o) {
+					for (int n = 0; n < NOTE_RANGE; ++n) {
+						if (GetSample(o, n) == (Index + 1) && !bAssigned[o][n]) {
+							SetSample(o, n, j + 1);
+							bAssigned[o][n] = true;
+						}
+					}
 				}
 			}
 		}
-		if (!Found) {
-			// Load sample
-			int FreeSample;
-			for (FreeSample = 0; FreeSample < MAX_DSAMPLES; FreeSample++) {
-				if (pDoc->GetSampleSize(FreeSample) == 0)
-					break;
-			}
 
-			if (FreeSample < MAX_DSAMPLES) {
+		if (!Found) {
+			// Load sample			
+			int FreeSample = pDoc->GetFreeDSample();
+			if (FreeSample != -1) {
 				CDSample *Sample = pDoc->GetDSample(FreeSample);
 				strcpy(Sample->Name, SampleNames[Index]);
 				Sample->SampleSize = Size;
 				Sample->SampleData = SampleData;
 				// Assign it
-				for (int n = 0; n < (6 * 12); n++) {
-					if (GetSample(n / 6, n % 13) == (Index + 1))
-						SetSample(n / 6, n % 13, FreeSample + 1);
+				for (int o = 0; o < OCTAVE_RANGE; ++o) {
+					for (int n = 0; n < NOTE_RANGE; ++n) {
+						if (GetSample(o, n) == (Index + 1) && !bAssigned[o][n]) {
+							SetSample(o, n, FreeSample + 1);
+							bAssigned[o][n] = true;
+						}
+					}
 				}
 			}
 			else {
-				theApp.DisplayError(IDS_OUT_OF_SLOTS);
+				AfxMessageBox(IDS_OUT_OF_SLOTS, MB_ICONERROR);
+				SAFE_RELEASE_ARRAY(SampleData);
+				return false;
 			}
 		}
-		else
-			delete [] SampleData;
+		else {
+			SAFE_RELEASE_ARRAY(SampleData);
+		}
 	}
 
 	return true;
@@ -386,7 +397,7 @@ int CInstrument2A03::Compile(CCompiler *pCompiler, int Index)
 	StoredBytes++;
 
 	for (i = 0; i < SEQ_COUNT; ++i) {
-		iAddress = (GetSeqEnable(i) == 0) ? 0 : pCompiler->GetSequenceAddress(GetSeqIndex(i), i);
+		iAddress = (GetSeqEnable(i) == 0 || (pDoc->GetSequence(GetSeqIndex(i), i)->GetItemCount() == 0)) ? 0 : pCompiler->GetSequenceAddress2A03(GetSeqIndex(i), i);
 		if (iAddress > 0) {
 			pCompiler->StoreShort(iAddress);
 			pCompiler->WriteLog("%04X ", iAddress);
@@ -427,6 +438,11 @@ char CInstrument2A03::GetSamplePitch(int Octave, int Note) const
 	return m_cSamplePitch[Octave][Note];
 }
 
+bool CInstrument2A03::GetSampleLoop(int Octave, int Note) const
+{
+	return (m_cSamplePitch[Octave][Note] & 0x80) == 0x80;
+}
+
 char CInstrument2A03::GetSampleLoopOffset(int Octave, int Note) const
 {
 	return m_cSampleLoopOffset[Octave][Note];
@@ -442,6 +458,11 @@ void CInstrument2A03::SetSamplePitch(int Octave, int Note, char Pitch)
 	m_cSamplePitch[Octave][Note] = Pitch;
 }
 
+void CInstrument2A03::SetSampleLoop(int Octave, int Note, bool Loop)
+{
+	m_cSamplePitch[Octave][Note] = (m_cSamplePitch[Octave][Note] & 0x7F) | (Loop ? 0x80 : 0);
+}
+
 void CInstrument2A03::SetSampleLoopOffset(int Octave, int Note, char Offset)
 {
 	m_cSampleLoopOffset[Octave][Note] = Offset;
@@ -449,12 +470,10 @@ void CInstrument2A03::SetSampleLoopOffset(int Octave, int Note, char Offset)
 
 bool CInstrument2A03::AssignedSamples() const
 {
-	// Returns true if there are assigned samples in this instrument
+	// Returns true if there are assigned samples in this instrument	
 
-	int i, j;
-	
-	for (i = 0; i < OCTAVE_RANGE; i++) {
-		for (j = 0; j < 12; j++) {
+	for (int i = 0; i < OCTAVE_RANGE; ++i) {
+		for (int j = 0; j < NOTE_RANGE; ++j) {
 			if (GetSample(i, j) != 0)
 				return true;
 		}

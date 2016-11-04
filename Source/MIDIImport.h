@@ -30,7 +30,7 @@ public:
 	CMIDIImport();
 	virtual ~CMIDIImport();
 
-	bool ImportFile(LPCSTR FileName);
+	bool ImportFile(LPCTSTR FileName);
 
 private:
 	bool			ParseTrack();

@@ -21,6 +21,7 @@
 
 #pragma once
 
+// Channel note struct, holds the data for each row in patterns
 struct stChanNote {
 	unsigned char Note;
 	unsigned char Octave;
@@ -30,18 +31,19 @@ struct stChanNote {
 	unsigned char EffParam[MAX_EFFECT_COLUMNS];
 };
 
+// CPatternData holds all notes in the patterns
 class CPatternData {
 public:
-	CPatternData();
+	CPatternData(unsigned int PatternLength, unsigned int Speed, unsigned int Tempo);
 	~CPatternData();
 
-	void	Init(unsigned int PatternLength, unsigned int FrameCount, unsigned int Speed, unsigned int Tempo);
+	void SetEffect(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column, char EffNumber, char EffParam);
+	void SetInstrument(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Instrument);
+	void SetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Note);
+	void SetOctave(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Octave);
+	void SetVolume(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Volume);
 
-	void	SetEffect(unsigned int Channel, unsigned int Pattern, unsigned int Row, unsigned int Column, char EffNumber, char EffParam);
-	void	SetInstrument(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Instrument);
-	void	SetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Note);
-	void	SetOctave(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Octave);
-	void	SetVolume(unsigned int Channel, unsigned int Pattern, unsigned int Row, char Volume);
+	// None of these are const because accessing an unallocated pattern will allocate it
 
 	char GetNote(unsigned int Channel, unsigned int Pattern, unsigned int Row) 
 		{ return GetPatternData(Channel, Pattern, Row)->Note; };
@@ -64,24 +66,47 @@ public:
 	bool IsCellFree(unsigned int Channel, unsigned int Pattern, unsigned int Row);
 	bool IsPatternFree(unsigned int Channel, unsigned int Pattern);
 
+	int GetEffectColumnCount(int Channel) const
+		{ return m_iEffectColumns[Channel]; };
+
+	void SetEffectColumnCount(int Channel, int Count)
+		{ m_iEffectColumns[Channel] = Count; };
+
 	void ClearEverything();
 	void ClearPattern(int Channel, int Pattern);
 
 	stChanNote *GetPatternData(int Channel, int Pattern, int Row);
 
-	// Move these to the private area
-	unsigned short	m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		// List of the patterns assigned to frames
+	unsigned int GetPatternLength() const		{ return m_iPatternLength;	 };
+	unsigned int GetFrameCount() const			{ return m_iFrameCount;		 };
+	unsigned int GetSongSpeed() const			{ return m_iSongSpeed;		 };
+	unsigned int GetSongTempo() const			{ return m_iSongTempo;		 };
 
-	unsigned int	m_iPatternLength;							// Amount of rows in one pattern
-	unsigned int	m_iFrameCount;								// Number of frames
-	unsigned int	m_iSongSpeed;								// Song speed
-	unsigned int	m_iSongTempo;								// Song tempo
+	void SetPatternLength(unsigned int Length)	{ m_iPatternLength = Length; };
+	void SetFrameCount(unsigned int Count)		{ m_iFrameCount = Count;	 };
+	void SetSongSpeed(unsigned int Speed)		{ m_iSongSpeed = Speed;		 };
+	void SetSongTempo(unsigned int Tempo)		{ m_iSongTempo = Tempo;		 };
 
-	unsigned int	m_iEffectColumns[MAX_CHANNELS];				// Effect columns enabled
+	unsigned short GetFramePattern(int Frame, int Channel) const;
+	void SetFramePattern(int Frame, int Channel, int Pattern);
 
 private:
-	void			AllocatePattern(int Channel, int Patterns);
+	void AllocatePattern(int Channel, int Patterns);
+
+	// Pattern data
+private:
+
+	// List of the patterns assigned to frames
+	unsigned short m_iFrameList[MAX_FRAMES][MAX_CHANNELS];		
+
+	unsigned int m_iPatternLength;			// Amount of rows in one pattern
+	unsigned int m_iFrameCount;				// Number of frames
+	unsigned int m_iSongSpeed;				// Song speed
+	unsigned int m_iSongTempo;				// Song tempo
+
+	// Number of visible effect columns for each channel
+	unsigned int m_iEffectColumns[MAX_CHANNELS];
 
 	// All accesses to m_pPatternData must go through GetPatternData()
-	stChanNote		*m_pPatternData[MAX_CHANNELS][MAX_PATTERN];
+	stChanNote *m_pPatternData[MAX_CHANNELS][MAX_PATTERN];
 };

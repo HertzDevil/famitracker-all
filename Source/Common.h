@@ -20,14 +20,14 @@
 
 #pragma once
 
-typedef unsigned	char		uint8;
-typedef unsigned	short		uint16;
-typedef unsigned	long		uint32;
-typedef unsigned	__int64		uint64;
-typedef signed		char		int8;
-typedef signed		short		int16;
-typedef signed		long		int32;
-typedef signed		__int64		int64;
+typedef unsigned char		uint8;
+typedef unsigned short		uint16;
+typedef unsigned long		uint32;
+typedef unsigned __int64	uint64;
+typedef signed char			int8;
+typedef signed short		int16;
+typedef signed long			int32;
+typedef signed __int64		int64;
 
 #define _MAIN_H_
 
@@ -37,6 +37,8 @@ const int SPEED_AUTO	= 0;
 const int SPEED_NTSC	= 1;
 const int SPEED_PAL		= 2;
 
+
+// Used to play the audio when the buffer is full
 class ICallback {
 public:
 	virtual void FlushBuffer(int16 *Buffer, uint32 Size) = 0;
@@ -44,23 +46,23 @@ public:
 
 
 // class for simulating CPU memory, used by the DPCM channel
-class CSampleMem
+class CSampleMem 
 {
 	public:
-		uint8	Read(uint16 Address) {
-			if (!Mem)
+		uint8 Read(uint16 Address) {
+			if (!pMem)
 				return 0;
 			int Addr = ((Address & 0xFFFF) - 0xC000) % MemSize;
 			if (Addr > MemSize)
 				return 0;
-			return (Mem[Addr]);
+			return pMem[Addr];
 		};
 
-		void	SetMem(char *Ptr, int Size) {
-			Mem = (uint8*)Ptr;
+		void SetMem(char *Ptr, int Size) {
+			pMem = (uint8*)Ptr;
 			MemSize = Size;
 		};
 	private:
-		uint8	*Mem;
+		uint8	*pMem;
 		uint16	MemSize;
 };

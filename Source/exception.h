@@ -1,6 +1,6 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
-** Copyright (C) 2005-2009  Jonathan Liss
+** Copyright (C) 2005-2010  Jonathan Liss
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -18,19 +18,13 @@
 ** must bear this legend.
 */
 
-#ifndef _SOUNDINTERFACE_H_
-#define _SOUNDINTERFACE_H_
+#pragma once
 
-#include "common.h"
+#ifndef _DEBUG
+// Enable crash handler
+#define ENABLE_CRASH_HANDLER
+#endif
 
-class ISoundInterface
-{
-public:
-	virtual void FlushAudio(int32 *Samples, uint32 SampleCount) = 0;
-	virtual void StopSound() = 0;
-	virtual void Quit() = 0;
-	virtual void Reset() = 0;
-private:
-};
-
-#endif /* _SOUNDINTERFACE_H_ */
+#ifdef ENABLE_CRASH_HANDLER
+LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep);
+#endif

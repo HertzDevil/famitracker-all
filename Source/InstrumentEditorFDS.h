@@ -33,7 +33,7 @@ public:
 	CInstrumentEditorFDS(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorFDS();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "Nintendo FDS"; };
+	virtual TCHAR *GetTitle() { return _T("Nintendo FDS"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -42,15 +42,19 @@ public:
 	enum { IDD = IDD_INSTRUMENT_FDS };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	void WaveChanged();
+	void ReadWaveString();
+	void ReadModString();
 
+	virtual	void PreviewNote(unsigned char Key);
+
+protected:
 	CInstrumentFDS		*m_pInstrument;
 	CWaveEditor			*m_pWaveEditor;
 	CModSequenceEditor	*m_pModSequenceEditor;
 
-	void WaveChanged();
-	void ReadWaveString();
-	void ReadModString();
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:
@@ -60,7 +64,7 @@ public:
 	afx_msg void OnPresetSquare();
 	afx_msg void OnPresetSawtooth();
 	afx_msg void OnModPresetFlat();
-	afx_msg void OnModPresetVibrato();
+	afx_msg void OnModPresetSine();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnModRateChange();
 	afx_msg void OnModDepthChange();

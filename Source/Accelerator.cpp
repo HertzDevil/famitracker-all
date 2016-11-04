@@ -23,7 +23,14 @@
 #include "accelerator.h"
 #include "Settings.h"
 
-static const char *KEY_NAMES[] = {
+/*
+ * This class is used to translate key shortcuts -> command messages
+ *
+ * Todo: move this to windows accelerator functions?
+ *
+ */
+
+static const TCHAR *KEY_NAMES[] = {
 	"",			 "",		"",			"",			"",			"",			"",			"",			// 00-07
 	"Backspace", "Tab",		"",			"",			"clear",	"Enter",	"",			"",			// 08-0F
 	"",			 "",		"",			"Pause",	"",			"",			"",			"",			// 10-17
@@ -58,15 +65,15 @@ static const char *KEY_NAMES[] = {
 	"",			 "",		"",			"",			"",			"",			"",			""			// F8-FF
 };
 
-const char *CAccelerator::MOD_NAMES[] = {
-	"None", 
-	"Alt", 
-	"Ctrl", 
-	"Alt+Ctrl", 
-	"Shift", 
-	"Alt+Shift", 
-	"Ctrl+Shift", 
-	"Alt+Ctrl+Shift"
+LPCTSTR CAccelerator::MOD_NAMES[] = {
+	_T("None"), 
+	_T("Alt"), 
+	_T("Ctrl"), 
+	_T("Alt+Ctrl"), 
+	_T("Shift"), 
+	_T("Alt+Shift"), 
+	_T("Ctrl+Shift"), 
+	_T("Alt+Ctrl+Shift")
 };
 
 struct stAccelEntry {
@@ -77,58 +84,64 @@ struct stAccelEntry {
 	int	 focus;
 };
 
+// Default shortcut table
 const stAccelEntry DEFAULT_TABLE[] = {
-	{"Increase octave",				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
-	{"Decrease octave",				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
-	{"Play / Stop",					MOD_NONE,		VK_RETURN,		ID_TRACKER_TOGGLE_PLAY},
-	{"Play",						MOD_NONE,		0,				ID_TRACKER_PLAY},
-	{"Play from start",				MOD_NONE,		VK_F5,			ID_TRACKER_PLAY_START},
-	{"Play from cursor",			MOD_NONE,		VK_F7,			ID_TRACKER_PLAY_CURSOR},
-	{"Play and loop pattern",		MOD_NONE,		VK_F6,			ID_TRACKER_PLAYPATTERN},
-	{"Play row",					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
-	{"Stop",						MOD_NONE,		VK_F8,			ID_TRACKER_STOP},
-	{"Edit enable/disable",			MOD_NONE,		VK_SPACE,		ID_TRACKER_EDIT},
-	{"Paste and overwrite",			MOD_CONTROL,	'B',			ID_CMD_PASTEOVERWRITE},
-	{"Paste and mix",				MOD_CONTROL,	'M',			ID_CMD_PASTEMIXED},
-	{"Select all",					MOD_CONTROL,	'A',			ID_EDIT_SELECTALL},
-	{"Toggle channel",				MOD_ALT,		VK_F9,			ID_TRACKER_TOGGLECHANNEL},
-	{"Solo channel",				MOD_ALT,		VK_F10,			ID_TRACKER_SOLOCHANNEL},
-	{"Interpolate",					MOD_CONTROL,	'G',			ID_EDIT_INTERPOLATE},
-	{"Go to next frame",			MOD_CONTROL,	VK_RIGHT,		ID_NEXT_FRAME},
-	{"Go to previous frame",		MOD_CONTROL,	VK_LEFT,		ID_PREV_FRAME},
-	{"Transpose, decrease notes",	MOD_CONTROL,	VK_F1,			ID_TRANSPOSE_DECREASENOTE},
-	{"Transpose, increase notes",	MOD_CONTROL,	VK_F2,			ID_TRANSPOSE_INCREASENOTE},
-	{"Transpose, decrease octaves",	MOD_CONTROL,	VK_F3,			ID_TRANSPOSE_DECREASEOCTAVE},
-	{"Transpose, increase octaves",	MOD_CONTROL,	VK_F4,			ID_TRANSPOSE_INCREASEOCTAVE},
-	{"Increase pattern",			MOD_NONE,		VK_ADD,			IDC_FRAME_INC},
-	{"Decrease pattern",			MOD_NONE,		VK_SUBTRACT,	IDC_FRAME_DEC},
-	{"Next instrument",				MOD_CONTROL,	VK_DOWN,		ID_CMD_NEXT_INSTRUMENT},
-	{"Previous instrument",			MOD_CONTROL,	VK_UP,			ID_CMD_PREV_INSTRUMENT},
-	{"Mask instruments",			MOD_ALT,		'T',			ID_EDIT_INSTRUMENTMASK},
-	{"Edit instrument",				MOD_CONTROL,	'I',			ID_MODULE_EDITINSTRUMENT},
-	{"Increase step size",			MOD_CONTROL,	VK_ADD,			ID_CMD_INCREASESTEPSIZE},
-	{"Decrease step size",			MOD_CONTROL,	VK_SUBTRACT,	ID_CMD_DECREASESTEPSIZE},
-	{"Follow mode",					MOD_NONE,		VK_SCROLL,		IDC_FOLLOW_TOGGLE},
-	{"Duplicate frame",				MOD_CONTROL,	'D',			ID_MODULE_DUPLICATEFRAME},
-	{"Insert frame",				MOD_NONE,		0,				ID_FRAME_INSERT},
-	{"Remove frame",				MOD_NONE,		0,				ID_FRAME_REMOVE},
-	{"Reverse",						MOD_CONTROL,	'R',			ID_EDIT_REVERSE},
-	{"Select frame editor",			MOD_NONE,		VK_F3,			ID_FOCUS_FRAME_EDITOR},
-	{"Select pattern editor",		MOD_NONE,		VK_F2,			ID_FOCUS_PATTERN_EDITOR},
-	{"Move one step up",			MOD_ALT,		VK_UP,			ID_CMD_STEP_UP},
-	{"Move one step down",			MOD_ALT,		VK_DOWN,		ID_CMD_STEP_DOWN},
-	{"Replace instrument",			MOD_ALT,		'S',			ID_EDIT_REPLACEINSTRUMENT},
+	{_T("Increase octave"),				MOD_NONE,		VK_DIVIDE,		ID_CMD_OCTAVE_PREVIOUS},
+	{_T("Decrease octave"),				MOD_NONE,		VK_MULTIPLY,	ID_CMD_OCTAVE_NEXT},
+	{_T("Play / Stop"),					MOD_NONE,		VK_RETURN,		ID_TRACKER_TOGGLE_PLAY},
+	{_T("Play"),						MOD_NONE,		0,				ID_TRACKER_PLAY},
+	{_T("Play from start"),				MOD_NONE,		VK_F5,			ID_TRACKER_PLAY_START},
+	{_T("Play from cursor"),			MOD_NONE,		VK_F7,			ID_TRACKER_PLAY_CURSOR},
+	{_T("Play and loop pattern"),		MOD_NONE,		VK_F6,			ID_TRACKER_PLAYPATTERN},
+	{_T("Play row"),					MOD_CONTROL,	VK_RETURN,		ID_TRACKER_PLAYROW},
+	{_T("Stop"),						MOD_NONE,		VK_F8,			ID_TRACKER_STOP},
+	{_T("Edit enable/disable"),			MOD_NONE,		VK_SPACE,		ID_TRACKER_EDIT},
+	{_T("Paste and overwrite"),			MOD_CONTROL,	'B',			ID_CMD_PASTEOVERWRITE},
+	{_T("Paste and mix"),				MOD_CONTROL,	'M',			ID_CMD_PASTEMIXED},
+	{_T("Select all"),					MOD_CONTROL,	'A',			ID_EDIT_SELECTALL},
+	{_T("Toggle channel"),				MOD_ALT,		VK_F9,			ID_TRACKER_TOGGLECHANNEL},
+	{_T("Solo channel"),				MOD_ALT,		VK_F10,			ID_TRACKER_SOLOCHANNEL},
+	{_T("Interpolate"),					MOD_CONTROL,	'G',			ID_EDIT_INTERPOLATE},
+	{_T("Go to next frame"),			MOD_CONTROL,	VK_RIGHT,		ID_NEXT_FRAME},
+	{_T("Go to previous frame"),		MOD_CONTROL,	VK_LEFT,		ID_PREV_FRAME},
+	{_T("Transpose, decrease notes"),	MOD_CONTROL,	VK_F1,			ID_TRANSPOSE_DECREASENOTE},
+	{_T("Transpose, increase notes"),	MOD_CONTROL,	VK_F2,			ID_TRANSPOSE_INCREASENOTE},
+	{_T("Transpose, decrease octaves"),	MOD_CONTROL,	VK_F3,			ID_TRANSPOSE_DECREASEOCTAVE},
+	{_T("Transpose, increase octaves"),	MOD_CONTROL,	VK_F4,			ID_TRANSPOSE_INCREASEOCTAVE},
+	{_T("Increase pattern"),			MOD_NONE,		VK_ADD,			IDC_FRAME_INC},
+	{_T("Decrease pattern"),			MOD_NONE,		VK_SUBTRACT,	IDC_FRAME_DEC},
+	{_T("Next instrument"),				MOD_CONTROL,	VK_DOWN,		ID_CMD_NEXT_INSTRUMENT},
+	{_T("Previous instrument"),			MOD_CONTROL,	VK_UP,			ID_CMD_PREV_INSTRUMENT},
+	{_T("Mask instruments"),			MOD_ALT,		'T',			ID_EDIT_INSTRUMENTMASK},
+	{_T("Edit instrument"),				MOD_CONTROL,	'I',			ID_MODULE_EDITINSTRUMENT},
+	{_T("Increase step size"),			MOD_CONTROL,	VK_ADD,			ID_CMD_INCREASESTEPSIZE},
+	{_T("Decrease step size"),			MOD_CONTROL,	VK_SUBTRACT,	ID_CMD_DECREASESTEPSIZE},
+	{_T("Follow mode"),					MOD_NONE,		VK_SCROLL,		IDC_FOLLOW_TOGGLE},
+	{_T("Duplicate frame"),				MOD_CONTROL,	'D',			ID_MODULE_DUPLICATEFRAME},
+	{_T("Insert frame"),				MOD_NONE,		0,				ID_FRAME_INSERT},
+	{_T("Remove frame"),				MOD_NONE,		0,				ID_FRAME_REMOVE},
+	{_T("Reverse"),						MOD_CONTROL,	'R',			ID_EDIT_REVERSE},
+	{_T("Select frame editor"),			MOD_NONE,		VK_F3,			ID_FOCUS_FRAME_EDITOR},
+	{_T("Select pattern editor"),		MOD_NONE,		VK_F2,			ID_FOCUS_PATTERN_EDITOR},
+	{_T("Move one step up"),			MOD_ALT,		VK_UP,			ID_CMD_STEP_UP},
+	{_T("Move one step down"),			MOD_ALT,		VK_DOWN,		ID_CMD_STEP_DOWN},
+	{_T("Replace instrument"),			MOD_ALT,		'S',			ID_EDIT_REPLACEINSTRUMENT},
+	{_T("Toggle control panel"),		MOD_NONE,		0,				ID_VIEW_CONTROLPANEL},
+	{_T("Display effect list"),			MOD_NONE,		0,				ID_HELP_EFFECTTABLE},
+	{_T("Select block start"),			MOD_ALT,		'B',			ID_BLOCK_START},
+	{_T("Select block end"),			MOD_ALT,		'E',			ID_BLOCK_END},
+	{_T("Pick up row settings"),		MOD_NONE,		0,				ID_POPUP_PICKUPROW},
+
 };
 
 const int ACCEL_COUNT = sizeof(DEFAULT_TABLE) / sizeof(stAccelEntry);
 
 stAccelEntry EntriesTable[ACCEL_COUNT];
 
-//char *GetKeyName(int Key)
 
-CAccelerator::CAccelerator()
+CAccelerator::CAccelerator() : m_iModifier(0)
 {
-	m_iModifier = 0;
+	ATLTRACE2(atlTraceGeneral, 0, "Accelerator: Accelerator table contains %d items\n", ACCEL_COUNT);
 }
 
 CAccelerator::~CAccelerator()
@@ -162,11 +175,22 @@ unsigned short CAccelerator::GetAction(unsigned char nChar)
 			return 0;
 	}
 
+	// Find exact match
 	for (int i = 0; i < ACCEL_COUNT; i++) {
 		unsigned char Mod = EntriesTable[i].mod;
 		unsigned char Key = EntriesTable[i].key;
 
 		if ((Mod == m_iModifier) && nChar == Key) {
+			return EntriesTable[i].id;
+		}
+	}
+
+	// Find partial match
+	for (int i = 0; i < ACCEL_COUNT; i++) {
+		unsigned char Mod = EntriesTable[i].mod;
+		unsigned char Key = EntriesTable[i].key;
+
+		if ((Mod & m_iModifier) == Mod && nChar == Key) {
 			return EntriesTable[i].id;
 		}
 	}
@@ -189,56 +213,26 @@ void CAccelerator::KeyReleased(unsigned char nChar)
 	}
 }
 
-char *CAccelerator::GetModName(int Item)
+LPCTSTR CAccelerator::GetModName(int Item) const
 {
-	/*
-	if (EntriesTable[Item].mod & MOD_ALT)
-		return "Alt";
-	else if (EntriesTable[Item].mod & MOD_CONTROL)
-		return "Ctrl";
-	else if (EntriesTable[Item].mod & MOD_SHIFT)
-		return "Shift";
-	*/
-
-	return (char*)MOD_NAMES[EntriesTable[Item].mod];
-
-	/*
-	switch (EntriesTable[Item].mod) {
-		case MOD_ALT:
-			return "Alt";
-		case MOD_CONTROL:
-			return "Control";
-		case MOD_SHIFT:
-			return "Shift";
-		case MOD_ALT | MOD_CONTROL:
-			return "Alt+Control";
-		case MOD_ALT | MOD_SHIFT:
-			return "Alt+Shift";
-		case MOD_CONTROL | MOD_SHIFT:
-			return "Control+Shift";
-		case MOD_ALT | MOD_CONTROL | MOD_SHIFT:
-			return "Alt+Control+Shift";
-	}
-
-	return "None";
-	*/
+	return MOD_NAMES[EntriesTable[Item].mod];
 }
 
-char *CAccelerator::GetKeyName(int Item)
+LPCTSTR CAccelerator::GetKeyName(int Item) const
 {
 	if (EntriesTable[Item].key > 0) {
-		return (char*)KEY_NAMES[EntriesTable[Item].key];
+		return KEY_NAMES[EntriesTable[Item].key];
 	}
 
-	return "None";
+	return _T("None");
 }
 
-char *CAccelerator::EnumKeyNames(int Index)
+LPCTSTR CAccelerator::EnumKeyNames(int Index) const
 {
-	return (char*)KEY_NAMES[Index];
+	return KEY_NAMES[Index];
 }
 
-int CAccelerator::GetItem(CString Name)
+int CAccelerator::GetItem(CString Name) const
 {
 	for (int i = 0; i < ACCEL_COUNT; i++) {
 		if (Name.Compare(EntriesTable[i].name) == 0)
@@ -257,7 +251,7 @@ void CAccelerator::SelectKey(int Item, CString Key)
 {
 	int i;
 
-	if (Key.Compare("None") == 0) {
+	if (Key.Compare(_T("None")) == 0) {
 		EntriesTable[Item].key = 0;
 		return;
 	}
@@ -273,11 +267,11 @@ void CAccelerator::SelectKey(int Item, CString Key)
 	EntriesTable[Item].key = i;
 }
 
-void CAccelerator::SaveShortcuts(CSettings *pSettings)
+void CAccelerator::SaveShortcuts(CSettings *pSettings) const
 {
 	// Save values
-	for (int i = 0; i < ACCEL_COUNT; i++) {
-		pSettings->StoreSetting("Shortcuts", EntriesTable[i].name, (EntriesTable[i].mod << 8) | EntriesTable[i].key);
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		pSettings->StoreSetting(_T("Shortcuts"), EntriesTable[i].name, (EntriesTable[i].mod << 8) | EntriesTable[i].key);
 	}
 }
 
@@ -287,8 +281,8 @@ void CAccelerator::LoadShortcuts(CSettings *pSettings)
 	LoadDefaults();
 
 	// Load custom values, if exists
-	for (int i = 0; i < ACCEL_COUNT; i++) {
-		int Setting = pSettings->LoadSetting("Shortcuts", EntriesTable[i].name);
+	for (int i = 0; i < ACCEL_COUNT; ++i) {
+		int Setting = pSettings->LoadSetting(_T("Shortcuts"), EntriesTable[i].name);
 		if (Setting > 0) {
 			EntriesTable[i].key = Setting & 0xFF;
 			EntriesTable[i].mod = Setting >> 8;

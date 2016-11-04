@@ -24,12 +24,8 @@
 const uint16 CDPCM::DMC_FREQ_NTSC[] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 85, 72, 54};
 const uint16 CDPCM::DMC_FREQ_PAL[]	= {398, 354, 316, 298, 266, 236, 210, 199, 177, 149, 132, 119, 99, 79, 67, 50};
 
-CDPCM::CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID)
+CDPCM::CDPCM(CMixer *pMixer, CSampleMem *pSampleMem, int ID) : CChannel(pMixer, ID, SNDCHIP_NONE), m_pSampleMem(pSampleMem)
 {
-	m_pMixer = pMixer;
-	m_pSampleMem = pSampleMem;
-	m_iChanId = ID;
-	m_iChip = SNDCHIP_NONE;
 }
 
 CDPCM::~CDPCM()
@@ -55,7 +51,7 @@ void CDPCM::Reset()
 
 void CDPCM::SetSpeed(int Speed)
 {
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 16; ++i)
 		m_iDMC_FreqTable[i] = (Speed == MACHINE_NTSC) ? DMC_FREQ_NTSC[i] : DMC_FREQ_PAL[i];
 }
 

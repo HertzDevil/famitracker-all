@@ -19,7 +19,6 @@
 */
 
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
 #include "Instrument.h"
 
@@ -42,12 +41,12 @@ bool CInstrument5B::Load(CDocumentFile *pDocFile)
 	return false;
 }
 
-void CInstrument5B::SaveFile(CFile *pFile)
+void CInstrument5B::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
-	AfxMessageBox("Saving 5B instruments is not yet supported");
+	AfxMessageBox(_T("Saving 5B instruments is not yet supported"));
 }
 
-bool CInstrument5B::LoadFile(CFile *pFile, int iVersion)
+bool CInstrument5B::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
 	return false;
 }

@@ -20,6 +20,7 @@
 
 #pragma once
 
+
 // CInstrumentSettings dialog
 
 class CInstrumentEditor2A03 : public CSequenceInstrumentEditPanel
@@ -30,7 +31,7 @@ public:
 	CInstrumentEditor2A03(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditor2A03();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "2A03 settings"; };
+	virtual TCHAR *GetTitle() { return _T("2A03 settings"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -48,7 +49,7 @@ protected:
 	void TranslateMML(CString String, int Max, int Min);
 
 protected:
-	static const char *INST_SETTINGS[];
+	static LPCTSTR INST_SETTINGS[];
 
 protected:
 	CWnd				*m_pParentWin;

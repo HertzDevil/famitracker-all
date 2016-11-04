@@ -85,21 +85,20 @@ struct stSongHeader {
 class CCompiler
 {
 public:
-	CCompiler();
-	~CCompiler();
+	CCompiler(CFamiTrackerDoc *pDoc);
+	virtual ~CCompiler();
 
-	void Export(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt);
-	void ExportNSF(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
-	void ExportNES(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
-	void ExportBIN(CString BIN_File, CString DPCM_File, CFamiTrackerDoc *pDoc, CEdit *pLogTxt);
-	void ExportPRG(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt, bool EnablePAL);
-	void ExportASM(CString FileName, CFamiTrackerDoc *pDoc, CEdit *pLogTxt);
+	void ExportNSF(CString FileName, CEdit *pLogTxt, bool EnablePAL);
+	void ExportNES(CString FileName, CEdit *pLogTxt, bool EnablePAL);
+	void ExportBIN(CString BIN_File, CString DPCM_File, CEdit *pLogTxt);
+	void ExportPRG(CString FileName, CEdit *pLogTxt, bool EnablePAL);
+	void ExportASM(CString FileName, CEdit *pLogTxt);
 
 	void StoreShort(unsigned short Value);
 	void StoreByte(unsigned char Value);
 	void WriteLog(char *text, ...);
 
-	unsigned int GetSequenceAddress(int Sequence, int Type) const;
+	unsigned int GetSequenceAddress2A03(int Sequence, int Type) const;
 	unsigned int GetSequenceAddressVRC6(int Sequence, int Type) const;
 	unsigned int GetSequenceAddressFDS(int Instrument, int Type) const;
 
@@ -110,6 +109,8 @@ public:
 
 private:
 	void CreateHeader(CFamiTrackerDoc *pDoc, stNSFHeader *pHeader, bool EnablePAL);
+
+	const char *LoadDriver(const char *driver) const;
 
 	void AllocateSpace();
 	void RemoveSpace();
@@ -132,7 +133,7 @@ private:
 	void WriteTrackHeader(stSongHeader *m_stTrackHeader, unsigned int iAddress);
 
 	void StoreSongs(CFamiTrackerDoc *pDoc);
-	void CreateFrameList(CFamiTrackerDoc *pDoc);
+	void CreateFrameList(CFamiTrackerDoc *pDoc, int Track);
 	void StorePatterns(CFamiTrackerDoc *pDoc, unsigned int Track);
 
 	void CreateInstrumentList(CFamiTrackerDoc *pDoc);
@@ -143,13 +144,13 @@ private:
 
 	unsigned int StoreSequence(CFamiTrackerDoc *pDoc, CSequence *pSeq);
 
-	bool IsPatternAddressed(CFamiTrackerDoc *pDoc, int Pattern, int Channel);
+	bool IsPatternAddressed(CFamiTrackerDoc *pDoc, int Track, int Pattern, int Channel);
 
 	int GetSampleIndex(int SampleNumber);
 	bool IsSampleAccessed(int SampleNumber);
 
 	// Debugging
-	void Print(char *text, ...);
+	void Print(char *text, ...) const;
 
 private:
 	const int		*m_pChanOrder;
@@ -180,9 +181,9 @@ private:
 	unsigned int	m_iInstruments;
 	unsigned int	m_iSequences;
 	unsigned int	m_iAssignedInstruments[MAX_INSTRUMENTS];
-	unsigned int	m_iSequenceAddresses[MAX_SEQUENCES][SEQ_COUNT];
+	unsigned int	m_iSequenceAddresses2A03[MAX_SEQUENCES][SEQ_COUNT];
 	unsigned int	m_iSequenceAddressesVRC6[MAX_SEQUENCES][SEQ_COUNT];
-	unsigned int	m_iSequenceAddressesFDS[MAX_INSTRUMENTS][SEQ_COUNT];	// Actually only 2 are used
+	unsigned int	m_iSequenceAddressesFDS[MAX_INSTRUMENTS][SEQ_COUNT];
 	
 	// Patterns and frames
 	unsigned short	m_iPatternAddresses[MAX_PATTERN][MAX_CHANNELS];
@@ -205,7 +206,7 @@ private:
 
 	CFamiTrackerDoc	*m_pDocument;
 
-	int m_iFrameBank;
+	int				m_iFrameBank;
 
 	// Expansion chips
 	// FDS

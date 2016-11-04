@@ -23,7 +23,6 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "ChannelsVRC6.h"
 
@@ -79,7 +78,7 @@ void CChannelHandlerVRC6::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		}
 	}
 
-	if (LastInstrument != m_iInstrument || Note > 0 && Note != HALT) {
+	if (LastInstrument != m_iInstrument || Note > 0 && Note != HALT && Note != RELEASE) {
 		// Setup instrument
 		for (int i = 0; i < SEQ_COUNT; i++) {
 			m_iSeqEnabled[i] = pInst->GetSeqEnable(i);

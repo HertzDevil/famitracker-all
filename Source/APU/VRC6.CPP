@@ -20,6 +20,7 @@
 
 #include <memory>
 #include "APU.h"
+#include "VRC6.h"
 
 // Konami VRC6 external sound chip emulation
 
@@ -138,9 +139,14 @@ CVRC6::CVRC6(CMixer *pMixer)
 
 CVRC6::~CVRC6()
 {
-	delete Pulse1;
-	delete Pulse2;
-	delete Sawtooth;
+	if (Pulse1)
+		delete Pulse1;
+
+	if (Pulse2)
+		delete Pulse2;
+
+	if (Sawtooth)
+		delete Sawtooth;
 }
 
 void CVRC6::Reset()

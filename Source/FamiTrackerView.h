@@ -20,43 +20,12 @@
 
 #pragma once
 
-// Default song settings
-const unsigned int DEFAULT_TEMPO_NTSC	= 150;
-const unsigned int DEFAULT_TEMPO_PAL	= 125;
-const unsigned int DEFAULT_SPEED		= 6;
+#include <afxmt.h>
 
-// Default font
-const static char *FONT_FACE = "Fixedsys";
-
-const struct {
-	const static int BACKGROUND			= 0x00000000;		// Background color
-	const static int BACKGROUND_HILITE	= 0x00001010;		// Background color
-	const static int BACKGROUND_HILITE2	= 0x00002020;		// Background color
-	const static int TEXT_NORMAL		= 0x0000FF00;		// Normal text color
-	const static int TEXT_HILITE		= 0x0000F0F0;		// Highlighted text color
-	const static int TEXT_HILITE2		= 0x0060FFFF;		// Highlighted text color
-	const static int TEXT_MUTED			= 0x000000FF;		// Channel muted color
-	const static int TEXT_INSTRUMENT	= 0x0080FF80;
-	const static int TEXT_VOLUME		= 0x00FF8080;
-	const static int TEXT_EFFECT		= 0x008080FF;
-	const static int BORDER_NORMAL		= 0x006671F4;		// Normal border, inactive
-	const static int BORDER_EDIT		= 0x00000080;		// Edit border, inactive
-	const static int BORDER_NORMAL_A	= 0x00C02020;		// Normal border, active
-	const static int BORDER_EDIT_A		= 0x000000FF;		// Edit border, active
-	const static int SELECTION			= 0x00FF0000;
-	const static int CURSOR				= 0x00808080;
-} COLOR_SCHEME;
-
+// Paste modes
 enum {PASTE_MODE_NORMAL, PASTE_MODE_OVERWRITE, PASTE_MODE_MIX};
 
-enum eCOLUMNS {C_NOTE, 
-			   C_INSTRUMENT1, C_INSTRUMENT2, 
-			   C_VOLUME, 
-			   C_EFF_NUM, C_EFF_PARAM1, C_EFF_PARAM2,
-			   C_EFF2_NUM, C_EFF2_PARAM1, C_EFF2_PARAM2, 
-			   C_EFF3_NUM, C_EFF3_PARAM1, C_EFF3_PARAM2, 
-			   C_EFF4_NUM, C_EFF4_PARAM1, C_EFF4_PARAM2};
-
+// Tracker playing interface commands
 enum {
 	CMD_STEP_DOWN = 1,
 	CMD_HALT,
@@ -75,15 +44,13 @@ enum {
 	CMD_MOVE_TO_CURSOR
 };
 
+// Custom window messages
 enum {MSG_UPDATE = WM_USER, MSG_MIDI_EVENT = WM_USER + 1};
 
-const unsigned int COLUMNS = 7;
-
-class CTrackerChannel;
+// External classes
 class CFamiTrackerDoc;
 class CPatternView;
-
-//class CSoundGen;
+class CFrameBoxWnd;
 
 class CFamiTrackerView : public CView
 {
@@ -100,97 +67,96 @@ public:
 //
 public:
 
-	// General
-	void				SetInstrument(int Instrument);
-	unsigned int		GetInstrument() const { return m_iInstrument; };
-	void				CreateFont();
+	// Instruments
+	void		 SetInstrument(int Instrument);
+	unsigned int GetInstrument() const;
+	bool		 SwitchToInstrument() const { return m_bSwitchToInstrument; };
+	void		 SwitchToInstrument(bool Switch) { m_bSwitchToInstrument = Switch; };
 
 	// Scrolling/viewing no-editing functions
-	void				MoveCursorNextChannel();
-	void				MoveCursorPrevChannel();
+	void		 MoveCursorNextChannel();
+	void		 MoveCursorPrevChannel();
 
-	void				SelectNextFrame();
-	void				SelectPrevFrame();
-	void				SelectFirstFrame();
-	void				SelectLastFrame();
-	void				SelectFrame(unsigned int Frame);
-	void				SelectChannel(unsigned int Channel);
-	
-	unsigned int		GetSelectedFrame() const;
-	unsigned int		GetSelectedChannel() const;
-	unsigned int		GetPlayFrame() const;
-	bool				GetFollowMode() const;
-	int					GetSelectedChipType() const;
-	unsigned int		GetCurrentTempo() const { return (m_iTempo * 6) / m_iSpeed; };
-	unsigned int		GetOctave() const { return m_iOctave; };
-	bool				GetEditMode() const { return m_bEditEnable; };
+	void		 SelectNextFrame();
+	void		 SelectPrevFrame();
+	void		 SelectFirstFrame();
+	void		 SelectLastFrame();
+	void		 SelectFrame(unsigned int Frame);
+	void		 SelectChannel(unsigned int Channel);
+	 
+	unsigned int GetSelectedFrame() const;
+	unsigned int GetSelectedChannel() const;
+	unsigned int GetPlayFrame() const;
+	bool		 GetFollowMode() const;
+	int			 GetSelectedChipType() const;
+	unsigned int GetOctave() const { return m_iOctave; };
+	bool		 GetEditMode() const { return m_bEditEnable; };
 
-	void				SetFrameQueue(int Frame);
-	int					GetFrameQueue() const;
+	void		 SetFrameQueue(int Frame);
+	int			 GetFrameQueue() const;
 
 	// Settings
-	unsigned int		GetStepping() const { return m_iRealKeyStepping; };	
-	void				SetStepping(int Step);
-	void				SetChangeAllPattern(bool ChangeAll) { m_bChangeAllPattern = ChangeAll; };
-	bool				ChangeAllPatterns() { return m_bChangeAllPattern; };
-	void				SetFollowMode(bool Mode);
-	void				SetSongSpeed(unsigned int Speed);
-	void				SetOctave(unsigned int iOctave);
+	unsigned int GetStepping() const { return m_iRealKeyStepping; };	
+	void		 SetStepping(int Step);
+	void		 SetChangeAllPattern(bool ChangeAll) { m_bChangeAllPattern = ChangeAll; };
+	bool		 ChangeAllPatterns() { return m_bChangeAllPattern; };
+	void		 SetFollowMode(bool Mode);
+	void		 SetOctave(unsigned int iOctave);
 
 	// Document editing functions
-	void				IncreaseCurrentPattern();
-	void				DecreaseCurrentPattern();
+	void		 IncreaseCurrentPattern();
+	void		 DecreaseCurrentPattern();
 
 	// Player
-	int					PlayerCommand(char Command, int Value);
-	void 				GetRow(CFamiTrackerDoc *pDoc);
+	int			 PlayerCommand(char Command, int Value);
+	void 		 GetRow(CFamiTrackerDoc *pDoc);
+	void		 MakeSilent();
+	void		 RegisterKeyState(int Channel, int Note);
+	void		 FeedNote(int Channel, stChanNote *NoteData);
 
 	// Note preview
-	void				PreviewNote(unsigned char Key);
-	void				PreviewRelease(unsigned char Key);
-	bool				SwitchToInstrument() const { return m_bSwitchToInstrument; };
-	void				SwitchToInstrument(bool Switch) { m_bSwitchToInstrument = Switch; };
+	void		 PreviewNote(unsigned char Key);
+	void		 PreviewRelease(unsigned char Key);
 
 	// General
-	void				SoloChannel(unsigned int Channel);
-	void				ToggleChannel(unsigned int Channel);
-	bool				IsChannelSolo(unsigned int Channel);
-	bool				IsChannelMuted(unsigned int Channel);
+	void		 SoloChannel(unsigned int Channel);
+	void		 ToggleChannel(unsigned int Channel);
+	bool		 IsChannelSolo(unsigned int Channel) const;
+	bool		 IsChannelMuted(unsigned int Channel) const;
 
 	// Drawing
-	void				UpdateEditor(LPARAM lHint);
-
-	void				MakeSilent();
+	void		 UpdateEditor(LPARAM lHint);
 
 	// Keys
-	bool				IsControlPressed() const;
+	bool		 IsControlPressed() const;
 
 	// For UI updates
-	bool				IsSelecting() const;
-	bool				IsClipboardAvailable() const;
+	bool		 IsSelecting() const;
+	bool		 IsClipboardAvailable() const;
+
+	void		 SetupColors();
+
+	void		 DrawFrameWindow();
+
+	bool	DoRelease() const;
 
 protected:
 	// General
-	void				StepDown();
-
-	// Player
-	void				GetStartSpeed();
+	void	StepDown();
 
 	// Input handling
-	void				HandleKeyboardInput(char Key);
-	void				TranslateMidiMessage();
-	void				RemoveWithoutDelete();
-	void				DeleteKey();
-	void				InsertKey();
-	void				BackKey();
-	void				OnKeyHome();
+	void	HandleKeyboardInput(char Key);
+	void	TranslateMidiMessage();
+	void	RemoveWithoutDelete();
+	void	DeleteKey();
+	void	InsertKey();
+	void	BackKey();
+	void	OnKeyHome();
 
 	// MIDI note functions
-	void				TriggerMIDINote(unsigned int Channel, unsigned int MidiNote, unsigned int Velocity, bool Insert);
-	void				ReleaseMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
-	void				CutMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
-
-	bool				DoRelease() const;
+	void	TriggerMIDINote(unsigned int Channel, unsigned int MidiNote, unsigned int Velocity, bool Insert);
+	void	ReleaseMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
+	void	CutMIDINote(unsigned int Channel, unsigned int MidiNote, bool InsertCut);
 
 //
 // Private functions
@@ -198,80 +164,86 @@ protected:
 private:
 
 	// Input handling
-	void				KeyIncreaseAction();
-	void				KeyDecreaseAction();
-	int					TranslateKey(unsigned char Key);
-	int					TranslateKey2(unsigned char Key);
-	int					TranslateKeyAzerty(unsigned char Key);
-	bool				CheckClearKey(unsigned char Key);
-	bool				CheckHaltKey(unsigned char Key);
-	bool				CheckReleaseKey(unsigned char Key);
-	bool				CheckRepeatKey(unsigned char Key);
-	bool				PreventRepeat(unsigned char Key, bool Insert);
-	void				RepeatRelease(unsigned char Key);
-	bool				EditInstrumentColumn(stChanNote &Note, int Value);
-	bool				EditVolumeColumn(stChanNote &Note, int Value);
-	bool				EditEffNumberColumn(stChanNote &Note, unsigned char nChar, int EffectIndex);
-	bool				EditEffParamColumn(stChanNote &Note, int Value, int EffectIndex);
-	void				InsertEffect(char Effect);
+	void	KeyIncreaseAction();
+	void	KeyDecreaseAction();
+	int		TranslateKey(unsigned char Key);
+	int		TranslateKey2(unsigned char Key);
+	int		TranslateKeyAzerty(unsigned char Key);
+	bool	CheckClearKey(unsigned char Key);
+	bool	CheckHaltKey(unsigned char Key);
+	bool	CheckReleaseKey(unsigned char Key);
+	bool	CheckRepeatKey(unsigned char Key);
+	bool	PreventRepeat(unsigned char Key, bool Insert);
+	void	RepeatRelease(unsigned char Key);
+	bool	EditInstrumentColumn(stChanNote &Note, int Value);
+	bool	EditVolumeColumn(stChanNote &Note, int Value);
+	bool	EditEffNumberColumn(stChanNote &Note, unsigned char nChar, int EffectIndex);
+	bool	EditEffParamColumn(stChanNote &Note, int Value, int EffectIndex);
+	void	InsertEffect(char Effect);
+	void	InsertNote(int Note, int Octave, int Channel, int Velocity);
 
 	// MIDI keyboard emulation
-	void				HandleKeyboardNote(char nChar, bool Pressed);
+	void	HandleKeyboardNote(char nChar, bool Pressed);
 
 	// Note handling
-	void				PlayNote(unsigned int Channel, unsigned int Note, unsigned int Octave, unsigned int Velocity);
-	void				HaltNote(unsigned int Channel, bool HardHalt);
+	void	PlayNote(unsigned int Channel, unsigned int Note, unsigned int Octave, unsigned int Velocity);
+	void	ReleaseNote(unsigned int Channel);
+	void	HaltNote(unsigned int Channel);
 	
-	void				UpdateArpDisplay();
+	void	UpdateArpDisplay();
 	
+//
+// Constants
+//
+public:
+	static const TCHAR CLIPBOARD_ID[];
+
 //
 // View variables
 //
 protected:
 	// General
-	bool				m_bInitialized;
 	bool				m_bHasFocus;
 	UINT				m_iClipBoard;
-	unsigned int		m_iActualLengths[MAX_FRAMES];
-	unsigned int		m_iNextPreviewFrame[MAX_FRAMES];
+	int					m_iMenuChannel;
 
 	// Cursor & editing
-	unsigned int		m_iKeyStepping;												// Numbers of rows to jump when moving
+	unsigned int		m_iKeyStepping;							// Numbers of rows to jump when moving
 	unsigned int		m_iRealKeyStepping;
-	bool				m_bChangeAllPattern;										// All pattern will change
-	int					m_iPasteMode;
-	bool				m_bEditEnable;												// Edit is enabled
-	bool				m_bShiftPressed, m_bControlPressed;							// Shift and control keys
-	unsigned int		m_iInstrument;												// Selected instrument
-	unsigned int		m_iOctave;													// Selected octave
+	unsigned int		m_iInstrument;							// Selected instrument
+	unsigned int		m_iOctave;								// Selected octave	
+	bool				m_bEditEnable;							// Edit is enabled
 	bool				m_bSwitchToInstrument;
-	bool				m_bFollowMode;												// Follow mode, default true
-	
+	bool				m_bFollowMode;							// Follow mode, default true
+	bool				m_bShiftPressed, m_bControlPressed;		// Shift and control keys
+	bool				m_bChangeAllPattern;					// All pattern will change
+	bool				m_bMaskInstrument;
+	int					m_iPasteMode;
+
 	// Playing
 	bool				m_bMuteChannels[MAX_CHANNELS];
 	unsigned int		m_iPlayTime;
-	unsigned int		m_iTickPeriod;
-	unsigned int		m_iTempo, m_iSpeed;					// Tempo and speed
+	int					m_iFrameQueue;
+	int					m_iSwitchToInstrument;
 
+	// Auto arpeggio
 	char				m_iAutoArpNotes[128];
 	int					m_iAutoArpPtr, m_iLastAutoArpPtr;
 	int					m_iAutoArpKeyCount;
-
-	int					m_iFrameQueue;
 
 	// Window size
 	unsigned int		m_iWindowWidth, m_iWindowHeight;
 
 	// Drawing
-	bool				m_bForceRedraw;						// Draw the thing
+	bool				m_bForceRedraw;
 	bool				m_bUpdateBackground;
 
 	// Input
 	char				m_cKeyList[256];
-	bool				m_bMaskInstrument;
-
-	// Unsorted
 	unsigned int		m_iKeyboardNote;
+	int					m_iLastNote;
+	int					m_iLastInstrument, m_iLastVolume;
+	int					m_iLastEffect, m_iLastEffectParam;
 
 	// MIDI
 	unsigned int		m_iLastMIDINote;
@@ -279,23 +251,20 @@ protected:
 
 	// Drawing
 	CPatternView		*m_pPatternView;
+	CFrameBoxWnd		*m_pFrameBoxWnd;
 
-	int					m_iMenuChannel;
-
+	// Synchronization
+	CCriticalSection	m_csDrawLock;
 
 // ---------------------------
-// These below will be removed
+// TODO: Remove these below
 // ---------------------------
 
 // Operations
 public:
-	void	RegisterKeyState(int Channel, int Note);
 
 	// change this
-//	stChanNote	CurrentNotes[MAX_CHANNELS];
-//	bool		NewNoteData[MAX_CHANNELS];
 	unsigned int Arpeggiate[MAX_CHANNELS];
-
 
 // Overrides
 public:
@@ -313,22 +282,10 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 	virtual void OnDraw(CDC* /*pDC*/);
-public:
-	void ForceRedraw();
-
-	void InsertNote(int Note, int Octave, int Channel, int Velocity);
-	void StopNote(int Channel);
-	void RefreshStatusMessage();
-
-	void FeedNote(int Channel, stChanNote *NoteData);
 
 protected:
 	virtual void CalcWindowRect(LPRECT lpClientRect, UINT nAdjustType = adjustBorder);
 	virtual void OnUpdate(CView* /*pSender*/, LPARAM /*lHint*/, CObject* /*pHint*/);
-	virtual void PostNcDestroy();
-
-public:
-	void SetMessageText(LPCSTR lpszText);
 
 public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
@@ -402,8 +359,6 @@ public:
 	afx_msg void OnPreviousOctave();
 	afx_msg void OnPasteOverwrite();
 	afx_msg void OnPasteMixed();
-	afx_msg void OnNextInstrument();
-	afx_msg void OnPrevInstrument();
 	afx_msg void OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnEditInterpolate();
 	afx_msg void OnEditReplaceInstrument();
@@ -412,6 +367,9 @@ public:
 	afx_msg void OnOneStepUp();
 	afx_msg void OnOneStepDown();
 	afx_msg void OnSysKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnBlockStart();
+	afx_msg void OnBlockEnd();
+	afx_msg void OnPickupRow();
 };
 
 #ifndef _DEBUG  // debug version in FamiTrackerView.cpp

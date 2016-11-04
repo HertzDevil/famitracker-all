@@ -21,7 +21,6 @@
 #ifndef _VRC6_H_
 #define _VRC6_H_
 
-#include "apu.h"
 #include "external.h"
 #include "channel.h"
 
@@ -57,7 +56,7 @@ private:
 class CVRC6 : public CExternal {
 public:
 	CVRC6(CMixer *pMixer);
-	~CVRC6();
+	virtual ~CVRC6();
 	void Reset();
 	void Write(uint16 Address, uint8 Value);
 	void EndFrame();

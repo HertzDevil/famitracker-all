@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "FamiTracker.h"
 #include "FontDrawer.h"
 
 const int FONT_CHAR_WIDTH = 8;
@@ -36,7 +35,7 @@ void CFontDrawer::SetupFontPlane(CDC *pDC, CFont *pFont)
 		for (int i = FIRST_CHAR; i < LAST_CHAR; i++) {
 			char c[2] = {0, 0};
 			c[0] = i;
-			m_hFontDC.TextOut((i - FIRST_CHAR) * FONT_CHAR_WIDTH, 0, c, 1);
+//			m_hFontDC.TextOut((i - FIRST_CHAR) * FONT_CHAR_WIDTH, 0, c, 1);
 		}
 
 		m_hFontDC.SelectObject(pOldFont);

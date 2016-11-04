@@ -30,7 +30,7 @@ public:
 	CInstrumentEditorFDSEnvelope(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorFDSEnvelope();
 	virtual int GetIDD() { return IDD; };
-	virtual char *GetTitle() { return "Envelopes"; };
+	virtual TCHAR *GetTitle() { return _T("Envelopes"); };
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -44,6 +44,9 @@ protected:
 
 	virtual void OnKeyReturn();
 	void LoadSequence();
+
+protected:
+	static const int MAX_VOLUME = 32;
 
 protected:
 	CSequenceEditor *m_pSequenceEditor;

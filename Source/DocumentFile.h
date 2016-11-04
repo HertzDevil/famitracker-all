@@ -26,46 +26,55 @@ class CDocumentFile : public CFile
 {
 public:
 	CDocumentFile();
-	~CDocumentFile();
+	virtual ~CDocumentFile();
 
-	bool	Finished() const;
+	bool		Finished() const;
 
 	// Write functions
-	void	BeginDocument();
-	void	EndDocument();
+	void		BeginDocument();
+	void		EndDocument();
 
-	void	CreateBlock(const char *ID, int Version);
-	void	WriteBlock(void *Data, int Size);
-	void	WriteBlockInt(int Value);
-	void	WriteBlockChar(char Value);
-	void	WriteString(CString String);
-	void	FlushBlock();
+	void		CreateBlock(const char *ID, int Version);
+	void		WriteBlock(const void *Data, unsigned int Size);
+	void		WriteBlockInt(int Value);
+	void		WriteBlockChar(char Value);
+	void		WriteString(CString String);
+	void		FlushBlock();
 
 	// Read functions
-	bool	CheckValidity();
-	int		GetFileVersion() const;
+	bool		CheckValidity();
+	unsigned int GetFileVersion() const;
 
-	void	ReadBlock();
-	char	*GetBlockHeaderID();
-	int		GetBlockInt();
-	char	GetBlockChar();
-	void	GetBlock(void *Buffer, int Size);
-	int		GetBlockVersion() const;
-	bool	BlockDone() const;
+	bool		ReadBlock();
+	void		GetBlock(void *Buffer, int Size);
+	int			GetBlockVersion() const;
+	bool		BlockDone() const;
+	char		*GetBlockHeaderID() const;
+	int			GetBlockInt();
+	char		GetBlockChar();
 
-	int		GetBlockPos() const;
-	int		GetBlockSize() const;
+	int			GetBlockPos() const;
+	int			GetBlockSize() const;
 
-	CString	ReadString();
+	CString		ReadString();
 
-	void RollbackPointer(int count);	// avoid this
+	void		RollbackPointer(int count);	// avoid this
 
 public:
 	// Constants
 	static const unsigned int FILE_VER;
 	static const unsigned int COMPATIBLE_VER;
 
-private:
+	static const char *FILE_HEADER_ID;
+	static const char *FILE_END_ID;
+
+	static const unsigned int MAX_BLOCK_SIZE;
+	static const unsigned int BLOCK_SIZE;
+
+protected:
+	void ReallocateBlock();
+
+protected:
 	unsigned int	m_iFileVersion;
 	bool			m_bFileDone;
 
@@ -73,6 +82,8 @@ private:
 	unsigned int	m_iBlockSize;
 	unsigned int	m_iBlockVersion;
 	char			*m_pBlockData;
+
+	unsigned int	m_iMaxBlockSize;
 
 	unsigned int	m_iBlockPointer;	
 };

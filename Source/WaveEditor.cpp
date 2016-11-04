@@ -138,5 +138,5 @@ void CWaveEditor::EditWave(CPoint point)
 	ReleaseDC(pDC);
 
 	// Indicates wave change
-	GetParent()->PostMessageA(WM_USER);
+	GetParent()->PostMessage(WM_USER);
 }

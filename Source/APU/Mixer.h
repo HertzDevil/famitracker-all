@@ -21,7 +21,7 @@
 #ifndef _MIXER_H_
 #define _MIXER_H_
 
-#include "..\SoundInterface.h"
+#include "..\common.h"
 #include "..\Blip_Buffer\blip_buffer.h"
 
 enum CHAN_IDS {
@@ -63,46 +63,31 @@ enum CHAN_IDS {
 
 	CHANNELS		/* Total number of channels */
 };
-/*
-struct stMixerSettings {
-	int m_iMaster;
-	int m_iInternal;
-	int m_iVRC6;
-	int m_iVRC7;
-	int m_iMMC5;
-	int m_iFDS;
-	int m_iN106;
-	int m_iFME07;
-	int m_iChannels[CHANNELS];
-	int m_iChannelPan[CHANNELS];
-};
-*/
+
 class CMixer
 {
 	public:
 		CMixer();
 		~CMixer();
 
-		bool	Init();
-		void	Shutdown();
 		void	ExternalSound(int Chip);
 		void	AddValue(int ChanID, int Chip, int Value, int AbsValue, int FrameCycles);
 		void	UpdateSettings(int LowCut,	int HighCut, int HighDamp, int OverallVol);
 
-		bool	AllocateBuffer(unsigned int Size, uint32 SampleRate, uint32 ClockRate, uint8 NrChannels);
-		void	SetClockRate(int Rate);
+		bool	AllocateBuffer(unsigned int Size, uint32 SampleRate, uint8 NrChannels);
+		void	SetClockRate(uint32 Rate);
 		void	ClearBuffer();
 		int		FinishBuffer(int t);
-		int		SamplesAvail();
+		int		SamplesAvail() const;
 
 		void	MixSamples(blip_sample_t *pBuffer, uint32 Count);
-		uint32	GetMixSampleCount(int t);
+		uint32	GetMixSampleCount(int t) const;
 
 		void	AddSample(int ChanID, int Value);
 
 		int		ReadBuffer(int Size, void *Buffer, bool Stereo);
 
-		int32	GetChanOutput(uint8 Chan);
+		int32	GetChanOutput(uint8 Chan) const;
 
 	private:
 		inline double CalcPin1(double Val1, double Val2);
@@ -124,18 +109,25 @@ class CMixer
 		Blip_Synth<blip_good_quality, -1600>	SynthN106;
 		Blip_Synth<blip_good_quality, -3500>	SynthFDS;
 
-		Blip_Buffer		BlipBuffer;
+		// Blip buffer object
+		Blip_Buffer	BlipBuffer;
 
-		int32			*m_pSampleBuffer;
+		// Random variables
+		int32		*m_pSampleBuffer;
 
-		int32			Channels[CHANNELS];
-		uint8			ExternalChip;
-		bool			StereoEnabled;
+		int32		m_iChannels[CHANNELS];
+		uint8		m_iExternalChip;
+		uint32		m_iSampleRate;
 
-		uint32			m_iSampleRate;
+		float		m_fChannelLevels[CHANNELS];
+		uint32		m_iChanLevelFallOff[CHANNELS];
 
-		float			ChannelLevels[CHANNELS];
-		uint32			ChanLevelFallOff[CHANNELS];
+		int			m_iLowCut;
+		int			m_iHighCut;
+		int			m_iHighDamp;
+		int			m_iOverallVol;
+
+		float		m_fDamping;
 };
 
 #endif /* _MIXER_H_ */

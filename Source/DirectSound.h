@@ -25,65 +25,74 @@
 #include <mmsystem.h>
 #include <dsound.h>
 
-#define EVENT_FLAG	1
-#define NO_SYNC		2
-#define	IN_SYNC		3
+enum {CUSTOM_EVENT = 1, BUFFER_IN_SYNC, BUFFER_OUT_OF_SYNC};
 
-class CDSoundChannel {
-friend class CDSound;
+// DirectSound channel
+class CDSoundChannel 
+{
+	friend class CDSound;
 
 public:
 	CDSoundChannel();
 	~CDSoundChannel();
 
-	void Play();
+	void Play() const;
 	void Stop();
-	void Pause();
+	void Pause() const;
 	void Clear();
 	void Reset();
 	void WriteSoundBuffer(void *Buffer, unsigned int Samples);
-	int	 WaitForDirectSoundEvent();
+	int WaitForDirectSoundEvent() const;
 	bool IsPlaying() const;
+	void ResetWritePointer();
+	void AdvanceWritePointer();
 
-	int GetBlockSize()		{ return BlockSize;		};
-	int GetBlockSamples()	{ return BlockSize >> ((SampleSize >> 3) - 1); };
-	int GetBlocks()			{ return Blocks;		};
-	int	GetBufferLength()	{ return BufferLength;	};
-	int GetSampleSize()		{ return SampleSize;	};
-	int	GetSampleRate()		{ return SampleRate;	};
-	int GetChannels()		{ return Channels;		};
-
-private:
-	int GetWriteBlock();
-	int GetPlayBlock();
+	int GetBlockSize() const	{ return m_iBlockSize; };
+	int GetBlockSamples() const	{ return m_iBlockSize >> ((m_iSampleSize >> 3) - 1); };
+	int GetBlocks()	const		{ return m_iBlocks; };
+	int	GetBufferLength() const	{ return m_iBufferLength; };
+	int GetSampleSize()	const	{ return m_iSampleSize;	};
+	int	GetSampleRate()	const	{ return m_iSampleRate;	};
+	int GetChannels() const		{ return m_iChannels; };
 
 private:
-	LPDIRECTSOUNDBUFFER	lpDirectSoundBuffer;
-	LPDIRECTSOUNDNOTIFY	lpDirectSoundNotify;
+	int GetPlayBlock() const;
+	int GetWriteBlock() const;
 
-	HANDLE	hEventList[2];
-	HWND	hWndTarget;
+private:
+	LPDIRECTSOUNDBUFFER	m_lpDirectSoundBuffer;
+	LPDIRECTSOUNDNOTIFY	m_lpDirectSoundNotify;
 
-	int		SampleSize, SampleRate, Channels;
-	int		BufferLength, Blocks;			// buffer length in ms
-	int		LastWriteBlock;
+	HANDLE			m_hEventList[2];
+	HWND			m_hWndTarget;
 
-	unsigned int	SoundBufferSize;		// in bytes
-	unsigned int	BlockSize;				// in bytes
-	unsigned char	CurrentWriteBlock;
+	// Configuration
+	unsigned int	m_iSampleSize;
+	unsigned int	m_iSampleRate;
+	unsigned int	m_iChannels;
+	unsigned int	m_iBufferLength;
+	unsigned int	m_iSoundBufferSize;			// in bytes
+	unsigned int	m_iBlocks;
+	unsigned int	m_iBlockSize;				// in bytes
+
+	// State
+	unsigned int	m_iCurrentWriteBlock;
 };
 
-class CDSound {
+// DirectSound
+class CDSound 
+{
 public:
 	CDSound();
 	~CDSound();
 
-	bool Init(HWND hWnd, HANDLE hNotification, int Device);
-	void Close();
+	bool			Init(HWND hWnd, HANDLE hNotification, int Device);
+	void			Close();
 
 	CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);
 	void			CloseChannel(CDSoundChannel *Channel);
 
+	// Enumeration
 	void			EnumerateDevices();
 	void			ClearEnumeration();
 	void			EnumerateCallback(LPGUID lpGuid, LPCSTR lpcstrDescription, LPCSTR lpcstrModule, LPVOID lpContext);
@@ -92,14 +101,18 @@ public:
 	int				MatchDeviceID(char *Name);
 	GUID			GetDeviceID(int iDevice);
 
+public:
+	static const unsigned int MAX_DEVICES = 256;
+	static const unsigned int MAX_BLOCKS = 16;
+	static const unsigned int MAX_SAMPLE_RATE = 96000;
+	static const unsigned int MAX_BUFFER_LENGTH = 10000;
+
 private:
-	const static unsigned int MAX_DEVICES = 256;
-	static const int MAX_BLOCKS;
+	HWND			m_hWndTarget;
+	HANDLE			m_hNotificationHandle;
+	LPDIRECTSOUND	m_lpDirectSound;
 
-	HWND			hWndTarget;
-	HANDLE			hNotificationHandle;
-	LPDIRECTSOUND	lpDirectSound;
-
+	// Available devices
 	unsigned int	m_iDevices;
 	char			*m_pcDevice[MAX_DEVICES];
 	GUID			*m_pGUIDs[MAX_DEVICES];

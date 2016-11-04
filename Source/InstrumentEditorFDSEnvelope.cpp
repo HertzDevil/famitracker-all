@@ -31,14 +31,16 @@
 
 IMPLEMENT_DYNAMIC(CInstrumentEditorFDSEnvelope, CSequenceInstrumentEditPanel)
 
-CInstrumentEditorFDSEnvelope::CInstrumentEditorFDSEnvelope(CWnd* pParent)
-	: CSequenceInstrumentEditPanel(CInstrumentEditorFDSEnvelope::IDD, pParent),
-	m_pInstrument(NULL), m_iSelectedType(0)
+CInstrumentEditorFDSEnvelope::CInstrumentEditorFDSEnvelope(CWnd* pParent) : CSequenceInstrumentEditPanel(CInstrumentEditorFDSEnvelope::IDD, pParent),
+	m_pInstrument(NULL), 
+	m_pSequenceEditor(NULL),
+	m_iSelectedType(0)
 {
 }
 
 CInstrumentEditorFDSEnvelope::~CInstrumentEditorFDSEnvelope()
 {
+	SAFE_RELEASE(m_pSequenceEditor);
 }
 
 void CInstrumentEditorFDSEnvelope::DoDataExchange(CDataExchange* pDX)
@@ -48,8 +50,7 @@ void CInstrumentEditorFDSEnvelope::DoDataExchange(CDataExchange* pDX)
 
 void CInstrumentEditorFDSEnvelope::SelectInstrument(int Instrument)
 {
-	CFamiTrackerDoc *pDoc = (CFamiTrackerDoc*)theApp.GetFirstDocument();
-	CInstrumentFDS *pInst = (CInstrumentFDS*)pDoc->GetInstrument(Instrument);
+	CInstrumentFDS *pInst = (CInstrumentFDS*)GetDocument()->GetInstrument(Instrument);
 	m_pInstrument = pInst;
 	LoadSequence();
 }
@@ -69,8 +70,9 @@ BOOL CInstrumentEditorFDSEnvelope::OnInitDialog()
 	GetClientRect(&rect);
 	rect.DeflateRect(10, 10, 10, 45);
 
-	m_pSequenceEditor = new CSequenceEditor();
+	m_pSequenceEditor = new CSequenceEditor(GetDocument());
 	m_pSequenceEditor->CreateEditor(this, rect);
+	m_pSequenceEditor->SetMaxValues(MAX_VOLUME, 0);
 
 	((CComboBox*)GetDlgItem(IDC_TYPE))->SetCurSel(0);
 
@@ -80,7 +82,7 @@ BOOL CInstrumentEditorFDSEnvelope::OnInitDialog()
 
 void CInstrumentEditorFDSEnvelope::SetSequenceString(CString Sequence, bool Changed)
 {
-	SetDlgItemText(IDC_SEQUENCE, Sequence);
+	SetDlgItemText(IDC_SEQUENCE_STRING, Sequence);
 }
 
 void CInstrumentEditorFDSEnvelope::OnCbnSelchangeType()
@@ -109,10 +111,10 @@ void CInstrumentEditorFDSEnvelope::OnKeyReturn()
 {
 	CString string;
 
-	GetDlgItemText(IDC_SEQUENCE, string);
+	GetDlgItemText(IDC_SEQUENCE_STRING, string);
 
 	if (m_iSelectedType == SEQ_VOLUME) {
-		TranslateMML(string, m_pInstrument->GetVolumeSeq(), 31, 0);
+		TranslateMML(string, m_pInstrument->GetVolumeSeq(), MAX_VOLUME, 0);
 	}
 	else if (m_iSelectedType == SEQ_ARPEGGIO) {
 		TranslateMML(string, m_pInstrument->GetArpSeq(), 96, -96);
@@ -125,5 +127,5 @@ void CInstrumentEditorFDSEnvelope::OnKeyReturn()
 	m_pSequenceEditor->RedrawWindow();
 
 	// Register a document change
-	theApp.GetFirstDocument()->SetModifiedFlag();
+	GetDocument()->SetModifiedFlag();
 }

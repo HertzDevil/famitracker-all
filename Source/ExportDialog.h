@@ -20,6 +20,9 @@
 
 #pragma once
 
+class CExportDialog;
+
+typedef void (CExportDialog::*exportFunc_t)();
 
 // CExportDialog dialog
 
@@ -35,6 +38,24 @@ public:
 	enum { IDD = IDD_EXPORT };
 
 protected:
+	static int m_iExportOption;
+
+protected:
+	static const exportFunc_t DEFAULT_EXPORT_FUNCS[];
+	static const LPTSTR		  DEFAULT_EXPORT_NAMES[];
+	static const int		  DEFAULT_EXPORTERS;
+
+	static LPCTSTR NSF_FILTER[2];
+	static LPCTSTR NES_FILTER[2];
+	static LPCTSTR RAW_FILTER[2];
+	static LPCTSTR DPCMS_FILTER[2];
+	static LPCTSTR PRG_FILTER[2];
+
+#ifdef _DEBUG
+	CString m_strFile;
+#endif
+
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	void CreateNSF();
 	void CreateNES();
@@ -48,4 +69,5 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedClose();
 	afx_msg void OnBnClickedExport();
+	afx_msg void OnBnClickedPlay();
 };

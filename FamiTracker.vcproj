@@ -22,7 +22,7 @@
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="2"
+			UseOfMFC="1"
 			CharacterSet="2"
 			>
 			<Tool
@@ -49,7 +49,7 @@
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				StructMemberAlignment="0"
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
@@ -109,6 +109,7 @@
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
+			UseOfATL="0"
 			CharacterSet="2"
 			>
 			<Tool
@@ -154,7 +155,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				Version=""
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
@@ -283,11 +284,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Source\AboutDlg.cpp"
+				RelativePath=".\Source\Accelerator.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Source\Accelerator.cpp"
+				RelativePath=".\Source\ChannelMap.cpp"
 				>
 			</File>
 			<File
@@ -295,7 +296,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\CustomControls.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\DocumentFile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\Exception.cpp"
 				>
 			</File>
 			<File
@@ -357,10 +366,6 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Source\FontDrawer.cpp"
-				>
 			</File>
 			<File
 				RelativePath=".\Source\MainFrm.cpp"
@@ -461,6 +466,10 @@
 			<Filter
 				Name="Dialog Boxes"
 				>
+				<File
+					RelativePath=".\Source\AboutDlg.cpp"
+					>
+				</File>
 				<File
 					RelativePath=".\Source\DialogReBar.cpp"
 					>
@@ -767,6 +776,10 @@
 								>
 							</File>
 							<File
+								RelativePath=".\Source\SequenceSetting.cpp"
+								>
+							</File>
+							<File
 								RelativePath=".\Source\SizeEditor.cpp"
 								>
 							</File>
@@ -855,6 +868,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\CustomExporter.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomExporter_C_Interface.cpp"
 					>
 				</File>
 				<File
@@ -1075,6 +1092,14 @@
 				</Filter>
 			</Filter>
 			<Filter
+				Name="Other"
+				>
+				<File
+					RelativePath=".\Fft\Fft.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
 				Name="MIDI"
 				>
 				<File
@@ -1134,14 +1159,6 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
-			<Filter
-				Name="Other"
-				>
-				<File
-					RelativePath=".\Fft\Fft.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1149,11 +1166,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Source\AboutDlg.h"
+				RelativePath=".\Source\Accelerator.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Source\Accelerator.h"
+				RelativePath=".\Source\ChannelMap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\ColorScheme.h"
 				>
 			</File>
 			<File
@@ -1161,7 +1182,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Source\CustomControls.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Source\DocumentFile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Source\Exception.h"
 				>
 			</File>
 			<File
@@ -1173,11 +1202,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FamiTrackerView.h"
+				RelativePath=".\Source\FamiTrackerTypes.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Source\FontDrawer.h"
+				RelativePath=".\Source\FamiTrackerView.h"
 				>
 			</File>
 			<File
@@ -1352,6 +1381,10 @@
 				Name="Dialog Boxes Headers"
 				>
 				<File
+					RelativePath=".\Source\AboutDlg.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\CreateWaveDlg.h"
 					>
 				</File>
@@ -1369,10 +1402,6 @@
 				</File>
 				<File
 					RelativePath=".\Source\ModulePropertiesDlg.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\OctaveDlgBar.h"
 					>
 				</File>
 				<File
@@ -1450,6 +1479,10 @@
 							</File>
 							<File
 								RelativePath=".\Source\SequenceEditor.h"
+								>
+							</File>
+							<File
+								RelativePath=".\Source\SequenceSetting.h"
 								>
 							</File>
 							<File
@@ -1536,6 +1569,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Source\CustomExporter_C_Interface.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\CustomExporterInterfaces.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Source\CustomExporters.h"
 					>
 				</File>
@@ -1577,10 +1618,6 @@
 				>
 				<File
 					RelativePath=".\Source\PatternData.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Source\SampleBank.h"
 					>
 				</File>
 				<File

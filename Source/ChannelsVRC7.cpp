@@ -23,9 +23,11 @@
 #include "stdafx.h"
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
-#include "SoundGen.h"
 #include "ChannelHandler.h"
 #include "ChannelsVRC7.h"
+
+#define OPL_NOTE_ON 0x10
+#define OPL_SUSTAIN_ON 0x20
 
 enum {
 	CMD_NONE, 
@@ -33,7 +35,8 @@ enum {
 	CMD_NOTE_TRIGGER,
 	CMD_NOTE_OFF, 
 	CMD_NOTE_HALT,
-	CMD_NOTE_RELEASE};
+	CMD_NOTE_RELEASE
+};
 
 CChannelHandlerVRC7::CChannelHandlerVRC7(int ChanID) : 
 	CChannelHandler(ChanID), 
@@ -46,7 +49,7 @@ CChannelHandlerVRC7::CChannelHandlerVRC7(int ChanID) :
 void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 {
 	CInstrumentVRC7 *pInstrument;
-	//int MidiNote;
+
 	int PostEffect = 0, PostEffectParam;
 
 	if (pNoteData->Instrument != MAX_INSTRUMENTS)
@@ -60,14 +63,23 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		int EffCmd	 = pNoteData->EffNumber[n];
 		int EffParam = pNoteData->EffParam[n];
 
-		if (!CheckCommonEffects(EffCmd, EffParam)) {
-			switch (EffCmd) {
-				case EF_SLIDE_UP:
-				case EF_SLIDE_DOWN:
-					PostEffect = EffCmd;
-					PostEffectParam = EffParam;
-//					SetupSlide(EffCmd, EffParam);
-					break;
+		if (EffCmd == EF_PORTA_DOWN) {
+			m_iEffect = EF_PORTA_UP;
+			m_iPortaSpeed = EffParam;
+		}
+		else if (EffCmd == EF_PORTA_UP) {
+			m_iEffect = EF_PORTA_DOWN;
+			m_iPortaSpeed = EffParam;
+		}
+		else {
+			if (!CheckCommonEffects(EffCmd, EffParam)) {
+				switch (EffCmd) {
+					case EF_SLIDE_UP:
+					case EF_SLIDE_DOWN:
+						PostEffect = EffCmd;
+						PostEffectParam = EffParam;
+						break;
+				}
 			}
 		}
 	}
@@ -81,13 +93,18 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		// Halt
 		m_iCommand = CMD_NOTE_HALT;
 		theApp.RegisterKeyState(m_iChannelID, -1);
-		m_iNote = HALT;
+		/*
+		m_iNote = 0;
+		m_iOctave = 0;
+		m_iFrequency = 0;
+		*/
 	}
 	else if (pNoteData->Note == RELEASE) {
 		// Release
 		m_iCommand = CMD_NOTE_RELEASE;
 		theApp.RegisterKeyState(m_iChannelID, -1);
-		m_iNote = RELEASE;
+//		m_iNote = 0;
+//		m_iOctave = 0;
 	}
 	else if (pNoteData->Note != NONE) {
 
@@ -98,16 +115,20 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		int OldNote = m_iNote;
 		int OldOctave = m_iOctave;
 
+		// Portamento fix
+		if (m_iCommand == CMD_NOTE_HALT)
+			m_iFrequency = 0;
+
 		// Trigger note
 		m_iNote		= CChannelHandler::RunNote(pNoteData->Octave, pNoteData->Note);
 		m_iPatch	= pInstrument->GetPatch();
 		m_bEnabled	= true;
 		m_bHold		= true;
 
-		if (m_iEffect != EF_PORTAMENTO || OldNote == 0)
+		if ((m_iEffect != EF_PORTAMENTO || m_iPortaSpeed == 0) || m_iCommand == CMD_NOTE_HALT)
 			m_iCommand = CMD_NOTE_TRIGGER;
 
-		if (m_iPortaSpeed > 0 && m_iEffect == EF_PORTAMENTO && OldNote > 0) {
+		if (m_iPortaSpeed > 0 && m_iEffect == EF_PORTAMENTO && m_iCommand != CMD_NOTE_HALT) {
 
 			// Set current frequency to the one with highest octave
 			if (m_iOctave > OldOctave) {
@@ -131,7 +152,6 @@ void CChannelHandlerVRC7::PlayChannelNote(stChanNote *pNoteData, int EffColumns)
 		m_iEffect = EF_NONE;
 
 	if (PostEffect) {
-//		SetupSlide(PostEffect, PostEffectParam);
 
 		#define GET_SLIDE_SPEED(x) (((x & 0xF0) >> 3) + 1)
 
@@ -171,7 +191,7 @@ unsigned int CChannelHandlerVRC7::TriggerNote(int Note)
 {
 	m_iTriggeredNote = Note;
 	theApp.RegisterKeyState(m_iChannelID, Note);
-	if (m_iNote != HALT && m_iCommand != CMD_NOTE_TRIGGER)
+	if (m_iCommand != CMD_NOTE_TRIGGER && m_iCommand != CMD_NOTE_HALT)
 		m_iCommand = CMD_NOTE_ON;
 	m_bEnabled = true;
 	m_iOctave = Note / 12;
@@ -188,10 +208,8 @@ int CChannelHandlerVRC7::LimitFreq(int Freq)
 {
 	if (Freq > 2047)
 		Freq = 2047;
-	
 	if (Freq < 0)
 		Freq = 0;
-
 	return Freq;
 }
 
@@ -201,10 +219,6 @@ int CChannelHandlerVRC7::LimitFreq(int Freq)
 
 void CVRC7Channel::RefreshChannel()
 {
-
-#define OPL_NOTE_ON 0x10
-#define OPL_SUSTAIN_ON 0x20
-
 	int Note;
 	int Fnum;		// F-number
 	int Bnum;		// Block
@@ -215,7 +229,7 @@ void CVRC7Channel::RefreshChannel()
 	Patch = m_iPatch;
 	Volume = 15 - ((m_iVolume >> VOL_SHIFT) - GetTremolo());
 	Bnum = m_iOctave;
-	Fnum = (m_iFrequency >> 2) - GetVibrato() + (m_iFinePitch - 0x80);
+	Fnum = (m_iFrequency >> 2) - GetVibrato() - GetFinePitch();// (m_iFinePitch - 0x80);
 
 	// Write custom instrument
 	if (Patch == 0 && m_iCommand == CMD_NOTE_TRIGGER) {

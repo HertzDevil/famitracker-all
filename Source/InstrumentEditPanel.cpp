@@ -49,6 +49,7 @@ BEGIN_MESSAGE_MAP(CInstrumentEditPanel, CDialog)
 	ON_WM_ERASEBKGND()
 	ON_WM_CTLCOLOR()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_SETFOCUS()
 END_MESSAGE_MAP()
 
 //COLORREF m_iBGColor = 0xFF0000;
@@ -67,13 +68,14 @@ HBRUSH CInstrumentEditPanel::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 	if (!theApp.IsThemeActive())
 		return hbr;
-
+	
 	switch (nCtlColor) {
 		case CTLCOLOR_STATIC:
-		case CTLCOLOR_DLG:
+//		case CTLCOLOR_DLG:
 			pDC->SetBkMode(TRANSPARENT);
 			// Todo: this might fail on some themes?
-			return GetSysColorBrush(COLOR_WINDOW);
+			//return NULL;
+			return GetSysColorBrush(COLOR_3DHILIGHT);
 			//return CreateSolidBrush(m_iBGColor);
 	}
 
@@ -93,13 +95,17 @@ BOOL CInstrumentEditPanel::PreTranslateMessage(MSG* pMsg)
 					((CInstrumentEditDlg*)GetParent())->DestroyWindow();
 					return TRUE;
 				default:	// Note keys
-					if (GetDlgItem(IDC_MML) != GetFocus())
-						static_cast<CFamiTrackerView*>(theApp.GetDocumentView())->PreviewNote((unsigned char)pMsg->wParam);
+					// Make sure the dialog is selected when previewing
+					if (GetFocus() == this) {
+						// Remove repeated keys
+						if ((pMsg->lParam & (1 << 30)) == 0)
+							PreviewNote((unsigned char)pMsg->wParam);
+						return TRUE;
+					}
 			}
 			break;
 		case WM_KEYUP:
-			static_cast<CFamiTrackerView*>(theApp.GetDocumentView())->PreviewRelease((unsigned char)pMsg->wParam);
-			return TRUE;
+			PreviewRelease((unsigned char)pMsg->wParam);
 	}
 
 	return CDialog::PreTranslateMessage(pMsg);
@@ -117,6 +123,28 @@ void CInstrumentEditPanel::OnKeyReturn()
 	// Empty
 }
 
+void CInstrumentEditPanel::OnSetFocus(CWnd* pOldWnd)
+{
+	// Kill the default handler to avoid setting focus to a child control
+	//CDialog::OnSetFocus(pOldWnd);
+}
+
+CFamiTrackerDoc *CInstrumentEditPanel::GetDocument() const
+{
+	// Return selected document
+	return static_cast<CInstrumentEditDlg*>(GetParent())->GetDocument();
+}
+
+void CInstrumentEditPanel::PreviewNote(unsigned char Key)
+{
+	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+}
+
+void CInstrumentEditPanel::PreviewRelease(unsigned char Key)
+{
+	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
+}
+
 // CSequenceInstrumentEditPanel
 // 
 // For dialog panels with sequence editors. Can translate MML strings 
@@ -129,6 +157,9 @@ CSequenceInstrumentEditPanel::CSequenceInstrumentEditPanel(UINT nIDTemplate, CWn
 {
 }
 
+CSequenceInstrumentEditPanel::~CSequenceInstrumentEditPanel()
+{
+}
 
 void CSequenceInstrumentEditPanel::DoDataExchange(CDataExchange* pDX)
 {
@@ -138,6 +169,17 @@ void CSequenceInstrumentEditPanel::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CSequenceInstrumentEditPanel, CDialog)
 END_MESSAGE_MAP()
 
+void CSequenceInstrumentEditPanel::PreviewNote(unsigned char Key)
+{
+	// Skip if MML window has focus
+	if (GetDlgItem(IDC_SEQUENCE_STRING) != GetFocus())
+		static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewNote(Key);
+}
+
+void CSequenceInstrumentEditPanel::PreviewRelease(unsigned char Key)
+{
+	static_cast<CFamiTrackerView*>(theApp.GetActiveView())->PreviewRelease(Key);
+}
 
 void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequence, int Max, int Min)
 {
@@ -156,19 +198,13 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 	pSequence->SetLoopPoint(-1);
 	pSequence->SetReleasePoint(-1);
 
-	for (i = 0; i < (Len + 1) && AddedItems < MAX_SEQ_ITEMS; i++) {
+	for (i = 0; i < (Len + 1) && AddedItems < MAX_SEQUENCE_ITEMS; i++) {
 		c = String.GetAt(i);
 
 		if (c >= '0' && c <= '9' || c == '-' && i != Len) {
 			// Digit
 			Accum.AppendChar(c);
-		}/*
-		else if (c == '*') {
-			// Multiplier
-			Mult = true;
-			MultValue = false;
-			NewValue = true;
-		}*/
+		}
 		else if (c == '|') {
 			// Loop point
 			pSequence->SetLoopPoint(AddedItems);
@@ -182,41 +218,21 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 				NewValue = true;
 		}
 		if (NewValue) {
-			/*
-			if (Mult && MultValue) {
-				if (Accum.GetLength() > 0) {
-					Mult = false;
-					MultValue = false;
-					int Multiplier;
-					sscanf(Accum, "%i", &Multiplier);
-					if (Multiplier < 1)
-						Multiplier = 1;
-					else if (Multiplier > MAX_SEQ_ITEMS)
-						Multiplier = MAX_SEQ_ITEMS;
-					Multiplier -= 1;
-					for (int i = 0; i < Multiplier && AddedItems < MAX_SEQ_ITEMS; i++) {
-						pSequence->SetItem(AddedItems++, Value);
-					}
-				}
+
+			if (Accum.GetLength() > 0) {
+				Value = _tstoi(Accum);
+
+				// Limit
+				if (Value < Min)
+					Value = Min;
+				if (Value > Max)
+					Value = Max;
+
+				pSequence->SetItem(AddedItems++, Value);
+
+				if (Mult && !MultValue)
+					MultValue = true;
 			}
-			else {
-			*/
-				if (Accum.GetLength() > 0) {
-					sscanf(Accum, "%i", &Value);
-
-					// Limit
-					if (Value < Min)
-						Value = Min;
-					if (Value > Max)
-						Value = Max;
-
-					pSequence->SetItem(AddedItems++, Value);
-
-					if (Mult && !MultValue)
-						MultValue = true;
-				}
-				/*
-			}*/
 			Accum = "";
 			NewValue = false;
 		}
