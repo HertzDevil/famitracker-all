@@ -116,7 +116,7 @@ CSoundGen::CSoundGen() :
 	// Create all kinds of channels
 	CreateChannels();
 
-	m_pAPU->SetNamcoMixing(theApp.GetSettings()->m_bNamcoMixing);
+	m_pAPU->SetNamcoMixing(TRUE);
 
 #ifdef EXPORT_TEST
 	m_bExportTesting = false;
