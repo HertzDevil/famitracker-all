@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="FamiTracker"
 	ProjectGUID="{92FE0690-CE4F-4CCF-A52C-23265AE7429F}"
 	RootNamespace="FamiTracker"
@@ -1159,6 +1159,46 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
+			<Filter
+				Name="NSF Import"
+				>
+				<File
+					RelativePath=".\Source\NSF_Import\fmopl.c"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NotSoFatsoReadme.txt"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_6502.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_6502_Trace.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Core.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_File.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Import.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Import_Dlg.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_VRC7.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1219,6 +1259,10 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource1.h"
 				>
 			</File>
 			<File
@@ -1633,6 +1677,58 @@
 					</File>
 				</Filter>
 			</Filter>
+			<Filter
+				Name="NSF Import"
+				>
+				<File
+					RelativePath=".\Source\NSF_Import\fmopl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Core.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_File.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Import.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\NSF_Import_Dlg.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_FDS.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_FME07.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_MMC5.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_N106.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_Square.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_TND.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\NSF_Import\Wave_VRC6.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -1722,6 +1818,10 @@
 			</File>
 			<File
 				RelativePath=".\res\key_white_unpressed.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\NSF_Import.rc"
 				>
 			</File>
 			<File
@@ -2027,6 +2127,10 @@
 		</File>
 		<File
 			RelativePath=".\gpl.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\NSFImporter.txt"
 			>
 		</File>
 		<File

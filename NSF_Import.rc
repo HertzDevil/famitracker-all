@@ -1,0 +1,113 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource1.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (Canada) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENC)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_CAN
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource1.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_NSF_IMPORT DIALOGEX 0, 0, 316, 183
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "NSF Import v0.1"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,205,162,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,259,162,50,14
+    LTEXT           "Filename",IDC_FILENAME,7,7,302,14,0,WS_EX_CLIENTEDGE
+    LTEXT           "Name",IDC_NSFINFO1,76,26,233,14,0,WS_EX_CLIENTEDGE
+    LTEXT           "Composer",IDC_NSFINFO2,76,44,233,14,0,WS_EX_CLIENTEDGE
+    LTEXT           "Copyright",IDC_NSFINFO3,76,63,233,14,0,WS_EX_CLIENTEDGE
+    RTEXT           "Name:",IDC_STATIC,7,27,66,14
+    RTEXT           "Copyright:",IDC_STATIC,7,64,66,14
+    RTEXT           "Composer:",IDC_STATIC,7,45,66,14
+    EDITTEXT        IDC_TRACK,76,92,55,16,ES_CENTER | ES_AUTOHSCROLL
+    CTEXT           "1",IDC_TRACKCOUNT,149,92,55,16,0,WS_EX_CLIENTEDGE
+    CTEXT           "/",IDC_STATIC,133,93,14,14
+    RTEXT           "Track:",IDC_STATIC,7,94,66,15
+    EDITTEXT        IDC_SECONDS,76,112,55,16,ES_CENTER | ES_AUTOHSCROLL
+    LTEXT           "seconds",IDC_STATIC,136,114,77,14
+    RTEXT           "Record time:",IDC_STATIC,7,113,66,13
+    CONTROL         "Create debug_sound.wav",IDC_DEBUGWAV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,163,97,13
+    CONTROL         "PAL",IDC_PAL,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,280,80,29,17
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_DIALOG_NSF_IMPORT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 176
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // English (Canada) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

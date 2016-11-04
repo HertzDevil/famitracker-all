@@ -95,7 +95,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Create NSF...\tCtrl+E",      ID_FILE_CREATE_NSF
         MENUITEM "Create WAV...",               ID_FILE_CREATEWAV
-        MENUITEM "Import MIDI...",              ID_FILE_IMPORTMIDI
+        MENUITEM "Import NSF...",               ID_FILE_IMPORTMIDI
         MENUITEM SEPARATOR
         MENUITEM "&Configuration",              ID_FILE_GENERALSETTINGS
         MENUITEM SEPARATOR
@@ -510,7 +510,7 @@ BEGIN
     ID_FRAME_INSERT         "Insert a new frame on current location\nAdd frame"
     ID_FRAME_REMOVE         "Remove current frame\nRemove frame"
     ID_TRACKER_PLAYROW      "Plays a single row"
-    ID_FILE_IMPORTMIDI      "Imports a MIDI file\nImport MIDI"
+    ID_FILE_IMPORTMIDI      "Imports an NSF file\nImport NSF"
 END
 
 STRINGTABLE 

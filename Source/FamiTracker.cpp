@@ -161,7 +161,7 @@ BOOL CFamiTrackerApp::InitInstance()
 
 	// Skip this if in wip/beta mode
 #ifndef WIP
-	RegisterShellFileTypes(TRUE);
+	//RegisterShellFileTypes(TRUE); // EDIT
 #endif
 	
 	// Parse command line for standard shell commands, DDE, file open + some custom ones

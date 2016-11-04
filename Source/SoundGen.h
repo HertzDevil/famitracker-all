@@ -225,10 +225,12 @@ private:
 	int					m_iPlayMode;
 
 	unsigned int		*m_pNoteLookupTable;
+public: // EDIT made public for NFS Importer to use
 	unsigned int		m_iNoteLookupTable[96];				// For 2A03/2A07
 	unsigned int		m_iNoteLookupTableSaw[96];			// For VRC6 sawtooth
 	unsigned int		m_iNoteLookupTableFDS[96];			// For FDS
 	int					m_iVibratoTable[VIBRATO_LENGTH];
+private:
 
 	unsigned int		m_iMachineType;						// NTSC/PAL
 	bool				m_bRunning;							// Main loop is running

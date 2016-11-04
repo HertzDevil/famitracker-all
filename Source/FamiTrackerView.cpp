@@ -635,6 +635,23 @@ int CFamiTrackerView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CView::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
+    // EDIT
+    // so the user knows what is going on
+    ::MessageBox(::GetActiveWindow(),
+        "NSF Importer v1.0\n"
+        "\n"
+        "Created for FamiTracker 0.3.6 by Brad Smith\n"
+        "Uses NotSo Fatso for NSF playback.\n"
+        "\n"
+        "Please note that editing is disabled\n"
+        "but you can save your FTM and load it in\n"
+        "the regular release of FamiTracker.\n"
+        "\n"
+        "Questions: rainwarrior@gmail.com"
+        ,
+        "NSF Importer",
+        MB_OK | MB_ICONINFORMATION);
+
 	// Install a timer for screen updates, 20ms
 	SetTimer(TMR_UPDATE, 20, NULL);
 
@@ -741,7 +758,9 @@ void CFamiTrackerView::OnEditDelete()
 
 void CFamiTrackerView::OnTrackerEdit()
 {
-	m_bEditEnable = !m_bEditEnable;
+    // EDIT
+    // disabled editing
+	//m_bEditEnable = !m_bEditEnable;
 
 	if (m_bEditEnable)
 		GetParentFrame()->SetMessageText(_T("Changed to edit mode"));

@@ -41,6 +41,7 @@
 #include "Accelerator.h"
 #include "SoundGen.h"
 #include "MIDI.h"
+#include "NSF_Import/NSF_Import.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1434,16 +1435,26 @@ void CMainFrame::OnUpdateKeyRepeat(CCmdUI *pCmdUI)
 
 void CMainFrame::OnFileImportmidi()
 {
-	CMIDIImport	Importer;
-	CFileDialog FileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, _T("MIDI files (*.mid)|*.mid|All files|*.*||"));
+	// EDIT
+	// Midi import replaced with NFS import
 
-	if (GetActiveDocument()->SaveModified() == 0)
-		return;
+	//CMIDIImport	Importer;
+	//CFileDialog FileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, _T("MIDI files (*.mid)|*.mid|All files|*.*||"));
+	//
+	//if (GetActiveDocument()->SaveModified() == 0)
+	//	return;
+	//
+	//if (FileDialog.DoModal() == IDCANCEL)
+	//	return;
+	//
+	//Importer.ImportFile(FileDialog.GetPathName());
 
-	if (FileDialog.DoModal() == IDCANCEL)
-		return;
-
-	Importer.ImportFile(FileDialog.GetPathName());
+    CFileDialog FileDialog(TRUE, 0, 0, OFN_HIDEREADONLY, _T("NSF files (*.nsf)|*.nsf|All files|*.*||"));
+    if (GetActiveDocument()->SaveModified() == 0)
+        return;
+    if (FileDialog.DoModal() == IDCANCEL)
+        return;
+    NSF_Import(FileDialog.GetPathName());
 }
 
 BOOL CMainFrame::DestroyWindow()
