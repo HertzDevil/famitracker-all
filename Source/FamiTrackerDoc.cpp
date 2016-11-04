@@ -937,10 +937,10 @@ BOOL CFamiTrackerDoc::SaveDocument(LPCTSTR lpszPathName) const
 	TCHAR TempPath[MAX_PATH], TempFile[MAX_PATH];
 	ULONGLONG FileSize;
 
-	if (GetExpansionChip() & SNDCHIP_S5B) {
+	/*if (GetExpansionChip() & SNDCHIP_S5B) {
 		AfxMessageBox(_T("Saving Sunsoft modules is not yet supported"));
 		return FALSE;
-	}
+	}*/
 
 	// First write to a temp file (if saving fails, the original is not destroyed)
 	GetTempPath(MAX_PATH, TempPath);
@@ -1942,7 +1942,7 @@ bool CFamiTrackerDoc::ReadBlock_Parameters(CDocumentFile *pDocFile)
 	m_iEngineSpeed			= pDocFile->GetBlockInt();
 
 	ASSERT_FILE_DATA(m_iMachine == NTSC || m_iMachine == PAL);
-	ASSERT_FILE_DATA(m_iChannelsAvailable < MAX_CHANNELS);
+	ASSERT_FILE_DATA(m_iChannelsAvailable <= MAX_CHANNELS);
 
 	if (m_iMachine != NTSC && m_iMachine != PAL)
 		m_iMachine = NTSC;
@@ -4192,6 +4192,7 @@ void CFamiTrackerDoc::SetupChannels(unsigned char Chip)
 
 	m_iChannelsAvailable = GetChannelCount();
 
+    //Adjust channel count for N163 - this is causing VRC7 to fall off.
 	if (Chip & SNDCHIP_N163) {
 		m_iChannelsAvailable -= (8 - m_iNamcoChannels);
 	}

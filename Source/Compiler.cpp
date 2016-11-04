@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -1245,8 +1246,11 @@ bool CCompiler::CompileData()
 			m_iSpeedPatchLocation = SPEED_PATCH_LOCATION_N163;
 			Print(" * N163 expansion enabled\n");
 			break;
+        case SNDCHIP_S5B:
+            Print("Error: Sunsoft B5 export is unsupported.\n");
+			return false;
 		default:
-			Print("Error: Selected expansion chip is unsupported\n");
+			Print("Error: Multichip export is unsupported\n");
 			return false;
 	}
 

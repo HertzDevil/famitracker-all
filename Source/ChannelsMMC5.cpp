@@ -55,7 +55,7 @@ void CChannelHandlerMMC5::HandleCustomEffects(int EffNum, int EffParam)
 {
 	if (!CheckCommonEffects(EffNum, EffParam)) {
 		switch (EffNum) {
-			case EF_VOLUME:
+			case EF_EXTRA:
 				m_iInitVolume = EffParam;
 				m_bManualVolume = true;
 				break;

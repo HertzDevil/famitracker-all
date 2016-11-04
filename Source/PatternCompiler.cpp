@@ -313,7 +313,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 					WriteData(CMD_EFF_HALT);
 					WriteData(EffParam);
 					break;
-				case EF_VOLUME:
+				case EF_EXTRA:
 					// TODO: remove this
 					if (Channel < 5) {
 						WriteData(CMD_EFF_VOLUME);
@@ -432,7 +432,7 @@ void CPatternCompiler::CompileData(CFamiTrackerDoc *pDoc, int Track, int Pattern
 						WriteData(EffParam);
 					}
 					break;
-				case EF_VOLUME_SLIDE:
+				case EF_EXTRA_SLIDE:
 					if (ChanID != CHANID_DPCM) {
 						WriteData(CMD_EFF_VOL_SLIDE);
 						WriteData(EffParam);

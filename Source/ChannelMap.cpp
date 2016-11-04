@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -63,7 +64,7 @@ void CChannelMap::SetupSoundChips()
 	AddChip(SNDCHIP_FDS,  new CInstrumentFDS(),  _T("Nintendo FDS sound"));
 	AddChip(SNDCHIP_MMC5, new CInstrument2A03(), _T("Nintendo MMC5"));
 	AddChip(SNDCHIP_N163, new CInstrumentN163(), _T("Namco 163"));
-//	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
+ 	AddChip(SNDCHIP_S5B,  new CInstrumentS5B(),  _T("Sunsoft 5B"));
 #endif /* _DEBUG */
 }
 

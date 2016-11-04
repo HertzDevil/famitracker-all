@@ -373,7 +373,15 @@
 #define IDC_ABOUT3                      1258
 #define IDC_SPIN1                       1263
 #define IDC_DELTA_SPIN                  1263
+#define IDC_CHANNELS_LABEL              1264
 #define IDC_DELTA_COUNTER               1265
+#define IDC_EXPANSION_MMC5              1265
+#define IDC_EXPANSION_FDS               1266
+#define IDC_EXPANSION_VRC6              1267
+#define IDC_EXPANSION_VRC7              1268
+#define IDC_EXPANSION_B5                1269
+#define IDC_EXPANSION_MMC6              1270
+#define IDC_EXPANSION_N163              1270
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
@@ -526,7 +534,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        304
 #define _APS_NEXT_COMMAND_VALUE         33117
-#define _APS_NEXT_CONTROL_VALUE         1264
+#define _APS_NEXT_CONTROL_VALUE         1266
 #define _APS_NEXT_SYMED_VALUE           176
 #endif
 #endif

@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -40,7 +41,7 @@ void CChannelHandler2A03::HandleNoteData(stChanNote *pNoteData, int EffColumns)
 	m_iSweep = 0;
 	m_bSweeping = false;
 	m_iInitVolume = 0x0F;
-	m_bManualVolume = false;
+	//m_bManualVolume = false;
 
 	CChannelHandler::HandleNoteData(pNoteData, EffColumns);
 
@@ -59,10 +60,14 @@ void CChannelHandler2A03::HandleCustomEffects(int EffNum, int EffParam)
 	if (!CheckCommonEffects(EffNum, EffParam)) {
 		// Custom effects
 		switch (EffNum) {
-			case EF_VOLUME:
-				// Kill this maybe?
-				m_iInitVolume = EffParam;
-				m_bManualVolume = true;
+			case EF_EXTRA:
+				/*m_iInitVolume = (EffParam & 0x0F);
+                if (m_iInitVolume == 0)
+                    m_iVolumeEffectType = VolumeEffectType::NONE;
+                else if ((EffParam >> 4) == 0x0E)
+                    m_iVolumeEffectType = VolumeEffectType::MULTIPLY;
+                else if ((EffParam >> 4) == 0x0F)
+                    m_iVolumeEffectType = VolumeEffectType::SUBTRACT;*/   
 				break;
 			case EF_SWEEPUP:
 				m_iSweep = 0x88 | (EffParam & 0x77);
@@ -114,8 +119,9 @@ bool CChannelHandler2A03::HandleInstrument(int Instrument, bool Trigger, bool Ne
 
 void CChannelHandler2A03::HandleEmptyNote()
 {
-	if (m_bManualVolume)
-		m_iSeqVolume = m_iInitVolume;
+    //Old strange Exx behaviour.
+	/*if (m_bManualVolume)
+		m_iSeqVolume = m_iInitVolume;*/
 	
 	if (m_bSweeping)
 		m_cSweep = m_iSweep;
@@ -301,11 +307,12 @@ void CTriangleChan::RefreshChannel()
 		return;
 
 	int Freq = CalculatePeriod(false);
+    int Volume = CalculateVolume(15);
 
 	unsigned char HiFreq = (Freq & 0xFF);
 	unsigned char LoFreq = (Freq >> 8);
 	
-	if (m_iSeqVolume > 0 && m_iVolume > 0 && m_bGate) {
+	if (m_iSeqVolume > 0 && Volume > 0 && m_bGate) {
 		WriteRegister(0x4008, 0x81);
 		WriteRegister(0x400A, HiFreq);
 		WriteRegister(0x400B, LoFreq);

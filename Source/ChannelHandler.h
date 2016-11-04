@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -111,6 +112,7 @@ protected:
 	void SetupSlide(int Type, int EffParam);
 
 	bool CheckCommonEffects(unsigned char EffCmd, unsigned char EffParam);
+    bool CheckExtraEffect(unsigned char OpCode, unsigned char Value);
 	bool HandleDelay(stChanNote *NoteData, int EffColumns);
 
 	int GetVibrato() const;
@@ -130,11 +132,13 @@ protected:
 
 private:
 	void UpdateNoteCut();
+    void UpdateNoteRelease();
 	void UpdateDelay();
 	void UpdateVolumeSlide();
 	void UpdateTargetVolumeSlide();
 	void UpdateVibratoTremolo();
 	void UpdateEffects();
+    void UpdateArpeggio();
 
 public:
 	static int PITCH_WHEEL_RANGE;
@@ -171,13 +175,16 @@ protected:
 	unsigned char		m_iEffect;		// arpeggio & portamento
 	unsigned char		m_iArpeggio;
 	unsigned char		m_iArpState;
+    int         		m_iArpSpeed, m_iArpSpeedCounter; //Arpeggio speeds.
 	int					m_iPortaTo;
 	int					m_iPortaSpeed;
 
 	unsigned char		m_iNoteCut;					// Note cut effect
+    unsigned char		m_iNoteRelease;				// Note release effect
 	unsigned int		m_iFinePitch;				// Fine pitch effect
 	unsigned char		m_iDefaultDuty;				// Duty effect
 	unsigned char		m_iVolSlide;				// Volume slide effect
+    unsigned char       m_iChannelVolume;           // Channel volume effect.
 
 	// Sequences
 	int					m_iSeqEnabled[SEQ_COUNT];
@@ -201,5 +208,4 @@ protected:
 	// Private variables
 private:
 	int m_iMaxPeriod;				// Used to limit period register
-
 };

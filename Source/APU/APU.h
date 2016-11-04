@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -26,13 +27,16 @@
 #include "../common.h"
 #include "mixer.h"
 
-const uint8 SNDCHIP_NONE  = 0;
-const uint8 SNDCHIP_VRC6  = 1;			// Konami VRCVI
-const uint8 SNDCHIP_VRC7  = 2;			// Konami VRCVII
-const uint8 SNDCHIP_FDS	  = 4;			// Famicom Disk Sound
-const uint8 SNDCHIP_MMC5  = 8;			// Nintendo MMC5
-const uint8 SNDCHIP_N163  = 16;			// Namco N-106
-const uint8 SNDCHIP_S5B	  = 32;			// Sunsoft 5B
+enum : uint8
+{
+    SNDCHIP_NONE  = 0,
+    SNDCHIP_VRC6  = 1,			// Konami VRCVI
+    SNDCHIP_VRC7  = 2,			// Konami VRCVII
+    SNDCHIP_FDS	  = 4,			// Famicom Disk Sound
+    SNDCHIP_MMC5  = 8,			// Nintendo MMC5
+    SNDCHIP_N163  = 16,			// Namco N-106
+    SNDCHIP_S5B	  = 32			// Sunsoft 5B
+};
 
 enum {MACHINE_NTSC, MACHINE_PAL};
 

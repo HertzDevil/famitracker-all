@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -45,8 +46,13 @@ protected:
 	unsigned char m_cSweep;			// Sweep, used by pulse channels
 	bool		  m_bArpEffDone;	// Currently not used
 
-	bool	m_bManualVolume;
+	enum VolumeEffectType
+    {
+        NONE, MULTIPLY, SUBTRACT
+    } m_iVolumeEffectType;
+
 	int		m_iInitVolume;
+
 	bool	m_bSweeping;
 	int		m_iSweep;
 	int		m_iPostEffect, m_iPostEffectParam;

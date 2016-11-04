@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -33,8 +34,12 @@ private:
 	
 	unsigned int m_iSelectedSong;
 	CListCtrl *m_pSongList;
+    unsigned char m_iExpansions;
+    int m_iN163Channels;
 
 	CFamiTrackerDoc *m_pDocument;
+
+    bool _hasWarnedAboutB5;
 
 public:
 	CModulePropertiesDlg(CWnd* pParent = NULL);   // standard constructor
@@ -63,4 +68,10 @@ public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLvnItemchangedSonglist(NMHDR *pNMHDR, LRESULT *pResult);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+    afx_msg void OnBnClickedExpansionMmc5();
+    afx_msg void OnBnClickedExpansionFds();
+    afx_msg void OnBnClickedExpansionVrc6();
+    afx_msg void OnBnClickedExpansionVrc7();
+    afx_msg void OnBnClickedExpansionB5();
+    afx_msg void OnBnClickedExpansionN163();
 };

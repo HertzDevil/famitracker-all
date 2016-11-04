@@ -1,6 +1,7 @@
 /*
 ** FamiTracker - NES/Famicom sound tracker
 ** Copyright (C) 2005-2012  Jonathan Liss
+** Modified by Sean Latham, 2014
 **
 ** This program is free software; you can redistribute it and/or modify
 ** it under the terms of the GNU General Public License as published by
@@ -119,7 +120,7 @@ enum {
 	EF_JUMP,
 	EF_SKIP,
 	EF_HALT,
-	EF_VOLUME,
+	EF_EXTRA,
 	EF_PORTAMENTO,
 	EF_PORTAOFF,				// unused!!
 	EF_SWEEPUP,
@@ -136,7 +137,7 @@ enum {
 	EF_SAMPLE_OFFSET,
 	EF_SLIDE_UP,
 	EF_SLIDE_DOWN,
-	EF_VOLUME_SLIDE,
+	EF_EXTRA_SLIDE,
 	EF_NOTE_CUT,
 	EF_RETRIGGER,
 	EF_DELAYED_VOLUME,			// Unimplemented
@@ -153,7 +154,15 @@ enum {
 	EF_VRC7_CARRIER,
 	EF_VRC7_LEVELS,
 */
+    EF_NOTE_RELEASE,
 	EF_COUNT
+};
+
+//Channel extra effects
+enum
+{
+    EEF_ARP_SPEED = 0x00,
+    EEF_CHANNEL_VOLUME = 0x0E
 };
 
 // DPCM  effects
@@ -171,7 +180,7 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'B',	// Jump 
 						 'D',	// Skip 
 						 'C',	// Halt
-						 'E',	// Volume
+						 'E',	// Extra (previously volume)
 						 '3',	// Porta on
 						 ' ',	// Porta off		// unused
 						 'H',	// Sweep up
@@ -205,6 +214,7 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'I',	// VRC7 carrier
 						 'J',	// VRC7 modulator/feedback level
 						 */
+                         'L',	// Note release
 };
 
 

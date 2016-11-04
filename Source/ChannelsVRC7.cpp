@@ -269,7 +269,8 @@ void CVRC7Channel::RefreshChannel()
 	
 	Note = m_iTriggeredNote;
 	Patch = m_iPatch;
-	Volume = 15 - ((m_iVolume >> VOL_SHIFT) - GetTremolo());
+    Volume = 15 - ((m_iVolume >> VOL_SHIFT) - GetTremolo());
+
 	Bnum = m_iOctave;
 	Fnum = (m_iPeriod >> 2) - GetVibrato() - GetFinePitch();// (m_iFinePitch - 0x80);
 

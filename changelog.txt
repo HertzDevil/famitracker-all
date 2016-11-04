@@ -2,6 +2,49 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.2, ipi's edit r2
+
+  Known bugs:
+  - EEx has no effect on VRC7 channels.
+
+  Fixed bugs:
+  - Fixed a bug where Hxx/Ixx on FDS became out of sync.
+  - Fixed a bug when using different arps speeds with a 0x0 effect.
+  - Using 0x0 arpeggios now acts like it does in FT 0.4.2.
+  - Fixed a bug where channel volume and the volume column were ignored for
+    instruments with blank volume envelopes.
+
+Version 0.4.2, ipi's edit
+
+  New stuff:
+  - Added the Lxx delayed release effect - similarly to Sxx, it releases the
+    current note after xx ticks.
+  - Completely changed Exx - it is now the extra effect (similar to XM's Exx).
+    - E0x sets the frequency of arpeggios in ticks. E00 will stop arpeggios.
+    - EEx sets the channel's volume to x. EE0 will mute the channel.
+  - The module properties window now allows you to choose multiple expansions.
+
+  Known bugs:
+  - Instruments with no volume envelope are unaffected by EEx.
+  - Sunsoft B5 implementation is very unfinished (and should not be used).
+
+  Fixed bugs:
+  - Fixed a bug where VRC7/B5 channels were being removed by having less than
+    8 N163 channels.
+  - Fixed a "bug" where saving B5 modules was not allowed.
+
+  To add:
+  - More Exx effects, maybe vibrato envelope, glissando?
+  - The ability emulate older VRC7 patches (and possibly blank volume envelope
+    behaviour).
+  - NSF export for the added effects.
+  - NSF export for multichip... but this is unrealistic.
+
+  Not going to be added:
+  - B5 export.
+  - Multiplexing control.
+
+
 Version 0.4.2
 
  New stuff:

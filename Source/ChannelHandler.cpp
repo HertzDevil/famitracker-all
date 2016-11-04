@@ -174,6 +174,8 @@ void CChannelHandler::ResetChannel()
 	m_iPortaTo			= 0;
 	m_iArpeggio			= 0;
 	m_iArpState			= 0;
+    m_iArpSpeed         = 1;
+    m_iArpSpeedCounter  = 0;
 	m_iVibratoSpeed		= 0;
 	m_iVibratoPhase		= (m_iVibratoStyle == VIBRATO_OLD) ? 48 : 0;
 	m_iTremoloSpeed		= 0;
@@ -185,6 +187,7 @@ void CChannelHandler::ResetChannel()
 	m_iNoteCut			= 0;
 	m_iVibratoDepth		= 0;
 	m_iTremoloDepth		= 0;
+    m_iChannelVolume    = 0x0F;
 
 	// States
 	m_bRelease			= false;
@@ -278,7 +281,7 @@ void CChannelHandler::HandleNoteData(stChanNote *pNoteData, int EffColumns)
 
 	// Volume
 	if (pNoteData->Vol < 0x10) {
-		m_iVolume = pNoteData->Vol << VOL_SHIFT;
+        m_iVolume = pNoteData->Vol << VOL_SHIFT;
 	}
 
 	// Clear release flag
@@ -406,6 +409,8 @@ bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char Eff
 		case EF_ARPEGGIO:
 			m_iArpeggio = EffParam;
 			m_iEffect = EF_ARPEGGIO;
+            m_iArpState = 0;
+            m_iArpSpeedCounter = m_iArpSpeed;
 			break;
 		case EF_PITCH:
 			m_iFinePitch = EffParam;
@@ -418,20 +423,42 @@ bool CChannelHandler::CheckCommonEffects(unsigned char EffCmd, unsigned char Eff
 			m_iPortaSpeed = EffParam;
 			m_iEffect = EF_PORTA_UP;
 			break;
-		case EF_VOLUME_SLIDE:
+		case EF_EXTRA_SLIDE:
 			m_iVolSlide = EffParam;
 			break;
 		case EF_NOTE_CUT:
 			m_iNoteCut = EffParam + 1;
 			break;
+        case EF_NOTE_RELEASE:
+            m_iNoteRelease = EffParam + 1;
+            break;
 //		case EF_TARGET_VOLUME_SLIDE:
 			// TODO implement
 //			break;
+        case EF_EXTRA:
+            return CheckExtraEffect(EffParam >> 4, EffParam & 0x0F);
 		default:
 			return false;
 	}
 	
 	return true;
+}
+
+bool CChannelHandler::CheckExtraEffect(unsigned char OpCode, unsigned char Value)
+{
+    switch (OpCode)
+    {
+    case EEF_ARP_SPEED:
+        m_iArpSpeed = Value;
+        break;
+    case EEF_CHANNEL_VOLUME:
+        m_iChannelVolume = Value;
+        break;
+    default:
+        return false;
+    }
+
+    return true;
 }
 
 bool CChannelHandler::HandleDelay(stChanNote *pNoteData, int EffColumns)
@@ -484,6 +511,17 @@ void CChannelHandler::UpdateNoteCut()
 		m_iNoteCut--;
 		if (m_iNoteCut == 0) {
 			CutNote();
+		}
+	}
+}
+
+void CChannelHandler::UpdateNoteRelease()
+{
+	// Note cut ()
+	if (m_iNoteRelease > 0) {
+		m_iNoteRelease--;
+		if (m_iNoteRelease == 0) {
+			ReleaseNote();
 		}
 	}
 }
@@ -568,22 +606,7 @@ void CChannelHandler::UpdateEffects()
 	// Handle other effects
 	switch (m_iEffect) {
 		case EF_ARPEGGIO:
-			if (m_iArpeggio != 0) {
-				switch (m_iArpState) {
-					case 0:
-						m_iPeriod = TriggerNote(m_iNote);
-						break;
-					case 1:
-						m_iPeriod = TriggerNote(m_iNote + (m_iArpeggio >> 4));
-						if ((m_iArpeggio & 0x0F) == 0)
-							++m_iArpState;
-						break;
-					case 2:
-						m_iPeriod = TriggerNote(m_iNote + (m_iArpeggio & 0x0F));
-						break;
-				}
-				m_iArpState = (m_iArpState + 1) % 3;
-			}
+            UpdateArpeggio();
 			break;
 		case EF_PORTAMENTO:
 		case EF_SLIDE_UP:
@@ -616,6 +639,35 @@ void CChannelHandler::UpdateEffects()
 	}
 }
 
+void CChannelHandler::UpdateArpeggio()
+{
+    if (m_iArpeggio != 0 && m_iArpSpeed != 0) {
+		switch (m_iArpState) {
+			case 0:
+				m_iPeriod = TriggerNote(m_iNote);
+				break;
+			case 1:
+				m_iPeriod = TriggerNote(m_iNote + (m_iArpeggio >> 4));
+				break;
+			case 2:
+				m_iPeriod = TriggerNote(m_iNote + (m_iArpeggio & 0x0F));
+				break;
+		}
+
+        //Update the counter.
+        m_iArpSpeedCounter--;
+        if (m_iArpSpeedCounter <= 0)
+        {
+            m_iArpState = (m_iArpState + 1) % 3;
+            m_iArpSpeedCounter = m_iArpSpeed;
+
+            //Loop back to start upon 0x0 effects.
+            if ((m_iArpeggio & 0x0F) == 0 && m_iArpState == 2)
+                m_iArpState = 0;
+        }
+	}
+}
+
 void CChannelHandler::ProcessChannel()
 {
 	// Run all default and common channel processing
@@ -624,6 +676,7 @@ void CChannelHandler::ProcessChannel()
 
 	UpdateDelay();
 	UpdateNoteCut();
+    UpdateNoteRelease();
 
 	if (!m_bEnabled)
 		return;
@@ -816,13 +869,20 @@ int CChannelHandler::CalculateVolume(int Limit) const
 	Volume = m_iVolume >> VOL_SHIFT;
 	Volume = (m_iSeqVolume * Volume) / 15 - GetTremolo();
 
+    //Keeps the volume at 1 if the instrument is playing normally.
+	if (m_iSeqVolume > 0 && m_iVolume > 0 && Volume == 0)
+		Volume = 1;
+
+    //Channel volume multiplication.
+    if (m_iChannelVolume != 0)
+        Volume = static_cast<int>(Volume * (m_iChannelVolume / (float)15) + 0.4f);
+    else
+        Volume = 0;
+
 	if (Volume < 0)
 		Volume = 0;
 	if (Volume > Limit)
 		Volume = Limit;
-
-	if (m_iSeqVolume > 0 && m_iVolume > 0 && Volume == 0)
-		Volume = 1;
 
 	if (!m_bGate)
 		Volume = 0;
