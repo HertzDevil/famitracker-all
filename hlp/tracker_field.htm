@@ -1,0 +1,142 @@
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+	</HEAD>
+	<BODY>
+		<H2><FONT face="Verdana">The&nbsp;pattern field</FONT></H2>
+		<P>
+			The&nbsp;pattern field consists of the avaliable channels.&nbsp;Each 
+			channel&nbsp;has&nbsp;four columns.
+			<BR>
+			The first column&nbsp;defines what note and octave&nbsp;to play, the second 
+			defines the instrument used, the third&nbsp;sets volume&nbsp;and the last one 
+			is used for channel&nbsp;effects.</P>
+		<P><STRONG><FONT size="4">Channel info</FONT></STRONG></P>
+		<P>It's possible to disable channels by clicking its name on top of pattern.</P>
+		<P dir="ltr" style="MARGIN-RIGHT: 0px"><STRONG>Square 1 &amp; 2</STRONG></P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P dir="ltr" style="MARGIN-RIGHT: 0px">
+				Produces&nbsp;square&nbsp;waveforms.&nbsp;<BR>
+				They cannot produce sound below A-0 (G-0 for PAL). Both channels&nbsp;are 
+				identical.</P>
+		</BLOCKQUOTE>
+		<P dir="ltr"><STRONG>Triangle</STRONG></P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P>
+				Produces a&nbsp;triangle-formed waveform. It isn't possible to set 
+				volume,&nbsp;so&nbsp;the volume&nbsp;column have no effect on this channel.<BR>
+				It's&nbsp;one octave lower than the square channels and cannot 
+				produce&nbsp;sound below&nbsp;A-0 (G-0 for PAL).</P>
+		</BLOCKQUOTE>
+		<P dir="ltr"><STRONG>Noise</STRONG></P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P>Produces white-noise&nbsp;sound.<BR>
+				It's only possible to play 16 different frequencies, where the lowest frequency 
+				is played at&nbsp;C-0 and highest at D#1 (going out of that range will wrap).</P>
+		</BLOCKQUOTE>
+		<P dir="ltr"><STRONG>DPCM</STRONG></P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P dir="ltr" style="MARGIN-RIGHT: 0px">
+				This one&nbsp;plays&nbsp;samples that are&nbsp;loaded from 
+				files.&nbsp;Instrument effects are not used at all.<BR>
+				It is only able to play samples at&nbsp;16&nbsp;different pitches, defined in 
+				the instrument settings (DPCM samples-tab).<BR>
+				Notes above octave 5 will&nbsp;cause samples to loop.</P>
+		</BLOCKQUOTE>
+		<P><STRONG><FONT size="4">Channel effects</FONT></STRONG></P>
+		<BLOCKQUOTE dir="ltr" style="MARGIN-RIGHT: 0px">
+			<P>
+				Effects&nbsp;are entered&nbsp;in the last column, in form of <STRONG>Xxx</STRONG>. 
+				(<STRONG>X</STRONG> - Effect number, <STRONG>xx</STRONG> - Effect parameter)</P>
+		</BLOCKQUOTE>
+		<P>
+			<TABLE id="Table1" height="216" cellSpacing="0" cellPadding="0" width="848" border="0">
+				<TR>
+					<TD width="38" height="3">
+						<P>&nbsp;</P>
+					</TD>
+					<TD width="42" height="3">
+						<P><STRONG><FONT face="Fixedsys">Axx</FONT></STRONG></P>
+					</TD>
+					<TD height="3">
+						<P>Set speed to <STRONG>xx.</STRONG> &nbsp;Speed is divided by the frame rate, 
+							lower <STRONG>xx</STRONG> means faster.
+						</P>
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="16"></TD>
+					<TD width="42" height="16">
+						<P><STRONG><STRONG><FONT face="Fixedsys">Bxx</FONT></STRONG></STRONG></P>
+					</TD>
+					<TD height="16">Jump to frame <STRONG>xx</STRONG>
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="5"></TD>
+					<TD width="42" height="5">
+						<P><STRONG><FONT face="Fixedsys">Cxx</FONT></STRONG>
+						</P>
+					</TD>
+					<TD height="5">Skip to next frame and start at row <STRONG>xx</STRONG></TD>
+				</TR>
+				<TR>
+					<TD width="38" height="4"></TD>
+					<TD width="42" height="4"><STRONG><FONT face="Fixedsys">Dxx</FONT> </STRONG>
+					</TD>
+					<TD height="4">Halt (<STRONG>xx</STRONG> doesn't do anything)
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="2"></TD>
+					<TD width="42" height="2"><STRONG><FONT face="Fixedsys">Exx</FONT> </STRONG>
+					</TD>
+					<TD height="2">Set volume (<STRONG>xx = </STRONG>0 - 15). <EM>Obsolete, use the volume 
+							column instead!</EM>
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="10"></TD>
+					<TD width="42" height="10"><STRONG><FONT face="Fixedsys">Fxx</FONT> </STRONG>
+					</TD>
+					<TD height="10">Portamento on (slide&nbsp;to new notes),&nbsp;<STRONG>xx</STRONG>&nbsp;= 
+						speed
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="10"></TD>
+					<TD width="42" height="10"><STRONG><FONT face="Fixedsys">Gxx</FONT> </STRONG>
+					</TD>
+					<TD height="10">Portamento&nbsp;off (<STRONG>xx </STRONG>doesn't do anything)
+					</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="1"></TD>
+					<TD width="42" height="1"><STRONG><FONT face="Fixedsys">Hxy</FONT> </STRONG>
+					</TD>
+					<TD height="1">Trigger hardware sweep up, <STRONG>x - </STRONG>period (0 - 7), <STRONG>y 
+							- </STRONG>shift (1 - 7). This feature is only avaliable for the square 
+						channels.</TD>
+				</TR>
+				<TR>
+					<TD width="38" height="1"></TD>
+					<TD width="42" height="1"><STRONG><FONT face="Fixedsys">Ixy</FONT></STRONG></TD>
+					<TD height="1">
+						<P>Trigger hardware sweep down, <STRONG>x - </STRONG>period (0 - 7), <STRONG>y - </STRONG>
+							shift (1 - 7). This feature is only avaliable&nbsp;for the square channels.</P>
+					</TD>
+				</TR>
+			</TABLE>
+			<EM><STRONG></STRONG>
+		</P>
+		<DL>
+			</EM>
+			<DD>
+				<EM>Notes: E won't work if an instrument volume effect loop is used. </EM><EM>F&nbsp;&amp;&nbsp;G 
+					won't work if an instrument&nbsp;frequency effect loop is used. (Pitch, 
+					Hi-pitch&nbsp;and Arpeggio)</EM>
+			</DD>
+		</DL>
+	</BODY>
+</HTML>

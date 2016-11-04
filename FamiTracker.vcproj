@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.10"
+	Name="FamiTracker"
+	ProjectGUID="{92FE0690-CE4F-4CCF-A52C-23265AE7429F}"
+	Keyword="MFCProj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="1"
+			UseOfMFC="2"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				TreatWChar_tAsBuiltInType="TRUE"
+				UsePrecompiledHeader="3"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				LinkIncremental="2"
+				GenerateDebugInformation="TRUE"
+				SubSystem="2"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="FALSE"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="1"
+			UseOfMFC="1"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
+				MinimalRebuild="FALSE"
+				RuntimeLibrary="0"
+				TreatWChar_tAsBuiltInType="TRUE"
+				UsePrecompiledHeader="3"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="3"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
+				LinkIncremental="1"
+				GenerateDebugInformation="TRUE"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="FALSE"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
+			<Tool
+				Name="VCManagedWrapperGeneratorTool"/>
+			<Tool
+				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
+			<File
+				RelativePath=".\Compile.cpp">
+			</File>
+			<File
+				RelativePath=".\DocumentFile.cpp">
+			</File>
+			<File
+				RelativePath=".\FamiTracker.cpp">
+			</File>
+			<File
+				RelativePath=".\FamiTrackerDoc.cpp">
+			</File>
+			<File
+				RelativePath=".\FamiTrackerView.cpp">
+			</File>
+			<File
+				RelativePath=".\MainFrm.cpp">
+			</File>
+			<File
+				RelativePath=".\MIDI.cpp">
+			</File>
+			<File
+				RelativePath=".\Settings.cpp">
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"/>
+				</FileConfiguration>
+			</File>
+			<Filter
+				Name="Sound Driver"
+				Filter="">
+				<File
+					RelativePath=".\player\DSound.cpp">
+				</File>
+				<File
+					RelativePath=".\SoundGen.cpp">
+				</File>
+				<Filter
+					Name="APU"
+					Filter="">
+					<File
+						RelativePath=".\player\Apu.cpp">
+					</File>
+					<File
+						RelativePath=".\player\Dpcm.cpp">
+					</File>
+					<File
+						RelativePath=".\player\Mixer.cpp">
+					</File>
+					<File
+						RelativePath=".\player\Noise.cpp">
+					</File>
+					<File
+						RelativePath=".\player\Square.cpp">
+					</File>
+					<File
+						RelativePath=".\player\Triangle.cpp">
+					</File>
+				</Filter>
+				<Filter
+					Name="Blip_Buffer"
+					Filter="">
+					<File
+						RelativePath=".\player\blip buffer\Blip_Buffer.cpp">
+					</File>
+				</Filter>
+			</Filter>
+			<Filter
+				Name="Dialog Boxes"
+				Filter="">
+				<File
+					RelativePath=".\InstrumentDPCM.cpp">
+				</File>
+				<File
+					RelativePath=".\InstrumentEditDlg.cpp">
+				</File>
+				<File
+					RelativePath=".\InstrumentSettings.cpp">
+				</File>
+				<File
+					RelativePath=".\MIDIConfig.cpp">
+				</File>
+				<File
+					RelativePath=".\NSFDialog.cpp">
+				</File>
+				<File
+					RelativePath=".\OptionsDlg.cpp">
+				</File>
+				<File
+					RelativePath=".\PCMImport.cpp">
+				</File>
+				<File
+					RelativePath=".\PerformanceDlg.cpp">
+				</File>
+				<File
+					RelativePath=".\SoundSettings.cpp">
+				</File>
+				<File
+					RelativePath=".\SpeedDlg.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="Windows"
+				Filter="">
+				<File
+					RelativePath=".\PatternWnd.cpp">
+				</File>
+				<File
+					RelativePath=".\SampleWindow.cpp">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc;xsd"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+			<File
+				RelativePath=".\Compile.h">
+			</File>
+			<File
+				RelativePath=".\DocumentFile.h">
+			</File>
+			<File
+				RelativePath=".\Driver.h">
+			</File>
+			<File
+				RelativePath=".\FamiTracker.h">
+			</File>
+			<File
+				RelativePath=".\FamiTrackerDoc.h">
+			</File>
+			<File
+				RelativePath=".\FamiTrackerView.h">
+			</File>
+			<File
+				RelativePath=".\MainFrm.h">
+			</File>
+			<File
+				RelativePath=".\MIDI.h">
+			</File>
+			<File
+				RelativePath=".\Resource.h">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+"
+						Outputs="hlp\HTMLDefines.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Generating map file for help compiler..."
+						CommandLine="echo // Generated Help Map file.  Used by FamiTracker.HHP. &gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Commands (ID_* and IDM_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h ID_,HID_,0x10000 IDM_,HIDM_,0x10000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Prompts (IDP_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDP_,HIDP_,0x30000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Resources (IDR_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDR_,HIDR_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Dialogs (IDD_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h IDD_,HIDD_,0x20000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo. &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+echo // Frame Controls (IDW_*) &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+makehm /h /a afxhh.h IDW_,HIDW_,0x50000 &quot;$(InputFileName)&quot; &gt;&gt; &quot;hlp\HTMLDefines.h&quot;
+"
+						Outputs="hlp\HTMLDefines.h"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Settings.h">
+			</File>
+			<File
+				RelativePath=".\stdafx.h">
+			</File>
+			<Filter
+				Name="Sound Driver Headers"
+				Filter="">
+				<File
+					RelativePath=".\player\Common.h">
+				</File>
+				<File
+					RelativePath=".\player\DSound.h">
+				</File>
+				<File
+					RelativePath=".\SoundGen.h">
+				</File>
+				<Filter
+					Name="APU Headers"
+					Filter="">
+					<File
+						RelativePath=".\player\Apu.h">
+					</File>
+					<File
+						RelativePath=".\player\Channel.h">
+					</File>
+					<File
+						RelativePath=".\player\Dpcm.h">
+					</File>
+					<File
+						RelativePath=".\player\Envelope.h">
+					</File>
+					<File
+						RelativePath=".\player\Mixer.h">
+					</File>
+					<File
+						RelativePath=".\player\Noise.h">
+					</File>
+					<File
+						RelativePath=".\player\Square.h">
+					</File>
+					<File
+						RelativePath=".\player\Triangle.h">
+					</File>
+				</Filter>
+				<Filter
+					Name="Blip_Buffer Headers"
+					Filter="">
+					<File
+						RelativePath=".\player\blip buffer\blargg_common.h">
+					</File>
+					<File
+						RelativePath=".\player\blip buffer\Blip_Buffer.h">
+					</File>
+					<File
+						RelativePath=".\player\blip buffer\Blip_Synth.h">
+					</File>
+				</Filter>
+			</Filter>
+			<Filter
+				Name="Dialog Boxes Headers"
+				Filter="">
+				<File
+					RelativePath=".\InstrumentDPCM.h">
+				</File>
+				<File
+					RelativePath=".\InstrumentEditDlg.h">
+				</File>
+				<File
+					RelativePath=".\InstrumentSettings.h">
+				</File>
+				<File
+					RelativePath=".\MIDIConfig.h">
+				</File>
+				<File
+					RelativePath=".\NSFDialog.h">
+				</File>
+				<File
+					RelativePath=".\OptionsDlg.h">
+				</File>
+				<File
+					RelativePath=".\PCMImport.h">
+				</File>
+				<File
+					RelativePath=".\PerformanceDlg.h">
+				</File>
+				<File
+					RelativePath=".\SoundSettings.h">
+				</File>
+				<File
+					RelativePath=".\SpeedDlg.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Windows Headers"
+				Filter="">
+				<File
+					RelativePath=".\PatternWnd.h">
+				</File>
+				<File
+					RelativePath=".\SampleWindow.h">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="Resource Files"
+			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
+			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			<File
+				RelativePath=".\res\Application.ico">
+			</File>
+			<File
+				RelativePath=".\res\bitmap1.bmp">
+			</File>
+			<File
+				RelativePath=".\res\bitmap2.bmp">
+			</File>
+			<File
+				RelativePath=".\res\bmp00001.bmp">
+			</File>
+			<File
+				RelativePath=".\res\bmp00002.bmp">
+			</File>
+			<File
+				RelativePath=".\res\bmp00003.bmp">
+			</File>
+			<File
+				RelativePath=".\FamiTracker.rc">
+			</File>
+			<File
+				RelativePath=".\res\FamiTrackerDoc.ico">
+			</File>
+			<File
+				RelativePath=".\res\icon2.ico">
+			</File>
+			<File
+				RelativePath=".\res\Inst_2A03.ico">
+			</File>
+			<File
+				RelativePath=".\res\Inst_2A03inv.ico">
+			</File>
+			<File
+				RelativePath=".\res\key_black_pressed.bmp">
+			</File>
+			<File
+				RelativePath=".\res\key_black_unpressed.bmp">
+			</File>
+			<File
+				RelativePath=".\res\key_white_pressed.bmp">
+			</File>
+			<File
+				RelativePath=".\res\key_white_unpressed.bmp">
+			</File>
+			<File
+				RelativePath=".\res\SampleBg.bmp">
+			</File>
+			<File
+				RelativePath=".\res\Toolbar.bmp">
+			</File>
+		</Filter>
+		<Filter
+			Name="HTML Help Files"
+			Filter="hhp;hhc;hhk;gif;jpg">
+			<File
+				RelativePath=".\hlp\FamiTracker.hhc">
+			</File>
+			<File
+				RelativePath=".\hlp\FamiTracker.hhk">
+			</File>
+			<File
+				RelativePath=".\hlp\FamiTracker.hhp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;
+if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError
+copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;
+goto :HelpDone
+:HelpError
+echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file
+echo.
+:HelpDone
+echo.
+"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Making help file..."
+						CommandLine="start /wait hhc &quot;hlp\FamiTracker.hhp&quot;
+if not exist &quot;hlp\FamiTracker.chm&quot; goto :HelpError
+copy &quot;hlp\FamiTracker.chm&quot; &quot;$(OutDir)\FamiTracker.chm&quot;
+goto :HelpDone
+:HelpError
+echo hlp\FamiTracker.hhp(1) : error:Problem encountered creating help file
+echo.
+:HelpDone
+echo.
+"
+						AdditionalDependencies="hlp\HTMLDefines.h"
+						Outputs="$(OutDir)\$(ProjectName).chm"/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="HTML Help Topics"
+			Filter="htm;html">
+			<File
+				RelativePath=".\hlp\import_dpcm.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\instruments.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\main_index.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\menu_edit.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\menu_file.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\menu_help.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\menu_tracker.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\menu_view.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\midi_settings.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\shortcuts.htm"
+				DeploymentContent="TRUE">
+			</File>
+			<File
+				RelativePath=".\hlp\tracker_field.htm"
+				DeploymentContent="TRUE">
+			</File>
+		</Filter>
+		<File
+			RelativePath=".\res\FamiTracker.manifest">
+		</File>
+		<File
+			RelativePath=".\FamiTracker.reg">
+		</File>
+		<File
+			RelativePath=".\gpl.txt">
+		</File>
+		<File
+			RelativePath=".\ReadMe.txt">
+		</File>
+	</Files>
+	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="FamiTracker.rc"/>
+	</Globals>
+</VisualStudioProject>

@@ -1,0 +1,37 @@
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+	</HEAD>
+	<BODY>
+		<P><FONT size="5" face="Verdana"><STRONG>Importing&nbsp;DPCM samples</STRONG></FONT></P>
+		<P>It is possible to import wave files (PCM) and convert to 1-bit DPCM samples. The 
+			format of samples shouldn't care.<BR>
+			Choose import in the DPCM instruments dialog, select a file and a new dialog 
+			will come up where you choose quality and volume.</P>
+		<H3>Options</H3>
+		<P><STRONG>Quality</STRONG> (1 - 16)<BR>
+			16 - play the sample at normal speed using the highest pitch (D#5)<BR>
+			1 - will play the sample at normal speed using the lowest pitch (C-4)</P>
+		<P><STRONG>Volume</STRONG> (1 - 32)<BR>
+			Sets the&nbsp;scale volume level. Higher levels removes noise.</P>
+		<P><STRONG>Click-elimination<BR>
+			</STRONG>The volume of triangle and noise&nbsp;is decreased when a DPCM sample 
+			is playing, these two options will restore the volume after&nbsp;the sample 
+			is&nbsp;finished.<BR>
+			<BR>
+			<EM>&nbsp;Restore delta counter</EM><STRONG> -&nbsp;</STRONG>Restores 
+			the&nbsp;channels delta counter&nbsp;by adding zeroes after the sample. Could 
+			cause a small echo.<BR>
+			<EM><STRONG>&nbsp;</STRONG>Clip sample</EM> <STRONG>- </STRONG>Cuts the 
+			avaliable&nbsp;volume for the sample and leaves it at zero after end. 
+			Decreases&nbsp;volume&nbsp;and distorts the&nbsp;sample.<BR>
+			<BR>
+			What's best depends on the sample. If no option is choosen, a note-off after 
+			sample will restore&nbsp;full volume (with a click).</P>
+		<P>Max size of DPCM samples is&nbsp;3.9 kB, at best quality&nbsp;(33 kHz) it's a 
+			little less than one second and lowest quality (4 kHz)&nbsp;about eight 
+			seconds.
+		</P>
+	</BODY>
+</HTML>

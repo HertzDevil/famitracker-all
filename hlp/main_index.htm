@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+	<HEAD>
+		<TITLE>(<<YourApp>> Help Index)</TITLE>
+		<META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252">
+	</HEAD>
+	<BODY>
+		<H1><A NAME="main_index"></A><FONT face="Verdana">FamiTracker&nbsp;Help Index</FONT></H1>
+		<H2><FONT face="Verdana">Overview</FONT></H2>
+		<P>This is a&nbsp;tracker&nbsp;for producing music&nbsp;for&nbsp;the Famicom/NES 
+			PSG chip. It is possible to export to the NSF-format, which allows playback on 
+			the real hardware. Currently no extra sound chips are supported.</P>
+		<P>This software is beta, please report any bugs/comments.</P>
+		<P><FONT size="4" face="Verdana"><STRONG>News and bug-fixes&nbsp;in this version</STRONG></FONT></P>
+		<P>&nbsp;Added a volume column, this works even if a volume effect setting is used 
+			(as opposite to the <STRONG>Exx</STRONG> command)<BR>
+			&nbsp;Added a play row command (Ctrl+Return)<BR>
+			&nbsp;Added a keyboard to the instrument settings window (for testing 
+			instruments)<BR>
+			&nbsp;Multiple DPCM samples may be assigned to one instrument<BR>
+			&nbsp;Track-effect numbers are entered in hexadecimal, this&nbsp;makes it 
+			possible to&nbsp;jump&nbsp;more than 99&nbsp;rows&nbsp;when skipping frame<BR>
+			&nbsp;A new file format is used for decreased file size (old format is still 
+			readable, backups&nbsp;will be created when loaded)<BR>
+			&nbsp;Fixed a MML parser bug (negative values didn't work)<BR>
+			&nbsp;Changed the instrument duty cycle / noise mode behavior when no sequence 
+			is used (0 is used)<BR>
+			&nbsp;Sequences failed to loop in some circumstances when compiled into NSF, 
+			fixed<BR>
+			&nbsp;Deleting the instrument number worked in the tracker but failed in 
+			compiled NSF, fixed<BR>
+			&nbsp;Fixed the effect called 'Hi-pitch', it didn't work properly when lowering 
+			the pitch in NSF<BR>
+			&nbsp;NSF hardware sweep is more accurate (should sound as&nbsp;in the tracker)<BR>
+			&nbsp;and&nbsp;more...</P>
+		<P><FONT size="4"><STRONG>Topics</STRONG></FONT></P>
+		<MENU>
+			<LI>
+				<A href="tracker_field.htm" target="">The&nbsp;pattern field</A>
+			<LI>
+				<A href="instruments.htm">Instruments</A>
+			<LI>
+				<A href="midi_settings.htm">MIDI configuration</A>
+			<LI>
+				<A href="file:///E:\Programmering\NET\FamiTracker\FamiTracker\hlp\shortcuts.htm" target="">
+					Key commands</A></LI></MENU>
+		<P>
+			<HR>
+		<P></P>
+		<ADDRESS>FamiTracker is Copyright (c) 2005 jsr</ADDRESS>
+		<ADDRESS>E-mail: <A href="mailto:zxy965r@tninet.se">zxy965r@tninet.se</A></ADDRESS>
+		<ADDRESS>Web: <A href="http://user.tninet.se/~zxy965r/ft/">http://user.tninet.se/~zxy965r/ft/</A></ADDRESS>
+		<ADDRESS>&nbsp;</ADDRESS>
+	</BODY>
+</HTML>

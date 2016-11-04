@@ -1,0 +1,126 @@
+<HTML>
+	<HEAD>
+		<TITLE></TITLE>
+		<META NAME="GENERATOR" Content="Microsoft Visual Studio .NET 7.1">
+	</HEAD>
+	<BODY>
+		<H2 align="left"><FONT face="Verdana">Instruments</FONT></H2>
+		<P align="left">
+			Instruments are used to define how&nbsp;the channels should produce the sound.<BR>
+			Each instrument has a number of&nbsp;effects. These effects may be connected to 
+			a sequence, wich defines how the effect&nbsp;is&nbsp;changing over time.</P>
+		<P align="left"><STRONG><FONT size="4">Instrument list</FONT></STRONG></P>
+		<P align="left">Found to the right in the main window,&nbsp;contains all 
+			instruments used&nbsp;by&nbsp;the song.
+			<BR>
+			Instruments will be added from the lowest&nbsp;free number, not from 
+			a&nbsp;selection in the list.<BR>
+			<BR>
+			To edit instruments, click the <STRONG>Edit instrument-</STRONG> button <STRONG>.</STRONG></P>
+		<P align="left"><STRONG><FONT size="4"> Instrument editor</FONT></STRONG></P>
+		<UL>
+			<LI>
+				<DIV align="left"><STRONG>Instrument settings<BR>
+					</STRONG>Contains&nbsp;a list used&nbsp;to&nbsp;connect&nbsp;sequences 
+					for&nbsp;the instrument&nbsp;effects. They are explained at the bottom of this 
+					file.<BR>
+				</DIV>
+			<LI>
+				<DIV align="left">
+					<STRONG>Sequence editor
+						<BR>
+					</STRONG>Used to set up the sequence lists. Each sequenceitem consists of two 
+					values:<BR>
+				</DIV>
+				<UL>
+					<LI>
+						<DIV align="left">
+							<EM>Length,&nbsp;</EM>has two&nbsp;purposes: a positive value adds a delay 
+							before the next item is executed, a negative will jump backward in the list. 
+							The delay is counted in frames. (A&nbsp;NES do 60/50 frames per 
+							second&nbsp;(NTSC/PAL))
+							<BR>
+						</DIV>
+					<LI>
+						<DIV align="left">
+							<EM>Value</EM>, is the number used by effect.<BR>
+							<BR>
+							The MML field is used for MML-style sequences. Enter the string and press <STRONG>Parse
+							</STRONG>to convert to a sequence.
+							<BR>
+						</DIV>
+					</LI>
+				</UL>
+			</LI>
+		</UL>
+		<P align="left"><STRONG><FONT size="4">The DPCM channel</FONT></STRONG></P>
+		<P dir="ltr" align="left">
+			This channel is different&nbsp;from the others,&nbsp;it uses 
+			samples&nbsp;loaded from files.&nbsp;(None of the&nbsp;instrument effects will 
+			affect it.)
+		</P>
+		<P dir="ltr" align="left">To assign samples, open the instrument editor and click 
+			the <STRONG>DPCM samples</STRONG>-tab. On&nbsp;the&nbsp;left side&nbsp;you'll 
+			find a list with loaded samples, and&nbsp;on the right side&nbsp;you'll find a 
+			list with assigned samples for the selected instrument. The format&nbsp;of 
+			samples is&nbsp;1-bit delta modulation, but it is possible to import and 
+			convert usual wave-files. <EM>See </EM><a href="import_dpcm.htm"><EM>importing PCM</EM></a><EM>.
+				<BR>
+			</EM>
+			<BR>
+			<EM>Important note!<BR>
+			</EM>Playing a&nbsp;DPCM&nbsp;sample will decrease the output level of triangle 
+			and noise. If&nbsp;full volume isn't regained after the sample is done, a note 
+			stop will fix it.</P>
+		<P align="left"><STRONG><FONT size="4">Instrument settings</FONT></STRONG></P>
+		<OL>
+			<LI>
+				<DIV align="left">
+					<STRONG>Volume</STRONG>&nbsp;<BR>
+					<EM>Range:&nbsp;0 - 15&nbsp;</EM><BR>
+					Sets the channel output volume. It isn't possible to set&nbsp;volume of 
+					the&nbsp;triangle channel,&nbsp;but a positive value will activate the 
+					channel.&nbsp;<BR>
+				</DIV>
+			<LI>
+				<DIV align="left">
+					<STRONG>Arpeggio
+						<BR>
+					</STRONG><EM>Range -128 - 127</EM><BR>
+					Produces fast note-shifting, commonly used for&nbsp;making chords. <EM>
+						<BR>
+				</DIV>
+			</EM>
+			<LI>
+				<DIV align="left">
+					<STRONG>Pitch
+						<BR>
+					</STRONG><EM>Range -128 - 127</EM><BR>
+					Alters the pitch,&nbsp;a negative value will lower the&nbsp;frequency.<EM><BR>
+				</DIV>
+			</EM>
+			<LI>
+				<DIV align="left">
+					<STRONG>Hi-pitch
+						<BR>
+					</STRONG><EM>Range -128 - 127</EM><BR>
+					Same as pitch,&nbsp;but sixteen times faster.<BR>
+				</DIV>
+			<LI>
+				<DIV align="left">
+					<STRONG>Duty cycle / Noise
+						<BR>
+					</STRONG><EM>Square:&nbsp;0 - 12.5%, 1 - 25%, 2 - 50%, 3 - 25% (inverted),
+						<BR>
+						Noise: 0 - 32k-bit mode, 1 -&nbsp;93-bit mode</EM><BR>
+					Square -&nbsp;Changes the duty cycle for the square channles.
+					<BR>
+					Noise -&nbsp;Changes the noise random generation mode. 1 will generate 93-bit 
+					sequences (causes noise&nbsp;to sound looped).<BR>
+					This item does not affect&nbsp;other channels.
+				</DIV>
+			</LI>
+		</OL>
+		<P align="left">&nbsp;</P>
+	</BODY>
+</HTML>
