@@ -95,9 +95,9 @@ void CInstrumentEditorN163::SelectSequence(int Sequence, int Type)
 	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_N163);
 }
 
-void CInstrumentEditorN163::TranslateMML(CString String, int Max, int Min)
+void CInstrumentEditorN163::TranslateMML(CString String, int Max, int Min, bool arpScheme) // // //
 {
-	CSequenceInstrumentEditPanel::TranslateMML(String, m_pSequence, Max, Min);
+	CSequenceInstrumentEditPanel::TranslateMML(String, m_pSequence, Max, Min, arpScheme);
 
 	// Update editor
 	m_pSequenceEditor->RedrawWindow();
@@ -243,7 +243,10 @@ void CInstrumentEditorN163::OnKeyReturn()
 			TranslateMML(Text, MAX_VOLUME, 0);
 			break;
 		case SEQ_ARPEGGIO:
-			TranslateMML(Text, 96, -96);
+			if (m_pSequence->GetSetting() == ARP_SETTING_SCHEME)	// // //
+				TranslateMML(Text, 36, -27, true);
+			else
+				TranslateMML(Text, 96, m_pSequence->GetSetting()== ARP_SETTING_FIXED ? 0 : -96, false);
 			break;
 		case SEQ_PITCH:
 			TranslateMML(Text, 126, -127);

@@ -198,7 +198,7 @@ void CSequenceInstrumentEditPanel::PreviewRelease(unsigned char Key)
 	CFamiTrackerView::GetView()->PreviewRelease(Key);
 }
 
-void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequence, int Max, int Min)
+void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequence, int Max, int Min, bool arpScheme) // // //
 {
 	// Takes a string and translates it into a sequence
 
@@ -225,12 +225,37 @@ void CSequenceInstrumentEditPanel::TranslateMML(CString String, CSequence *pSequ
 			// Set release point
 			pSequence->SetReleasePoint(AddedItems);
 		}
+		else if (item[0] == 'x' && arpScheme) {			// // //
+			int value = item[1] == '\0' ? 0 : atoi(item.c_str() + 1);
+			LIMIT(value, Max, Min);
+			pSequence->SetItem(AddedItems++, (value < 0 ? value + 64 : value) + 64);
+		}
+		else if (item[0] == 'y' && arpScheme) {
+			int value = item[1] == '\0' ? 0 : atoi(item.c_str() + 1);
+			LIMIT(value, Max, Min);
+			pSequence->SetItem(AddedItems++, (value < 0 ? value + 64 : value) + 128);
+		}
+		else if (item[0] == '-' && item[1] == 'y' && arpScheme) {
+			int value = item[2] == '\0' ? 0 : atoi(item.c_str() + 2);
+			LIMIT(value, Max, Min);
+			pSequence->SetItem(AddedItems++, (value < 0 ? value + 64 : value) + 192);
+		}
 		else {
 			// Convert to number
 			int value = atoi(item.c_str());
 			// Check for invalid chars
 			if (!(value == 0 && item[0] != '0')) {
 				LIMIT(value, Max, Min);
+				if (arpScheme) {
+					int pos = 0;
+					while (item[pos] >= '0' && item[pos] <= '9') pos++;
+					if (item[pos] == '+')
+					{
+						if (item[pos+1] == 'x') value += 64;
+						if (item[pos+1] == 'y') value += 128;
+					}
+					if (item[pos] == '-' && item[pos+1] == 'y') value += 192;
+				}
 				pSequence->SetItem(AddedItems++, value);
 			}
 		}

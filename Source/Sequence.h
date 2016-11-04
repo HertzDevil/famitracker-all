@@ -68,7 +68,8 @@ private:
 enum {
 	ARP_SETTING_ABSOLUTE = 0,
 	ARP_SETTING_FIXED = 1,
-	ARP_SETTING_RELATIVE = 2
+	ARP_SETTING_RELATIVE = 2,
+	ARP_SETTING_SCHEME = 3			// // //
 };
 
 // Sunsoft modes

@@ -32,7 +32,7 @@
 #include "SequenceSetting.h"
 
 // Arpeggio menu
-enum {MENU_ARP_ABSOLUTE = 500, MENU_ARP_RELATIVE, MENU_ARP_FIXED};
+enum {MENU_ARP_ABSOLUTE = 500, MENU_ARP_RELATIVE, MENU_ARP_FIXED, MENU_ARP_SCHEME}; // // //
 
 IMPLEMENT_DYNAMIC(CSequenceSetting, CWnd)
 
@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CSequenceSetting, CWnd)
 	ON_COMMAND(MENU_ARP_ABSOLUTE, OnMenuArpAbsolute)
 	ON_COMMAND(MENU_ARP_RELATIVE, OnMenuArpRelative)
 	ON_COMMAND(MENU_ARP_FIXED, OnMenuArpFixed)
+	ON_COMMAND(MENU_ARP_SCHEME, OnMenuArpScheme) // // //
 END_MESSAGE_MAP()
 
 int mode = 0;
@@ -62,6 +63,7 @@ void CSequenceSetting::Setup(CFont *pFont)
 	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_ABSOLUTE, _T("Absolute"));
 	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_RELATIVE, _T("Relative"));
 	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_FIXED, _T("Fixed"));
+	m_menuPopup.AppendMenu(MF_STRING, MENU_ARP_SCHEME, _T("Scheme")); // // //
 
 	m_pFont = pFont;
 }
@@ -90,7 +92,7 @@ void CSequenceSetting::OnPaint()
 		dc.SetTextColor(0xFFFFFF);
 		dc.SetBkColor(BG_COLOR);
 
-		LPCTSTR MODES[] = {_T("Absolute"), _T("Fixed"), _T("Relative")};
+		LPCTSTR MODES[] = {_T("Absolute"), _T("Fixed"), _T("Relative"), _T("Scheme")}; // // //
 
 		rect.top += 2;
 		dc.DrawText(MODES[mode], _tcslen(MODES[mode]), rect, DT_CENTER);
@@ -107,21 +109,30 @@ void CSequenceSetting::OnLButtonDown(UINT nFlags, CPoint point)
 
 	if (m_iType == SEQ_ARPEGGIO) {
 
-		switch (m_pSequence->GetSetting()) {
+		switch (m_pSequence->GetSetting()) {		// // //
 			case ARP_SETTING_ABSOLUTE:
 				m_menuPopup.CheckMenuItem(MENU_ARP_ABSOLUTE, MF_CHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_RELATIVE, MF_UNCHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_FIXED, MF_UNCHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_SCHEME, MF_UNCHECKED | MF_BYCOMMAND);
 				break;
 			case ARP_SETTING_RELATIVE:
 				m_menuPopup.CheckMenuItem(MENU_ARP_ABSOLUTE, MF_UNCHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_RELATIVE, MF_CHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_FIXED, MF_UNCHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_SCHEME, MF_UNCHECKED | MF_BYCOMMAND);
 				break;
 			case ARP_SETTING_FIXED:
 				m_menuPopup.CheckMenuItem(MENU_ARP_ABSOLUTE, MF_UNCHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_RELATIVE, MF_UNCHECKED | MF_BYCOMMAND);
 				m_menuPopup.CheckMenuItem(MENU_ARP_FIXED, MF_CHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_SCHEME, MF_UNCHECKED | MF_BYCOMMAND);
+				break;
+			case ARP_SETTING_SCHEME:
+				m_menuPopup.CheckMenuItem(MENU_ARP_ABSOLUTE, MF_UNCHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_RELATIVE, MF_UNCHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_FIXED, MF_UNCHECKED | MF_BYCOMMAND);
+				m_menuPopup.CheckMenuItem(MENU_ARP_SCHEME, MF_CHECKED | MF_BYCOMMAND);
 				break;
 		}
 
@@ -165,4 +176,10 @@ void CSequenceSetting::OnMenuArpFixed()
 			Item = 0;
 		m_pSequence->SetItem(i, Item);
 	}
+}
+
+void CSequenceSetting::OnMenuArpScheme() // // //
+{
+	m_pSequence->SetSetting(ARP_SETTING_SCHEME);
+	((CSequenceEditor*)m_pParent)->ChangedSetting();
 }

@@ -75,7 +75,7 @@ public:
 
 	virtual void SetSequenceString(CString Sequence, bool Changed) = 0;
 
-	virtual void TranslateMML(CString String, CSequence *pSequence, int Max, int Min);
+	virtual void TranslateMML(CString String, CSequence *pSequence, int Max, int Min, bool arpScheme = false); // // //
 
 protected:
 	virtual void PreviewNote(unsigned char Key);

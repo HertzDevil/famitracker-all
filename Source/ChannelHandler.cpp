@@ -708,6 +708,26 @@ void CChannelHandler::RunSequence(int Index, CSequence *pSequence)
 							m_iNote = 0;
 						m_iPeriod = TriggerNote(m_iNote);
 						break;
+					case ARP_SETTING_SCHEME: // // //
+						if (Value < 0) Value += 256;
+						int lim = Value % 0x40, scheme = Value / 0x40;
+						if (lim > 36)
+							lim -= 64;
+						switch (scheme){
+							case 0:
+								break;
+							case 1:
+								lim += m_iArpeggio >> 4;
+								break;
+							case 2:
+								lim += m_iArpeggio & 0x0F;
+								break;
+							case 3:			// -y; not implemented
+								lim -= m_iArpeggio & 0x0F;
+								break;
+						}
+						m_iPeriod = TriggerNote(m_iNote + lim);
+						break;
 				}
 				break;
 			// Pitch

@@ -43,7 +43,7 @@ protected:
 	virtual void OnKeyReturn();
 
 	void SelectSequence(int Sequence, int Type);
-	void TranslateMML(CString String, int Max, int Min);
+	void TranslateMML(CString String, int Max, int Min, bool arpScheme = false);		// // //
 
 protected:
 	static LPCTSTR INST_SETTINGS_VRC6[];

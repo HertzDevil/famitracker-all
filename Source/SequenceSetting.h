@@ -44,4 +44,5 @@ public:
 	afx_msg void OnMenuArpAbsolute();
 	afx_msg void OnMenuArpRelative();
 	afx_msg void OnMenuArpFixed();
+	afx_msg void OnMenuArpScheme();		// // //
 };
