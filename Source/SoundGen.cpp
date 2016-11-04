@@ -116,7 +116,8 @@ CSoundGen::CSoundGen() :
 	// Create all kinds of channels
 	CreateChannels();
 
-	m_pAPU->SetNamcoMixing(theApp.GetSettings()->m_bNamcoMixing);
+	//m_pAPU->SetNamcoMixing(theApp.GetSettings()->m_bNamcoMixing);
+	m_pAPU->SetNamcoMixing(TRUE);
 
 #ifdef EXPORT_TEST
 	m_bExportTesting = false;
@@ -150,6 +151,7 @@ void CSoundGen::CreateChannels()
 		m_pTrackerChannels[i] = NULL;
 	}
 
+	/*
 	// 2A03/2A07
 	AssignChannel(new CTrackerChannel(_T("Pulse 1"), SNDCHIP_NONE, CHANID_SQUARE1), new CSquare1Chan());
 	AssignChannel(new CTrackerChannel(_T("Pulse 2"), SNDCHIP_NONE, CHANID_SQUARE2), new CSquare2Chan());
@@ -191,6 +193,49 @@ void CSoundGen::CreateChannels()
 	AssignChannel(new CTrackerChannel(_T("Square 1"), SNDCHIP_S5B, CHANID_S5B_CH1), new CS5BChannel1());
 	AssignChannel(new CTrackerChannel(_T("Square 2"), SNDCHIP_S5B, CHANID_S5B_CH2), new CS5BChannel2());
 	AssignChannel(new CTrackerChannel(_T("Square 3"), SNDCHIP_S5B, CHANID_S5B_CH3), new CS5BChannel3());
+	*/
+
+	// 2A03/2A07
+	AssignChannel(new CTrackerChannel(_T("Pulse 1"), SNDCHIP_NONE, CHANID_SQUARE1), new CSquare1Chan());
+	AssignChannel(new CTrackerChannel(_T("Pulse 2"), SNDCHIP_NONE, CHANID_SQUARE2), new CSquare2Chan());
+	AssignChannel(new CTrackerChannel(_T("Triangle"), SNDCHIP_NONE, CHANID_TRIANGLE), new CTriangleChan());
+	AssignChannel(new CTrackerChannel(_T("Noise"), SNDCHIP_NONE, CHANID_NOISE), new CNoiseChan());
+	AssignChannel(new CTrackerChannel(_T("DPCM"), SNDCHIP_NONE, CHANID_DPCM), new CDPCMChan(m_pSampleMem));
+
+	// Konami VRC6
+	AssignChannel(new CTrackerChannel(_T("VRC6 Pulse 1"), SNDCHIP_VRC6, CHANID_VRC6_PULSE1), new CVRC6Square1());
+	AssignChannel(new CTrackerChannel(_T("VRC6 Pulse 2"), SNDCHIP_VRC6, CHANID_VRC6_PULSE2), new CVRC6Square2());
+	AssignChannel(new CTrackerChannel(_T("VRC6 Sawtooth"), SNDCHIP_VRC6, CHANID_VRC6_SAWTOOTH), new CVRC6Sawtooth());
+
+	// Konami VRC7
+	AssignChannel(new CTrackerChannel(_T("FM Channel 1"), SNDCHIP_VRC7, CHANID_VRC7_CH1), new CVRC7Channel());
+	AssignChannel(new CTrackerChannel(_T("FM Channel 2"), SNDCHIP_VRC7, CHANID_VRC7_CH2), new CVRC7Channel());
+	AssignChannel(new CTrackerChannel(_T("FM Channel 3"), SNDCHIP_VRC7, CHANID_VRC7_CH3), new CVRC7Channel());
+	AssignChannel(new CTrackerChannel(_T("FM Channel 4"), SNDCHIP_VRC7, CHANID_VRC7_CH4), new CVRC7Channel());
+	AssignChannel(new CTrackerChannel(_T("FM Channel 5"), SNDCHIP_VRC7, CHANID_VRC7_CH5), new CVRC7Channel());
+	AssignChannel(new CTrackerChannel(_T("FM Channel 6"), SNDCHIP_VRC7, CHANID_VRC7_CH6), new CVRC7Channel());
+
+	// Nintendo FDS
+	AssignChannel(new CTrackerChannel(_T("FDS"), SNDCHIP_FDS, CHANID_FDS), new CChannelHandlerFDS());
+
+	// Nintendo MMC5
+	AssignChannel(new CTrackerChannel(_T("MMC5 Pulse 1"), SNDCHIP_MMC5, CHANID_MMC5_SQUARE1), new CMMC5Square1Chan());
+	AssignChannel(new CTrackerChannel(_T("MMC5 Pulse 2"), SNDCHIP_MMC5, CHANID_MMC5_SQUARE2), new CMMC5Square2Chan());
+
+	// Namco N163
+	AssignChannel(new CTrackerChannel(_T("Namco 1"), SNDCHIP_N163, CHANID_N163_CHAN1), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 2"), SNDCHIP_N163, CHANID_N163_CHAN2), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 3"), SNDCHIP_N163, CHANID_N163_CHAN3), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 4"), SNDCHIP_N163, CHANID_N163_CHAN4), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 5"), SNDCHIP_N163, CHANID_N163_CHAN5), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 6"), SNDCHIP_N163, CHANID_N163_CHAN6), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 7"), SNDCHIP_N163, CHANID_N163_CHAN7), new CChannelHandlerN163());
+	AssignChannel(new CTrackerChannel(_T("Namco 8"), SNDCHIP_N163, CHANID_N163_CHAN8), new CChannelHandlerN163());
+
+	// Sunsoft 5B
+	AssignChannel(new CTrackerChannel(_T("5B Channel 1"), SNDCHIP_S5B, CHANID_S5B_CH1), new CS5BChannel1());
+	AssignChannel(new CTrackerChannel(_T("5B Channel 2"), SNDCHIP_S5B, CHANID_S5B_CH2), new CS5BChannel2());
+	AssignChannel(new CTrackerChannel(_T("5B Channel 3"), SNDCHIP_S5B, CHANID_S5B_CH3), new CS5BChannel3());
 }
 
 

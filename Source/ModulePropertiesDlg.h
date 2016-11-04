@@ -33,6 +33,8 @@ private:
 	
 	unsigned int m_iSelectedSong;
 	CListCtrl *m_pSongList;
+	unsigned char m_iExpansions;
+    int m_iN163Channels;
 
 	CFamiTrackerDoc *m_pDocument;
 
@@ -63,4 +65,10 @@ public:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLvnItemchangedSonglist(NMHDR *pNMHDR, LRESULT *pResult);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedExpansionFDS();
+	afx_msg void OnBnClickedExpansionMMC5();
+	afx_msg void OnBnClickedExpansionVRC6();
+    afx_msg void OnBnClickedExpansionVRC7();
+	afx_msg void OnBnClickedExpansion5B();
+    afx_msg void OnBnClickedExpansionN163();
 };

@@ -685,9 +685,9 @@ void CPatternView::DrawScreen(CDC *pDC, CFamiTrackerView *pView)
 	pDC->TextOut(m_iWinWidth - 70, 82, _T("DEBUG"));
 #else 
 #ifndef SVN_BUILD
-	pDC->SetBkColor(DEFAULT_COLOR_SCHEME.CURSOR);
-	pDC->SetTextColor(DEFAULT_COLOR_SCHEME.TEXT_HILITE);
-	pDC->TextOut(m_iWinWidth - 110, m_iWinHeight - 20, _T("Release build"));
+	//pDC->SetBkColor(DEFAULT_COLOR_SCHEME.CURSOR);
+	//pDC->SetTextColor(DEFAULT_COLOR_SCHEME.TEXT_HILITE);
+	//pDC->TextOut(m_iWinWidth - 110, m_iWinHeight - 20, _T("Release build"));
 #endif
 #endif
 

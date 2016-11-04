@@ -79,14 +79,98 @@ bool CInstrumentS5B::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
-void CInstrumentS5B::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
+/*void CInstrumentS5B::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
 {
 	AfxMessageBox(_T("Saving 5B instruments is not yet supported"));
+}*/
+
+void CInstrumentS5B::SaveFile(CFile *pFile, CFamiTrackerDoc *pDoc)
+{
+	//AfxMessageBox(_T("Saving 5B instruments is not yet supported"));
+	unsigned char SeqCount = SEQUENCE_COUNT;
+	pFile->Write(&SeqCount, sizeof(char));
+
+	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
+		int Sequence = GetSeqIndex(i);
+		if (GetSeqEnable(i)) {
+			CSequence *pSeq = pDoc->GetSequence(SNDCHIP_S5B, Sequence, i);
+
+			char Enabled = 1;
+			int ItemCount = pSeq->GetItemCount();
+			int LoopPoint = pSeq->GetLoopPoint();
+			int ReleasePoint = pSeq->GetReleasePoint();
+			int Setting	= pSeq->GetSetting();
+			
+			pFile->Write(&Enabled, sizeof(char));
+			pFile->Write(&ItemCount, sizeof(int));
+			pFile->Write(&LoopPoint, sizeof(int));
+			pFile->Write(&ReleasePoint, sizeof(int));
+			pFile->Write(&Setting, sizeof(int));
+
+			for (int j = 0; j < ItemCount; ++j) {
+				signed char Value = pSeq->GetItem(j);
+				pFile->Write(&Value, sizeof(char));
+			}
+		}
+		else {
+			char Enabled = 0;
+			pFile->Write(&Enabled, sizeof(char));
+		}
+	}
 }
+
+/*bool CInstrumentS5B::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
+{
+	return false;
+}*/
 
 bool CInstrumentS5B::LoadFile(CFile *pFile, int iVersion, CFamiTrackerDoc *pDoc)
 {
-	return false;
+	// Sequences
+	unsigned char SeqCount;
+	unsigned char Enabled;
+	int Count, Index;
+	int LoopPoint, ReleasePoint, Setting;
+
+	pFile->Read(&SeqCount, sizeof(char));
+
+	// Loop through all instrument effects
+	for (int i = 0; i < SeqCount; ++i) {
+		pFile->Read(&Enabled, sizeof(char));
+		if (Enabled == 1) {
+			// Read the sequence
+
+			pFile->Read(&Count, sizeof(int));
+			Index = pDoc->GetFreeSequenceS5B(i);
+
+			CSequence *pSeq = pDoc->GetSequence(SNDCHIP_S5B, Index, i);
+
+			pSeq->SetItemCount(Count);
+			pFile->Read(&LoopPoint, sizeof(int));
+			pSeq->SetLoopPoint(LoopPoint);
+			if (iVersion > 20) {
+				pFile->Read(&ReleasePoint, sizeof(int));
+				pSeq->SetReleasePoint(ReleasePoint);
+			}
+			if (iVersion >= 22) {
+				pFile->Read(&Setting, sizeof(int));
+				pSeq->SetSetting(Setting);
+			}
+			for (int j = 0; j < Count; ++j) {
+				char Val;
+				pFile->Read(&Val, sizeof(char));
+				pSeq->SetItem(j, Val);
+			}
+			SetSeqEnable(i, true);
+			SetSeqIndex(i, Index);
+		}
+		else {
+			SetSeqEnable(i, false);
+			SetSeqIndex(i, 0);
+		}
+	}
+
+	return true;
 }
 
 int CInstrumentS5B::Compile(CChunk *pChunk, int Index)

@@ -1245,8 +1245,11 @@ bool CCompiler::CompileData()
 			m_iSpeedPatchLocation = SPEED_PATCH_LOCATION_N163;
 			Print(" * N163 expansion enabled\n");
 			break;
+		case SNDCHIP_S5B:
+			Print("Error: 5B expansion is unsupported\n");
+			return false;
 		default:
-			Print("Error: Selected expansion chip is unsupported\n");
+			Print("Error: Multichip export is unsupported\n");
 			return false;
 	}
 

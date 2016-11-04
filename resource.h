@@ -374,6 +374,12 @@
 #define IDC_SPIN1                       1263
 #define IDC_DELTA_SPIN                  1263
 #define IDC_DELTA_COUNTER               1265
+#define IDC_EXPANSION_MMC5              1266
+#define IDC_EXPANSION_FDS               1267
+#define IDC_EXPANSION_VRC6              1268
+#define IDC_EXPANSION_VRC7              1269
+#define IDC_EXPANSION_5B                1270
+#define IDC_EXPANSION_N163              1271
 #define ID_TRACKER_PLAY                 32771
 #define ID_TRACKER_PLAYPATTERN          32775
 #define ID_TRACKER_STOP                 32776
