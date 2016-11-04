@@ -32,10 +32,11 @@ public:
 	CModuleImportDlg(CFamiTrackerDoc *pDoc);
 	virtual ~CModuleImportDlg();
 
-	bool LoadFile(CString Path, CFamiTrackerDoc *pDoc);
-
 // Dialog Data
 	enum { IDD = IDD_IMPORT };
+
+public:
+	bool LoadFile(CString Path, CFamiTrackerDoc *pDoc);
 
 private:
 	CFamiTrackerDoc *m_pDocument;
@@ -48,6 +49,9 @@ protected:
 
 	bool ImportInstruments();
 	bool ImportTracks();
+
+protected:
+	CCheckListBox m_ctlTrackList;
 
 	DECLARE_MESSAGE_MAP()
 public:

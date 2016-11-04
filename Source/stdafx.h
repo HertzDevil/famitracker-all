@@ -68,6 +68,8 @@
 #include <afxdhtml.h>
 #include <afxdlgs.h>
 
+#include <afxole.h>        // MFC OLE support
+
 // Releasing pointers
 #define SAFE_RELEASE(p) \
 	if (p != NULL) { \

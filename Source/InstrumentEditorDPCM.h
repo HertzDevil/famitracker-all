@@ -88,4 +88,6 @@ public:
 	afx_msg void OnNMRClickSampleList(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMRClickTable(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkTable(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeDeltaCounter();
+	afx_msg void OnDeltaposDeltaSpin(NMHDR *pNMHDR, LRESULT *pResult);
 };

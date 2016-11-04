@@ -161,7 +161,7 @@ public:
 	//
 	// Document file I/O
 	//
-	bool IsFileLoaded();
+	bool IsFileLoaded() const;
 	bool HasLastLoadFailed() const;
 
 	// Import
@@ -211,6 +211,7 @@ public:
 	void			SetPatternAtFrame(unsigned int Frame, unsigned int Channel, unsigned int Pattern);
 
 	int				GetFirstFreePattern(int Channel);
+	bool			IsPatternEmpty(unsigned int Channel, unsigned int Pattern) const;
 
 	void			ClearPatterns();
 
@@ -241,6 +242,7 @@ public:
 	bool			ClearRowField(unsigned int Frame, unsigned int Channel, unsigned int Row, unsigned int Column);
 	bool			RemoveNote(unsigned int Frame, unsigned int Channel, unsigned int Row);
 	bool			PullUp(unsigned int Frame, unsigned int Channel, unsigned int Row);
+	void			CopyPattern(int Track, int Target, int Source, int Channel);
 
 	// Frame editing
 	bool			InsertFrame(int Pos);
@@ -249,6 +251,7 @@ public:
 	bool			DuplicatePatterns(int Pos);
 	bool			MoveFrameDown(int Pos);
 	bool			MoveFrameUp(int Pos);
+	void			DeleteFrames(int Pos, int Count);
 
 	// Global (module) data
 	void			SetEngineSpeed(unsigned int Speed);
@@ -268,9 +271,9 @@ public:
 	char			*GetSongName()		 { return m_strName; };
 	char			*GetSongArtist()	 { return m_strArtist; };
 	char			*GetSongCopyright()	 { return m_strCopyright; };
-	void			SetSongName(char *pName);
-	void			SetSongArtist(char *pArtist);
-	void			SetSongCopyright(char *pCopyright);
+	void			SetSongName(const char *pName);
+	void			SetSongArtist(const char *pArtist);
+	void			SetSongCopyright(const char *pCopyright);
 
 	int				GetVibratoStyle() const;
 	void			SetVibratoStyle(int Style);
@@ -278,8 +281,9 @@ public:
 	bool			GetLinearPitch() const;
 	void			SetLinearPitch(bool Enable);
 
-	void			SetComment(CString &comment);
+	void			SetComment(CString &comment, bool ShowOnLoad);
 	CString			GetComment() const;
+	bool			ShowCommentOnOpen() const;
 
 	void			SetSpeedSplitPoint(int SplitPoint);
 	int				GetSpeedSplitPoint() const;
@@ -308,6 +312,7 @@ public:
 
 	int				AddInstrument(const char *Name, int ChipType);				// Add a new instrument
 	int				AddInstrument(CInstrument *pInst);
+	void			AddInstrument(CInstrument *pInst, unsigned int Slot);
 	void			RemoveInstrument(unsigned int Index);						// Remove an instrument
 	void			SetInstrumentName(unsigned int Index, const char *Name);	// Set the name of an instrument
 	void			GetInstrumentName(unsigned int Index, char *Name) const;	// Get the name of an instrument
@@ -402,6 +407,7 @@ protected:
 	bool			WriteBlock_Frames(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Patterns(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_DSamples(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_Comments(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesN163(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesS5B(CDocumentFile *pDocFile) const;
@@ -413,6 +419,7 @@ protected:
 	bool			ReadBlock_Frames(CDocumentFile *pDocFile);
 	bool			ReadBlock_Patterns(CDocumentFile *pDocFile);
 	bool			ReadBlock_DSamples(CDocumentFile *pDocFile);
+	bool			ReadBlock_Comments(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesVRC6(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesN163(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesS5B(CDocumentFile *pDocFile);
@@ -505,6 +512,7 @@ private:
 	unsigned int	m_iSpeedSplitPoint;							// Speed/tempo split-point
 
 	CString			m_strComment;
+	bool			m_bDisplayComment;
 
 	unsigned int	m_iFirstHighlight;
 	unsigned int	m_iSecondHighlight;
@@ -517,14 +525,19 @@ private:
 	// End of document data
 	//
 
+	// document override for export (NULL for no override)
+	static CFamiTrackerDoc* ms_pDocOverride;
+
 	// Synchronization
-	CCriticalSection m_csLoadedLock;
+//	CCriticalSection m_csLoadedLock;
 
 // Operations
 public:
+	// temporarily overrides document used for GetDoc, used for automated export
+	static void OverrideDoc(CFamiTrackerDoc* pDoc);
 
 // Overrides
-	public:
+public:
 	virtual BOOL OnNewDocument();
 	virtual BOOL OnSaveDocument(LPCTSTR lpszPathName);
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
@@ -549,5 +562,6 @@ public:
 	afx_msg void OnFileSave();
 	afx_msg void OnEditRemoveUnusedInstruments();
 	afx_msg void OnEditRemoveUnusedPatterns();
+	afx_msg void OnEditMergeDuplicatedPatterns();
 	afx_msg void OnEditClearPatterns();
 };

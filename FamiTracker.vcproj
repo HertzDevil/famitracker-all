@@ -111,6 +111,7 @@
 			UseOfMFC="1"
 			UseOfATL="0"
 			CharacterSet="2"
+			WholeProgramOptimization="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -134,7 +135,6 @@
 				Optimization="1"
 				AdditionalIncludeDirectories="$(DXSDK_DIR)\Include\;.\;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
-				MinimalRebuild="false"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="true"
 				UsePrecompiledHeader="0"
@@ -157,7 +157,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Dbghelp.lib winmm.lib comctl32.lib dsound.lib dxguid.lib Version.lib"
 				Version=""
-				LinkIncremental="1"
+				LinkIncremental="0"
 				AdditionalLibraryDirectories="$(DXSDK_DIR)\Lib\x86\;"
 				GenerateDebugInformation="true"
 				GenerateMapFile="false"
@@ -338,10 +338,6 @@
 						ObjectFile="$(IntDir)/$(InputName)1.obj"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Source\TrackerChannel.cpp"
-				>
 			</File>
 			<File
 				RelativePath=".\Source\WaveFile.cpp"
@@ -714,6 +710,10 @@
 					RelativePath=".\Source\PatternCompiler.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\Source\TextExporter.cpp"
+					>
+				</File>
 				<Filter
 					Name="Custom Exporter"
 					>
@@ -727,6 +727,14 @@
 					</File>
 					<File
 						RelativePath=".\Source\CustomExporters.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Test"
+					>
+					<File
+						RelativePath=".\Source\ExportTest\ExportTest.cpp"
 						>
 					</File>
 				</Filter>
@@ -816,6 +824,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\SoundGen.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\TrackerChannel.cpp"
 					>
 				</File>
 				<Filter
@@ -1110,10 +1122,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Source\TrackerChannel.h"
-				>
-			</File>
-			<File
 				RelativePath=".\version.h"
 				>
 			</File>
@@ -1134,6 +1142,10 @@
 				</File>
 				<File
 					RelativePath=".\Source\SoundGen.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Source\TrackerChannel.h"
 					>
 				</File>
 				<Filter
@@ -1504,6 +1516,10 @@
 					RelativePath=".\Source\PatternCompiler.h"
 					>
 				</File>
+				<File
+					RelativePath=".\Source\TextExporter.h"
+					>
+				</File>
 				<Filter
 					Name="Custom Exporter Headers"
 					>
@@ -1521,6 +1537,14 @@
 					</File>
 					<File
 						RelativePath=".\Source\CustomExporters.h"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Test Headers"
+					>
+					<File
+						RelativePath=".\Source\ExportTest\ExportTest.h"
 						>
 					</File>
 				</Filter>
@@ -1685,11 +1709,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Toolbar-d5.bmp"
+				RelativePath=".\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
-				RelativePath=".\Toolbar-d5.bmp"
+				RelativePath=".\res\Toolbar-d5.bmp"
 				>
 			</File>
 			<File
@@ -1832,6 +1856,11 @@
 					>
 				</File>
 				<File
+					RelativePath=".\hlp\sunsoft.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
 					RelativePath=".\hlp\vrc6.htm"
 					DeploymentContent="true"
 					>
@@ -1853,6 +1882,11 @@
 			<Filter
 				Name="Interface"
 				>
+				<File
+					RelativePath=".\hlp\command_line.htm"
+					DeploymentContent="true"
+					>
+				</File>
 				<File
 					RelativePath=".\hlp\control_panel.htm"
 					DeploymentContent="true"
@@ -1900,6 +1934,11 @@
 				</File>
 				<File
 					RelativePath=".\hlp\shortcuts.htm"
+					DeploymentContent="true"
+					>
+				</File>
+				<File
+					RelativePath=".\hlp\text_export.htm"
 					DeploymentContent="true"
 					>
 				</File>

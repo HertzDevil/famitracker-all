@@ -40,9 +40,11 @@ BOOL CALLBACK CDSound::DSEnumCallback(LPGUID lpGuid, LPCTSTR lpcstrDescription, 
 
 // Instance members
 
-CDSound::CDSound() :
+CDSound::CDSound(HWND hWnd, HANDLE hNotification) :
 	m_iDevices(0),
-	m_lpDirectSound(NULL)
+	m_lpDirectSound(NULL),
+	m_hWndTarget(hWnd),
+	m_hNotificationHandle(hNotification)
 {
 	ASSERT(pThisObject == NULL);
 	pThisObject = this;
@@ -56,11 +58,8 @@ CDSound::~CDSound()
 	}
 }
 
-bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
+bool CDSound::Init(int Device)
 {	
-	m_hNotificationHandle = hNotification;
-	m_hWndTarget = hWnd;
-
 	if (Device > (int)m_iDevices)
 		Device = 0;
 	
@@ -74,7 +73,7 @@ bool CDSound::Init(HWND hWnd, HANDLE hNotification, int Device)
 		return false;
 	}
 
-	if (FAILED(m_lpDirectSound->SetCooperativeLevel(hWnd, DSSCL_PRIORITY)))
+	if (FAILED(m_lpDirectSound->SetCooperativeLevel(m_hWndTarget, DSSCL_PRIORITY)))
 		return false;
 	
 	return true;
@@ -364,18 +363,20 @@ void CDSoundChannel::Reset()
 	m_lpDirectSoundBuffer->SetCurrentPosition(0);
 }
 
-int CDSoundChannel::WaitForDirectSoundEvent() const
+int CDSoundChannel::WaitForDirectSoundEvent(DWORD dwTimeout) const
 {
 	// Wait for a DirectSound event
 	if (!IsPlaying())
 		Play();
 
 	// Wait for events
-	switch (WaitForMultipleObjects(2, m_hEventList, FALSE, INFINITE)) {
+	switch (::WaitForMultipleObjects(2, m_hEventList, FALSE, dwTimeout)) {
 		case WAIT_OBJECT_0:			// External event
-			return CUSTOM_EVENT;
-		case WAIT_OBJECT_0 + 1:		// Direct sound buffer
+			return BUFFER_CUSTOM_EVENT;
+		case WAIT_OBJECT_0 + 1:		// DirectSound buffer
 			return (GetWriteBlock() == m_iCurrentWriteBlock) ? BUFFER_OUT_OF_SYNC : BUFFER_IN_SYNC;
+		case WAIT_TIMEOUT:			// Timeout
+			return BUFFER_TIMEOUT;
 	}
 
 	// Error

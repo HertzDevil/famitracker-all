@@ -42,7 +42,7 @@ struct stNSFHeader {
 	unsigned char	Reserved[4];
 };
 
-const int BANK_SIZE = 4096;	// The NSF specification
+const int BANK_SIZE = 4096;	// As specified by the NSF specification
 
 /*
  * NSF file bank
@@ -61,12 +61,22 @@ public:
 struct driver_t;
 
 /*
+ * Logger class
+ */
+class CCompilerLog
+{
+public:
+	virtual void WriteLog(char *text) = 0;
+	virtual void Clear() = 0;
+};
+
+/*
  * The compiler
  */
 class CCompiler
 {
 public:
-	CCompiler(CFamiTrackerDoc *pDoc, CEdit *pLogText);
+	CCompiler(CFamiTrackerDoc *pDoc, CCompilerLog *pLogger);
 	~CCompiler();
 	
 	void	ExportNSF(CString FileName, int MachineType);
@@ -74,6 +84,8 @@ public:
 	void	ExportBIN(CString BIN_File, CString DPCM_File);
 	void	ExportPRG(CString FileName, bool EnablePAL);
 	void	ExportASM(CString FileName);
+
+	void	ExportTest(char *pResult, stNSFHeader *pHeader, int MachineType);
 
 private:
 	void	CreateHeader(stNSFHeader *pHeader, int MachineType);
@@ -91,7 +103,7 @@ private:
 	// Compiler
 	bool	CompileData();
 	void	AllocateData();
-	void	AllocateDataBankswitched();
+	bool	AllocateDataBankswitched();
 	void	AddBankswitching();
 	void	Cleanup();
 
@@ -150,6 +162,8 @@ public:
 	static const int PAGE_BANKED;
 	static const int PAGE_SAMPLES;
 
+	static const int PATTERN_SWITCH_BANK;
+
 	// Channel order lists
 	static const int CHAN_ORDER_DEFAULT[];
 	static const int CHAN_ORDER_VRC6[];
@@ -165,6 +179,7 @@ public:
 	static const char LABEL_SAMPLES_LIST[];
 	static const char LABEL_SAMPLES[];
 	static const char LABEL_WAVETABLE[];
+	static const char LABEL_SAMPLE[];
 	static const char LABEL_WAVES[];
 	static const char LABEL_SEQ_2A03[];
 	static const char LABEL_SEQ_VRC6[];
@@ -175,6 +190,12 @@ public:
 	static const char LABEL_SONG_FRAMES[];
 	static const char LABEL_SONG_FRAME[];
 	static const char LABEL_PATTERN[];
+
+protected:
+	static CCompiler *pCompiler;			// Points to an active CCompiler object
+
+public:
+	static CCompiler *GetCompiler();		// Get the active CCompiler object, NULL otherwise
 
 private:
 	int				m_iChanOrder[MAX_CHANNELS];
@@ -188,7 +209,8 @@ private:
 	std::vector<CChunk*> m_vInstrumentChunks;
 	std::vector<CChunk*> m_vSongChunks;	
 	std::vector<CChunk*> m_vFrameChunks;
-	std::vector<CChunk*> m_vPatternChunks;	
+	std::vector<CChunk*> m_vPatternChunks;
+	//std::vector<CChunk*> m_vWaveChunks;
 
 
 	// Special objects
@@ -213,6 +235,8 @@ private:
 	bool			m_bSequencesUsedVRC6[MAX_SEQUENCES][SEQ_COUNT];
 	bool			m_bSequencesUsedN163[MAX_SEQUENCES][SEQ_COUNT];
 
+	int				m_iWaveBanks[MAX_INSTRUMENTS];	// N163 waves
+
 	// Sample variables
 	unsigned char	m_iSamplesLookUp[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE];
 	bool			m_bSamplesAccessed[MAX_INSTRUMENTS][OCTAVE_RANGE][NOTE_RANGE];
@@ -228,9 +252,9 @@ private:
 	unsigned int	m_iInitAddress;			// NSF init address
 	unsigned int	m_iDriverAddress;		// Music driver location
 
-	unsigned int	m_iTrackFrameSize[MAX_TRACKS];
+	unsigned int	m_iTrackFrameSize[MAX_TRACKS];	// Cached song frame sizes
 
-	unsigned int	m_iDuplicatePatterns;
+	unsigned int	m_iDuplicatePatterns;	// Number of duplicated patterns removed
 
 	// NSF banks
 	CFileBank		*m_pFileBanks[256];
@@ -249,5 +273,5 @@ private:
 	CMap<CString, LPCTSTR, CString, LPCTSTR> m_DuplicateMap;
 
 	// Debugging
-	CEdit			*m_pLogText;
+	CCompilerLog	*m_pLogger;
 };

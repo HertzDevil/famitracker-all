@@ -139,8 +139,8 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 {
 	CString Title;
 	char Name[256];
-	CInstrument *pInst = m_pDocument->GetInstrument(Index);
-	int InstType = pInst->GetType();
+	CInstrument *pInstrument = m_pDocument->GetInstrument(Index);
+	int InstType = pInstrument->GetType();
 
 	// Dialog title
 	m_pDocument->GetInstrumentName(Index, Name);	
@@ -157,7 +157,7 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 			case INST_2A03: {
 					int Channel = CFamiTrackerView::GetView()->GetSelectedChannel();
 					int Type = CFamiTrackerDoc::GetDoc()->GetChannelType(Channel);
-					bool bShowDPCM = (Type == CHANID_DPCM) || (((CInstrument2A03*)pInst)->AssignedSamples());
+					bool bShowDPCM = (Type == CHANID_DPCM) || (((CInstrument2A03*)pInstrument)->AssignedSamples());
 					InsertPane(new CInstrumentEditor2A03(), !bShowDPCM);
 					InsertPane(new CInstrumentEditorDPCM(), bShowDPCM);
 				}
@@ -194,6 +194,8 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 	UpdateWindow();
 
 	m_iSelectedInstType = InstType;
+
+	pInstrument->Release();
 }
 
 void CInstrumentEditDlg::OnTcnSelchangeInstTab(NMHDR *pNMHDR, LRESULT *pResult)

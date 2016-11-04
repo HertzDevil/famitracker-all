@@ -121,7 +121,7 @@ enum {
 	EF_HALT,
 	EF_VOLUME,
 	EF_PORTAMENTO,
-	EF_PORTAOFF,		// unused!!
+	EF_PORTAOFF,				// unused!!
 	EF_SWEEPUP,
 	EF_SWEEPDOWN,
 	EF_ARPEGGIO,
@@ -139,18 +139,15 @@ enum {
 	EF_VOLUME_SLIDE,
 	EF_NOTE_CUT,
 	EF_RETRIGGER,
-
-	EF_DELAYED_VOLUME,	
-
+	EF_DELAYED_VOLUME,			// Unimplemented
 	EF_FDS_MOD_DEPTH,
 	EF_FDS_MOD_SPEED_HI,
 	EF_FDS_MOD_SPEED_LO,
-
 	EF_DPCM_PITCH,
-
 	EF_SUNSOFT_ENV_LO,
 	EF_SUNSOFT_ENV_HI,
 	EF_SUNSOFT_ENV_TYPE,
+//	EF_TARGET_VOLUME_SLIDE, 
 /*
 	EF_VRC7_MODULATOR,
 	EF_VRC7_CARRIER,
@@ -202,6 +199,7 @@ const char EFF_CHAR[] = {'F',	// Speed
 						 'H',	// Sunsoft envelope low
 						 'I',	// Sunsoft envelope high
 						 'J',	// Sunsoft envelope type
+//						 '9'	// Targeted volume slide
 						 /*
 						 'H',	// VRC7 modulator
 						 'I',	// VRC7 carrier

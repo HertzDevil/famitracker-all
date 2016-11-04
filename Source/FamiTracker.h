@@ -25,6 +25,9 @@
 
 #include "version.h"
 
+// Enable export verification
+//#define EXPORT_TEST
+
 //#define LIMIT(v, max, min) if (v > max) v = max; else if (v < min) v = min;
 #define LIMIT(v, max, min) v = ((v > max) ? max : ((v < min) ? min : v));//  if (v > max) v = max; else if (v < min) v = min;
 
@@ -51,6 +54,8 @@ public:
 	bool m_bExport;
 	bool m_bPlay;
 	CString m_strExportFile;
+	CString m_strExportLogFile;
+	CString m_strExportDPCMFile;
 };
 
 
@@ -85,7 +90,6 @@ public:
 	void			RemoveSoundGenerator();
 
 	// Tracker player functions
-	void			RegisterKeyState(int Channel, int Note);
 	bool			IsPlaying() const;
 	void			ResetPlayer();
 	void			SilentEverything();
@@ -104,16 +108,21 @@ public:
 //	CDocument		*GetActiveDocument() const;
 //	CView			*GetActiveView() const;
 
+#ifdef EXPORT_TEST
+	void			VerifyExport();
+#endif /* EXPORT_TEST */
+
 	//
 	// Private functions
 	//
 private:
 	void CheckAppThemed();
 	void ShutDownSynth();
-	bool CheckSingleInstance();
+	bool CheckSingleInstance(CFTCommandLineInfo &cmdInfo);
 	void RegisterSingleInstance();
 	void UnregisterSingleInstance();
 	void CheckNewVersion();
+	void CommandLineExport(const CString& fileIn, const CString& fileOut, const CString& fileLog, const CString& fileDPCM);
 
 protected:
 	BOOL DoPromptFileName(CString& fileName, CString& filePath, UINT nIDSTitle, DWORD lFlags, BOOL bOpenFileDialog, CDocTemplate* pTemplate);
@@ -132,10 +141,6 @@ private:
 	// Single instance stuff
 	CMutex			*m_pInstanceMutex;
 	HANDLE			m_hWndMapFile;
-
-	// Windows handles
-	HANDLE			m_hAliveCheck;
-	HANDLE			m_hNotificationEvent;
 
 	bool			m_bThemeActive;
 

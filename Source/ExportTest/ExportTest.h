@@ -20,37 +20,36 @@
 
 #pragma once
 
-#include "fft\fft.h"
+#ifdef EXPORT_TEST
 
-const int FFT_POINTS = 256;
+// DLL imports
+typedef void (*LoadFile_t)(char*, int, int);
+typedef int (*RunFrame_t)(unsigned int, int);
+typedef unsigned char (*ReadResult_t)(unsigned int);
 
-class CSWSpectrum : public CSampleWinState
+struct stNSFHeader;
+
+// Test class
+class CExportTest
 {
 public:
-	CSWSpectrum();
-	~CSWSpectrum();
+	CExportTest();
+	~CExportTest();
 
-	void Activate();
-	void Deactivate();
-	void SetSampleRate(int SampleRate);
-	void SetSampleData(int *iSamples, unsigned int iCount);
-	void Draw(CDC *pDC, bool bMessage);
+	bool Setup();
+	void RunInit(int Song);
+	void RunPlay();
+
+	unsigned char ReadReg(int Reg);
 
 private:
-	unsigned int m_iCount;
+	struct {
+		LoadFile_t		LoadFileFunc;
+		RunFrame_t		RunFrameFunc;
+		ReadResult_t	ReadResultFunc;
+	} ImportFuncs;
 
-	int	*m_pSamples;
-	int	*m_pBlitBuffer;
-	int	m_iWindowBufPtr, *m_pWindowBuf;
-
-	int	m_iLogTable[WIN_HEIGHT];
-
-	int m_iFillPos;
-
-	BITMAPINFO bmi;
-
-	Fft	*m_pFftObject;
-	int	m_iFftPoint[FFT_POINTS];
-
-	int m_pSampleBuffer[FFT_POINTS];
+	stNSFHeader *m_pHeader;
 };
+
+#endif /* EXPORT_TEST */

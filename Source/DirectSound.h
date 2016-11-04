@@ -26,7 +26,7 @@
 #include <dsound.h>
 
 // Return values from WaitForDirectSoundEvent()
-enum {CUSTOM_EVENT = 1, BUFFER_IN_SYNC, BUFFER_OUT_OF_SYNC};
+enum {BUFFER_CUSTOM_EVENT = 1, BUFFER_TIMEOUT, BUFFER_IN_SYNC, BUFFER_OUT_OF_SYNC};
 
 // DirectSound channel
 class CDSoundChannel 
@@ -47,7 +47,7 @@ public:
 	void ResetWritePointer();
 	void AdvanceWritePointer();
 
-	int  WaitForDirectSoundEvent() const;
+	int  WaitForDirectSoundEvent(DWORD dwTimeout) const;
 
 	int GetBlockSize() const	{ return m_iBlockSize; };
 	int GetBlockSamples() const	{ return m_iBlockSize >> ((m_iSampleSize >> 3) - 1); };
@@ -85,10 +85,10 @@ private:
 class CDSound 
 {
 public:
-	CDSound();
+	CDSound(HWND hWnd, HANDLE hNotification);
 	~CDSound();
 
-	bool			Init(HWND hWnd, HANDLE hNotification, int Device);
+	bool			Init(int Device);
 	void			Close();
 
 	CDSoundChannel	*OpenChannel(int SampleRate, int SampleSize, int Channels, int BufferLength, int Blocks);

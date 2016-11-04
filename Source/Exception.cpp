@@ -31,13 +31,53 @@
 // This won't be called when running with a debugger attached
 
 const TCHAR FTM_DUMP[] = _T("recover");
-const TCHAR MINIDUMP_FILE[] = _T("MiniDump.dmp");
+const TCHAR MINIDUMP_FILE_PRE[] = _T("MiniDump");
+const TCHAR MINIDUMP_FILE_END[] = _T(".dmp");
 
 //#ifdef ENABLE_CRASH_HANDLER
 
+CString GetDumpFilename(int counter)
+{
+	// Append a timestamp to the filename
+	//
+	CString filename;
+	CTime t = CTime::GetCurrentTime();
+	
+	filename = MINIDUMP_FILE_PRE;
+
+	// Date
+	filename.AppendFormat(_T("_%02i%02i%02i-%02i%02i"), t.GetYear(), t.GetMonth(), t.GetDay(), t.GetHour(), t.GetMinute());
+
+	// App version
+	filename.AppendFormat(_T("-v%i_%i_%i"), VERSION_MAJ, VERSION_MIN, VERSION_REV);
+#ifdef WIP
+	filename.AppendFormat(_T("_b%i"), VERSION_WIP);
+#endif
+
+	// Counter
+	if (counter > 0)
+		filename.AppendFormat(_T("(%i)"), counter);
+
+#ifndef SVN_BUILD
+	filename.Append(_T("-custom"));
+#endif /* SVN_BUILD */
+
+	filename.Append(MINIDUMP_FILE_END);
+
+	return filename;
+}
+
 LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 {
-	HANDLE hFile = CreateFile(MINIDUMP_FILE, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
+	CString MinidumpFile;
+	int dump_counter = 0;
+
+	MinidumpFile = GetDumpFilename(dump_counter++);
+
+	while (GetFileAttributes(MinidumpFile) != 0xFFFFFFFF)
+		MinidumpFile = GetDumpFilename(dump_counter++);
+		
+	HANDLE hFile = CreateFile(MinidumpFile, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); 
 
 	// Save the memory dump file
 	if ((hFile != NULL) && (hFile != INVALID_HANDLE_VALUE))  {
@@ -67,7 +107,7 @@ LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep)
 	CString text;
 	text.Format(_T("This application has encountered a problem and needs to close.\n\n"));
 	text.AppendFormat(_T("Unhandled exception %X.\n\n"), ep->ExceptionRecord->ExceptionCode);
-	text.AppendFormat(_T("A memory dump file has been made (%s), please include this if you file a bug report.\n\n"), MINIDUMP_FILE);
+	text.AppendFormat(_T("A memory dump file has been created (%s), please include this if you file a bug report!\n\n"), MinidumpFile);
 	text.AppendFormat(_T("Attempting to save current module as %s."), DocDumpFile);
 //	text.Append(_T("Application will now close."));
 	AfxMessageBox(text, MB_ICONSTOP);

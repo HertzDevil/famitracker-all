@@ -176,7 +176,7 @@ void CSettings::LoadSettings()
 		m_pSettings[i]->Load();
 	}
 
-	m_bNamcoMixing = LoadSetting(_T("Emulation"), _T("Linear Namco mixing"), 0) == 1;
+//	m_bNamcoMixing = LoadSetting(_T("Emulation"), _T("Linear Namco mixing"), 0) == 1;
 }
 
 void CSettings::SaveSettings()

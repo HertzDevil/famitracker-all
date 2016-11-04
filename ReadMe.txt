@@ -7,7 +7,7 @@
  The NSF driver code is assembled using the CA65 assembler.
 
  The export plugin support is written by Gradualore
- An example exporter can be found here: http://famitracker.shoodot.net/files/exporterplugin.zip
+ An example exporter can be found here: http://famitracker.com/files/exporterplugin.zip
 
  Icon is made by Kuhneghetz
  Toolbar icons are made by ilkke

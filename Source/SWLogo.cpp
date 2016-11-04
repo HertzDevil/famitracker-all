@@ -19,6 +19,7 @@
 */
 
 #include "stdafx.h"
+#include "SampleWindow.h"
 #include "SWLogo.h"
 #include "resource.h"
 

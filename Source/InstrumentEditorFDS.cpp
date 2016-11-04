@@ -30,6 +30,7 @@
 #include "InstrumentEditPanel.h"
 #include "InstrumentEditorFDS.h"
 #include "MainFrm.h"
+#include "SoundGen.h"
 
 using namespace std;
 
@@ -48,6 +49,9 @@ CInstrumentEditorFDS::~CInstrumentEditorFDS()
 {
 	SAFE_RELEASE(m_pModSequenceEditor);
 	SAFE_RELEASE(m_pWaveEditor);
+
+	if (m_pInstrument)
+		m_pInstrument->Release();
 }
 
 void CInstrumentEditorFDS::DoDataExchange(CDataExchange* pDX)
@@ -57,6 +61,9 @@ void CInstrumentEditorFDS::DoDataExchange(CDataExchange* pDX)
 
 void CInstrumentEditorFDS::SelectInstrument(int Instrument)
 {
+	if (m_pInstrument)
+		m_pInstrument->Release();
+
 	m_pInstrument = (CInstrumentFDS*)GetDocument()->GetInstrument(Instrument);
 
 	if (m_pWaveEditor)

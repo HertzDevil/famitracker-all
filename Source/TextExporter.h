@@ -20,37 +20,15 @@
 
 #pragma once
 
-#include "fft\fft.h"
+class CFamiTrackerDoc; // forward declaration
 
-const int FFT_POINTS = 256;
-
-class CSWSpectrum : public CSampleWinState
+class CTextExport : public CObject
 {
 public:
-	CSWSpectrum();
-	~CSWSpectrum();
+	CTextExport();
+	virtual ~CTextExport();
 
-	void Activate();
-	void Deactivate();
-	void SetSampleRate(int SampleRate);
-	void SetSampleData(int *iSamples, unsigned int iCount);
-	void Draw(CDC *pDC, bool bMessage);
-
-private:
-	unsigned int m_iCount;
-
-	int	*m_pSamples;
-	int	*m_pBlitBuffer;
-	int	m_iWindowBufPtr, *m_pWindowBuf;
-
-	int	m_iLogTable[WIN_HEIGHT];
-
-	int m_iFillPos;
-
-	BITMAPINFO bmi;
-
-	Fft	*m_pFftObject;
-	int	m_iFftPoint[FFT_POINTS];
-
-	int m_pSampleBuffer[FFT_POINTS];
+	// returns an empty string on success, otherwise returns a descriptive error
+	const CString& ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc);
+	const CString& ExportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc);
 };

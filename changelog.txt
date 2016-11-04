@@ -2,6 +2,28 @@
  Change log
 --------------------------------------------------------------------------------
 
+Version 0.4.2
+
+ New stuff:
+  - Added selection + drag & drop capability to the frame editor
+  - NSF exporter will optimize N163 waves
+  - Added initial delta counter setting to the DPCM instrument editor
+  - Added a text exporter / importer (by rainwarrior)
+  - Added a shortcut item for the duplicate patterns command
+  - Added a volume mask option to pattern editor (edit menu)
+  - Added module comments dialog
+  - Adjusted filtering of FDS audio emulation
+  
+ Fixed bugs:
+  - Fixed extra effect columns not being copied on shift+drag
+  - Fixed a problem with shift+mouse wheel
+  - Fixed a few other FTM file import problems
+  - Fixed a problem with FDS wave previewing
+  - Fixed a bankswitching bug when exporting multisong NSFs
+  - Fixed VRC6 and MMC5 not being silenced by the Cxx command
+  - Fixed some problems with the Dxx command
+  
+
 Version 0.4.1
 
  New stuff:
@@ -16,6 +38,7 @@ Version 0.4.1
   - Fixed undo bug after pasting from clipboard
   - Fixed problem when loading instrument files that contains sequences of max size
   - Fixed some wave file export bugs
+
 
 Version 0.4.0
 

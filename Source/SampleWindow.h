@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include <afxmt.h>		// Synchronization objects
+
+class CSampleWindowThread;
+
 class CSampleWinState
 {
 public:
@@ -47,7 +51,9 @@ public:
 	virtual ~CSampleWindow();
 
 	void SetSampleRate(int SampleRate);
-	void DrawSamples(int *Samples, int Count);
+	void FlushSamples(int *Samples, int Count);
+
+	UINT ThreadProc();
 
 	static const int WIN_WIDTH = 145;
 	static const int WIN_HEIGHT = 40;
@@ -55,10 +61,24 @@ public:
 private:
 	static const int STATE_COUNT = 4;
 
+private:
 	void NextState();
 
+private:
 	CSampleWinState *m_pStates[STATE_COUNT];
 	unsigned int	m_iCurrentState;
+
+	int				m_iBufferSize;
+	int				*m_pBuffer1;
+	int				*m_pBuffer2;
+	int				*m_pFillBuffer;
+
+	HANDLE			m_hNewSamples;
+
+	bool			m_bThreadRunning;
+
+	CCriticalSection m_csBufferSelect;
+	CCriticalSection m_csBuffer;
 
 public:
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
@@ -70,4 +90,5 @@ protected:
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
 public:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnDestroy();
 };

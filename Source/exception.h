@@ -23,8 +23,8 @@
 #ifndef _DEBUG
 // Enable crash handler
 #define ENABLE_CRASH_HANDLER
-#endif
+#endif /* _DEBUG */
 
 #ifdef ENABLE_CRASH_HANDLER
 LONG WINAPI ExceptionHandler(__in struct _EXCEPTION_POINTERS *ep);
-#endif
+#endif /* ENABLE_CRASH_HANDLER */
