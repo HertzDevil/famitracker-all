@@ -1,0 +1,64 @@
+﻿msg.langfile {言語パックが破損しています}
+msg.langfile.title {ネンエラー}
+
+mm.file {ファイル}
+mm.edit {編集}
+mm.module {モジュール}
+mm.instr {音源}
+mm.tracker {トラッカー}
+mm.view {表示}
+mm.lang {言語}
+mm.help {ヘルプ}
+
+mm.file.new {新しいCtrl + Nキー}
+mm.file.open {開くCtrlキー+ O}
+mm.file.save {Ctrl + Sキーを保存します}
+mm.file.saveas {名前を付けて保存}
+mm.file.expnsf {NSFのCtrl + Eとしてエクスポート}
+mm.file.expwav {WAVファイルとしてエクスポート}
+mm.file.exptext {テキストとしてエクスポート}
+mm.file.imptext {インポートテキスト}
+mm.file.config {設定}
+mm.file.mru {開くCtrlキー}
+mm.file.exit {終了}
+
+stat.mm.file.new {新しいモジュールを作成します}
+stat.mm.file.open {モジュールを開きます}
+stat.mm.file.save {保存}
+stat.mm.file.saveas {新しいモジュールとして保存}
+stat.mm.file.expnsf {NSFとしてエクスポート}
+stat.mm.file.expwav {WAVファイルとしてエクスポート}
+stat.mm.file.exptext {テキストとしてエクスポート}
+stat.mm.file.imptext {テキストからのインポート}
+stat.mm.file.config {設定を開きます}
+stat.mm.file.exit {を閉じ}
+
+stat.chip.none {拡張子チップ}
+stat.chip.vrc6 {VRC6拡張子}
+stat.chip.vrc7 {VRC7拡張子}
+stat.chip.fds {FDS拡張}
+stat.chip.mmc5 {MMC5拡張子}
+stat.chip.n163 {N163拡張}
+stat.chip.s5b {サンソフト5B拡張子}
+
+mainfrm.songsets {ソング}
+mainfrm.speed {スピード}
+mainfrm.temp {一時}
+mainfrm.rows {行}
+mainfrm.frames {フレーム}
+mainfrm.editsets {編集設定}
+mainfrm.steps {ステップ}
+mainfrm.keyrepeat {ノートエントリ
+繰り返し}
+mainfrm.modsets {ソング設定}
+mainfrm.songs {曲}
+
+instrfrm.new.2a03 {新しい2A03-楽器}
+instrfrm.new.mmc5 {新しいMMC5楽器}
+instrfrm.new.vrc6 {新しいVRC6楽器}
+instrfrm.new.vrc7 {新しいVRC7楽器}
+instrfrm.new.fds {新しいFDS-楽器}
+instrfrm.new.n163 {新しいN163-楽器}
+instrfrm.new.s5b {新しいS5B楽器}
+
+song.new {<new song>}

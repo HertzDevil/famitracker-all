@@ -18,7 +18,7 @@
 ** must bear this legend.
 */
 
-#include <boost/scoped_array.hpp>
+//#include <boost/scoped_array.hpp>
 #include <map>
 #include <vector>
 #include "stdafx.h"
@@ -272,11 +272,11 @@ void CCompiler::ExportNSF(LPCTSTR lpszFileName, int MachineType)
 	m_iInitAddress = m_iDriverAddress + 8;
 
 	// Load driver
-	boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
-	char *pDriver = pDriverPtr.get();
+	//boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
+	//char *pDriver = pDriverPtr.get();
 
 	// Patch driver binary
-	PatchVibratoTable(pDriver);
+//	PatchVibratoTable(pDriver);
 
 	// Copy the Namco table, if used
 	if (m_pDocument->ExpansionEnabled(SNDCHIP_N163)) {
@@ -284,8 +284,8 @@ void CCompiler::ExportNSF(LPCTSTR lpszFileName, int MachineType)
 		CSoundGen *pSoundGen = theApp.GetSoundGenerator();
 
 		for (int i = 0; i < 96; ++i) {
-			*(pDriver + m_iDriverSize - 258 - 192 + i * 2 + 0) = (unsigned char)(pSoundGen->ReadNamcoPeriodTable(i) & 0xFF);
-			*(pDriver + m_iDriverSize - 258 - 192 + i * 2 + 1) = (unsigned char)(pSoundGen->ReadNamcoPeriodTable(i) >> 8);
+//			*(pDriver + m_iDriverSize - 258 - 192 + i * 2 + 0) = (unsigned char)(pSoundGen->ReadNamcoPeriodTable(i) & 0xFF);
+//			*(pDriver + m_iDriverSize - 258 - 192 + i * 2 + 1) = (unsigned char)(pSoundGen->ReadNamcoPeriodTable(i) >> 8);
 		}
 
 		// Patch the channel list
@@ -303,9 +303,9 @@ void CCompiler::ExportNSF(LPCTSTR lpszFileName, int MachineType)
 			*/
 			
 			// Channel type
-			*(pDriver + m_iDriverSize - 258 - 96 * 6 - (9 - NamcoChannels)) = 0;		// 2A03
+//			*(pDriver + m_iDriverSize - 258 - 96 * 6 - (9 - NamcoChannels)) = 0;		// 2A03
 			// Channel id
-			*(pDriver + m_iDriverSize - 258 - 96 * 6 - 13 - (9 - NamcoChannels)) = 5;	// DPCM
+//			*(pDriver + m_iDriverSize - 258 - 96 * 6 - 13 - (9 - NamcoChannels)) = 5;	// DPCM
 			
 			/*
 			TRACE0("after\n");
@@ -320,7 +320,7 @@ void CCompiler::ExportNSF(LPCTSTR lpszFileName, int MachineType)
 	}
 
 	// Write music data address
-	SetDriverSongAddress(pDriver, MusicDataAddress);
+//	SetDriverSongAddress(pDriver, MusicDataAddress);
 
 	// Open output file
 	CFile OutputFile;
@@ -341,18 +341,18 @@ void CCompiler::ExportNSF(LPCTSTR lpszFileName, int MachineType)
 	CChunkRenderNSF Render(&OutputFile, m_iLoadAddress);
 
 	if (m_bBankSwitched) {
-		Render.StoreDriver(pDriver, m_iDriverSize);
+//		Render.StoreDriver(pDriver, m_iDriverSize);
 		Render.StoreChunksBankswitched(m_vChunks);
 		Render.StoreSamplesBankswitched(m_vSamples);
 	}
 	else {
 		if (bCompressedMode) {
 			Render.StoreChunks(m_vChunks);
-			Render.StoreDriver(pDriver, m_iDriverSize);
+////			Render.StoreDriver(pDriver, m_iDriverSize);
 			Render.StoreSamples(m_vSamples);
 		}
 		else {
-			Render.StoreDriver(pDriver, m_iDriverSize);
+//			Render.StoreDriver(pDriver, m_iDriverSize);
 			Render.StoreChunks(m_vChunks);
 			Render.StoreSamples(m_vSamples);
 		}
@@ -432,14 +432,14 @@ void CCompiler::ExportNES(LPCTSTR lpszFileName, bool EnablePAL)
 	m_iInitAddress = m_iDriverAddress + 8;
 
 	// Load driver
-	boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
-	char *pDriver = pDriverPtr.get();
+	//boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
+	//char *pDriver = pDriverPtr.get();
 
 	// Patch driver binary
-	PatchVibratoTable(pDriver);
+//	PatchVibratoTable(pDriver);
 
 	// Write music data address
-	SetDriverSongAddress(pDriver, MusicDataAddress);
+//	SetDriverSongAddress(pDriver, MusicDataAddress);
 
 	int Percent = (100 * m_iMusicDataSize) / (0x8000 - m_iDriverSize - m_iSamplesSize);
 
@@ -452,7 +452,7 @@ void CCompiler::ExportNES(LPCTSTR lpszFileName, bool EnablePAL)
 
 	// Write NES data
 	CChunkRenderNES Render(&OutputFile, m_iLoadAddress);
-	Render.StoreDriver(pDriver, m_iDriverSize);
+//	Render.StoreDriver(pDriver, m_iDriverSize);
 	Render.StoreChunks(m_vChunks);
 	Render.StoreSamples(m_vSamples);
 	Render.StoreCaller(NSF_CALLER_BIN, NSF_CALLER_SIZE);
@@ -554,14 +554,14 @@ void CCompiler::ExportPRG(LPCTSTR lpszFileName, bool EnablePAL)
 	m_iInitAddress = m_iDriverAddress + 8;
 
 	// Load driver
-	boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
-	char *pDriver = pDriverPtr.get();
+//	boost::scoped_array<char> pDriverPtr(LoadDriver(m_pDriverData, m_iDriverAddress));
+	//char *pDriver = pDriverPtr.get();
 
 	// Patch driver binary
-	PatchVibratoTable(pDriver);
+//	PatchVibratoTable(pDriver);
 
 	// Write music data address
-	SetDriverSongAddress(pDriver, MusicDataAddress);
+//	SetDriverSongAddress(pDriver, MusicDataAddress);
 
 	int Percent = (100 * m_iMusicDataSize) / (0x8000 - m_iDriverSize - m_iSamplesSize);
 
@@ -571,7 +571,7 @@ void CCompiler::ExportPRG(LPCTSTR lpszFileName, bool EnablePAL)
 
 	// Write NES data
 	CChunkRenderNES Render(&OutputFile, m_iLoadAddress);
-	Render.StoreDriver(pDriver, m_iDriverSize);
+//	Render.StoreDriver(pDriver, m_iDriverSize);
 	Render.StoreChunks(m_vChunks);
 	Render.StoreSamples(m_vSamples);
 	Render.StoreCaller(NSF_CALLER_BIN, NSF_CALLER_SIZE);

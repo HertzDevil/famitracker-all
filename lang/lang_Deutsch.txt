@@ -1,0 +1,64 @@
+﻿msg.langfile {Das Sprachpaket ist beschädigt}
+msg.langfile.title {Nen Error}
+
+mm.file {Datei}
+mm.edit {Bearbeiten}
+mm.module {Modul}
+mm.instr {Instrument}
+mm.tracker {Tracker}
+mm.view {Ansicht}
+mm.lang {Sprache}
+mm.help {Hilfe}
+
+mm.file.new {Neu	Strg+N}
+mm.file.open {Öffnen	Strg+O}
+mm.file.save {Speichern	Strg+S}
+mm.file.saveas {Speichern als}
+mm.file.expnsf {Exportieren als NSF	Strg+E}
+mm.file.expwav {Exportieren als WAV}
+mm.file.exptext {Exportieren als Text}
+mm.file.imptext {Importieren von Text}
+mm.file.config {Einstellungen}
+mm.file.mru {Öffnet das hier}
+mm.file.exit {Beenden}
+
+stat.mm.file.new {Erstellt ein neues Modul}
+stat.mm.file.open {Öffnet ein Module}
+stat.mm.file.save {Speichern}
+stat.mm.file.saveas {Speichern als neues Modul}
+stat.mm.file.expnsf {Exportieren als NSF}
+stat.mm.file.expwav {Exportieren als WAV}
+stat.mm.file.exptext {Exportieren als Text}
+stat.mm.file.imptext {Importieren aus Text}
+stat.mm.file.config {Öffnet die Einstellungen}
+stat.mm.file.exit {Schließt Famitracker}
+
+stat.chip.none {Kein Erweiterungs-Chip}
+stat.chip.vrc6 {VRC6 Erweiterung}
+stat.chip.vrc7 {VRC7 Erweiterung}
+stat.chip.fds {FDS Erweiterung}
+stat.chip.mmc5 {MMC5 Erweiterung}
+stat.chip.n163 {N163 Erweiterung}
+stat.chip.s5b {Sunsoft 5B Erweiterung}
+
+mainfrm.songsets {Song}
+mainfrm.speed {Speed}
+mainfrm.temp {Temp}
+mainfrm.rows {Zeilen}
+mainfrm.frames {Frames}
+mainfrm.editsets {Bearbeitungseinstellung}
+mainfrm.steps {Schritte}
+mainfrm.keyrepeat {Noteneingabe
+wiederholen}
+mainfrm.modsets {Songeinstellungen}
+mainfrm.songs {Songs}
+
+instrfrm.new.2a03 {neues 2A03-Instrument}
+instrfrm.new.mmc5 {neues MMC5-Instrument}
+instrfrm.new.vrc6 {neues VRC6-Instrument}
+instrfrm.new.vrc7 {neues VRC7-Instrument}
+instrfrm.new.fds {neues FDS-Instrument}
+instrfrm.new.n163 {neues N163-Instrument}
+instrfrm.new.s5b {neues S5B-Instrument}
+
+song.new {Neuer Song}

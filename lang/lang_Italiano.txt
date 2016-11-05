@@ -1,0 +1,63 @@
+﻿msg.langfile {Il file linguaggio è in omaggio}
+msg.langfile.title {Viva l'Italia!}
+
+mm.file {File}
+mm.edit {Modifica}
+mm.module {Modulo}
+mm.instr {Strumento}
+mm.tracker {Tracker}
+mm.view {Visualizza}
+mm.lang {Lingua}
+mm.help {Aiuto}
+
+mm.file.new {Nuovo	Ctrl+N}
+mm.file.open {Apri 	Ctrl+O}
+mm.file.save {Salva 	Ctrl+S}
+mm.file.saveas {Salva come sous}
+mm.file.expnsf {Esporta NSF	Ctrl+E}
+mm.file.expwav {Esporta in WAV}
+mm.file.exptext {Esporta come file di testo}
+mm.file.imptext {Importa un file di testo}
+mm.file.config {Configurazione}
+mm.file.mru {Menu}
+mm.file.exit {Esci}
+
+stat.mm.file.new {Crea un nuovo modulo}
+stat.mm.file.open {Apri un modulo}
+stat.mm.file.save {Salva il modulo}
+stat.mm.file.saveas {Salva come nuovo modulo
+stat.mm.file.expnsf {Esporta NSF}
+stat.mm.file.expwav {Esporta in WAV}
+stat.mm.file.exptext {Esporta come file di testo}
+stat.mm.file.imptext {Importa un file di testo}
+stat.mm.file.config {Configura le impostazioni}
+stat.mm.file.exit {Esci da Famitracker}
+
+stat.chip.none {Nessuna espansione}
+stat.chip.vrc6 {Espansione Konami VRC6}
+stat.chip.vrc7 {Espansione Konami VRC7}
+stat.chip.fds {Espansione Nintendo FDS}
+stat.chip.mmc5 {Espansione Nintendo MMC5}
+stat.chip.n163 {Espansione Namco N163}
+stat.chip.s5b {Espansione Sunsoft 5B}
+
+mainfrm.songsets {Canzone}
+mainfrm.speed {Velocità}
+mainfrm.temp {Tempo}
+mainfrm.rows {Righe}
+mainfrm.frames {Frame}
+mainfrm.editsets {Modifica}
+mainfrm.steps {Passi cursore}
+mainfrm.keyrepeat {Ripetizione note}
+mainfrm.modsets {Impostazioni canzone}
+mainfrm.songs {Tracce}
+
+instrfrm.new.2a03 {Nuovo strumento 2A03}
+instrfrm.new.mmc5 {Nuovo strumento MMC5}
+instrfrm.new.vrc6 {Nuovo strumento VRC6}
+instrfrm.new.vrc7 {Nuovo strumento VRC7}
+instrfrm.new.fds {Nuovo strumento FDS}
+instrfrm.new.n163 {Nuovo strumento N163}
+instrfrm.new.s5b {Nuovo strumento S5B}
+
+song.new {Nuova traccia}

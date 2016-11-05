@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by FamiTracker.rc
+// Von Microsoft Visual C++ generierte Includedatei.
+// Verwendet durch FamiTracker.rc
 //
 #define ID_MANIFEST                     1
 #define ID_INVALID_WAVEFILE             3
@@ -204,6 +204,7 @@
 #define IDS_MIDI_MESSAGE_OFF            317
 #define IDI_RIGHT                       317
 #define IDR_SEQUENCE_POPUP              319
+#define IDR_LANGPACK1                   320
 #define IDC_INSTRUMENTS                 1001
 #define IDC_INSTSETTINGS                1002
 #define IDC_INSTNAME                    1005
@@ -621,7 +622,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        320
+#define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         33127
 #define _APS_NEXT_CONTROL_VALUE         1280
 #define _APS_NEXT_SYMED_VALUE           179

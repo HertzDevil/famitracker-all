@@ -50,6 +50,9 @@
 #include "PatternEditor.h"
 #include "FrameEditor.h"
 #include "APU/APU.h"
+#include "lang/langpack.hpp"
+
+extern YFW::Windows::Locale::LanguagePackSystem ps;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1038,6 +1041,7 @@ void CMainFrame::OnInstNameChange()
 	pDoc->SetInstrumentName(m_iInstrument, T2A(Text));
 }
 
+
 void CMainFrame::OnAddInstrument2A03()
 {
 	NewInstrument(SNDCHIP_NONE);
@@ -1278,6 +1282,8 @@ void CMainFrame::OnTrackerPlaypattern()
 
 void CMainFrame::OnTrackerPlayStart()
 {
+	YFW::Windows::Locale::GuiLocalizer::getInstance().ChangeLanguage(ps.RequestPack(u"Espa\u00F1a"));
+
 	// Play from start of song
 	theApp.StartPlayer(MODE_PLAY_START);
 }
@@ -1296,6 +1302,8 @@ void CMainFrame::OnTrackerTogglePlay()
 
 void CMainFrame::OnTrackerStop()
 {
+	YFW::Windows::Locale::GuiLocalizer::getInstance().ChangeLanguage(ps.RequestPack(u"Deutsch"));
+
 	// Stop playback
 	theApp.StopPlayer();
 }

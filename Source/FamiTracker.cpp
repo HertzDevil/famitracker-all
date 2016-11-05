@@ -33,6 +33,7 @@
 #include "ChannelMap.h"
 #include "CustomExporters.h"
 #include "CommandLineExport.h"
+#include "lang/langpack.hpp"
 
 #ifdef EXPORT_TEST
 #include "ExportTest/ExportTest.h"
@@ -103,11 +104,23 @@ CFamiTrackerApp	theApp;
 
 // CFamiTrackerApp initialization
 
+YFW::Windows::Locale::LanguagePackSystem ps;
+
 BOOL CFamiTrackerApp::InitInstance()
 {
+	YFW::Windows::Locale::GuiLocalizer::InitializeInstance();
+	ps.setLocation(u"lang", u"lang_", u".txt");
+
+	YFW::Windows::Locale::LanguagePack &lp = ps.AddPack();
+	lp.setName(u"Espa\u00F1a");
+	lp.LoadResourcePack(IDR_LANGPACK1, u"langpack");
+
+	YFW::Windows::Locale::GuiLocalizer::getInstance().ChangeLanguage(ps.RequestPack(u"English"));
+
+	
 	// InitCommonControls() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
-	// visual styles.  Otherwise, any window creation will fail.
+	// visual styles.  Otherwise, any window creation will5 fail.
 	InitCommonControls();
 #ifdef SUPPORT_TRANSLATIONS
 	LoadLocalization();

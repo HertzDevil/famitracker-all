@@ -1,0 +1,63 @@
+﻿msg.langfile {El paquete de idiomas esta dañado}
+msg.langfile.title {¡Hola!}
+
+mm.file {Archivo}
+mm.edit {Editar}
+mm.module {Módulo}
+mm.instr {Instrumento}
+mm.tracker {Tracker}
+mm.view {Ver}
+mm.lang {Lenguaje}
+mm.help {Ayuda}
+
+mm.file.new {Nuevo	Ctrl+N}
+mm.file.open {Abrir	Ctrl+O}
+mm.file.save {Guardar	Ctrl+S}
+mm.file.saveas {Guardar como...}
+mm.file.expnsf {Exportar NSF	Ctrl+E}
+mm.file.expwav {Exportar WAV}
+mm.file.exptext {Exportar TXT}
+mm.file.imptext {Importar TXT}
+mm.file.config {Configuración}
+mm.file.mru {Abrir...}
+mm.file.exit {Salir}
+
+stat.mm.file.new {Crear nuevo Módulo}
+stat.mm.file.open {Abrir Módulo}
+stat.mm.file.save {Guardar}
+stat.mm.file.saveas {Guardar como...}
+stat.mm.file.expnsf {Exportar archivo NSF}
+stat.mm.file.expwav {Exportar archivo WAV}
+stat.mm.file.exptext {Exportar archivo de texto}
+stat.mm.file.imptext {Importar archivo de texto}
+stat.mm.file.config {Configuración}
+stat.mm.file.exit {Salir de Famitracker}
+
+stat.chip.none {Sin chip de expansión}
+stat.chip.vrc6 {Konami VRC6}
+stat.chip.vrc7 {Konami VRC7}
+stat.chip.fds {Nintendo FDS}
+stat.chip.mmc5 {Nintendo MMC5}
+stat.chip.n163 {Namco 163}
+stat.chip.s5b {Sunsoft 5B}
+
+mainfrm.songsets {Ajustes del tema}
+mainfrm.speed {Velocidad}
+mainfrm.temp {Tempo}
+mainfrm.rows {Filas}
+mainfrm.frames {Cuadros}
+mainfrm.editsets {Editar ajustes}
+mainfrm.steps {Pasos}
+mainfrm.keyrepeat {Repetir tecleado}
+mainfrm.modsets {Informacion del tema}
+mainfrm.songs {Temas}
+
+instrfrm.new.2a03 {Nuevo instrumento 2A03}
+instrfrm.new.mmc5 {Nuevo instrumento MMC5}
+instrfrm.new.vrc6 {Nuevo instrumento VRC6}
+instrfrm.new.vrc7 {Nuevo instrumento VRC7}
+instrfrm.new.fds {Nuevo instrumento FDS}
+instrfrm.new.n163 {Nuevo instrumento N163}
+instrfrm.new.s5b {Nuevo instrumento S5B}
+
+song.new {Nuevo Tema}

@@ -1,0 +1,64 @@
+﻿msg.langfile {Le pack de langue est endommagé}
+msg.langfile.title {Oh lala}
+
+mm.file {Fichier}
+mm.edit {Modifier}
+mm.module {Module}
+mm.instr {Instrument}
+mm.tracker {Tracker}
+mm.view {Visualiser}
+mm.lang {Langue}
+mm.help {Aide}
+
+mm.file.new {Nouveau	Ctrl+N}
+mm.file.open {Ouvrir 	Ctrl+O}
+mm.file.save {Enregistrer 	Ctrl+S}
+mm.file.saveas {Enregistrer sous}
+mm.file.expnsf {Export NSF	Ctrl+E}
+mm.file.expwav {Exporter en WAV}
+mm.file.exptext {Exporter sous forme de texte}
+mm.file.imptext {TexteImportation}
+mm.file.config {Paramètres}
+mm.file.mru {Ouvrir}
+mm.file.exit {Quitter}
+
+stat.mm.file.new {Crée un nouveau module}
+stat.mm.file.open {Ouvre un module}
+stat.mm.file.save {Enregistrer}
+stat.mm.file.saveas {Enregistrer sous un nouveau module}
+stat.mm.file.expnsf {Export NSF}
+stat.mm.file.expwav {Exporter en WAV}
+stat.mm.file.exptext {Exporter sous forme de texte}
+stat.mm.file.imptext {Importer à partir de texte}
+stat.mm.file.config {Ouvre les Paramètres}
+stat.mm.file.exit {Ferme Famitracker}
+
+stat.chip.none {Aucune prolongation Chip}
+stat.chip.vrc6 {prolongation VRC6}
+stat.chip.vrc7 {prolongation VRC7}
+stat.chip.fds {FDS prolongation}
+stat.chip.mmc5 {extension MMC5}
+stat.chip.n163 {prolongation N163}
+stat.chip.s5b {prolongation Sunsoft 5B}
+
+mainfrm.songsets {Chanson}
+mainfrm.speed {Vitesse}
+mainfrm.temp {tempo}
+mainfrm.rows {rangées}
+mainfrm.frames {cadres}
+mainfrm.editsets {modifier paramètre}
+mainfrm.steps {étapes}
+mainfrm.keyrepeat {entrée de note
+répétition}
+mainfrm.modsets {Song Settings}
+mainfrm.songs {chansons}
+
+instrfrm.new.2a03 {new-2A03 instrument}
+instrfrm.new.mmc5 {nouvel instrument de MMC5}
+instrfrm.new.vrc6 {nouvel instrument de VRC6}
+instrfrm.new.vrc7 {nouvel instrument de VRC7}
+instrfrm.new.fds {nouvelle FDS-instrument}
+instrfrm.new.n163 {nouvelle N163-instrument}
+instrfrm.new.s5b {nouvel instrument S5B}
+
+song.new {type here}

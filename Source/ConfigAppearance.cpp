@@ -37,7 +37,7 @@ const TCHAR *CConfigAppearance::COLOR_ITEMS[] = {
 	_T("Instrument column"),
 	_T("Volume column"),
 	_T("Effect number column"),
-	_T("Selection"),
+	_T("$!testi$"),
 	_T("Cursor")
 };
 

@@ -23,6 +23,7 @@
 // but are changed infrequently
 
 #pragma once
+#include <algorithm>
 
 #define _CRTDBG_MAPALLOC
 #define NOMINMAX
