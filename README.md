@@ -10,6 +10,7 @@ the following forks:
 [ipi](http://famitracker.com/forum/posts.php?id=5235),
 [uber](http://famitracker.com/forum/posts.php?id=5488),
 [arp-scheme](http://famitracker.com/forum/posts.php?id=6151),
+[fds-seq](http://forums.famitracker.com/viewtopic.php?f=6&t=1081),
 [lc](http://forums.famitracker.com/viewtopic.php?f=7&t=1221).
 
 The FamiTracker source is known to put its header files in several directories
