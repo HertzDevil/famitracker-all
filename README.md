@@ -9,7 +9,8 @@ the following forks:
 [slimeball](http://famitracker.com/forum/posts.php?id=4362&pid=44500#44500),
 [ipi](http://famitracker.com/forum/posts.php?id=5235),
 [uber](http://famitracker.com/forum/posts.php?id=5488),
-[arp-scheme](http://famitracker.com/forum/posts.php?id=6151).
+[arp-scheme](http://famitracker.com/forum/posts.php?id=6151),
+[lc](http://forums.famitracker.com/viewtopic.php?f=7&t=1221).
 
 The FamiTracker source is known to put its header files in several directories
 throughout its history. No attempt has been made to unify them to make the
