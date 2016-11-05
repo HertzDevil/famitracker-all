@@ -915,7 +915,7 @@ const CString& CTextExport::ImportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 					for (int s=0; s < CInstrumentFDS::WAVE_SIZE; ++s)
 					{
 						CHECK(t.ReadInt(i,0,63,&sResult));
-						pInst->SetSample(s, i);
+						pInst->SetSample(0, s, i);		// implementation omitted
 					}
 					CHECK(t.ReadEOL(&sResult));
 				}
@@ -1329,7 +1329,7 @@ const CString& CTextExport::ExportFile(LPCTSTR FileName, CFamiTrackerDoc *pDoc)
 					f.WriteString(s);
 					for (int smp=0; smp < CInstrumentFDS::WAVE_SIZE; ++smp)
 					{
-						s.Format(_T(" %2d"), pDI->GetSample(smp));
+						s.Format(_T(" %2d"), pDI->GetSample(0, smp));		// implementation omitted
 						f.WriteString(s);
 					}
 					f.WriteString(_T("\n"));

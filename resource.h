@@ -452,12 +452,16 @@
 #define IDC_SLIDER_APU2                 1279
 #define IDC_SLIDER3                     1280
 #define IDC_SLIDER_VRC6                 1280
+#define IDC_INDEX_FDS                   1280
 #define IDC_SLIDER4                     1281
 #define IDC_SLIDER_VRC7                 1281
+#define IDC_WAVES_FDS                   1281
 #define IDC_SLIDER5                     1282
 #define IDC_SLIDER_MMC5                 1282
+#define IDC_INDEX_FDS_SPIN              1282
 #define IDC_SLIDER6                     1283
 #define IDC_SLIDER_FDS                  1283
+#define IDC_WAVES_FDS_SPIN              1283
 #define IDC_SLIDER7                     1284
 #define IDC_SLIDER_N163                 1284
 #define IDC_SLIDER8                     1285
@@ -621,9 +625,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        320
+#define _APS_NEXT_RESOURCE_VALUE        321
 #define _APS_NEXT_COMMAND_VALUE         33127
-#define _APS_NEXT_CONTROL_VALUE         1280
+#define _APS_NEXT_CONTROL_VALUE         1284
 #define _APS_NEXT_SYMED_VALUE           179
 #endif
 #endif

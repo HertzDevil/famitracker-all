@@ -180,8 +180,8 @@ void CInstrumentEditDlg::SetCurrentInstrument(int Index)
 				InsertPane(new CInstrumentEditorVRC7(), true);
 				break;
 			case INST_FDS:
+				InsertPane(new CInstrumentEditorFDSEnvelope(), false);		// // //
 				InsertPane(new CInstrumentEditorFDS(), true);
-				InsertPane(new CInstrumentEditorFDSEnvelope(), false);
 				break;
 			case INST_N163:
 				InsertPane(new CInstrumentEditorN163(), true);

@@ -36,9 +36,13 @@ const char TEST_WAVE[] = {
 
 const int FIXED_FDS_INST_SIZE = 1 + 16 + 4 + 1;
 
+// // //
+const int CInstrumentFDS::SEQUENCE_TYPES[] = {SEQ_VOLUME, SEQ_ARPEGGIO, SEQ_PITCH, SEQ_HIPITCH, SEQ_DUTYCYCLE};
+
 CInstrumentFDS::CInstrumentFDS() : CInstrument()
 {
-	memcpy(m_iSamples, TEST_WAVE, WAVE_SIZE);	
+	memcpy(m_iSamples[0], TEST_WAVE, WAVE_SIZE);		// // //
+	memset(m_iSamples[1], 0, WAVE_SIZE * (MAX_WAVE_COUNT - 1));
 	memset(m_iModulation, 0, MOD_SIZE);
 
 	m_iModulationSpeed = 0;
@@ -49,6 +53,12 @@ CInstrumentFDS::CInstrumentFDS() : CInstrument()
 	m_pVolume = new CSequence();
 	m_pArpeggio = new CSequence();
 	m_pPitch = new CSequence();
+	for (int i = 0; i < SEQUENCE_COUNT; i++) {		// // //
+		m_iSeqEnable[i] = 0;
+		m_iSeqIndex[i] = 0;
+	}
+	
+	m_iWaveCount = 1;		// // //
 }
 
 CInstrumentFDS::~CInstrumentFDS()
@@ -63,16 +73,18 @@ CInstrument *CInstrumentFDS::Clone() const
 	CInstrumentFDS *pNewInst = new CInstrumentFDS();
 
 	// Copy parameters
-	memcpy(pNewInst->m_iSamples, m_iSamples, WAVE_SIZE);
+	memcpy(pNewInst->m_iSamples, m_iSamples, WAVE_SIZE * MAX_WAVE_COUNT);		// // //
 	memcpy(pNewInst->m_iModulation, m_iModulation, MOD_SIZE);
 	pNewInst->m_iModulationDelay = m_iModulationDelay;
 	pNewInst->m_iModulationDepth = m_iModulationDepth;
 	pNewInst->m_iModulationSpeed = m_iModulationSpeed;
+	pNewInst->m_iWaveCount = m_iWaveCount;		// // //
 
 	// Copy sequences
-	pNewInst->m_pVolume->Copy(m_pVolume);
-	pNewInst->m_pArpeggio->Copy(m_pArpeggio);
-	pNewInst->m_pPitch->Copy(m_pPitch);
+	for (int i = 0; i < SEQUENCE_COUNT; i++) {		// // //
+		pNewInst->SetSeqEnable(i, GetSeqEnable(i));
+		pNewInst->SetSeqIndex(i, GetSeqIndex(i));
+	}
 
 	// Copy name
 	pNewInst->SetName(GetName());
@@ -80,8 +92,16 @@ CInstrument *CInstrumentFDS::Clone() const
 	return pNewInst;
 }
 
-void CInstrumentFDS::Setup()
+void CInstrumentFDS::Setup()		// // //
 {
+	CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();
+
+	for (int i = 0; i < SEQ_COUNT; ++i) {
+		SetSeqEnable(i, 0);
+		int Index = pDoc->GetFreeSequenceFDS(i);
+		if (Index != -1)
+			SetSeqIndex(i, Index);
+	}
 }
 
 void CInstrumentFDS::StoreInstSequence(CInstrumentFile *pFile, CSequence *pSeq)
@@ -164,8 +184,11 @@ bool CInstrumentFDS::LoadSequence(CDocumentFile *pDocFile, CSequence *pSeq)
 void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 {
 	// Write wave
-	for (int i = 0; i < WAVE_SIZE; ++i) {
-		pDocFile->WriteBlockChar(GetSample(i));
+	pDocFile->WriteBlockInt(m_iWaveCount);		// // //
+	for (int j = 0; j < m_iWaveCount; j++) {
+		for (int i = 0; i < WAVE_SIZE; ++i) {
+			pDocFile->WriteBlockChar(GetSample(j, i));
+		}
 	}
 
 	// Write modulation table
@@ -178,16 +201,20 @@ void CInstrumentFDS::Store(CDocumentFile *pDocFile)
 	pDocFile->WriteBlockInt(GetModulationDepth());
 	pDocFile->WriteBlockInt(GetModulationDelay());
 
-	// Sequences
-	StoreSequence(pDocFile, m_pVolume);
-	StoreSequence(pDocFile, m_pArpeggio);
-	StoreSequence(pDocFile, m_pPitch);
+	// // // Sequences
+	pDocFile->WriteBlockInt(SEQUENCE_COUNT);
+
+	for (int i = 0; i < SEQUENCE_COUNT; i++) {
+		pDocFile->WriteBlockChar(GetSeqEnable(i));
+		pDocFile->WriteBlockChar(GetSeqIndex(i));
+	}
 }
 
 bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 {
+	m_iWaveCount = 1;		// // //
 	for (int i = 0; i < WAVE_SIZE; ++i) {
-		SetSample(i, pDocFile->GetBlockChar());
+		SetSample(0, i, pDocFile->GetBlockChar());
 	}
 
 	for (int i = 0; i < MOD_SIZE; ++i) {
@@ -215,15 +242,28 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 	if (a < 256 && (b & 0xFF) != 0x00) {
 	}
 	else {
-		LoadSequence(pDocFile, m_pVolume);
-		LoadSequence(pDocFile, m_pArpeggio);
-		//
-		// Note: Remove this line when files are unable to load 
-		// (if a file contains FDS instruments but FDS is disabled)
-		// this was a problem in an earlier version.
-		//
-		if (pDocFile->GetBlockVersion() > 2)
-			LoadSequence(pDocFile, m_pPitch);
+		CFamiTrackerDoc *pDoc = CFamiTrackerDoc::GetDoc();		// // //
+		CSequence *vSeq;
+		static const sequence_t FDSSEQTYPE[] = {SEQ_VOLUME, SEQ_ARPEGGIO, SEQ_PITCH};
+		int id;
+		for (int i = 0; i < sizeof(FDSSEQTYPE) / sizeof(sequence_t); i++) {
+			if (FDSSEQTYPE[i] == SEQ_PITCH && pDocFile->GetBlockVersion() <= 2) break;
+			id = 0;
+			vSeq = NULL;
+			do {
+				vSeq = pDoc->GetSequenceFDS(id++, FDSSEQTYPE[i]);
+			} while (vSeq->GetItemCount() > 0);
+			ASSERT(vSeq != NULL);
+			LoadSequence(pDocFile, vSeq);
+			if (vSeq->GetItemCount() > 0) {
+				SetSeqEnable(FDSSEQTYPE[i], 1);
+				SetSeqIndex(FDSSEQTYPE[i], --id);
+			}
+			else {
+				SetSeqEnable(FDSSEQTYPE[i], 0);
+				SetSeqIndex(FDSSEQTYPE[i], 0);
+			}
+		}
 	}
 
 //	}
@@ -237,11 +277,45 @@ bool CInstrumentFDS::Load(CDocumentFile *pDocFile)
 	return true;
 }
 
+bool CInstrumentFDS::LoadNew(CDocumentFile *pDocFile)		// // //
+{
+	m_iWaveCount = pDocFile->GetBlockInt();		// // //
+	ASSERT_FILE_DATA(m_iWaveCount >= 1 && m_iWaveCount <= MAX_WAVE_COUNT);
+	for (int j = 0; j < m_iWaveCount; j++) {
+		for (int i = 0; i < WAVE_SIZE; ++i) {
+			SetSample(j, i, pDocFile->GetBlockChar());
+		}
+	}
+
+	for (int i = 0; i < MOD_SIZE; ++i) {
+		SetModulation(i, pDocFile->GetBlockChar());
+	}
+
+	SetModulationSpeed(pDocFile->GetBlockInt());
+	SetModulationDepth(pDocFile->GetBlockInt());
+	SetModulationDelay(pDocFile->GetBlockInt());
+
+	int SeqCnt = pDocFile->GetBlockInt();
+
+	ASSERT_FILE_DATA(SeqCnt < (SEQUENCE_COUNT + 1));
+
+	SeqCnt = SEQUENCE_COUNT;//SEQ_COUNT;
+
+	for (int i = 0; i < SeqCnt; i++) {
+		SetSeqEnable(i, pDocFile->GetBlockChar());
+		int Index = pDocFile->GetBlockChar();
+		ASSERT_FILE_DATA(Index < MAX_SEQUENCES);
+		SetSeqIndex(i, Index);
+	}
+
+	return true;
+}
+
 void CInstrumentFDS::SaveFile(CInstrumentFile *pFile, const CFamiTrackerDoc *pDoc)
 {
 	// Write wave
 	for (int i = 0; i < WAVE_SIZE; ++i) {
-		pFile->WriteChar(GetSample(i));
+		pFile->WriteChar(GetSample(0, i));
 	}
 
 	// Write modulation table
@@ -264,7 +338,7 @@ bool CInstrumentFDS::LoadFile(CInstrumentFile *pFile, int iVersion, CFamiTracker
 {
 	// Read wave
 	for (int i = 0; i < WAVE_SIZE; ++i) {
-		SetSample(i, pFile->ReadChar());
+		SetSample(0, i, pFile->ReadChar());
 	}
 
 	// Read modulation table
@@ -309,56 +383,85 @@ int CInstrumentFDS::Compile(CFamiTrackerDoc *pDoc, CChunk *pChunk, int Index)
 	pChunk->StoreByte(GetModulationDepth());
 	pChunk->StoreWord(GetModulationSpeed());
 
-	// Store sequences
-	char Switch = (m_pVolume->GetItemCount() > 0 ? 1 : 0) | (m_pArpeggio->GetItemCount() > 0 ? 2 : 0) | (m_pPitch->GetItemCount() > 0 ? 4 : 0);
+	// // // Store reference to wave
+	CStringA waveLabel;
+	waveLabel.Format(CCompiler::LABEL_WAVES, Index);
+	pChunk->StoreReference(waveLabel);
 
+	// Store sequences
+	char Switch = 0;		// // //
+	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
+		Switch = (Switch >> 1) | (GetSeqEnable(i) && (pDoc->GetSequence(SNDCHIP_FDS, GetSeqIndex(i), i)->GetItemCount() > 0) ? 0x10 : 0);
+	}
 	pChunk->StoreByte(Switch);
 
-	// Volume
-	if (Switch & 1) {
-		str.Format(CCompiler::LABEL_SEQ_FDS, Index * 5 + 0);
-		pChunk->StoreReference(str);
-	}
-
-	// Arpeggio
-	if (Switch & 2) {
-		str.Format(CCompiler::LABEL_SEQ_FDS, Index * 5 + 1);
-		pChunk->StoreReference(str);
+	// // //
+	int size = FIXED_FDS_INST_SIZE + 2;
+	for (int i = 0; i < SEQUENCE_COUNT; ++i) {
+		if (GetSeqEnable(i) != 0 && (pDoc->GetSequence(SNDCHIP_FDS, GetSeqIndex(i), i)->GetItemCount() != 0)) {
+			CStringA str;
+			str.Format(CCompiler::LABEL_SEQ_FDS, GetSeqIndex(i) * SEQUENCE_COUNT + i);
+			pChunk->StoreReference(str);
+			size += 2;
+		}
 	}
 	
-	// Pitch
-	if (Switch & 4) {
-		str.Format(CCompiler::LABEL_SEQ_FDS, Index * 5 + 2);
-		pChunk->StoreReference(str);
+	return size;
+}
+
+int CInstrumentFDS::StoreWave(CChunk *pChunk) const		// // //
+{
+	// Number of waves
+//	pChunk->StoreByte(m_iWaveCount);
+
+	// Pack samples
+	for (int i = 0; i < m_iWaveCount; ++i) {
+		for (int j = 0; j < WAVE_SIZE; j++) {
+			pChunk->StoreByte(m_iSamples[i][j]);
+		}
 	}
 
-	int size = FIXED_FDS_INST_SIZE;
-	size += (m_pVolume->GetItemCount() > 0 ? 2 : 0);
-	size += (m_pArpeggio->GetItemCount() > 0 ? 2 : 0);
-	size += (m_pPitch->GetItemCount() > 0 ? 2 : 0);
-	return size;
+	return m_iWaveCount * WAVE_SIZE;
+}
+
+bool CInstrumentFDS::IsWaveEqual(CInstrumentFDS *pInstrument)		// // //
+{
+	int Count = GetWaveCount();
+
+	if (pInstrument->GetWaveCount() != Count)
+		return false;
+
+	for (int i = 0; i < Count; ++i) {
+		for (int j = 0; j < WAVE_SIZE; ++j) {
+			if (GetSample(i, j) != pInstrument->GetSample(i, j))
+				return false;
+		}
+	}
+
+	return true;
 }
 
 bool CInstrumentFDS::CanRelease() const
 {
-	if (m_pVolume->GetItemCount() > 0) {
-		if (m_pVolume->GetReleasePoint() != -1)
-			return true;
-		
+	if (GetSeqEnable(SEQ_VOLUME) != 0) {		// // //
+		int index = GetSeqIndex(SEQ_VOLUME);
+		return CFamiTrackerDoc::GetDoc()->GetSequence(SNDCHIP_FDS, index, SEQ_VOLUME)->GetReleasePoint() != -1;
 	}
 	return false;
 }
 
-unsigned char CInstrumentFDS::GetSample(int Index) const
+unsigned char CInstrumentFDS::GetSample(int Wave, int Index) const		// // //
 {
+	ASSERT(Wave < MAX_WAVE_COUNT);
 	ASSERT(Index < WAVE_SIZE);
-	return m_iSamples[Index];
+	return m_iSamples[Wave][Index];
 }
 
-void CInstrumentFDS::SetSample(int Index, int Sample)
+void CInstrumentFDS::SetSample(int Wave, int Index, int Sample)		// // //
 {
+	ASSERT(Wave < MAX_WAVE_COUNT);
 	ASSERT(Index < WAVE_SIZE);
-	m_iSamples[Index] = Sample;
+	m_iSamples[Wave][Index] = Sample;
 	InstrumentChanged();
 }
 
@@ -430,4 +533,40 @@ void CInstrumentFDS::SetModulationEnable(bool Enable)
 {
 	m_bModulationEnable = Enable;
 	InstrumentChanged();
+}
+
+int	CInstrumentFDS::GetSeqEnable(int Index) const		// // //
+{
+	return m_iSeqEnable[Index];
+}
+
+int	CInstrumentFDS::GetSeqIndex(int Index) const
+{
+	return m_iSeqIndex[Index];
+}
+
+void CInstrumentFDS::SetSeqEnable(int Index, int Value)
+{
+	if (m_iSeqEnable[Index] != Value)
+		InstrumentChanged();		
+	m_iSeqEnable[Index] = Value;
+}
+
+void CInstrumentFDS::SetSeqIndex(int Index, int Value)
+{
+	if (m_iSeqIndex[Index] != Value)
+		InstrumentChanged();
+	m_iSeqIndex[Index] = Value;
+}
+
+void CInstrumentFDS::SetWaveCount(int count)		// // //
+{
+	ASSERT(count <= MAX_WAVE_COUNT);
+	m_iWaveCount = count;
+	InstrumentChanged();
+}
+
+int CInstrumentFDS::GetWaveCount() const		// // //
+{
+	return m_iWaveCount;
 }

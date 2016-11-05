@@ -23,17 +23,25 @@
 #include <cmath>
 #include "FamiTracker.h"
 #include "FamiTrackerDoc.h"
+#include "FamiTrackerView.h"		// // //
 #include "InstrumentEditPanel.h"
 #include "SequenceEditor.h"
 #include "InstrumentEditorFDSEnvelope.h"
+
+LPCTSTR CInstrumentEditorFDSEnvelope::INST_SETTINGS_FDS[] = {		// // //
+	_T("Volume"), 
+	_T("Arpeggio"), 
+	_T("Pitch"), 
+	_T("Hi-pitch"), 
+	_T("Wave")
+};
 
 // CInstrumentEditorFDSEnvelope dialog
 
 IMPLEMENT_DYNAMIC(CInstrumentEditorFDSEnvelope, CSequenceInstrumentEditPanel)
 
 CInstrumentEditorFDSEnvelope::CInstrumentEditorFDSEnvelope(CWnd* pParent) : CSequenceInstrumentEditPanel(CInstrumentEditorFDSEnvelope::IDD, pParent),
-	m_pInstrument(NULL),
-	m_iSelectedType(0)
+	m_pInstrument(NULL)		// // //
 {
 }
 
@@ -50,20 +58,69 @@ void CInstrumentEditorFDSEnvelope::DoDataExchange(CDataExchange* pDX)
 	CInstrumentEditPanel::DoDataExchange(pDX);
 }
 
-void CInstrumentEditorFDSEnvelope::SelectInstrument(int Instrument)
+void CInstrumentEditorFDSEnvelope::SelectInstrument(int Instrument)		// // //
 {
+	CInstrumentFDS *pInstrument = static_cast<CInstrumentFDS*>(GetDocument()->GetInstrument(Instrument));
+	ASSERT(pInstrument->GetType() == INST_FDS);
+	
+	CListCtrl *pList = static_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
+
 	if (m_pInstrument)
 		m_pInstrument->Release();
 
-	m_pInstrument = static_cast<CInstrumentFDS*>(GetDocument()->GetInstrument(Instrument));
-	ASSERT(m_pInstrument->GetType() == INST_FDS);
-	
-	LoadSequence();
+	m_pInstrument = NULL;
+
+	// Update instrument setting list
+	for (int i = 0; i < SEQ_COUNT; i++) {
+		pList->SetCheck(i, pInstrument->GetSeqEnable(i));
+		pList->SetItemText(i, 1, MakeIntString(pInstrument->GetSeqIndex(i)));
+	} 
+
+	// Setting text box
+	SetDlgItemInt(IDC_SEQ_INDEX, pInstrument->GetSeqIndex(m_iSelectedSetting));
+
+	m_pInstrument = pInstrument;
+
+	// Select new sequence
+	SelectSequence(pInstrument->GetSeqIndex(m_iSelectedSetting), m_iSelectedSetting);
 }
 
+void CInstrumentEditorFDSEnvelope::SelectSequence(int Sequence, int Type)		// // //
+{
+	// Selects the current sequence in the sequence editor
+	m_pSequence = GetDocument()->GetSequence(SNDCHIP_FDS, Sequence, Type);
+	m_pSequenceEditor->SelectSequence(m_pSequence, Type, INST_FDS);
+}
+
+void CInstrumentEditorFDSEnvelope::TranslateMML(CString String, int Max, int Min)		// // //
+{
+	CSequenceInstrumentEditPanel::TranslateMML(String, m_pSequence, Max, Min);
+
+	// Update editor
+	m_pSequenceEditor->RedrawWindow();
+
+	// Register a document change
+	GetDocument()->SetModifiedFlag();
+
+	// Enable setting
+	static_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);
+}
+
+void CInstrumentEditorFDSEnvelope::SetSequenceString(CString Sequence, bool Changed)		// // //
+{
+	// Update sequence string
+	SetDlgItemText(IDC_SEQUENCE_STRING, Sequence);
+	// If the sequence was changed, assume the user wants to enable it
+	if (Changed) {
+		static_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS))->SetCheck(m_iSelectedSetting, 1);
+	}
+}
 
 BEGIN_MESSAGE_MAP(CInstrumentEditorFDSEnvelope, CInstrumentEditPanel)
-	ON_CBN_SELCHANGE(IDC_TYPE, &CInstrumentEditorFDSEnvelope::OnCbnSelchangeType)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_INSTSETTINGS, OnLvnItemchangedInstsettings)		// // //
+	ON_EN_CHANGE(IDC_SEQ_INDEX, OnEnChangeSeqIndex)
+	ON_BN_CLICKED(IDC_FREE_SEQ, OnBnClickedFreeSeq)
+	ON_COMMAND(ID_CLONE_SEQUENCE, OnCloneSequence)
 END_MESSAGE_MAP()
 
 // CInstrumentEditorFDSEnvelope message handlers
@@ -72,68 +129,110 @@ BOOL CInstrumentEditorFDSEnvelope::OnInitDialog()
 {
 	CInstrumentEditPanel::OnInitDialog();
 
-	CRect rect;
-	GetClientRect(&rect);
-	rect.DeflateRect(10, 10, 10, 45);
-
-	m_pSequenceEditor = new CSequenceEditor(GetDocument());
-	m_pSequenceEditor->CreateEditor(this, rect);
-	m_pSequenceEditor->SetMaxValues(MAX_VOLUME, 0);
-
-	static_cast<CComboBox*>(GetDlgItem(IDC_TYPE))->SetCurSel(0);
+	SetupDialog(INST_SETTINGS_FDS);		// // //
+	m_pSequenceEditor->SetMaxValues(MAX_VOLUME, CInstrumentFDS::MAX_WAVE_COUNT - 1);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
 }
 
-void CInstrumentEditorFDSEnvelope::SetSequenceString(CString Sequence, bool Changed)
+void CInstrumentEditorFDSEnvelope::OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	SetDlgItemText(IDC_SEQUENCE_STRING, Sequence);
-}
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	CListCtrl *pList = static_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
 
-void CInstrumentEditorFDSEnvelope::OnCbnSelchangeType()
-{
-	CComboBox *pTypeBox = static_cast<CComboBox*>(GetDlgItem(IDC_TYPE));
-	m_iSelectedType = pTypeBox->GetCurSel();
-	LoadSequence();
-}
+	if (pNMLV->uChanged & LVIF_STATE && m_pInstrument != NULL) {
+		// Selected new setting
+		if (pNMLV->uNewState & LVNI_SELECTED || pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			m_iSelectedSetting = pNMLV->iItem;
+			int Sequence = m_pInstrument->GetSeqIndex(m_iSelectedSetting);
+			SetDlgItemInt(IDC_SEQ_INDEX, Sequence);
+			SelectSequence(Sequence, m_iSelectedSetting);
+			pList->SetSelectionMark(m_iSelectedSetting);
+			pList->SetItemState(m_iSelectedSetting, LVIS_SELECTED, LVIS_SELECTED);
+		}
 
-void CInstrumentEditorFDSEnvelope::LoadSequence()
-{
-	switch (m_iSelectedType) {
-		case SEQ_VOLUME:
-			m_pSequenceEditor->SelectSequence(m_pInstrument->GetVolumeSeq(), SEQ_VOLUME, INST_FDS);	
-			break;
-		case SEQ_ARPEGGIO:
-			m_pSequenceEditor->SelectSequence(m_pInstrument->GetArpSeq(), SEQ_ARPEGGIO, INST_FDS);
-			break;
-		case SEQ_PITCH:
-			m_pSequenceEditor->SelectSequence(m_pInstrument->GetPitchSeq(), SEQ_PITCH, INST_FDS);
-			break;
+		// Changed checkbox
+		switch(pNMLV->uNewState & LCTRL_CHECKBOX_STATE) {
+			case LCTRL_CHECKBOX_CHECKED:	// Checked
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 1);
+				break;
+			case LCTRL_CHECKBOX_UNCHECKED:	// Unchecked
+				m_pInstrument->SetSeqEnable(m_iSelectedSetting, 0);
+				break;
+		}
 	}
+
+	*pResult = 0;
+}
+
+void CInstrumentEditorFDSEnvelope::OnEnChangeSeqIndex()
+{
+	// Selected sequence changed
+	CListCtrl *pList = static_cast<CListCtrl*>(GetDlgItem(IDC_INSTSETTINGS));
+	int Index = GetDlgItemInt(IDC_SEQ_INDEX);
+
+	if (Index < 0)
+		Index = 0;
+	if (Index > (MAX_SEQUENCES - 1))
+		Index = (MAX_SEQUENCES - 1);
+	
+	if (m_pInstrument) {
+		// Update list
+		pList->SetItemText(m_iSelectedSetting, 1, MakeIntString(Index));
+
+		if (m_pInstrument->GetSeqIndex(m_iSelectedSetting) != Index)
+			m_pInstrument->SetSeqIndex(m_iSelectedSetting, Index);
+		SelectSequence(Index, m_iSelectedSetting);
+	}
+}
+
+void CInstrumentEditorFDSEnvelope::OnBnClickedFreeSeq()
+{
+	int FreeIndex = GetDocument()->GetFreeSequenceFDS(m_iSelectedSetting);
+	if (FreeIndex == -1)
+		FreeIndex = 0;
+	SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);	// Things will update automatically by changing this
+}
+
+BOOL CInstrumentEditorFDSEnvelope::DestroyWindow()
+{
+	m_pSequenceEditor->DestroyWindow();
+	return CDialog::DestroyWindow();
 }
 
 void CInstrumentEditorFDSEnvelope::OnKeyReturn()
 {
-	CString string;
+	// Translate the sequence text string to a sequence
+	CString Text;
+	GetDlgItemText(IDC_SEQUENCE_STRING, Text);
 
-	GetDlgItemText(IDC_SEQUENCE_STRING, string);
-
-	switch (m_iSelectedType) {
+	switch (m_iSelectedSetting) {
 		case SEQ_VOLUME:
-			TranslateMML(string, m_pInstrument->GetVolumeSeq(), MAX_VOLUME, 0);
+			TranslateMML(Text, MAX_VOLUME, 0);
 			break;
 		case SEQ_ARPEGGIO:
-			TranslateMML(string, m_pInstrument->GetArpSeq(), 96, -96);
+			TranslateMML(Text, 96, -96);
 			break;
 		case SEQ_PITCH:
-			TranslateMML(string, m_pInstrument->GetPitchSeq(), 126, -127);
+			TranslateMML(Text, 126, -127);
+			break;
+		case SEQ_HIPITCH:
+			TranslateMML(Text, 126, -127);
+			break;
+		case SEQ_DUTYCYCLE:
+			TranslateMML(Text, CInstrumentFDS::MAX_WAVE_COUNT - 1, 0);
 			break;
 	}
+}
 
-	// Update editor
-	m_pSequenceEditor->RedrawWindow();
-
-	// Register a document change
-	GetDocument()->SetModifiedFlag();
+void CInstrumentEditorFDSEnvelope::OnCloneSequence()
+{
+	CFamiTrackerDoc *pDoc = GetDocument();
+	int FreeIndex = pDoc->GetFreeSequenceFDS(m_iSelectedSetting);
+	if (FreeIndex != -1) {
+		CSequence *pSeq = pDoc->GetSequence(SNDCHIP_FDS, FreeIndex, m_iSelectedSetting);
+		pSeq->Copy(m_pSequence);
+		SetDlgItemInt(IDC_SEQ_INDEX, FreeIndex, FALSE);
+	}
 }

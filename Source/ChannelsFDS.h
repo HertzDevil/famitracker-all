@@ -23,6 +23,7 @@
 class CChannelHandlerFDS : public CChannelHandlerInverted {
 public:
 	CChannelHandlerFDS();
+	virtual void ResetChannel();		// // //
 	virtual void ProcessChannel();
 	virtual void RefreshChannel();
 protected:
@@ -46,10 +47,6 @@ protected:
 	int m_iModulationSpeed;
 	int m_iModulationDepth;
 	int m_iModulationDelay;
-	// FDS sequences
-	//CSequence *m_pVolumeSeq;
-	//CSequence *m_pArpeggioSeq;
-	//CSequence *m_pPitchSeq;
 	// Modulation table
 	char m_iModTable[32];
 	char m_iWaveTable[64];
@@ -62,4 +59,9 @@ protected:
 	int m_iEffModDepth;
 	int m_iEffModSpeedHi;
 	int m_iEffModSpeedLo;
+
+	// // //
+	int m_iWaveIndex;
+	int m_iWaveCount;
+	bool m_bLoadWave;
 };

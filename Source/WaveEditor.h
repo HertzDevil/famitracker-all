@@ -76,8 +76,9 @@ public:
 class CWaveEditorFDS : public CWaveEditor
 {
 public:
-	CWaveEditorFDS(int sx, int sy, int lx, int ly) : CWaveEditor(sx, sy, lx, ly), m_pInstrument(NULL) {};
+	CWaveEditorFDS(int sx, int sy, int lx, int ly) : CWaveEditor(sx, sy, lx, ly), m_pInstrument(NULL), m_iWaveIndex(0) {}; // // //
 	void SetInstrument(CInstrumentFDS *pInst);
+	void SetWave(int i);		// // //
 protected:
 	virtual int GetSample(int i) const;
 	virtual void SetSample(int i, int s);
@@ -91,6 +92,7 @@ protected:
 
 protected:
 	CInstrumentFDS *m_pInstrument;
+	int m_iWaveIndex;		// // //
 };
 
 // N163 wave

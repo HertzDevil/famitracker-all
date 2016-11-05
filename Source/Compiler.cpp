@@ -1130,6 +1130,7 @@ void CCompiler::ScanSong()
 	memset(m_iAssignedInstruments, 0, sizeof(int) * MAX_INSTRUMENTS);
 	memset(m_bSequencesUsed2A03, false, sizeof(bool) * MAX_SEQUENCES * SEQ_COUNT);
 	memset(m_bSequencesUsedVRC6, false, sizeof(bool) * MAX_SEQUENCES * SEQ_COUNT);
+	memset(m_bSequencesUsedFDS, false, sizeof(bool) * MAX_SEQUENCES * SEQ_COUNT);		// // //
 	memset(m_bSequencesUsedN163, false, sizeof(bool) * MAX_SEQUENCES * SEQ_COUNT);
 
 	for (int i = 0; i < MAX_INSTRUMENTS; ++i) {
@@ -1157,6 +1158,16 @@ void CCompiler::ScanSong()
 						for (int j = 0; j < CInstrumentVRC6::SEQUENCE_COUNT; ++j) {
 							if (pInstrument->GetSeqEnable(j))
 								m_bSequencesUsedVRC6[pInstrument->GetSeqIndex(j)][j] = true;
+						}
+					}
+					break;
+				case INST_FDS:		// // //
+					{
+						CInstrumentContainer<CInstrumentFDS> instContainer(m_pDocument, i);
+						CInstrumentFDS *pInstrument = instContainer();
+						for (int j = 0; j < CInstrumentFDS::SEQUENCE_COUNT; ++j) {
+							if (pInstrument->GetSeqEnable(j))
+								m_bSequencesUsedFDS[pInstrument->GetSeqIndex(j)][j] = true;
 						}
 					}
 					break;
@@ -1259,9 +1270,7 @@ void CCompiler::CreateMainHeader()
 	m_iHeaderFlagOffset = pChunk->GetLength();		// Save the flags offset
 	pChunk->StoreByte(Flags);
 
-	// FDS table, only if FDS is enabled
-	if (m_pDocument->ExpansionEnabled(SNDCHIP_FDS))
-		pChunk->StoreReference(LABEL_WAVETABLE);
+	// // //
 
 	pChunk->StoreWord(DividerNTSC);
 	pChunk->StoreWord(DividerPAL);
@@ -1312,6 +1321,23 @@ void CCompiler::CreateSequenceList()
 			}
 		}
 	}
+	
+	
+	if (m_pDocument->ExpansionEnabled(SNDCHIP_FDS)) {		// // //
+		for (int i = 0; i < MAX_SEQUENCES; ++i) {
+			for (int j = 0; j < CInstrumentFDS::SEQUENCE_COUNT; ++j) {
+				CSequence* pSeq = m_pDocument->GetSequence(SNDCHIP_FDS, i, j);
+
+				if (m_bSequencesUsedFDS[i][j] && pSeq->GetItemCount() > 0) {
+					int Index = i * SEQ_COUNT + j;
+					CStringA label;
+					label.Format(LABEL_SEQ_FDS, Index);
+					Size += StoreSequence(pSeq, label);
+					++StoredCount;
+				}
+			}
+		}
+	}
 
 	
 	if (m_pDocument->ExpansionEnabled(SNDCHIP_N163)) {
@@ -1329,34 +1355,7 @@ void CCompiler::CreateSequenceList()
 			}
 		}
 	}
-	
 
-	if (m_pDocument->ExpansionEnabled(SNDCHIP_FDS)) {
-		// TODO: this is bad, fds only uses 3 sequences
-
-		for (int i = 0; i < MAX_INSTRUMENTS; ++i) {
-			CInstrumentContainer<CInstrumentFDS> instContainer(m_pDocument, i);
-			CInstrumentFDS *pInstrument = instContainer();
-
-			if (pInstrument != NULL && pInstrument->GetType() == INST_FDS) {
-				for (int j = 0; j < 3; ++j) {
-					CSequence* pSeq;
-					switch (j) {
-						case 0: pSeq = pInstrument->GetVolumeSeq(); break;
-						case 1: pSeq = pInstrument->GetArpSeq(); break;
-						case 2: pSeq = pInstrument->GetPitchSeq(); break;
-					}
-					if (pSeq->GetItemCount() > 0) {
-						int Index = i * SEQ_COUNT + j;
-						CStringA label;
-						label.Format(LABEL_SEQ_FDS, Index);
-						Size += StoreSequence(pSeq, label);
-						++StoredCount;
-					}
-				}
-			}
-		}
-	}
 
 	Print(_T(" * Sequences used: %i (%i bytes)\n"), StoredCount, Size);
 }
@@ -1405,15 +1404,10 @@ void CCompiler::CreateInstrumentList()
 	 */
 
 	unsigned int iTotalSize = 0;	
-	CChunk *pWavetableChunk = NULL;	// FDS
-	CChunk *pWavesChunk = NULL;		// N163
+	CChunk *pWavesChunk = NULL;		// // // FDS + N163
 	int iWaveSize = 0;				// N163 waves size
 
 	CChunk *pInstListChunk = CreateChunk(CHUNK_INSTRUMENT_LIST, LABEL_INSTRUMENT_LIST);
-	
-	if (m_pDocument->ExpansionEnabled(SNDCHIP_FDS)) {
-		pWavetableChunk = CreateChunk(CHUNK_WAVETABLE, LABEL_WAVETABLE);
-	}
 
 	memset(m_iWaveBanks, -1, MAX_INSTRUMENTS * sizeof(int));
 
@@ -1430,6 +1424,31 @@ void CCompiler::CreateInstrumentList()
 				if (m_pDocument->GetInstrumentType(inst) == INST_N163 && m_iWaveBanks[j] == -1) {
 					CInstrumentContainer<CInstrumentN163> instContainer(m_pDocument, inst);
 					CInstrumentN163 *pNewInst = instContainer();
+					if (pInstrument->IsWaveEqual(pNewInst)) {
+						m_iWaveBanks[j] = iIndex;
+					}
+				}
+			}
+			if (m_iWaveBanks[i] == -1) {
+				m_iWaveBanks[i] = iIndex;
+				// Store wave
+				CStringA label;
+				label.Format(LABEL_WAVES, iIndex);
+				pWavesChunk = CreateChunk(CHUNK_WAVES, label);
+				// Store waves
+				iWaveSize += pInstrument->StoreWave(pWavesChunk);
+			}
+		}
+		else if (m_pDocument->GetInstrumentType(iIndex) == INST_FDS && m_iWaveBanks[i] == -1) {		// // //
+
+			CInstrumentContainer<CInstrumentFDS> instContainer(m_pDocument, iIndex);
+			CInstrumentFDS *pInstrument = instContainer();
+
+			for (unsigned int j = i + 1; j < m_iInstruments; ++j) {
+				int inst = m_iAssignedInstruments[j];
+				if (m_pDocument->GetInstrumentType(inst) == INST_FDS && m_iWaveBanks[j] == -1) {
+					CInstrumentContainer<CInstrumentFDS> instContainer(m_pDocument, inst);
+					CInstrumentFDS *pNewInst = instContainer();
 					if (pInstrument->IsWaveEqual(pNewInst)) {
 						m_iWaveBanks[j] = iIndex;
 					}
@@ -1462,13 +1481,6 @@ void CCompiler::CreateInstrumentList()
 		int iIndex = m_iAssignedInstruments[i];
 		CInstrumentContainer<CInstrument> instContainer(m_pDocument, iIndex);
 		CInstrument *pInstrument = instContainer();
-
-		// Check if FDS
-		if (pInstrument->GetType() == INST_FDS && pWavetableChunk != NULL) {
-			// Store wave
-			AddWavetable(static_cast<CInstrumentFDS*>(pInstrument), pWavetableChunk);
-			pChunk->StoreByte(m_iWaveTables - 1);
-		}
 /*
 		if (pInstrument->GetType() == INST_N163) {
 			CString label;
@@ -1479,7 +1491,7 @@ void CCompiler::CreateInstrumentList()
 		}
 */
 
-		if (pInstrument->GetType() == INST_N163) {
+		if (pInstrument->GetType() == INST_N163 || pInstrument->GetType() == INST_FDS) {		// // //
 			// Translate wave index
 			iIndex = m_iWaveBanks[i];
 		}
@@ -1491,7 +1503,7 @@ void CCompiler::CreateInstrumentList()
 	Print(_T(" * Instruments used: %i (%i bytes)\n"), m_iInstruments, iTotalSize);
 
 	if (iWaveSize > 0)
-		Print(_T(" * N163 waves size: %i bytes\n"), iWaveSize);
+		Print(_T(" * FDS/N163 waves size: %i bytes\n"), iWaveSize);		// // //
 }
 
 // Samples
@@ -1830,23 +1842,6 @@ bool CCompiler::IsPatternAddressed(unsigned int Track, int Pattern, int Channel)
 	}
 
 	return false;
-}
-
-void CCompiler::AddWavetable(CInstrumentFDS *pInstrument, CChunk *pChunk)
-{
-	// TODO Find equal existing waves
-	/*
-	for (int i = 0; i < m_iWaveTables; ++i) {
-		if (!memcmp(Wave, m_iWaveTable[i], 64))
-			return i;
-	}
-	*/
-
-	// Allocate new wave
-	for (int i = 0; i < 64; ++i)
-		pChunk->StoreByte(pInstrument->GetSample(i));
-
-	m_iWaveTables++;
 }
 
 void CCompiler::WriteAssembly(CFile *pFile)

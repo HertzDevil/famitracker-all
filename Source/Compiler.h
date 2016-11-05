@@ -118,7 +118,7 @@ private:
 	void	EnableBankswitching();
 
 	// FDS
-	void	AddWavetable(CInstrumentFDS *pInstrument, CChunk *pChunk);
+	// // // void	AddWavetable(CInstrumentFDS *pInstrument, CChunk *pChunk);
 
 	// File writing
 	void	WriteAssembly(CFile *pFile);
@@ -210,6 +210,7 @@ private:
 	unsigned int	m_iAssignedInstruments[MAX_INSTRUMENTS];
 	bool			m_bSequencesUsed2A03[MAX_SEQUENCES][SEQ_COUNT];
 	bool			m_bSequencesUsedVRC6[MAX_SEQUENCES][SEQ_COUNT];
+	bool			m_bSequencesUsedFDS[MAX_SEQUENCES][SEQ_COUNT];		// // //
 	bool			m_bSequencesUsedN163[MAX_SEQUENCES][SEQ_COUNT];
 
 	int				m_iWaveBanks[MAX_INSTRUMENTS];	// N163 waves

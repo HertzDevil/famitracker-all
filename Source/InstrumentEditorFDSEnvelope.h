@@ -20,8 +20,6 @@
 
 #pragma once
 
-// CInstrumentEditorFDSEnvelope dialog
-
 class CInstrumentEditorFDSEnvelope : public CSequenceInstrumentEditPanel
 {
 	DECLARE_DYNAMIC(CInstrumentEditorFDSEnvelope)
@@ -34,26 +32,34 @@ public:
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
-	virtual void SetSequenceString(CString Sequence, bool Changed);
+	void SetSequenceString(CString Sequence, bool Changed);		// // //
 
 // Dialog Data
-	enum { IDD = IDD_INSTRUMENT_FDS_ENVELOPE };
+	enum { IDD = IDD_INSTRUMENT_INTERNAL };		// // //
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	virtual void OnKeyReturn();
-	void LoadSequence();
+
+	void SelectSequence(int Sequence, int Type);		// // //
+	void TranslateMML(CString String, int Max, int Min);
 
 protected:
+	static LPCTSTR INST_SETTINGS_FDS[];		// // //
+
 	static const int MAX_VOLUME = 32;
 
 protected:
 	CInstrumentFDS	*m_pInstrument;
-	int				m_iSelectedType;
 
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnInitDialog();
-	afx_msg void OnCbnSelchangeType();
+	afx_msg void OnLvnItemchangedInstsettings(NMHDR *pNMHDR, LRESULT *pResult);		// // //
+	afx_msg void OnEnChangeSeqIndex();
+	afx_msg void OnBnClickedFreeSeq();
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	virtual BOOL DestroyWindow();
+	afx_msg void OnCloneSequence();
 };

@@ -29,7 +29,10 @@
 #include "SoundGen.h"
 
 CChannelHandlerFDS::CChannelHandlerFDS() : 
-	CChannelHandlerInverted(0xFFF, 32)
+	CChannelHandlerInverted(0xFFF, 32), 
+	m_bLoadWave(false),		// // //
+	m_iWaveIndex(0),
+	m_iWaveCount(0)
 { 
 	ClearSequences();
 
@@ -37,6 +40,13 @@ CChannelHandlerFDS::CChannelHandlerFDS() :
 	memset(m_iWaveTable, 0, 64);
 
 	m_bResetMod = false;
+}
+
+void CChannelHandlerFDS::ResetChannel()		// // //
+{
+	CChannelHandler::ResetChannel();
+
+	m_iWaveIndex = 0;
 }
 
 void CChannelHandlerFDS::HandleNoteData(stChanNote *pNoteData, int EffColumns)
@@ -80,6 +90,10 @@ void CChannelHandlerFDS::HandleCustomEffects(int EffNum, int EffParam)
 	else if (!CheckCommonEffects(EffNum, EffParam)) {
 		// Custom effects
 		switch (EffNum) {
+			case EF_DUTY_CYCLE:		// // //
+				m_iWaveIndex = EffParam;
+				m_bLoadWave = true;
+				break;
 			case EF_SLIDE_UP:
 			case EF_SLIDE_DOWN:
 				m_iPostEffect = EffNum;
@@ -112,22 +126,27 @@ bool CChannelHandlerFDS::HandleInstrument(int Instrument, bool Trigger, bool New
 		FillWaveRAM(pInstrument);
 		FillModulationTable(pInstrument);
 	}
-
+	
+	for (int i = 0; i < CInstrumentFDS::SEQUENCE_COUNT; ++i) {		// // //
+		const CSequence *pSequence = pDocument->GetSequence(SNDCHIP_FDS, pInstrument->GetSeqIndex(i), i);
+		if (Trigger || !IsSequenceEqual(i, pSequence) || pInstrument->GetSeqEnable(i) > GetSequenceState(i)) {
+			if (pInstrument->GetSeqEnable(i) == 1)
+				SetupSequence(i, pSequence);
+			else
+				ClearSequence(i);
+		}
+	}
 	if (Trigger) {
-		CSequence *pVolSeq = pInstrument->GetVolumeSeq();
-		CSequence *pArpSeq = pInstrument->GetArpSeq();
-		CSequence *pPitchSeq = pInstrument->GetPitchSeq();
-
-		(pVolSeq->GetItemCount() > 0) ? SetupSequence(SEQ_VOLUME, pVolSeq) : ClearSequence(SEQ_VOLUME);
-		(pArpSeq->GetItemCount() > 0) ? SetupSequence(SEQ_ARPEGGIO, pArpSeq) : ClearSequence(SEQ_ARPEGGIO);
-		(pPitchSeq->GetItemCount() > 0) ? SetupSequence(SEQ_PITCH, pPitchSeq) : ClearSequence(SEQ_PITCH);
-
 //			if (pInstrument->GetModulationEnable()) {
 			m_iModulationSpeed = pInstrument->GetModulationSpeed();
 			m_iModulationDepth = pInstrument->GetModulationDepth();
 			m_iModulationDelay = pInstrument->GetModulationDelay();
 //			}
 	}
+	
+	m_iWaveCount = pInstrument->GetWaveCount();		// // //
+	if (!m_bLoadWave && NewInstrument)
+		m_iWaveIndex = 0;
 
 	return true;
 }
@@ -162,17 +181,18 @@ void CChannelHandlerFDS::HandleNote(int Note, int Octave)
 void CChannelHandlerFDS::ProcessChannel()
 {
 	// Default effects
-	CChannelHandler::ProcessChannel();	
+	CChannelHandler::ProcessChannel();
+	
+	bool bUpdateWave = GetSequenceState(SEQ_DUTYCYCLE) != SEQ_STATE_DISABLED;		// // //
 
 	// Sequences
-	if (GetSequenceState(SEQ_VOLUME) != SEQ_STATE_DISABLED)
-		RunSequence(SEQ_VOLUME);
-
-	if (GetSequenceState(SEQ_ARPEGGIO) != SEQ_STATE_DISABLED)
-		RunSequence(SEQ_ARPEGGIO);
-
-	if (GetSequenceState(SEQ_PITCH) != SEQ_STATE_DISABLED)
-		RunSequence(SEQ_PITCH);
+	for (int i = 0; i < CInstrumentFDS::SEQUENCE_COUNT; ++i)		// // //
+		RunSequence(i);
+	
+	if (bUpdateWave) {		// // //
+		m_bLoadWave = true;
+		m_iWaveIndex = m_iDutyPeriod;
+	}
 }
 
 void CChannelHandlerFDS::RefreshChannel()
@@ -190,6 +210,14 @@ void CChannelHandlerFDS::RefreshChannel()
 
 	if (!m_bGate)
 		Volume = 0;
+
+	if (m_bLoadWave && m_bGate) {		// // //
+		m_bLoadWave = false;
+		CInstrumentContainer<CInstrumentFDS> instContainer(m_pSoundGen->GetDocument(), m_iInstrument);
+		CInstrumentFDS *pInstrument = instContainer();
+		if (pInstrument != NULL && m_iInstrument != MAX_INSTRUMENTS)
+			FillWaveRAM(pInstrument);
+	}
 
 	// Write frequency
 	WriteExternalRegister(0x4082, LoFreq);
@@ -247,8 +275,11 @@ void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInstrument)
 {
 	bool bNew(false);
 
+	if (m_iWaveIndex >= m_iWaveCount)		// // //
+		m_iWaveIndex = m_iWaveCount - 1;
+
 	for (int i = 0; i < 64; ++i) {
-		if (m_iWaveTable[i] != pInstrument->GetSample(i)) {
+		if (m_iWaveTable[i] != pInstrument->GetSample(m_iWaveIndex, i)) {		// // //
 			bNew = true;
 			break;
 		}
@@ -256,7 +287,7 @@ void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInstrument)
 
 	if (bNew) {
 		for (int i = 0; i < 64; ++i)
-			m_iWaveTable[i] = pInstrument->GetSample(i);
+			m_iWaveTable[i] = pInstrument->GetSample(m_iWaveIndex, i);		// // //
 
 		// Fills the 64 byte waveform table
 		// Enable write for waveform RAM
@@ -267,7 +298,7 @@ void CChannelHandlerFDS::FillWaveRAM(CInstrumentFDS *pInstrument)
 
 		// Wave ram
 		for (int i = 0; i < 0x40; ++i)
-			WriteExternalRegister(0x4040 + i, pInstrument->GetSample(i));
+			WriteExternalRegister(0x4040 + i, pInstrument->GetSample(m_iWaveIndex, i));		// // //
 
 		// Disable write for waveform RAM, master volume = full
 		WriteExternalRegister(0x4089, 0x00);
@@ -309,6 +340,7 @@ void CChannelHandlerFDS::CheckWaveUpdate()
 	bool bWaveChanged = theApp.GetSoundGenerator()->HasWaveChanged();
 
 	if (m_iInstrument != MAX_INSTRUMENTS && bWaveChanged) {
+		m_bLoadWave = true;		// // //
 		CInstrumentContainer<CInstrumentFDS> instContainer(pDocument, m_iInstrument);
 		CInstrumentFDS *pInstrument = instContainer();
 		if (pInstrument != NULL) {

@@ -307,16 +307,21 @@ void CWaveEditorFDS::SetInstrument(CInstrumentFDS *pInst)
 	WaveChanged();
 }
 
+void CWaveEditorFDS::SetWave(int i)		// // //
+{
+	m_iWaveIndex = i;
+}
+
 int CWaveEditorFDS::GetSample(int i) const
 {
 	ASSERT(m_pInstrument != NULL);
-	return m_pInstrument->GetSample(i);
+	return m_pInstrument->GetSample(m_iWaveIndex, i);		// // //
 }
 
 void CWaveEditorFDS::SetSample(int i, int s)
 {
 	ASSERT(m_pInstrument != NULL);
-	m_pInstrument->SetSample(i, s);
+	m_pInstrument->SetSample(m_iWaveIndex, i, s);		// // //
 	theApp.GetSoundGenerator()->WaveChanged();
 }
 

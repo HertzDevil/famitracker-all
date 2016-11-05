@@ -33,7 +33,7 @@ public:
 	CInstrumentEditorFDS(CWnd* pParent = NULL);   // standard constructor
 	virtual ~CInstrumentEditorFDS();
 	virtual int GetIDD() const { return IDD; };
-	virtual TCHAR *GetTitle() const { return _T("Nintendo FDS"); };
+	virtual TCHAR *GetTitle() const { return _T("Waves"); };		// // //
 
 	// Public
 	virtual void SelectInstrument(int Instrument);
@@ -53,6 +53,7 @@ protected:
 	CInstrumentFDS		*m_pInstrument;
 	CWaveEditorFDS		*m_pWaveEditor;
 	CModSequenceEditor	*m_pModSequenceEditor;
+	int					m_iWaveIndex;		// // //
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -77,4 +78,6 @@ public:
 	afx_msg void OnBnClickedPasteTable();
 	afx_msg void OnBnClickedEnableFm();
 	afx_msg LRESULT OnModChanged(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnWavesChange();		// // //
+	afx_msg void OnIndexChange();
 };

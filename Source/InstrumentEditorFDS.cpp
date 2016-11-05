@@ -39,7 +39,8 @@ IMPLEMENT_DYNAMIC(CInstrumentEditorFDS, CInstrumentEditPanel)
 CInstrumentEditorFDS::CInstrumentEditorFDS(CWnd* pParent) : CInstrumentEditPanel(CInstrumentEditorFDS::IDD, pParent),
 	m_pWaveEditor(NULL), 
 	m_pModSequenceEditor(NULL), 
-	m_pInstrument(NULL)
+	m_pInstrument(NULL),
+	m_iWaveIndex(0)		// // //
 {
 }
 
@@ -78,6 +79,14 @@ void CInstrumentEditorFDS::SelectInstrument(int Instrument)
 //	CheckDlgButton(IDC_ENABLE_FM, m_pInstrument->GetModulationEnable() ? 1 : 0);
 
 	EnableModControls(m_pInstrument->GetModulationEnable());
+	
+	m_iWaveIndex = 0;		// // //
+	CSpinButtonCtrl *pIndexSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_INDEX_FDS_SPIN));
+	CSpinButtonCtrl *pWavesSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_WAVES_FDS_SPIN));
+	int WaveCount = m_pInstrument->GetWaveCount();
+	pIndexSpin->SetRange(0, WaveCount - 1);
+	pIndexSpin->SetPos(0);
+	pWavesSpin->SetPos(WaveCount - 1);
 }
 
 
@@ -99,6 +108,8 @@ BEGIN_MESSAGE_MAP(CInstrumentEditorFDS, CInstrumentEditPanel)
 	ON_BN_CLICKED(IDC_PASTE_TABLE, &CInstrumentEditorFDS::OnBnClickedPasteTable)
 //	ON_BN_CLICKED(IDC_ENABLE_FM, &CInstrumentEditorFDS::OnBnClickedEnableFm)
 	ON_MESSAGE(WM_USER + 1, OnModChanged)
+	ON_EN_CHANGE(IDC_WAVES_FDS, OnWavesChange)		// // //
+	ON_EN_CHANGE(IDC_INDEX_FDS, OnIndexChange)
 END_MESSAGE_MAP()
 
 // CInstrumentEditorFDS message handlers
@@ -124,6 +135,12 @@ BOOL CInstrumentEditorFDS::OnInitDialog()
 	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_RATE_SPIN))->SetRange(0, 4095);
 	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DEPTH_SPIN))->SetRange(0, 63);
 	static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_MOD_DELAY_SPIN))->SetRange(0, 255);
+
+	CSpinButtonCtrl *pIndexSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_INDEX_FDS_SPIN));		// // //
+	CSpinButtonCtrl *pWavesSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_WAVES_FDS_SPIN));
+
+	pIndexSpin->SetRange(0, CInstrumentFDS::MAX_WAVE_COUNT - 1);
+	pWavesSpin->SetRange(0, CInstrumentFDS::MAX_WAVE_COUNT - 1);
 /*
 	CSliderCtrl *pModSlider;
 	pModSlider = (CSliderCtrl*)GetDlgItem(IDC_MOD_FREQ);
@@ -138,7 +155,7 @@ void CInstrumentEditorFDS::OnPresetSine()
 	for (int i = 0; i < 64; ++i) {
 		float angle = (float(i) * 3.141592f * 2.0f) / 64.0f + 0.049087375f;
 		int sample = int((sinf(angle) + 1.0f) * 31.5f + 0.5f);
-		m_pInstrument->SetSample(i, sample);
+		m_pInstrument->SetSample(m_iWaveIndex, i, sample);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -149,7 +166,7 @@ void CInstrumentEditorFDS::OnPresetTriangle()
 {
 	for (int i = 0; i < 64; ++i) {
 		int sample = (i < 32 ? i << 1 : (63 - i) << 1);
-		m_pInstrument->SetSample(i, sample);
+		m_pInstrument->SetSample(m_iWaveIndex, i, sample);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -160,7 +177,7 @@ void CInstrumentEditorFDS::OnPresetPulse50()
 {
 	for (int i = 0; i < 64; ++i) {
 		int sample = (i < 32 ? 0 : 63);
-		m_pInstrument->SetSample(i, sample);
+		m_pInstrument->SetSample(m_iWaveIndex, i, sample);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -171,7 +188,7 @@ void CInstrumentEditorFDS::OnPresetPulse25()
 {
 	for (int i = 0; i < 64; ++i) {
 		int sample = (i < 16 ? 0 : 63);
-		m_pInstrument->SetSample(i, sample);
+		m_pInstrument->SetSample(m_iWaveIndex, i, sample);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -182,7 +199,7 @@ void CInstrumentEditorFDS::OnPresetSawtooth()
 {
 	for (int i = 0; i < 64; ++i) {
 		int sample = i;
-		m_pInstrument->SetSample(i, sample);
+		m_pInstrument->SetSample(m_iWaveIndex, i, sample);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -273,7 +290,7 @@ void CInstrumentEditorFDS::OnBnClickedCopyWave()
 
 	// Assemble a MML string
 	for (int i = 0; i < 64; ++i)
-		Str.AppendFormat(_T("%i "), m_pInstrument->GetSample(i));
+		Str.AppendFormat(_T("%i "), m_pInstrument->GetSample(m_iWaveIndex, i));		// // //
 
 	CClipboard Clipboard(this, CF_TEXT);
 
@@ -314,7 +331,7 @@ void CInstrumentEditorFDS::ParseWaveString(LPCTSTR pString)
 	for (int i = 0; (i < 64) && (begin != end); ++i) {
 		int value = CSequenceInstrumentEditPanel::ReadStringValue(*begin++);
 		value = std::min<int>(std::max<int>(value, 0), 63);
-		m_pInstrument->SetSample(i, value);
+		m_pInstrument->SetSample(m_iWaveIndex, i, value);		// // //
 	}
 
 	m_pWaveEditor->RedrawWindow();
@@ -404,4 +421,35 @@ LRESULT CInstrumentEditorFDS::OnModChanged(WPARAM wParam, LPARAM lParam)
 {
 	theApp.GetSoundGenerator()->WaveChanged();
 	return 0;
+}
+
+void CInstrumentEditorFDS::OnWavesChange()		// // //
+{
+	CSpinButtonCtrl *pIndexSpin = static_cast<CSpinButtonCtrl*>(GetDlgItem(IDC_INDEX_FDS_SPIN));
+
+	int count = GetDlgItemInt(IDC_WAVES_FDS) + 1;
+	
+	if (m_pInstrument != NULL)
+		m_pInstrument->SetWaveCount(count);
+
+	pIndexSpin->SetRange(0, count - 1);
+	pIndexSpin->RedrawWindow();
+
+	if (pIndexSpin->GetPos() > (count - 1))
+		pIndexSpin->SetPos(count - 1);
+
+	if (m_pWaveEditor != NULL) {
+		m_pWaveEditor->SetWave(m_iWaveIndex);
+		m_pWaveEditor->WaveChanged();
+	}
+}
+
+void CInstrumentEditorFDS::OnIndexChange()		// // //
+{
+	m_iWaveIndex = GetDlgItemInt(IDC_INDEX_FDS);
+
+	if (m_pWaveEditor != NULL) {
+		m_pWaveEditor->SetWave(m_iWaveIndex);
+		m_pWaveEditor->WaveChanged();
+	}
 }

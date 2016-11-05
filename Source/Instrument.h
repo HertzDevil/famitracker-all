@@ -202,14 +202,15 @@ public:
 	virtual void Setup();
 	virtual void Store(CDocumentFile *pDocFile);
 	virtual bool Load(CDocumentFile *pDocFile);
+	virtual bool LoadNew(CDocumentFile *pDocFile);		// // //
 	virtual void SaveFile(CInstrumentFile *pFile, const CFamiTrackerDoc *pDoc);
 	virtual bool LoadFile(CInstrumentFile *pFile, int iVersion, CFamiTrackerDoc *pDoc);
 	virtual int Compile(CFamiTrackerDoc *pDoc, CChunk *pChunk, int Index);
 	virtual bool CanRelease() const;
 
 public:
-	unsigned char GetSample(int Index) const;
-	void	SetSample(int Index, int Sample);
+	unsigned char GetSample(int Wave, int Index) const;		// // //
+	void	SetSample(int Wave, int Index, int Sample);		// // //
 	int		GetModulationSpeed() const;
 	void	SetModulationSpeed(int Speed);
 	int		GetModulation(int Index) const;
@@ -223,6 +224,14 @@ public:
 	CSequence* GetVolumeSeq() const;
 	CSequence* GetArpSeq() const;
 	CSequence* GetPitchSeq() const;
+	int		GetSeqEnable(int Index) const;		// // //
+	int		GetSeqIndex(int Index) const;
+	void	SetSeqEnable(int Index, int Value);
+	void	SetSeqIndex(int Index, int Value);
+	void	SetWaveCount(int count);		// // //
+	int		GetWaveCount() const;
+	int		StoreWave(CChunk *pChunk) const;		// // //
+	bool	IsWaveEqual(CInstrumentFDS *pInstrument);		// // //
 
 private:
 	void StoreSequence(CDocumentFile *pDocFile, CSequence *pSeq);
@@ -233,10 +242,13 @@ private:
 public:
 	static const int WAVE_SIZE = 64;
 	static const int MOD_SIZE = 32;
+	static const int MAX_WAVE_COUNT = 16;		// // //
+	static const int SEQUENCE_COUNT = 5;		// // //
+	static const int SEQUENCE_TYPES[];
 
 private:
 	// Instrument data
-	unsigned char m_iSamples[64];
+	unsigned char m_iSamples[MAX_WAVE_COUNT][64];		// // //
 	unsigned char m_iModulation[32];
 	int			  m_iModulationSpeed;
 	int			  m_iModulationDepth;
@@ -246,6 +258,9 @@ private:
 	CSequence*	  m_pVolume;
 	CSequence*	  m_pArpeggio;
 	CSequence*	  m_pPitch;
+	int			  m_iSeqEnable[SEQ_COUNT];		// // //
+	int			  m_iSeqIndex[SEQ_COUNT];
+	int			  m_iWaveCount;
 };
 
 class CInstrumentN163 : public CInstrument {

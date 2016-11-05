@@ -289,6 +289,11 @@ public:
 	int				GetSequenceItemCountVRC6(unsigned int Index, int Type) const;
 	int				GetFreeSequenceVRC6(int Type) const;
 
+	CSequence*		GetSequenceFDS(unsigned int Index, int Type);		// // //
+	CSequence*		GetSequenceFDS(unsigned int Index, int Type) const;
+	int				GetSequenceItemCountFDS(unsigned int Index, int Type) const;
+	int				GetFreeSequenceFDS(int Type) const;
+
 	CSequence*		GetSequenceN163(unsigned int Index, int Type);
 	CSequence*		GetSequenceN163(unsigned int Index, int Type) const;
 	int				GetSequenceItemCountN163(unsigned int Index, int Type) const;
@@ -356,6 +361,7 @@ private:
 	bool			WriteBlock_SongInfo(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Header(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Instruments(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_InstrumentsFDS(CDocumentFile *pDocFile) const;		// // //
 	bool			WriteBlock_Sequences(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Frames(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Patterns(CDocumentFile *pDocFile) const;
@@ -363,12 +369,14 @@ private:
 	bool			WriteBlock_Comments(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_ChannelLayout(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
+	bool			WriteBlock_SequencesFDS(CDocumentFile *pDocFile) const;		// // //
 	bool			WriteBlock_SequencesN163(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_SequencesS5B(CDocumentFile *pDocFile) const;
 
 	bool			ReadBlock_Parameters(CDocumentFile *pDocFile);
 	bool			ReadBlock_Header(CDocumentFile *pDocFile);
 	bool			ReadBlock_Instruments(CDocumentFile *pDocFile);
+	bool			ReadBlock_InstrumentsFDS(CDocumentFile *pDocFile);		// // //
 	bool			ReadBlock_Sequences(CDocumentFile *pDocFile);
 	bool			ReadBlock_Frames(CDocumentFile *pDocFile);
 	bool			ReadBlock_Patterns(CDocumentFile *pDocFile);
@@ -376,6 +384,7 @@ private:
 	bool			ReadBlock_Comments(CDocumentFile *pDocFile);
 	bool			ReadBlock_ChannelLayout(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesVRC6(CDocumentFile *pDocFile);
+	bool			ReadBlock_SequencesFDS(CDocumentFile *pDocFile);		// // //
 	bool			ReadBlock_SequencesN163(CDocumentFile *pDocFile);
 	bool			ReadBlock_SequencesS5B(CDocumentFile *pDocFile);
 
@@ -455,6 +464,7 @@ private:
 	CDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample list
 	CSequence		*m_pSequences2A03[MAX_SEQUENCES][SEQ_COUNT];
 	CSequence		*m_pSequencesVRC6[MAX_SEQUENCES][SEQ_COUNT];
+	CSequence		*m_pSequencesFDS[MAX_SEQUENCES][SEQ_COUNT];		// // //
 	CSequence		*m_pSequencesN163[MAX_SEQUENCES][SEQ_COUNT];
 	CSequence		*m_pSequencesS5B[MAX_SEQUENCES][SEQ_COUNT];
 
