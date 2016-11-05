@@ -1,8 +1,9 @@
 # famitracker-all
 
 This repository contains every single public release of the official FamiTracker
-source code, verbatim. It also includes the initial version of the following
-forks:
+source code, verbatim. It is created for archival purposes in the event that the
+FamiTracker website ceases to function. It also includes the initial version of
+the following forks:
 [nsf-importer](http://famitracker.com/forum/posts.php?id=2284),
 [sweep-hack](http://famitracker.com/forum/posts.php?id=4653),
 [slimeball](http://famitracker.com/forum/posts.php?id=4362&pid=44500#44500),
