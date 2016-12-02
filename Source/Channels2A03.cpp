@@ -32,12 +32,10 @@
 //#define NOISE_PITCH_SCALE
 
 CChannelHandler2A03::CChannelHandler2A03() : 
-	CChannelHandler(0x7FF, 0x0F),
-	m_cSweep(0),
+	CChannelHandler(0x3FF, 0x0F),		// // //
 	m_bManualVolume(0),
 	m_iInitVolume(0),
-	m_bSweeping(0),
-	m_iSweep(0),
+	// // //
 	m_iPostEffect(0),
 	m_iPostEffectParam(0)
 {
@@ -47,8 +45,7 @@ void CChannelHandler2A03::HandleNoteData(stChanNote *pNoteData, int EffColumns)
 {
 	m_iPostEffect = 0;
 	m_iPostEffectParam = 0;
-	m_iSweep = 0;
-	m_bSweeping = false;
+	// // //
 	m_iInitVolume = 0x0F;
 	m_bManualVolume = false;
 
@@ -69,21 +66,7 @@ void CChannelHandler2A03::HandleCustomEffects(int EffNum, int EffParam)
 	if (!CheckCommonEffects(EffNum, EffParam)) {
 		// Custom effects
 		switch (EffNum) {
-			case EF_VOLUME:
-				// Kill this eventually
-				m_iInitVolume = EffParam;
-				m_bManualVolume = true;
-				break;
-			case EF_SWEEPUP:
-				m_iSweep = 0x88 | (EffParam & 0x77);
-				m_iLastPeriod = 0xFFFF;
-				m_bSweeping = true;
-				break;
-			case EF_SWEEPDOWN:
-				m_iSweep = 0x80 | (EffParam & 0x77);
-				m_iLastPeriod = 0xFFFF;
-				m_bSweeping = true;
-				break;
+			// // //
 			case EF_DUTY_CYCLE:
 				m_iDefaultDuty = m_iDutyPeriod = EffParam;
 				break;
@@ -123,9 +106,7 @@ void CChannelHandler2A03::HandleEmptyNote()
 {
 	if (m_bManualVolume)
 		m_iSeqVolume = m_iInitVolume;
-	
-	if (m_bSweeping)
-		m_cSweep = m_iSweep;
+	// // //
 }
 
 void CChannelHandler2A03::HandleCut()
@@ -139,17 +120,7 @@ void CChannelHandler2A03::HandleRelease()
 		ReleaseNote();
 		ReleaseSequences();
 	}
-/*
-	if (!m_bSweeping && (m_cSweep != 0 || m_iSweep != 0)) {
-		m_iSweep = 0;
-		m_cSweep = 0;
-		m_iLastPeriod = 0xFFFF;
-	}
-	else if (m_bSweeping) {
-		m_cSweep = m_iSweep;
-		m_iLastPeriod = 0xFFFF;
-	}
-	*/
+	// // //
 }
 
 void CChannelHandler2A03::HandleNote(int Note, int Octave)
@@ -160,15 +131,7 @@ void CChannelHandler2A03::HandleNote(int Note, int Octave)
 
 	m_iArpState = 0;
 
-	if (!m_bSweeping && (m_cSweep != 0 || m_iSweep != 0)) {
-		m_iSweep = 0;
-		m_cSweep = 0;
-		m_iLastPeriod = 0xFFFF;
-	}
-	else if (m_bSweeping) {
-		m_cSweep = m_iSweep;
-		m_iLastPeriod = 0xFFFF;
-	}
+	// // //
 }
 
 void CChannelHandler2A03::ProcessChannel()
@@ -176,9 +139,7 @@ void CChannelHandler2A03::ProcessChannel()
 	// Default effects
 	CChannelHandler::ProcessChannel();
 	
-	// Skip when DPCM
-	if (m_iChannelID == CHANID_DPCM)
-		return;
+	// // //
 
 	// Sequences
 	for (int i = 0; i < CInstrument2A03::SEQUENCE_COUNT; ++i)
@@ -198,50 +159,21 @@ void CSquare1Chan::RefreshChannel()
 {
 	int Period = CalculatePeriod();
 	int Volume = CalculateVolume();
-	char DutyCycle = (m_iDutyPeriod & 0x03);
+	// // //
+	unsigned char HiFreq = (Period >> 4) & 0x3F;
+	unsigned char LoFreq = (Period & 0xF);
 
-	unsigned char HiFreq = (Period & 0xFF);
-	unsigned char LoFreq = (Period >> 8);
-
-	if (!m_bGate || !Volume) {
-		WriteRegister(0x4000, 0x30);
-		m_iLastPeriod = 0xFFFF;
-		return;
-	}
-
-	WriteRegister(0x4000, (DutyCycle << 6) | 0x30 | Volume);
-
-	if (m_cSweep) {
-		if (m_cSweep & 0x80) {
-			WriteRegister(0x4001, m_cSweep);
-			m_cSweep &= 0x7F;
-			WriteRegister(0x4017, 0x80);	// Clear sweep unit
-			WriteRegister(0x4017, 0x00);
-			WriteRegister(0x4002, HiFreq);
-			WriteRegister(0x4003, LoFreq);
-			m_iLastPeriod = 0xFFFF;
-		}
-	}
-	else {
-		WriteRegister(0x4001, 0x08);
-		WriteRegister(0x4017, 0x80);	// Manually execute one APU frame sequence to kill the sweep unit
-		WriteRegister(0x4017, 0x00);
-		WriteRegister(0x4002, HiFreq);
-		
-		if (LoFreq != (m_iLastPeriod >> 8))
-			WriteRegister(0x4003, LoFreq);
-	}
-
-	m_iLastPeriod = Period;
+	WriteRegister(0x01 + m_iChannelID * 2, 0xF ^ Volume);		// // //
+	WriteRegister(0x00 + m_iChannelID * 2, LoFreq);
+	WriteRegister(  -1, HiFreq); // double-byte
 }
 
 void CSquare1Chan::ClearRegisters()
 {
-	WriteRegister(0x4000, 0x30);
-	WriteRegister(0x4001, 0x08);
-	WriteRegister(0x4002, 0x00);
-	WriteRegister(0x4003, 0x00);
-	m_iLastPeriod = 0xFFFF;
+	// // //
+	WriteRegister(0x00 + m_iChannelID * 2, 0x00);
+	WriteRegister(  -1, 0x00); // double-byte
+	WriteRegister(0x01 + m_iChannelID * 2, 0xF);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -349,7 +281,9 @@ void CNoiseChan::HandleNote(int Note, int Octave)
 	int NewNote = MIDI_NOTE(Octave, Note);
 	int NesFreq = TriggerNote(NewNote);
 
-	NesFreq = (NesFreq & 0x0F) | 0x10;
+	NesFreq = (NesFreq & 0x03);		// // //
+	if (!(NesFreq & 0x01))
+		NesFreq ^= 0x02;
 
 //	NewNote &= 0x0F;
 
@@ -390,33 +324,32 @@ void CNoiseChan::RefreshChannel()
 {
 	int Period = CalculatePeriod();
 	int Volume = CalculateVolume();
-	char NoiseMode = (m_iDutyPeriod & 0x01) << 7;
+	char NoiseMode = m_iDutyPeriod & 0x01;
 
 	if (!m_bGate || !Volume) {
-		WriteRegister(0x400C, 0x30);
+		WriteRegister(0x07, 0xF);		// // //
 		return;
 	}
 
 #ifdef NOISE_PITCH_SCALE
 	Period = (Period >> 4) & 0x0F;
 #else
-	Period = Period & 0x0F;
+	Period = Period & 0x03;
 #endif
 
-	Period ^= 0x0F;
-
-	WriteRegister(0x400C, 0x30 | Volume);
-	WriteRegister(0x400D, 0x00);
-	WriteRegister(0x400E, NoiseMode | Period);
-	WriteRegister(0x400F, 0x00);
+	int newCtrl = (NoiseMode << 2) | Period;		// // //
+	if (newCtrl != m_iLastCtrl) {
+		WriteRegister(0x06, newCtrl);
+		m_iLastCtrl = newCtrl;
+	}
+	WriteRegister(0x07, 0xF ^ Volume);
 }
 
 void CNoiseChan::ClearRegisters()
 {
-	WriteRegister(0x400C, 0x30);
-	WriteRegister(0x400D, 0);
-	WriteRegister(0x400E, 0);
-	WriteRegister(0x400F, 0);
+	m_iLastCtrl = 0;		// // //
+	WriteRegister(0x06, 0);
+	WriteRegister(0x07, 0xF);
 }
 
 int CNoiseChan::TriggerNote(int Note)
@@ -436,206 +369,8 @@ int CNoiseChan::TriggerNote(int Note)
 #ifdef NOISE_PITCH_SCALE
 	return (Note ^ 0x0F) << 4;
 #else
-	return Note | 0x10;
+	return Note;		// // //
 #endif
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// DPCM
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-CDPCMChan::CDPCMChan(CSampleMem *pSampleMem) : 
-	CChannelHandler2A03(), 
-	m_pSampleMem(pSampleMem),
-	m_bEnabled(false),
-	m_bTrigger(false),
-	m_cDAC(255),
-	m_iRetrigger(0),
-	m_iRetriggerCntr(0)
-{ 
-}
-
-void CDPCMChan::HandleNoteData(stChanNote *pNoteData, int EffColumns)
-{
-	m_iCustomPitch = -1;
-	m_iRetrigger = 0;
-
-	if (pNoteData->Note != NONE) {
-		m_iNoteCut = 0;
-	}
-
-	CChannelHandler::HandleNoteData(pNoteData, EffColumns);
-}
-
-void CDPCMChan::HandleCustomEffects(int EffNum, int EffParam)
-{
-	switch (EffNum) {
-	case EF_DAC:
-		m_cDAC = EffParam & 0x7F;
-		break;
-	case EF_SAMPLE_OFFSET:
-		m_iOffset = EffParam;
-		break;
-	case EF_DPCM_PITCH:
-		m_iCustomPitch = EffParam;
-		break;
-	case EF_RETRIGGER:
-//			if (NoteData->EffParam[i] > 0) {
-			m_iRetrigger = EffParam + 1;
-			if (m_iRetriggerCntr == 0)
-				m_iRetriggerCntr = m_iRetrigger;
-//			}
-//			m_iEnableRetrigger = 1;
-		break;
-	case EF_NOTE_CUT:
-		m_iNoteCut = EffParam + 1;
-		break;
-	}
-}
-
-bool CDPCMChan::HandleInstrument(int Instrument, bool Trigger, bool NewInstrument)
-{
-	// Instruments are accessed in the note routine
-	return true;
-}
-
-void CDPCMChan::HandleEmptyNote()
-{
-}
-
-void CDPCMChan::HandleCut()
-{
-//	KillChannel();
-	CutNote();
-}
-
-void CDPCMChan::HandleRelease()
-{
-	m_bRelease = true;
-}
-
-void CDPCMChan::HandleNote(int Note, int Octave)
-{
-	CFamiTrackerDoc *pDocument = m_pSoundGen->GetDocument();
-	CInstrumentContainer<CInstrument2A03> instContainer(pDocument, m_iInstrument);
-	CInstrument2A03 *pInstrument = instContainer();
-
-	if (pInstrument == NULL)
-		return;
-
-	if (pInstrument->GetType() != INST_2A03)
-		return;
-
-	int SampleIndex = pInstrument->GetSample(Octave, Note - 1);
-
-	if (SampleIndex > 0) {
-
-		int Pitch = pInstrument->GetSamplePitch(Octave, Note - 1);
-		m_iLoop = (Pitch & 0x80) >> 1;
-
-		if (m_iCustomPitch != -1)
-			Pitch = m_iCustomPitch;
-	
-		m_iLoopOffset = pInstrument->GetSampleLoopOffset(Octave, Note - 1);
-
-		const CDSample *pDSample = pDocument->GetSample(SampleIndex - 1);
-
-		int SampleSize = pDSample->GetSize();
-
-		if (SampleSize > 0) {
-			m_pSampleMem->SetMem(pDSample->GetData(), SampleSize);
-			m_iPeriod = Pitch & 0x0F;
-			m_iSampleLength = (SampleSize >> 4) - (m_iOffset << 2);
-			m_iLoopLength = SampleSize - m_iLoopOffset;
-			m_bEnabled = true;
-			m_bTrigger = true;
-			m_bGate = true;
-
-			// Initial delta counter value
-			unsigned char Delta = pInstrument->GetSampleDeltaValue(Octave, Note - 1);
-			
-			if (Delta != 255 && m_cDAC == 255)
-				m_cDAC = Delta;
-
-			m_iRetriggerCntr = m_iRetrigger;
-		}
-	}
-
-	RegisterKeyState((Note - 1) + (Octave * 12));
-}
-
-void CDPCMChan::RefreshChannel()
-{
-	if (m_cDAC != 255) {
-		WriteRegister(0x4011, m_cDAC);
-		m_cDAC = 255;
-	}
-
-	if (m_iRetrigger != 0) {
-		m_iRetriggerCntr--;
-		if (m_iRetriggerCntr == 0) {
-			m_iRetriggerCntr = m_iRetrigger;
-			m_bEnabled = true;
-			m_bTrigger = true;
-		}
-	}
-
-	if (m_bRelease) {
-		// Release command
-		WriteRegister(0x4015, 0x0F);
-		m_bEnabled = false;
-		m_bRelease = false;
-	}
-
-/*	
-	if (m_bRelease) {
-		// Release loop flag
-		m_bRelease = false;
-		WriteRegister(0x4010, 0x00 | (m_iPeriod & 0x0F));
-		return;
-	}
-*/	
-
-	if (!m_bEnabled)
-		return;
-
-	if (!m_bGate) {
-		// Cut sample
-		WriteRegister(0x4015, 0x0F);
-
-		if (!theApp.GetSettings()->General.bNoDPCMReset || theApp.IsPlaying()) {
-			WriteRegister(0x4011, 0);	// regain full volume for TN
-		}
-
-		m_bEnabled = false;		// don't write to this channel anymore
-	}
-	else if (m_bTrigger) {
-		// Start playing the sample
-		WriteRegister(0x4010, (m_iPeriod & 0x0F) | m_iLoop);
-		WriteRegister(0x4012, m_iOffset);							// load address, start at $C000
-		WriteRegister(0x4013, m_iSampleLength);						// length
-		WriteRegister(0x4015, 0x0F);
-		WriteRegister(0x4015, 0x1F);								// fire sample
-
-		// Loop offset
-		if (m_iLoopOffset > 0) {
-			WriteRegister(0x4012, m_iLoopOffset);
-			WriteRegister(0x4013, m_iLoopLength);
-		}
-
-		m_bTrigger = false;
-	}
-}
-
-void CDPCMChan::ClearRegisters()
-{
-	WriteRegister(0x4015, 0x0F);
-
-	WriteRegister(0x4010, 0);	
-	WriteRegister(0x4011, 0);
-	WriteRegister(0x4012, 0);
-	WriteRegister(0x4013, 0);
-
-	m_iOffset = 0;
-	m_cDAC = 255;
-}
+// // //

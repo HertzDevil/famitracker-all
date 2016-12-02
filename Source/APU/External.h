@@ -23,6 +23,8 @@
 
 class CMixer;
 
+#include "../Common.h"		// // //
+
 class CExternal {
 public:
 	CExternal() {};

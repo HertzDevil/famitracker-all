@@ -20,8 +20,6 @@
 
 #pragma once
 
-#include "DSample.h"
-
 #define MIDI_NOTE(octave, note)		((octave) * 12 + (note) - 1)
 #define GET_OCTAVE(midi_note)		((midi_note) / 12)
 #define GET_NOTE(midi_note)			((midi_note) % 12 + 1)
@@ -50,11 +48,7 @@ const int MAX_FRAMES = 128;
 // Maximum length of patterns (in rows). 256 is max in NSF
 const int MAX_PATTERN_LENGTH = 256;
 
-// Maximum number of DPCM samples, cannot be increased unless the NSF driver is modified.
-const int MAX_DSAMPLES = 64;
-
-// Sample space available (from $C000-$FFFF), may now switch banks
-const int MAX_SAMPLE_SPACE = 0x40000;	// 256kB
+// // //
 
 // Number of effect columns allowed
 const int MAX_EFFECT_COLUMNS = 4;
@@ -78,9 +72,7 @@ const int MIN_SPEED = 1;
 // instead, check the channelsavailable variable and allocate dynamically
 const int MAX_CHANNELS	 = 5 + 3 + 2 + 6 + 1 + 8 + 3;		
 
-const int CHANNELS_DEFAULT = 5;
-const int CHANNELS_VRC6	   = 3;
-const int CHANNELS_VRC7	   = 6;
+const int CHANNELS_DEFAULT = 4;		// // //
 
 const int OCTAVE_RANGE = 8;
 const int NOTE_RANGE   = 12;
@@ -102,21 +94,6 @@ enum sequence_t {
 	SEQ_COUNT
 };
 
-// New sequence types
-/*
-enum {
-	SEQ_VOLUME,
-	SEQ_ARPEGGIO,
-	SEQ_PITCH,
-	SEQ_HIPITCH,		// TODO: remove this eventually
-	SEQ_DUTYCYCLE,
-	SEQ_SUNSOFT_NOISE,
-
-	SEQ_COUNT
-};
-*/
-//const int SEQ_SUNSOFT_NOISE = SEQ_DUTYCYCLE + 1;
-
 // Channel effects
 enum effect_t {
 	EF_NONE = 0,
@@ -127,31 +104,23 @@ enum effect_t {
 	EF_VOLUME,
 	EF_PORTAMENTO,
 	EF_PORTAOFF,				// unused!!
-	EF_SWEEPUP,
-	EF_SWEEPDOWN,
+	EF_SWEEPUP,		// // // unused
+	EF_SWEEPDOWN,		// // // unused
 	EF_ARPEGGIO,
 	EF_VIBRATO,
 	EF_TREMOLO,
 	EF_PITCH,
 	EF_DELAY,
-	EF_DAC,
+	EF_DAC,		// // // unused
 	EF_PORTA_UP,
 	EF_PORTA_DOWN,
 	EF_DUTY_CYCLE,
-	EF_SAMPLE_OFFSET,
+	EF_SAMPLE_OFFSET,		// // // unused
 	EF_SLIDE_UP,
 	EF_SLIDE_DOWN,
 	EF_VOLUME_SLIDE,
 	EF_NOTE_CUT,
-	EF_RETRIGGER,
-	EF_DELAYED_VOLUME,			// Unimplemented
-	EF_FDS_MOD_DEPTH,
-	EF_FDS_MOD_SPEED_HI,
-	EF_FDS_MOD_SPEED_LO,
-	EF_DPCM_PITCH,
-	EF_SUNSOFT_ENV_LO,
-	EF_SUNSOFT_ENV_HI,
-	EF_SUNSOFT_ENV_TYPE,
+	// // //
 //	EF_TARGET_VOLUME_SLIDE, 
 /*
 	EF_VRC7_MODULATOR,
@@ -161,15 +130,7 @@ enum effect_t {
 	EF_COUNT
 };
 
-// DPCM  effects
-//const int EF_DPCM_PITCH = EF_SWEEPUP;		// DPCM pitch, 'H'
-
-//const int EF_VRC7_PATCH = EF_DUTY_CYCLE;	// VRC7 patch setting, 'V'
-
-// FDS effects
-//const int EF_FDS_MOD_DEPTH = EF_SWEEPUP;	// FDS modulation depth, 'H'
-
-//const int EF_RETRIGGER = EF_SWEEPDOWN;
+// // //
 
 // Channel effect letters
 const char EFF_CHAR[] = {
@@ -180,37 +141,23 @@ const char EFF_CHAR[] = {
 	'E',	// Volume
 	'3',	// Porta on
 	 0,		// Porta off		// unused
-	'H',	// Sweep up
-	'I',	// Sweep down
+	 0,		// // // unused
+	 0,		// // // unused
 	'0',	// Arpeggio
 	'4',	// Vibrato
 	'7',	// Tremolo
 	'P',	// Pitch
 	'G',	// Note delay
-	'Z',	// DAC setting
+	 0,		// // // unused
 	'1',	// Portamento up
 	'2',	// Portamento down
 	'V',	// Duty cycle
-	'Y',	// Sample offset
+	 0,		// // // unused
 	'Q',	// Slide up
 	'R',	// Slide down
 	'A',	// Volume slide
 	'S',	// Note cut
-	'X',	// DPCM retrigger						 
-	 0,		// (TODO, delayed volume)
-	'H',	// FDS modulation depth
-	'I',	// FDS modulation speed hi
-	'J',	// FDS modulation speed lo
-	'W',	// DPCM Pitch
-	'H',	// Sunsoft envelope low
-	'I',	// Sunsoft envelope high
-	'J',	// Sunsoft envelope type
-	//'9'	// Targeted volume slide
-	/*
-	'H',	// VRC7 modulator
-	'I',	// VRC7 carrier
-	'J',	// VRC7 modulator/feedback level
-	*/
+	// // //
 };
 
 

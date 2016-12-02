@@ -18,7 +18,7 @@
 ** must bear this legend.
 */
 
-#include <boost/scoped_ptr.hpp>
+#include <memory>		// // //
 #include <cmath>
 #include "stdafx.h"
 #include "FamiTracker.h"
@@ -43,7 +43,7 @@
 #endif
 
 // Clipboard ID
-const TCHAR CFamiTrackerView::CLIPBOARD_ID[] = _T("FamiTracker Pattern");
+const TCHAR CFamiTrackerView::CLIPBOARD_ID[] = _T("FamiTracker Pattern"); // keep
 
 // Effect texts (TODO update this list)
 const TCHAR *EFFECT_TEXTS[] = {
@@ -54,18 +54,18 @@ const TCHAR *EFFECT_TEXTS[] = {
 	{_T("EXX - Set volume")},
 	{_T("3XX - Automatic portamento, XX = speed")},
 	{_T("(not used)")},
-	{_T("HXY - Hardware sweep up, x = speed, y = shift")},
-	{_T("IXY - Hardware sweep down, x = speed, y = shift")},
+	{_T("(not used)")},
+	{_T("(not used)")},
 	{_T("0XY - Arpeggio, X = second note, Y = third note")},
 	{_T("4XY - Vibrato, x = speed, y = depth")},
 	{_T("7XY - Tremolo, x = speed, y = depth")},
 	{_T("PXX - Fine pitch")},
 	{_T("GXX - Row delay, XX = number of frames")},
-	{_T("ZXX - DPCM delta counter setting")},
+	{_T("(not used)")},		// // //
 	{_T("1XX - Slide up, XX = speed")},
 	{_T("2XX - Slide down, XX = speed")},
 	{_T("VXX - Square duty / Noise mode")},
-	{_T("YXX - DPCM sample offset")},
+	{_T("(not used)")},		// // //
 	{_T("QXY - Portamento up, X = speed, Y = notes")},
 	{_T("RXY - Portamento down, X = speed, Y = notes")},
 	{_T("AXY - Volume slide, X = up, Y = down")},
@@ -749,9 +749,7 @@ void CFamiTrackerView::PeriodicUpdate()
 
 			pMainFrm->SetIndicatorPos(Frame, Row);
 
-			// DPCM info
-			stDPCMState DPCMState = pSoundGen->GetDPCMState();
-			m_pPatternEditor->SetDPCMState(DPCMState);
+			// // //
 
 			if (pDoc->IsFileLoaded())
 				UpdateMeters();
@@ -817,7 +815,7 @@ void CFamiTrackerView::OnEditCopy()
 		return;
 	}
 	
-	boost::scoped_ptr<CPatternClipData> pClipData(m_pPatternEditor->Copy());
+	std::unique_ptr<CPatternClipData> pClipData(m_pPatternEditor->Copy());		// // //
 
 	SIZE_T Size = pClipData->GetAllocSize();
 	HGLOBAL hMem = Clipboard.AllocMem(Size);
@@ -921,7 +919,7 @@ void CFamiTrackerView::OnTrackerPal()
 
 	int Machine = PAL;
 	pDoc->SetMachine(Machine);
-	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, pDoc->GetEngineSpeed(), pDoc->GetNamcoChannels());
+	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, pDoc->GetEngineSpeed());		// // //
 }
 
 void CFamiTrackerView::OnTrackerNtsc()
@@ -931,7 +929,7 @@ void CFamiTrackerView::OnTrackerNtsc()
 
 	int Machine = NTSC;
 	pDoc->SetMachine(Machine);
-	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, pDoc->GetEngineSpeed(), pDoc->GetNamcoChannels());
+	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, pDoc->GetEngineSpeed());		// // //
 }
 
 void CFamiTrackerView::OnSpeedCustom()
@@ -951,7 +949,7 @@ void CFamiTrackerView::OnSpeedCustom()
 		return;
 
 	pDoc->SetEngineSpeed(Speed);
-	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, Speed, pDoc->GetNamcoChannels());
+	theApp.GetSoundGenerator()->LoadMachineSettings(Machine, Speed);		// // //
 }
 
 void CFamiTrackerView::OnSpeedDefault()
@@ -961,7 +959,7 @@ void CFamiTrackerView::OnSpeedDefault()
 
 	int Speed = 0;
 	pDoc->SetEngineSpeed(Speed);
-	theApp.GetSoundGenerator()->LoadMachineSettings(pDoc->GetMachine(), Speed, pDoc->GetNamcoChannels());
+	theApp.GetSoundGenerator()->LoadMachineSettings(pDoc->GetMachine(), Speed);		// // //
 }
 
 void CFamiTrackerView::OnTransposeDecreasenote()
@@ -2339,38 +2337,7 @@ bool CFamiTrackerView::EditEffNumberColumn(stChanNote &Note, unsigned char nChar
 	if (nChar >= VK_NUMPAD0 && nChar <= VK_NUMPAD9)
 		nChar = '0' + nChar - VK_NUMPAD0;
 
-	if (Chip == SNDCHIP_FDS) {
-		// FDS effects
-		const char FDS_EFFECTS[] = {EF_FDS_MOD_DEPTH, EF_FDS_MOD_SPEED_HI, EF_FDS_MOD_SPEED_LO};
-		for (int i = 0; i < sizeof(FDS_EFFECTS) && !bValidEffect; ++i) {
-			if (nChar == EFF_CHAR[FDS_EFFECTS[i] - 1]) {
-				bValidEffect = true;
-				Effect = FDS_EFFECTS[i];
-			}
-		}
-	}
-	else if (Chip == SNDCHIP_VRC7) {
-		// VRC7 effects
-		/*
-		const char VRC7_EFFECTS[] = {EF_VRC7_MODULATOR, EF_VRC7_CARRIER, EF_VRC7_LEVELS};
-		for (int i = 0; i < sizeof(VRC7_EFFECTS) && !bValidEffect; ++i) {
-			if (nChar == EFF_CHAR[VRC7_EFFECTS[i] - 1]) {
-				bValidEffect = true;
-				Effect = VRC7_EFFECTS[i];
-			}
-		}
-		*/
-	}
-	else if (Chip == SNDCHIP_S5B) {
-		// Sunsoft effects
-		const char SUNSOFT_EFFECTS[] = {EF_SUNSOFT_ENV_LO, EF_SUNSOFT_ENV_HI, EF_SUNSOFT_ENV_TYPE};
-		for (int i = 0; i < sizeof(SUNSOFT_EFFECTS) && !bValidEffect; ++i) {
-			if (nChar == EFF_CHAR[SUNSOFT_EFFECTS[i] - 1]) {
-				bValidEffect = true;
-				Effect = SUNSOFT_EFFECTS[i];
-			}
-		}
-	}
+	// // //
 
 	// Common effects
 	for (int i = 0; i < EF_COUNT && !bValidEffect; ++i) {
@@ -3158,7 +3125,7 @@ DROPEFFECT CFamiTrackerView::OnDragEnter(COleDataObject* pDataObject, DWORD dwKe
 		}
 
 		// Get drag rectangle
-		boost::scoped_ptr<CPatternClipData> pDragData(new CPatternClipData());
+		std::unique_ptr<CPatternClipData> pDragData(new CPatternClipData());		// // //
 
 		HGLOBAL hMem = pDataObject->GetGlobalData(m_iClipboard);
 		pDragData->FromMem(hMem);
@@ -3238,8 +3205,8 @@ void CFamiTrackerView::BeginDragData(int ChanOffset, int RowOffset)
 {
 	TRACE0("OLE: BeginDragData\n");
 
-	boost::scoped_ptr<COleDataSource> pSrc(new COleDataSource());
-	boost::scoped_ptr<CPatternClipData> pClipData(m_pPatternEditor->Copy());
+	std::unique_ptr<COleDataSource> pSrc(new COleDataSource());		// // //
+	std::unique_ptr<CPatternClipData> pClipData(m_pPatternEditor->Copy());
 	SIZE_T Size = pClipData->GetAllocSize();
 
 	pClipData->ClipInfo.OleInfo.ChanOffset = ChanOffset;

@@ -75,7 +75,7 @@ class CAPU;
 class CDSound;
 class CDSoundChannel;
 class CVisualizerWnd;
-class CDSample;
+// // //
 class CTrackerChannel;
 
 #ifdef EXPORT_TEST
@@ -106,7 +106,7 @@ public:
 	// Multiple times initialization
 	void		RegisterChannels(int Chip, CFamiTrackerDoc *pDoc);
 	void		SelectChip(int Chip);
-	void		LoadMachineSettings(int Machine, int Rate, int NamcoChannels);
+	void		LoadMachineSettings(int Machine, int Rate);		// // //
 
 	// Sound
 	bool		InitializeSound(HWND hWnd);
@@ -134,7 +134,7 @@ public:
 	void		 SetupVibratoTable(int Type);
 	int			 ReadVibratoTable(int index) const;
 
-	int			 ReadNamcoPeriodTable(int index) const;
+	// // //
 
 	// Player interface
 	void		 StartPlayer(play_mode_t Mode, int Track);	
@@ -156,7 +156,7 @@ public:
 	void		 SetJumpPattern(int Pattern);
 	void		 SetSkipRow(int Row);
 	void		 EvaluateGlobalEffects(stChanNote *NoteData, int EffColumns);
-	stDPCMState	 GetDPCMState() const;
+	// // //
 
 	// Rendering
 	bool		 RenderToFile(LPTSTR pFile, render_end_t SongEndType, int SongEndParam, int Track);
@@ -165,10 +165,7 @@ public:
 	bool		 IsRendering() const;	
 	bool		 IsBackgroundTask() const;
 
-	// Sample previewing
-	void		 PreviewSample(CDSample *pSample, int Offset, int Pitch);
-	void		 CancelPreviewSample();
-	bool		 PreviewDone() const;
+	// // //
 
 	void		 WriteAPU(int Address, char Value);
 
@@ -178,10 +175,7 @@ public:
 	// Other
 	uint8		GetReg(int Chip, int Reg) const;
 
-	// FDS & N163 wave preview
-	void		WaveChanged();
-	bool		HasWaveChanged() const;
-	void		ResetWaveChanged();
+	// // //
 
 	void		WriteRegister(uint16 Reg, uint8 Value);
 	void		WriteExternalRegister(uint16 Reg, uint8 Value);
@@ -242,8 +236,7 @@ private:
 	void		MakeSilent();
 	void		SetupSpeed();
 
-	// Misc
-	void		PlaySample(const CDSample *pSample, int Offset, int Pitch);
+	// // //
 	
 	// Player
 	void		ReadPatternRow();
@@ -279,9 +272,7 @@ private:
 	CDSoundChannel		*m_pDSoundChannel;
 	CVisualizerWnd		*m_pVisualizerWnd;
 	CAPU				*m_pAPU;
-	CSampleMem			*m_pSampleMem;
-
-	const CDSample		*m_pPreviewSample;
+	// // //
 
 	bool				m_bRunning;
 
@@ -333,10 +324,7 @@ private:
 	unsigned int		*m_pNoteLookupTable;				// NTSC or PAL
 	unsigned int		m_iNoteLookupTableNTSC[96];			// For 2A03
 	unsigned int		m_iNoteLookupTablePAL[96];			// For 2A07
-	unsigned int		m_iNoteLookupTableSaw[96];			// For VRC6 sawtooth
-	unsigned int		m_iNoteLookupTableFDS[96];			// For FDS
-	unsigned int		m_iNoteLookupTableN163[96];			// For N163
-	unsigned int		m_iNoteLookupTableS5B[96];			// For sunsoft
+	// // //
 	int					m_iVibratoTable[VIBRATO_LENGTH];
 
 	unsigned int		m_iMachineType;						// NTSC/PAL
@@ -358,9 +346,7 @@ private:
 
 	CWaveFile			m_wfWaveFile;
 
-	// FDS & N163 waves
-	volatile bool		m_bWaveChanged;
-	volatile bool		m_bInternalWaveChanged;
+	// // //
 
 	// Player state
 	int					m_iQueuedFrame;					// Queued frame
@@ -398,8 +384,7 @@ public:
 	afx_msg void OnResetPlayer(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnStartRender(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnStopRender(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnPreviewSample(WPARAM wParam, LPARAM lParam);
-	afx_msg void OnHaltPreview(WPARAM wParam, LPARAM lParam);
+	// // //
 	afx_msg void OnWriteAPU(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnCloseSound(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnSetChip(WPARAM wParam, LPARAM lParam);

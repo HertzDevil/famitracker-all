@@ -29,7 +29,7 @@
 // Constants, types and enums
 #include "FamiTrackerTypes.h"
 
-#define TRANSPOSE_FDS
+// // //
 
 // Default song settings
 const unsigned int DEFAULT_TEMPO_NTSC		 = 150;
@@ -81,12 +81,7 @@ enum {
 	UPDATE_CLOSE			// Document is closing (TODO remove)
 };
 
-// Old sequence list, kept for compability
-struct stSequence {
-	unsigned int Count;
-	signed char Length[MAX_SEQUENCE_ITEMS];
-	signed char Value[MAX_SEQUENCE_ITEMS];
-};
+// // //
 
 // Access data types used by the document class
 #include "PatternData.h"
@@ -213,8 +208,7 @@ public:
 	unsigned char	GetExpansionChip() const { return m_iExpansionChip; };
 	bool			ExpansionEnabled(unsigned char Chip) const;
 
-	unsigned int	GetNamcoChannels() const;
-	void			SetNamcoChannels(unsigned int Channels);
+	// // //
 
 	// Todo: remove this, use getchannelcount instead
 	unsigned int	GetAvailableChannels()	const { return m_iChannelsAvailable; };
@@ -284,29 +278,7 @@ public:
 	int				GetSequenceItemCount(unsigned int Index, int Type) const;
 	int				GetFreeSequence(int Type) const;
 
-	CSequence*		GetSequenceVRC6(unsigned int Index, int Type);
-	CSequence*		GetSequenceVRC6(unsigned int Index, int Type) const;
-	int				GetSequenceItemCountVRC6(unsigned int Index, int Type) const;
-	int				GetFreeSequenceVRC6(int Type) const;
-
-	CSequence*		GetSequenceN163(unsigned int Index, int Type);
-	CSequence*		GetSequenceN163(unsigned int Index, int Type) const;
-	int				GetSequenceItemCountN163(unsigned int Index, int Type) const;
-	int				GetFreeSequenceN163(int Type) const;
-
-	CSequence*		GetSequenceS5B(unsigned int Index, int Type);
-	CSequence*		GetSequenceS5B(unsigned int Index, int Type) const;
-	int				GetSequenceItemCountS5B(unsigned int Index, int Type) const;
-	int				GetFreeSequenceS5B(int Type) const;
-
-	// DPCM samples
-	CDSample*		GetSample(unsigned int Index);
-	const CDSample*	GetSample(unsigned int Index) const;
-	bool			IsSampleUsed(unsigned int Index) const;
-	unsigned int	GetSampleCount() const;
-	int				GetFreeSampleSlot() const;
-	void			RemoveSample(unsigned int Index);
-	unsigned int	GetTotalSampleSize() const;
+	// // //
 
 	// Other
 	unsigned int	ScanActualLength(unsigned int Track, unsigned int Count, unsigned int &RowCount) const;
@@ -317,8 +289,7 @@ public:
 	void			MergeDuplicatedPatterns();
 	void			SwapInstruments(int First, int Second);
 
-	// For file version compability
-	static void		ConvertSequence(stSequence *pOldSequence, CSequence *pNewSequence, int Type);
+	// // //
 
 	// Constants
 public:
@@ -326,7 +297,7 @@ public:
 	static const int	DEFAULT_ROW_COUNT;
 	static const char*	NEW_INST_NAME;
 
-	static const int	DEFAULT_NAMCO_CHANS;
+	// // //
 
 	static const int	DEFAULT_FIRST_HIGHLIGHT;
 	static const int	DEFAULT_SECOND_HIGHLIGHT;
@@ -348,7 +319,7 @@ private:
 	BOOL			SaveDocument(LPCTSTR lpszPathName) const;
 	BOOL			OpenDocument(LPCTSTR lpszPathName);
 
-	BOOL			OpenDocumentOld(CFile *pOpenFile);
+	// // //
 	BOOL			OpenDocumentNew(CDocumentFile &DocumentFile);
 
 	bool			WriteBlocks(CDocumentFile *pDocFile) const;
@@ -359,12 +330,9 @@ private:
 	bool			WriteBlock_Sequences(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Frames(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Patterns(CDocumentFile *pDocFile) const;
-	bool			WriteBlock_DSamples(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_Comments(CDocumentFile *pDocFile) const;
 	bool			WriteBlock_ChannelLayout(CDocumentFile *pDocFile) const;
-	bool			WriteBlock_SequencesVRC6(CDocumentFile *pDocFile) const;
-	bool			WriteBlock_SequencesN163(CDocumentFile *pDocFile) const;
-	bool			WriteBlock_SequencesS5B(CDocumentFile *pDocFile) const;
+	// // //
 
 	bool			ReadBlock_Parameters(CDocumentFile *pDocFile);
 	bool			ReadBlock_Header(CDocumentFile *pDocFile);
@@ -372,16 +340,9 @@ private:
 	bool			ReadBlock_Sequences(CDocumentFile *pDocFile);
 	bool			ReadBlock_Frames(CDocumentFile *pDocFile);
 	bool			ReadBlock_Patterns(CDocumentFile *pDocFile);
-	bool			ReadBlock_DSamples(CDocumentFile *pDocFile);
 	bool			ReadBlock_Comments(CDocumentFile *pDocFile);
 	bool			ReadBlock_ChannelLayout(CDocumentFile *pDocFile);
-	bool			ReadBlock_SequencesVRC6(CDocumentFile *pDocFile);
-	bool			ReadBlock_SequencesN163(CDocumentFile *pDocFile);
-	bool			ReadBlock_SequencesS5B(CDocumentFile *pDocFile);
-
-	// For file version compability
-	void			ReorderSequences();
-	void			ConvertSequences();
+	// // //
 
 #ifdef AUTOSAVE
 	void			SetupAutoSave();
@@ -429,9 +390,7 @@ private:
 
 	bool			m_bForceBackup;
 	bool			m_bBackupDone;
-#ifdef TRANSPOSE_FDS
-	bool			m_bAdjustFDSArpeggio;
-#endif
+// // //
 
 #ifdef AUTOSAVE
 	// Auto save
@@ -452,15 +411,13 @@ private:
 
 	// Instruments, samples and sequences
 	CInstrument		*m_pInstruments[MAX_INSTRUMENTS];
-	CDSample		m_DSamples[MAX_DSAMPLES];					// The DPCM sample list
+	// // //
 	CSequence		*m_pSequences2A03[MAX_SEQUENCES][SEQ_COUNT];
-	CSequence		*m_pSequencesVRC6[MAX_SEQUENCES][SEQ_COUNT];
-	CSequence		*m_pSequencesN163[MAX_SEQUENCES][SEQ_COUNT];
-	CSequence		*m_pSequencesS5B[MAX_SEQUENCES][SEQ_COUNT];
+	// // //
 
 	// Module properties
 	unsigned char	m_iExpansionChip;							// Expansion chip
-	unsigned int	m_iNamcoChannels;
+	// // //
 	vibrato_t		m_iVibratoStyle;							// 0 = old style, 1 = new style
 	bool			m_bLinearPitch;
 	unsigned int	m_iMachine;									// NTSC / PAL
@@ -480,9 +437,7 @@ private:
 	unsigned int	m_iFirstHighlight;
 	unsigned int	m_iSecondHighlight;
 
-	// Things below are for compability with older files
-	CArray<stSequence> m_vTmpSequences;
-	CArray<stSequence[SEQ_COUNT]> m_vSequences;
+	// // //
 
 	//
 	// End of document data

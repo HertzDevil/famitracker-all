@@ -40,10 +40,7 @@ enum {
 	IPC_LOAD_PLAY
 };
 
-#ifdef RELEASE_BUILD
-// Always disable export test for release builds
-#undef EXPORT_TEST
-#endif /* RELEASE_BUILD */
+// // //
 
 // Custom command line reader
 class CFTCommandLineInfo : public CCommandLineInfo
@@ -61,7 +58,7 @@ public:
 #endif
 	CString m_strExportFile;
 	CString m_strExportLogFile;
-	CString m_strExportDPCMFile;
+	// // //
 };
 
 
@@ -147,7 +144,7 @@ private:
 	CSettings		*m_pSettings;				// Program settings
 	CChannelMap		*m_pChannelMap;
 
-	CCustomExporters *m_customExporters;
+	// // //
 
 	// Single instance stuff
 	CMutex			*m_pInstanceMutex;

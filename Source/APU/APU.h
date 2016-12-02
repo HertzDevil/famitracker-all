@@ -30,16 +30,7 @@
 class CSquare;
 class CTriangle;
 class CNoise;
-class CDPCM;
-
-class CVRC6;
-class CVRC7;
-class CFDS;
-class CMMC5;
-class CN163;
-class CS5B;
-
-class CExternal;
+class CSN76489;		// // //
 
 #ifdef LOGGING
 class CFile;
@@ -47,16 +38,14 @@ class CFile;
 
 class CAPU {
 public:
-	CAPU(IAudioCallback *pCallback, CSampleMem *pSampleMem);
+	CAPU(IAudioCallback *pCallback);		// // //
 	~CAPU();
 
 	void	Reset();
 	void	Process();
 	void	AddTime(int32 Cycles);
 
-	uint8	Read4015();
-	void	Write4017(uint8 Value);
-	void	Write4015(uint8 Value);
+	// // //
 	void	Write(uint16 Address, uint8 Value);
 
 	void	SetExternalSound(uint8 Chip);
@@ -68,9 +57,7 @@ public:
 	void	SetupMixer(int LowCut, int HighCut, int HighDamp, int Volume) const;
 
 	int32	GetVol(uint8 Chan) const;
-	uint8	GetSamplePos() const;
-	uint8	GetDeltaCounter() const;
-	bool	DPCMPlaying() const;
+	// // //
 	uint8	GetReg(int Chip, int Reg) const;
 
 	void	SetChipLevel(chip_level_t Chip, float Level);
@@ -90,44 +77,26 @@ private:
 	static const int SEQUENCER_PERIOD;
 	
 private:
-	inline void Clock_240Hz();
-	inline void	Clock_120Hz();
-	inline void	Clock_60Hz();
-	inline void	ClockSequence();
-
-	inline void RunAPU1(uint32 Time);
-	inline void RunAPU2(uint32 Time);
+	inline void RunSN(uint32 Time);		// // //
 
 	void EndFrame();
-	
-	void LogExternalWrite(uint16 Address, uint8 Value);
 
 private:
 	CMixer		*m_pMixer;
 	IAudioCallback *m_pParent;
 
 	// Internal channels
-	CSquare		*m_pSquare1;
-	CSquare		*m_pSquare2;
-	CTriangle	*m_pTriangle;
-	CNoise		*m_pNoise;
-	CDPCM		*m_pDPCM;
+	CSN76489	*m_pSN76489;		// // //
 
-	// Expansion chips
-	CVRC6		*m_pVRC6;
-	CMMC5		*m_pMMC5;
-	CFDS		*m_pFDS;
-	CN163		*m_pN163;
-	CVRC7		*m_pVRC7;
-	CS5B		*m_pS5B;
+	// // //
 
 	uint8		m_iExternalSoundChip;				// External sound chip, if used
 
 	uint32		m_iFramePeriod;						// Cycles per frame
 	uint32		m_iFrameCycles;						// Cycles emulated from start of frame
-	uint32		m_iSequencerClock;						// Clock for frame sequencer
+	// // //
 	uint8		m_iFrameSequence;					// Frame sequence
-	uint8		m_iFrameMode;						// 4 or 5-steps frame sequence
+	// // //
 
 	uint32		m_iFrameCycleCount;
 	uint32		m_iFrameClock;
@@ -142,11 +111,7 @@ private:
 	int16		*m_pSoundBuffer;					// Sound transfer buffer
 
 	uint8		m_iRegs[0x20];
-	uint8		m_iRegsVRC6[0x10];
-	uint8		m_iRegsFDS[0x10];
-
-	float		m_fLevelVRC7;
-	float		m_fLevelS5B;
+	// // //
 
 #ifdef LOGGING
 	CFile		  *m_pLog;

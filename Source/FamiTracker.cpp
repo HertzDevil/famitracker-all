@@ -31,7 +31,7 @@
 #include "Accelerator.h"
 #include "Settings.h"
 #include "ChannelMap.h"
-#include "CustomExporters.h"
+// // //
 #include "CommandLineExport.h"
 
 #ifdef EXPORT_TEST
@@ -39,17 +39,15 @@
 #endif /* EXPORT_TEST */
 
 // Single instance-stuff
-const TCHAR FT_SHARED_MUTEX_NAME[]	= _T("FamiTrackerMutex");	// Name of global mutex
-const TCHAR FT_SHARED_MEM_NAME[]	= _T("FamiTrackerWnd");		// Name of global memory area
+const TCHAR FT_SHARED_MUTEX_NAME[]	= _T("SnevenTrackerMutex");		// // // Name of global mutex
+const TCHAR FT_SHARED_MEM_NAME[]	= _T("SnevenTrackerWnd");		// Name of global memory area
 const DWORD	SHARED_MEM_SIZE			= 256;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-#ifdef RELEASE_BUILD
-#pragma message("Building SVN release build...")
-#endif /* RELEASE_BUILD */
+// // //
 
 // CFamiTrackerApp
 
@@ -78,7 +76,7 @@ CFamiTrackerApp::CFamiTrackerApp() :
 	m_pSettings(NULL),
 	m_pSoundGenerator(NULL),
 	m_pChannelMap(NULL),
-	m_customExporters(NULL),
+	// // //
 	m_hWndMapFile(NULL),
 #ifdef SUPPORT_TRANSLATIONS
 	m_hInstResDLL(NULL),
@@ -141,14 +139,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	if (CheckSingleInstance(cmdInfo))
 		return FALSE;
 
-	//who: added by Derek Andrews <derek.george.andrews@gmail.com>
-	//why: Load all custom exporter plugins on startup.
-	
-	TCHAR pathToPlugins[MAX_PATH];
-	GetModuleFileName(NULL, pathToPlugins, MAX_PATH);
-	PathRemoveFileSpec(pathToPlugins);
-	PathAppend(pathToPlugins, _T("\\Plugins"));
-	m_customExporters = new CCustomExporters( pathToPlugins );
+	// // //
 
 	// Load custom accelerator
 	m_pAccel = new CAccelerator();
@@ -212,7 +203,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Skip this if in wip/beta mode
 #if /*!defined(WIP) &&*/ !defined(_DEBUG)
 	// Add shell options
-	RegisterShellFileTypes(TRUE);
+	// // // RegisterShellFileTypes(TRUE);
 	// Add an option to play files
 	CString strPathName, strTemp, strFileTypeId;
 	AfxGetModuleShortFileName(AfxGetInstanceHandle(), strPathName);
@@ -227,7 +218,7 @@ BOOL CFamiTrackerApp::InitInstance()
 	// Handle command line export
 	if (cmdInfo.m_bExport) {
 		CCommandLineExport exporter;
-		exporter.CommandLineExport(cmdInfo.m_strFileName, cmdInfo.m_strExportFile, cmdInfo.m_strExportLogFile, cmdInfo.m_strExportDPCMFile);
+		exporter.CommandLineExport(cmdInfo.m_strFileName, cmdInfo.m_strExportFile, cmdInfo.m_strExportLogFile);		// // //
 		ExitProcess(0);
 	}
 
@@ -325,10 +316,7 @@ int CFamiTrackerApp::ExitInstance()
 		m_pSettings = NULL;
 	}
 
-	if (m_customExporters) {
-		delete m_customExporters;
-		m_customExporters = NULL;
-	}
+	// // //
 
 	if (m_pChannelMap) {
 		delete m_pChannelMap;
@@ -494,10 +482,7 @@ void CFamiTrackerApp::RemoveSoundGenerator()
 	m_pSoundGenerator = NULL;
 }
 
-CCustomExporters* CFamiTrackerApp::GetCustomExporters(void) const
-{
-	return m_customExporters;
-}
+// // //
 
 void CFamiTrackerApp::RegisterSingleInstance()
 {
@@ -907,8 +892,7 @@ CFTCommandLineInfo::CFTCommandLineInfo() : CCommandLineInfo(),
 	m_bVerifyExport(false),
 #endif
 	m_strExportFile(_T("")),
-	m_strExportLogFile(_T("")),
-	m_strExportDPCMFile(_T(""))
+	m_strExportLogFile(_T(""))		// // //
 {
 }
 
@@ -970,12 +954,7 @@ void CFTCommandLineInfo::ParseParam(const TCHAR* pszParam, BOOL bFlag, BOOL bLas
 				m_strExportLogFile = CString(pszParam);
 				return;
 			}
-			else if(m_strExportDPCMFile.GetLength() == 0)
-			{
-				// BIN export takes another file paramter for DPCM
-				m_strExportDPCMFile = CString(pszParam);
-				return;
-			}
+			// // //
 		}
 #ifdef EXPORT_TEST
 		else if (m_bVerifyExport) {

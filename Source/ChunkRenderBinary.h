@@ -44,14 +44,11 @@ class CChunkRenderBinary : public CBinaryFileWriter
 public:
 	CChunkRenderBinary(CFile *pFile);
 	void StoreChunks(const std::vector<CChunk*> &Chunks);
-	void StoreSamples(const std::vector<const CDSample*> &Samples);
+	// // //
 
 private:
 	void StoreChunk(CChunk *pChunk);
-	void StoreSample(const CDSample *pDSample);
-
-private:
-	int m_iSampleAddress;
+	// // //
 };
 
 // NSF render
@@ -63,15 +60,13 @@ public:
 	void StoreDriver(const char *pDriver, unsigned int Size);
 	void StoreChunks(const std::vector<CChunk*> &Chunks);
 	void StoreChunksBankswitched(const std::vector<CChunk*> &Chunks);
-	void StoreSamples(const std::vector<const CDSample*> &Samples);
-	void StoreSamplesBankswitched(const std::vector<const CDSample*> &Samples);
+	// // //
 	int  GetBankCount() const;
 
 protected:
 	void StoreChunk(const CChunk *pChunk);
 	void StoreChunkBankswitched(const CChunk *pChunk);
-	void StoreSample(const CDSample *pDSample);
-	void StoreSampleBankswitched(const CDSample *pDSample);
+	// // //
 
 	int  GetRemainingSize() const;
 	void AllocateNewBank();
@@ -80,7 +75,7 @@ protected:
 
 protected:
 	unsigned int m_iStartAddr;
-	unsigned int m_iSampleAddr;
+	// // //
 };
 
 // NES render

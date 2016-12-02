@@ -107,7 +107,7 @@ public:
 		bool	bRowInHex;
 		bool	bFramePreview;
 		int		iEditStyle;
-		bool	bNoDPCMReset;
+		// // //
 		bool	bNoStepMove;
 		int		iPageStepSize;
 		CString	strFont;
@@ -179,12 +179,7 @@ public:
 	struct {
 		int		iLevelAPU1;
 		int		iLevelAPU2;
-		int		iLevelVRC6;
-		int		iLevelVRC7;
-		int		iLevelMMC5;
-		int		iLevelFDS;
-		int		iLevelN163;
-		int		iLevelS5B;
+		// // //
 	} ChipLevels;
 
 	CString InstrumentMenuPath;

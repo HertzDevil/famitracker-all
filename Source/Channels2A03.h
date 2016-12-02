@@ -44,8 +44,7 @@ protected:
 
 	bool	m_bManualVolume;		// Flag for Exx
 	int		m_iInitVolume;			// Initial volume
-	bool	m_bSweeping;			// Flag for HW sweep
-	int		m_iSweep;
+	// // //
 	int		m_iPostEffect;
 	int		m_iPostEffectParam;
 };
@@ -88,36 +87,9 @@ protected:
 	virtual void SetupSlide(int Type, int EffParam);
 
 	int TriggerNote(int Note);
-};
 
-// DPCM
-class CDPCMChan : public CChannelHandler2A03 {
-public:
-	CDPCMChan(CSampleMem *pSampleMem);
-	virtual void RefreshChannel();
-protected:
-	virtual void HandleNoteData(stChanNote *pNoteData, int EffColumns);
-	virtual void HandleCustomEffects(int EffNum, int EffParam);
-	virtual bool HandleInstrument(int Instrument, bool Trigger, bool NewInstrument);
-	virtual void HandleEmptyNote();
-	virtual void HandleCut();
-	virtual void HandleRelease();
-	virtual void HandleNote(int Note, int Octave);
-
-	virtual void ClearRegisters();
 private:
-	// DPCM variables
-	CSampleMem *m_pSampleMem;
-
-	unsigned char m_cDAC;
-	unsigned char m_iLoop;
-	unsigned char m_iOffset;
-	unsigned char m_iSampleLength;
-	unsigned char m_iLoopOffset;
-	unsigned char m_iLoopLength;
-	int m_iRetrigger;
-	int m_iRetriggerCntr;
-	int m_iCustomPitch;
-	bool m_bTrigger;
-	bool m_bEnabled;
+	int m_iLastCtrl;		// // //
 };
+
+// // //

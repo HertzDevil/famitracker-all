@@ -286,7 +286,7 @@ public:
 	afx_msg void OnClickedFollow();
 	afx_msg void OnToggleFollow();
 	afx_msg void OnViewControlpanel();
-	afx_msg void OnTrackerDPCM();
+	// // //
 	afx_msg void OnTrackerDisplayRegisterState();
 	afx_msg void OnSelectPatternEditor();
 	afx_msg void OnSelectFrameEditor();
@@ -298,12 +298,6 @@ public:
 	afx_msg void OnNewInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result);
 	afx_msg void OnLoadInstrumentMenu(NMHDR * pNotifyStruct, LRESULT * result);
 	afx_msg void OnAddInstrument2A03();
-	afx_msg void OnAddInstrumentVRC6();
-	afx_msg void OnAddInstrumentVRC7();
-	afx_msg void OnAddInstrumentFDS();
-	afx_msg void OnAddInstrumentMMC5();
-	afx_msg void OnAddInstrumentN163();
-	afx_msg void OnAddInstrumentS5B();
 	afx_msg void OnEditUndo();
 	afx_msg void OnEditRedo();
 	afx_msg void OnEditCut();
