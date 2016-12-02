@@ -11,7 +11,8 @@ the following forks:
 [uber](http://famitracker.com/forum/posts.php?id=5488),
 [arp-scheme](http://famitracker.com/forum/posts.php?id=6151),
 [fds-seq](http://forums.famitracker.com/viewtopic.php?f=6&t=1081),
-[lc](http://forums.famitracker.com/viewtopic.php?f=7&t=1221).
+[lc](http://forums.famitracker.com/viewtopic.php?f=7&t=1221),
+[sneven](https://github.com/HertzDevil/SnevenTracker).
 
 The FamiTracker source is known to put its header files in several directories
 throughout its history. No attempt has been made to unify them to make the
